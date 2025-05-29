@@ -1,0 +1,56 @@
+# ======================
+# .NET (.NET 8 Backend)
+# ======================
+Bikontrol/**/bin/
+Bikontrol/**/obj/
+Bikontrol/**/*.user
+Bikontrol/**/*.suo
+Bikontrol/**/*.userosscache
+Bikontrol/packages/
+Bikontrol/*.sln.docstates
+Bikontrol/**/appsettings.Development.json
+
+*.log
+
+# Rider / VSCode
+.idea/
+.vscode/
+
+# ======================
+# Angular (Frontend)
+# ======================
+bikontrol-web/node_modules/
+bikontrol-web/dist/
+bikontrol-web/tmp/
+bikontrol-web/out-tsc/
+bikontrol-web/bazel-out/
+bikontrol-web/.angular/cache/
+bikontrol-web/.sass-cache/
+bikontrol-web/connect.lock
+bikontrol-web/coverage/
+bikontrol-web/libpeerconnection.log
+bikontrol-web/testem.log
+bikontrol-web/typings/
+bikontrol-web/.DS_Store
+bikontrol-web/Thumbs.db
+bikontrol-web/npm-debug.log
+bikontrol-web/yarn-error.log
+
+# IDEs and editors (global)
+*.launch
+.settings/
+*.sublime-workspace
+.project
+.classpath
+.c9/
+.history/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Visual Studio (IDE)
+.vs/

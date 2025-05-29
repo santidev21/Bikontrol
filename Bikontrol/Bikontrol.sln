@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.API", "Bikontrol.API\Bikontrol.API.csproj", "{ECB6A578-BEF0-43A1-B828-D1015B439430}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Application", "Bikontrol.Application\Bikontrol.Application.csproj", "{1B7207BB-CCC4-4275-B021-22774A16C9BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Domain", "Bikontrol.Domain\Bikontrol.Domain.csproj", "{B620AACE-BC8F-46B7-A7BF-9D5B4663F3E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Infrastructure", "Bikontrol.Infrastructure\Bikontrol.Infrastructure.csproj", "{A1160816-8547-4238-93B5-4810CF8D0688}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Persistence", "Bikontrol.Persistence\Bikontrol.Persistence.csproj", "{D15C6AEF-14ED-4B35-B084-B8669028A7DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Shared", "Bikontrol.Shared\Bikontrol.Shared.csproj", "{DCA5EC44-3A01-4777-BAE2-F3784E1A1133}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ECB6A578-BEF0-43A1-B828-D1015B439430}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECB6A578-BEF0-43A1-B828-D1015B439430}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECB6A578-BEF0-43A1-B828-D1015B439430}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECB6A578-BEF0-43A1-B828-D1015B439430}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B7207BB-CCC4-4275-B021-22774A16C9BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B7207BB-CCC4-4275-B021-22774A16C9BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B7207BB-CCC4-4275-B021-22774A16C9BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B7207BB-CCC4-4275-B021-22774A16C9BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B620AACE-BC8F-46B7-A7BF-9D5B4663F3E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B620AACE-BC8F-46B7-A7BF-9D5B4663F3E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B620AACE-BC8F-46B7-A7BF-9D5B4663F3E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B620AACE-BC8F-46B7-A7BF-9D5B4663F3E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1160816-8547-4238-93B5-4810CF8D0688}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1160816-8547-4238-93B5-4810CF8D0688}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1160816-8547-4238-93B5-4810CF8D0688}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1160816-8547-4238-93B5-4810CF8D0688}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D15C6AEF-14ED-4B35-B084-B8669028A7DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D15C6AEF-14ED-4B35-B084-B8669028A7DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D15C6AEF-14ED-4B35-B084-B8669028A7DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D15C6AEF-14ED-4B35-B084-B8669028A7DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCA5EC44-3A01-4777-BAE2-F3784E1A1133}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCA5EC44-3A01-4777-BAE2-F3784E1A1133}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCA5EC44-3A01-4777-BAE2-F3784E1A1133}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCA5EC44-3A01-4777-BAE2-F3784E1A1133}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6096239-0417-4B29-AD77-F2E5F3D49901}
+	EndGlobalSection
+EndGlobal
