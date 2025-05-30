@@ -11,7 +11,7 @@ Node: 18.18.1
 ## 🚀 Tech Stack
 
 - ASP.NET Core 8
-- Angular 17/
+- Angular 17
 - SQL Server - ADO.NET
 - Clean Architecture
 
