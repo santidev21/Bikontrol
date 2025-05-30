@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 using Bikontrol.Application.Authentication.DTOs;
@@ -52,7 +53,32 @@ namespace Bikontrol.Infrastructure.Authentication.Services
             return new AuthResponse
             {
                 UserId = user.Id,
-                Email = user.Email,
+                FullName = $"{user.Name} {user.LastName}",
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(1)
+            };
+        }
+
+        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+        {
+            var user = await _userRepository.GetByEmail(request.Email);
+
+            if (user is null)
+            {
+                throw new InvalidCredentialsException();
+            }
+
+            var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            if (!isPasswordValid)
+            {
+                throw new InvalidCredentialsException();
+            }
+
+            var token = _jwtService.GenerateToken(user);
+
+            return new AuthResponse
+            {
+                UserId = user.Id,
                 FullName = $"{user.Name} {user.LastName}",
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddHours(1)
