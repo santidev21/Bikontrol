@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Bikontrol.Application\Bikontrol.Application.csproj" />
     <ProjectReference Include="..\Bikontrol.Domain\Bikontrol.Domain.csproj" />
     <ProjectReference Include="..\Bikontrol.Shared\Bikontrol.Shared.csproj" />
   </ItemGroup>

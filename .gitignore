@@ -54,3 +54,9 @@ bikontrol-web/yarn-error.log
 
 # Visual Studio (IDE)
 .vs/
+
+# Database project
+*.dbmdl
+*.jfm
+*.scmp
+*.sqlproj.user
