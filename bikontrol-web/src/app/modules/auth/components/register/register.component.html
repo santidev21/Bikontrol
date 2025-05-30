@@ -1,0 +1,41 @@
+<div class="register-container">
+    <div class="register-image">
+        <img src="../../../../assets/images/auth-image.jpg" alt="">
+    </div>
+    <div class="register-form-container">
+  <form class="register-card" [formGroup]="registerForm" (ngSubmit)="register()">
+    <h2>Bikontrol - Register</h2>
+
+    <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input type="email" matInput formControlName="email" [errorStateMatcher]="matcher"
+            placeholder="example@example.com">
+            @if (email.hasError('email') && !email.hasError('required')) {
+            <mat-error>Please enter a valid email address</mat-error>
+            }
+            @if (email.hasError('required')) {
+            <mat-error>Email is <strong>required</strong></mat-error>
+            }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput type="text" formControlName="name" required />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Last Name</mat-label>
+      <input matInput type="text" formControlName="lastName" required />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput [type]="hide ? 'password' : 'text'" formControlName="password" required />
+      <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Toggle password visibility'" [attr.aria-pressed]="hide">
+        <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="registerForm.invalid">Register</button>
+  </form>
+</div>
