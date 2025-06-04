@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { RegisterRequest } from './interfaces/register-request.interface';
 import { environment } from '../../../environments/environment';
+import { LoginRequest } from './interfaces/login-request.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +16,12 @@ export class AuthService {
 
     register(data: RegisterRequest): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/register`, data).pipe(
+        catchError(this.handleError)
+        );
+    }
+
+    login(data: LoginRequest): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/login`, data).pipe(
         catchError(this.handleError)
         );
     }
