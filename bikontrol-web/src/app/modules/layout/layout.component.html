@@ -1,0 +1,18 @@
+<nav class="navbar">
+  <div class="navbar-left">
+    <img src="../../../assets/images/logo.png" alt="Bikontrol Logo" class="logo">
+    <a routerLink="/dashboard" routerLinkActive="font-semibold" class="nav-link">Dashboard</a>
+  </div>
+
+  <div class="navbar-center">
+    Hi {{ username }}
+  </div>
+
+  <div class="navbar-right">
+    <a routerLink="/settings" class="nav-link">Settings</a>
+    <button (click)="logout()" class="nav-link" style="background: none; border: none; cursor: pointer;">Logout</button>
+  </div>
+</nav>
+
+
+<router-outlet></router-outlet>
