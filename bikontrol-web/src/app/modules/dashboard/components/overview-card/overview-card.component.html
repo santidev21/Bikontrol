@@ -1,0 +1,23 @@
+<div class="overview-container bg-white rounded-2xl shadow-md p-4 flex flex-col items-center text-center border max-w-sm mx-auto">
+    <h2 class="text-bold">{{ motorcycle.name }}</h2>
+
+    <img
+    [src]="motorcycle.image"
+    alt="{{ motorcycle.name }}"
+    class="overview-image"
+    />
+
+    <h3 class="text-bold">
+        {{ motorcycle.brand }} - {{ motorcycle.model }}
+    </h3>
+
+    <div>
+        <p><span class="text-bold">Plate:</span> {{ motorcycle.plate }}</p>
+        <p><span class="text-bold">Model year:</span> {{ motorcycle.modelYear }}</p>
+        <p><span class="text-bold">Current mileage:</span> {{ motorcycle.lastMileage | number }} km</p>
+    </div>
+
+    <button aria-label="Open motorcycle">
+        <img src="../../../../../assets/svg/arrow-rigth.svg" alt="Open motorcycle" class="open-motorcycle" />
+    </button>
+</div>

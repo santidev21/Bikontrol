@@ -1,0 +1,27 @@
+.dashboard-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.no-registered-container{
+    margin-top: 200px;
+}
+
+.overview-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.add-moto-text{
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.icon-add{
+    height: 40px;
+    width: 40px;
+}

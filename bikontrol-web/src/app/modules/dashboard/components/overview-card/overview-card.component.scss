@@ -1,0 +1,30 @@
+.overview-container {
+  width: 280px;
+  height: 460px;                  /* fuerza mismo alto */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; /* ahora sí lo puedes usar */
+  padding: 16px;
+  gap: 10px;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.text-bold{
+    font-weight: bold;
+}
+
+.overview-image {
+  height: 150px;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.open-motorcycle{
+    height: 40px;
+    width: 40px;
+}

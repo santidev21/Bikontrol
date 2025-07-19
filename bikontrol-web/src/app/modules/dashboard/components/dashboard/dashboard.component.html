@@ -1,1 +1,23 @@
-<p>dashboard works!</p>
+<div class="flex justify-center">
+  <div class="dashboard-container">
+    <ng-container *ngIf="motorcycles.length > 0; else noMotos">
+      <div class="overview-cards">
+        <app-overview-card
+          *ngFor="let moto of motorcycles"
+          [motorcycle]="moto"
+        />
+      </div>
+    </ng-container>
+
+    <ng-template #noMotos>
+        <div class="no-registered-container text-center">
+            <p class="mb-4 add-moto-text">
+                You have no registered motorcycles. Please add one:
+            </p>
+            <button aria-label="Add motorcycle">
+            <img src="../../../../../assets/svg/add.svg" alt="Add" class="icon-add" />
+            </button>
+        </div>
+    </ng-template>
+  </div>
+</div>
