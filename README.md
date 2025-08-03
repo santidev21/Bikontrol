@@ -1,21 +1,71 @@
 # Bikontrol 🛠🏍️
 
-**Bikontrol** is a web application designed to help motorcycle owners track and manage maintenance tasks—from basic chain lubrication to advanced inspections.
+**Bikontrol** is a full-stack web application that helps motorcycle owners track and manage their maintenance tasks—from basic chain lubrication to advanced inspections.
 
-## 📂 Project Structure
+![Dashboard](images/dashboard.png)
+---
 
-- `Bikontrol/`: ASP.NET Core 8 backend using Clean Architecture
-- `bikontrol-web/`: Angular CLI: 17.3.17
-Node: 18.18.1
+## ✨ Features
 
-## 🚀 Tech Stack
+- 🛠️ Register and categorize maintenance tasks
+- 🔔 Track upcoming service reminders (planned)
+- 🔐 Login system with JWT-based authentication
+- ⚙️ Modular Clean Architecture project with distinct layers
+- 📑 Database schema managed with SQL Server projects
 
-- ASP.NET Core 8
-- Angular 17
-- SQL Server - ADO.NET
-- Clean Architecture
+> 🧪 Still in development – UI and core features are being built iteratively.
 
-## 🛠️ Setup
+---
+
+## 🏗️ Project Structure
+
+The backend follows a Clean Architecture approach:
+
+- `Bikontrol.API` → Entry point with controllers and API endpoints
+- `Bikontrol.Application` → DTOs, interfaces, and application logic  
+- `Bikontrol.Domain` → Core business entities
+- `Bikontrol.Infrastructure` → External services, JWT generator, custom exceptions
+- `Bikontrol.Persistence` → Repositories and EF Core DbContext implementation
+- `Bikontrol.Shared` → (Reserved for future shared logic or constants) 
+- `Bikontrol.Database` → SQL project for schema comparison and migrations
+
+Frontend is an Angular 17 SPA located in the `/bikontrol-web` folder.
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend**: Angular 17, Angular Material, Bootstrap
+- **Backend**: ASP.NET Core 8, Clean Architecture, ADO.NET
+- **Database**: SQL Server + SSDT (Database project)
+- **Auth**: JWT (JSON Web Tokens)
+
+---
+
+## 🚀 Getting Started
+
+### 🧩 Prerequisites
+
+- Node.js 18+ and Angular CLI
+- .NET 8 SDK
+- SQL Server
+- Visual Studio (for SSDT database project)
+
+### ⚙️ Frontend
+
+```bash
+cd bikontrol-web
+npm install
+ng serve
+```
+
+### ⚙️ Backend
+
+```bash
+cd Bikontrol.API
+dotnet restore
+dotnet run
+```
 
 ### 🔄 How to set up Schema Compare (optional)
 
@@ -31,3 +81,15 @@ If you want to use Visual Studio’s **Schema Compare** tool to compare and upda
 6. (Optional) Save the configuration locally via `Save As...`.
 
 > ⚠️ The `.scmp` file is not included in the repository to avoid machine-specific conflicts
+
+## 🖼️ Screenshots
+
+### 🔹 Login Page  
+![Login](images/login.png)
+
+### 🔹 Register Page  
+![Register](images/register.png)
+
+### 🔹 Dashboard (Group Overview)  
+![Dashboard](images/dashboard.png)
+
