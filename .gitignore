@@ -1,0 +1,69 @@
+# ==============================
+# Angular / Node / Frontend
+# ==============================
+
+# Node modules
+/bikontrol-web/node_modules/
+# Angular build outputs
+/bikontrol-web/dist/
+/bikontrol-web/out-tsc/
+/bikontrol-web/.angular/cache/
+/bikontrol-web/.parcel-cache/
+# Logs
+/bikontrol-web/npm-debug.log*
+/bikontrol-web/yarn-debug.log*
+/bikontrol-web/yarn-error.log*
+/bikontrol-web/pnpm-debug.log*
+# Environment files
+/bikontrol-web/src/environments/*.ts
+# IDE files
+/bikontrol-web/.vscode/
+/bikontrol-web/.idea/
+/bikontrol-web/*.sublime-workspace
+# Tailwind / PostCSS cache
+/bikontrol-web/.tailwindcss/
+
+# ==============================
+# .NET / Backend
+# ==============================
+
+# Build outputs
+/Bikontrol/**/bin/
+/Bikontrol/**/obj/
+/Bikontrol/**/Debug/
+/Bikontrol/**/Release/
+/Bikontrol/**/TestResults/
+/Bikontrol/**/publish/
+/Bikontrol/**/*.user
+/Bikontrol/**/*.suo
+/Bikontrol/**/*.userosscache
+/Bikontrol/**/*.sln.docstates
+
+# Rider / VSCode / JetBrains
+/Bikontrol/.idea/
+/Bikontrol/.vscode/
+/Bikontrol/.vs/
+
+# NuGet
+/Bikontrol/**/packages/
+/Bikontrol/**/project.lock.json
+/Bikontrol/**/project.fragment.lock.json
+/Bikontrol/**/artifacts/
+
+# Dotnet CLI
+/Bikontrol/**/.dotnet/
+
+# Logs
+/Bikontrol/**/*.log
+
+# Environment
+/Bikontrol/**/*.env
+/Bikontrol/**/*.local
+
+# ==============================
+# System / OS
+# ==============================
+.DS_Store
+Thumbs.db
+*.bak
+*.swp
