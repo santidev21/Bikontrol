@@ -1,0 +1,86 @@
+<div class="flex items-center justify-center min-h-screen bg-bg px-4">
+  <div class="w-full max-w-sm p-6 bg-card rounded-2xl shadow-lg">
+    <img src="logo.webp" alt="Bikontrol logo" class="mx-auto mb-4 w-24 h-24">
+
+    <h1 class="text-2xl font-bold text-center mb-6 text-primary">Crear cuenta</h1>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-textdark mb-1">Nombre completo</label>
+        <input
+          type="text"
+          formControlName="fullName"
+          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+          placeholder="Ej: Juan Pérez"
+        />
+        <small *ngIf="isInvalid('fullName')" class="text-red-500 text-xs">
+          El nombre es obligatorio.
+        </small>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-textdark mb-1">Correo</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+          placeholder="correo@example.com"
+        />
+        <small *ngIf="isInvalid('email') && f['email'].errors?.['required']" class="text-red-500 text-xs">
+          El correo es obligatorio.
+        </small>
+        <small *ngIf="isInvalid('email') && f['email'].errors?.['email']" class="text-red-500 text-xs">
+          Formato de correo inválido.
+        </small>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-textdark mb-1">Contraseña</label>
+        <input
+          type="password"
+          formControlName="password"
+          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+          placeholder="••••••••"
+        />
+        <small *ngIf="isInvalid('password') && f['password'].errors?.['required']" class="text-red-500 text-xs">
+          La contraseña es obligatoria.
+        </small>
+        <small *ngIf="isInvalid('password') && f['password'].errors?.['minlength']" class="text-red-500 text-xs">
+          Debe tener al menos 6 caracteres.
+        </small>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-textdark mb-1">Confirmar contraseña</label>
+        <input
+          type="password"
+          formControlName="confirmPassword"
+          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+          placeholder="••••••••"
+        />
+        <small *ngIf="isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']" class="text-red-500 text-xs">
+          Debes confirmar la contraseña.
+        </small>
+        <small *ngIf="registerForm.errors?.['passwordMismatch'] && (f['confirmPassword'].dirty || f['confirmPassword'].touched)" class="text-red-500 text-xs">
+          Las contraseñas no coinciden.
+        </small>
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="registerForm.invalid"
+        class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-secondary transition-colors"
+      >
+        Registrarse
+      </button>
+
+      <button
+        type="button"
+        routerLink="/login"
+        class="w-full mt-6 py-2 bg-accent text-textlight rounded-lg hover:bg-secondary transition-colors"
+      >
+        Volver al inicio de sesión
+      </button>
+    </form>
+  </div>
+</div>

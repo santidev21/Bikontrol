@@ -1,9 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22 d17.14
+VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.API", "Bikontrol.API\Bikontrol.API.csproj", "{907FCD88-B64D-4574-A125-FCC5BF3B57FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Application", "Bikontrol.Application\Bikontrol.Application.csproj", "{6FACD458-62A8-4ABC-B65F-7B3B56E3245C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Domain", "Bikontrol.Domain\Bikontrol.Domain.csproj", "{8A3B1FC8-549F-44E1-B4D1-58F78BA222DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Infrastructure", "Bikontrol.Infrastructure\Bikontrol.Infrastructure.csproj", "{087DC91D-AC93-4A6D-8BC8-05A9408D741B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Persistence", "Bikontrol.Persistence\Bikontrol.Persistence.csproj", "{6479F3BA-A34D-4FAA-A903-3CD7FDA2BFC8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Shared", "Bikontrol.Shared\Bikontrol.Shared.csproj", "{32ACCC13-B081-47AE-9914-6BE116BD81E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bikontrol.Tests", "Bikontrol.Tests\Bikontrol.Tests.csproj", "{25FE6A2E-0A74-4359-9600-4EDFE799665A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +27,30 @@ Global
 		{907FCD88-B64D-4574-A125-FCC5BF3B57FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{907FCD88-B64D-4574-A125-FCC5BF3B57FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{907FCD88-B64D-4574-A125-FCC5BF3B57FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FACD458-62A8-4ABC-B65F-7B3B56E3245C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FACD458-62A8-4ABC-B65F-7B3B56E3245C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FACD458-62A8-4ABC-B65F-7B3B56E3245C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FACD458-62A8-4ABC-B65F-7B3B56E3245C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A3B1FC8-549F-44E1-B4D1-58F78BA222DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A3B1FC8-549F-44E1-B4D1-58F78BA222DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A3B1FC8-549F-44E1-B4D1-58F78BA222DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A3B1FC8-549F-44E1-B4D1-58F78BA222DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{087DC91D-AC93-4A6D-8BC8-05A9408D741B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{087DC91D-AC93-4A6D-8BC8-05A9408D741B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{087DC91D-AC93-4A6D-8BC8-05A9408D741B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{087DC91D-AC93-4A6D-8BC8-05A9408D741B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6479F3BA-A34D-4FAA-A903-3CD7FDA2BFC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6479F3BA-A34D-4FAA-A903-3CD7FDA2BFC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6479F3BA-A34D-4FAA-A903-3CD7FDA2BFC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6479F3BA-A34D-4FAA-A903-3CD7FDA2BFC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32ACCC13-B081-47AE-9914-6BE116BD81E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32ACCC13-B081-47AE-9914-6BE116BD81E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32ACCC13-B081-47AE-9914-6BE116BD81E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32ACCC13-B081-47AE-9914-6BE116BD81E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25FE6A2E-0A74-4359-9600-4EDFE799665A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25FE6A2E-0A74-4359-9600-4EDFE799665A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25FE6A2E-0A74-4359-9600-4EDFE799665A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25FE6A2E-0A74-4359-9600-4EDFE799665A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
