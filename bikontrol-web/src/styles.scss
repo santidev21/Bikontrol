@@ -1,3 +1,19 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+
+:root {
+    /* Backgrounds */
+    --color-bg: #f8f8f8; 
+    --color-card: #b4d2e7;
+
+    /* Brand / Primary tones */
+    --color-primary: #003559;
+    --color-secondary: #94c5cc;
+    --color-accent: #a1a6b4;
+
+    /* Text */
+    --color-text-dark: #003559;
+    --color-text-light: #ffffff;
+}
