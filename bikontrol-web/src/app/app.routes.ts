@@ -1,7 +1,19 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
-  { path: 'dashboard', loadChildren: () => import('./modules/dashboard/dashboard.module').then(m => m.DashboardModule) },
-  { path: '**', redirectTo: 'auth' }
+  // Auth
+  { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(c => c.LoginComponent) },
+  { path: 'register', loadComponent: () => import('./modules/auth/pages/register/register.component').then(c => c.RegisterComponent) },
+
+  // Dashboard
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./modules/dashboard/components/dashboard-layout/dashboard-layout.component').then(c => c.DashboardLayoutComponent),
+    children: [
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: 'home', loadComponent: () => import('./modules/dashboard/pages/home/home.component').then(c => c.HomeComponent) },
+    ]
+  },
+
+  { path: '**', redirectTo: 'login' }
 ];

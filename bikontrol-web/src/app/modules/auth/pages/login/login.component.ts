@@ -2,9 +2,12 @@ import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AUTH_IMPORTS } from '../../auth-imports';
 
 @Component({
   selector: 'app-login',
+  standalone: true,
+  imports: [AUTH_IMPORTS],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })

@@ -2,9 +2,12 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { AUTH_IMPORTS } from '../../auth-imports';
 
 @Component({
   selector: 'app-register',
+  standalone: true,
+  imports: [AUTH_IMPORTS],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'
 })
