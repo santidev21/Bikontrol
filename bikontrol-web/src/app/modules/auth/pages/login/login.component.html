@@ -4,52 +4,38 @@
 
     <h1 class="text-2xl font-bold text-center mb-6 text-primary">Bikontrol</h1>
 
-    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
 
       <div class="mb-4">
         <label class="block text-sm font-medium text-textdark mb-1">Correo</label>
         <input
           type="email"
-          name="email"
-          [(ngModel)]="email"
-          #emailCtrl="ngModel"
-          required
-          email
+          formControlName="email"
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="correo@example.com"
         />
-
-        <p *ngIf="emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)" class="text-red-500 text-sm mt-1">
-          <ng-container *ngIf="emailCtrl.errors?.['required']">
-            El correo es obligatorio.
-          </ng-container>
-          <ng-container *ngIf="emailCtrl.errors?.['email']">
-            Ingresa un correo válido.
-          </ng-container>
-        </p>
+        <small *ngIf="isInvalid('email') && f['email'].errors?.['required']" class="text-red-500 text-xs font-bold">
+          El correo es obligatorio.
+        </small>
+        <small *ngIf="isInvalid('email') && f['email'].errors?.['email']" class="text-red-500 text-xs font-bold">
+          Ingresa un correo válido.
+        </small>
       </div>
 
       <div class="mb-6">
         <label class="block text-sm font-medium text-textdark mb-1">Contraseña</label>
         <input
           type="password"
-          name="password"
-          [(ngModel)]="password"
-          #passwordCtrl="ngModel"
-          required
-          minlength="6"
+          formControlName="password"
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="••••••••"
         />
-
-        <p *ngIf="passwordCtrl.invalid && (passwordCtrl.dirty || passwordCtrl.touched)" class="text-red-500 text-sm mt-1">
-          <ng-container *ngIf="passwordCtrl.errors?.['required']">
-            La contraseña es obligatoria.
-          </ng-container>
-          <ng-container *ngIf="passwordCtrl.errors?.['minlength']">
-            Debe tener al menos 6 caracteres.
-          </ng-container>
-        </p>
+        <small *ngIf="isInvalid('password') && f['password'].errors?.['required']" class="text-red-500 text-xs font-bold">
+          La contraseña es obligatoria.
+        </small>
+        <small *ngIf="isInvalid('password') && f['password'].errors?.['minlength']" class="text-red-500 text-xs font-bold">
+          Debe tener al menos 6 caracteres.
+        </small>
       </div>
 
       <button
@@ -59,6 +45,10 @@
       >
         Ingresar
       </button>
+
+      <small *ngIf="errorMessage" class="text-red-500 text-xs block text-center mt-3 font-bold">
+        {{ errorMessage }}
+      </small>
 
       <button
         type="button"

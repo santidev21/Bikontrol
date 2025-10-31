@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
@@ -8,22 +9,47 @@ import { Router } from '@angular/router';
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  email = '';
-  password = '';
+  loginForm: FormGroup;
+  submitted = false;
+  errorMessage: string | null = null;
 
   constructor(
-    private authService: AuthService,
+    private fb: FormBuilder, 
+    private authService: AuthService, 
     private router: Router
-  ) {}
-  
+  ) {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  get f() {
+    return this.loginForm.controls;
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.loginForm.get(controlName);
+    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted));
+  }
+
   onSubmit() {
-    this.authService.login(this.email, this.password).subscribe({
-      next: (response) => {
-        this.router.navigate(['/dashboard']);
-      },
+    this.submitted = true;
+    this.errorMessage = null;
+
+    if (this.loginForm.invalid) return;
+
+    const payload = {
+      email: this.loginForm.value.email,
+      password: this.loginForm.value.password
+    };
+
+    this.authService.login(payload.email, payload.password).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
         console.error(error);
+        this.errorMessage = error.error?.error || 'Error inesperado en el servidor.';
       }
-    });    
+    });
   }
 }
