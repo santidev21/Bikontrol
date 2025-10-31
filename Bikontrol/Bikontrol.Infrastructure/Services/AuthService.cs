@@ -1,8 +1,10 @@
 ﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Infrastructure.Exceptions;
 using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +28,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             // Check existing email
             if (_context.Users.Any(u => u.Email == request.Email))
-                throw new Exception("Email already registered.");
+                throw new AuthException("El usuario ya existe.", 409);
 
             var user = new User
             {
@@ -46,6 +48,25 @@ namespace Bikontrol.Infrastructure.Services
                 Email = user.Email,
                 FullName = user.FullName,
                 CreatedAt = user.CreatedAt
+            };
+        }
+
+        public async Task<LoginResponse> LoginAsync(LoginRequest dto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            if (user == null)
+                throw new AuthException("El correo o contraseña son inválidos.", 401);
+
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+
+            if (result != PasswordVerificationResult.Success)
+                throw new AuthException("El correo o contraseña son inválidos.", 401);
+
+            return new LoginResponse
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FullName = user.FullName
             };
         }
     }

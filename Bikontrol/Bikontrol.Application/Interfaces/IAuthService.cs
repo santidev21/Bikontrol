@@ -10,5 +10,6 @@ namespace Bikontrol.Application.Interfaces
     public interface IAuthService
     {
         Task<RegisterResponse> RegisterAsync(RegisterRequest request);
+        Task<LoginResponse> LoginAsync(LoginRequest dto);
     }
 }

@@ -21,5 +21,12 @@ namespace Bikontrol.API.Controllers
             var result = await _authService.RegisterAsync(request);
             return Ok(result);
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest dto)
+        {
+            var result = await _authService.LoginAsync(dto);
+            return Ok(result);
+        }
     }
 }

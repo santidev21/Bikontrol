@@ -1,3 +1,4 @@
+using Bikontrol.API.Middleware;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence;
@@ -34,6 +35,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.MapControllers();
 
