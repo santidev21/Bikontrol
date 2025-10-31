@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
@@ -10,7 +12,11 @@ export class RegisterComponent {
 registerForm: FormGroup;
   submitted = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.registerForm = this.fb.group(
       {
         fullName: ['', Validators.required],
@@ -40,11 +46,23 @@ registerForm: FormGroup;
 
   onSubmit() {
     this.submitted = true;
-    console.log('Register submit clicked');
 
     if (this.registerForm.invalid) return;
 
-    const payload = this.registerForm.value;
-    console.log('Register payload:', payload);
+     const payload = {
+      fullName: this.registerForm.value.fullName,
+      email: this.registerForm.value.email,
+      password: this.registerForm.value.password
+    };
+
+    this.authService.register(payload).subscribe({
+      next: (response) => {
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error) => {
+        console.error(error);
+      }
+    });
+    
   }
 }
