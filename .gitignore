@@ -67,3 +67,6 @@
 Thumbs.db
 *.bak
 *.swp
+
+# Local dev settings
+/Bikontrol/Bikontrol.API/appsettings.Development.json

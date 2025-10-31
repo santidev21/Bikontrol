@@ -1,5 +1,6 @@
 ﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Exceptions;
 using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
@@ -17,11 +18,13 @@ namespace Bikontrol.Infrastructure.Services
     {
         private readonly AppDbContext _context;
         private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly JwtTokenGenerator _jwtTokenGenerator;
 
-        public AuthService(AppDbContext context, IPasswordHasher<User> passwordHasher)
+        public AuthService(AppDbContext context, IPasswordHasher<User> passwordHasher, JwtTokenGenerator jwtTokenGenerator)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _jwtTokenGenerator = jwtTokenGenerator;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
@@ -42,12 +45,15 @@ namespace Bikontrol.Infrastructure.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
+
             return new RegisterResponse
             {
                 Id = user.Id,
                 Email = user.Email,
                 FullName = user.FullName,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                Token = token
             };
         }
 
@@ -62,11 +68,14 @@ namespace Bikontrol.Infrastructure.Services
             if (result != PasswordVerificationResult.Success)
                 throw new AuthException("El correo o contraseña son inválidos.", 401);
 
+            var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
+
             return new LoginResponse
             {
                 Id = user.Id,
                 Email = user.Email,
-                FullName = user.FullName
+                FullName = user.FullName,
+                Token = token
             };
         }
     }
