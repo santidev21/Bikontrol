@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 export class RegisterComponent {
 registerForm: FormGroup;
   submitted = false;
+  errorMessage: string | null = null; 
 
   constructor(
     private fb: FormBuilder,
@@ -46,6 +47,7 @@ registerForm: FormGroup;
 
   onSubmit() {
     this.submitted = true;
+    this.errorMessage = null;
 
     if (this.registerForm.invalid) return;
 
@@ -61,6 +63,7 @@ registerForm: FormGroup;
       },
       error: (error) => {
         console.error(error);
+        this.errorMessage = error.error?.error || 'Error inesperado en el servidor.';
       }
     });
     

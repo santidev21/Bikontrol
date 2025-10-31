@@ -13,7 +13,7 @@
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="Ej: Juan Pérez"
         />
-        <small *ngIf="isInvalid('fullName')" class="text-red-500 text-xs">
+        <small *ngIf="isInvalid('fullName')" class="text-red-500 text-xs font-bold">
           El nombre es obligatorio.
         </small>
       </div>
@@ -26,10 +26,10 @@
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="correo@example.com"
         />
-        <small *ngIf="isInvalid('email') && f['email'].errors?.['required']" class="text-red-500 text-xs">
+        <small *ngIf="isInvalid('email') && f['email'].errors?.['required']" class="text-red-500 text-xs font-bold">
           El correo es obligatorio.
         </small>
-        <small *ngIf="isInvalid('email') && f['email'].errors?.['email']" class="text-red-500 text-xs">
+        <small *ngIf="isInvalid('email') && f['email'].errors?.['email']" class="text-red-500 text-xs font-bold">
           Formato de correo inválido.
         </small>
       </div>
@@ -42,10 +42,10 @@
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="••••••••"
         />
-        <small *ngIf="isInvalid('password') && f['password'].errors?.['required']" class="text-red-500 text-xs">
+        <small *ngIf="isInvalid('password') && f['password'].errors?.['required']" class="text-red-500 text-xs font-bold">
           La contraseña es obligatoria.
         </small>
-        <small *ngIf="isInvalid('password') && f['password'].errors?.['minlength']" class="text-red-500 text-xs">
+        <small *ngIf="isInvalid('password') && f['password'].errors?.['minlength']" class="text-red-500 text-xs font-bold">
           Debe tener al menos 6 caracteres.
         </small>
       </div>
@@ -58,10 +58,10 @@
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="••••••••"
         />
-        <small *ngIf="isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']" class="text-red-500 text-xs">
+        <small *ngIf="isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']" class="text-red-500 text-xs font-bold">
           Debes confirmar la contraseña.
         </small>
-        <small *ngIf="registerForm.errors?.['passwordMismatch'] && (f['confirmPassword'].dirty || f['confirmPassword'].touched)" class="text-red-500 text-xs">
+        <small *ngIf="registerForm.errors?.['passwordMismatch'] && (f['confirmPassword'].dirty || f['confirmPassword'].touched)" class="text-red-500 text-xs font-bold">
           Las contraseñas no coinciden.
         </small>
       </div>
@@ -73,6 +73,10 @@
       >
         Registrarse
       </button>
+
+      <small *ngIf="errorMessage" class="text-red-500 text-xs block text-center mt-3 font-bold">
+        {{ errorMessage }}
+      </small>
 
       <button
         type="button"
