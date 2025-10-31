@@ -1,1 +1,64 @@
-<p>motorcycle-card works!</p>
+<div
+  class="bg-white rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition-shadow relative"
+>
+  <!-- Left: Motorcycle image -->
+  <div
+    class="flex-shrink-0 cursor-pointer"
+    (click)="goToDetails()"
+  >
+    <img
+      [src]="motorcycle.image"
+      alt="{{ motorcycle.name }}"
+      class="w-20 h-20 object-cover rounded-lg"
+    />
+  </div>
+
+  <!-- Middle: Info -->
+  <div class="flex-1 px-4 cursor-pointer" (click)="goToDetails()">
+    <h2 class="font-bold text-lg text-gray-900">{{ motorcycle.name }}</h2>
+    <p class="text-gray-500 text-sm">{{ motorcycle.brand }} - {{ motorcycle.year }}</p>
+    <p class="text-sm mt-1 text-gray-700">Apodo: {{ motorcycle.nickname }}</p>
+
+    <p class="mt-2 flex items-center text-gray-600 text-sm">
+      <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
+      {{ motorcycle.km }} km
+    </p>
+  </div>
+
+  <!-- Right: Options -->
+  <div class="self-start relative" (click)="$event.stopPropagation()">
+    <button
+      class="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
+      (click)="toggleMenu($event)">
+      ⋮
+    </button>
+
+    <!-- Floating menu -->
+    <div
+    *ngIf="menuOpen"
+    class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-20"
+    >
+    <button
+        (click)="confirmDelete($event)"
+        class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-lg"
+    >
+        <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="18px"
+        viewBox="0 -960 960 960"
+        width="18px"
+        fill="currentColor"
+        class="text-red-600"
+        >
+        <path
+            d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520
+            q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160
+            0h80v-360h-80v360ZM280-720v520-520Z"
+        />
+        </svg>
+        <span>Delete</span>
+    </button>
+    </div>
+
+  </div>
+</div>

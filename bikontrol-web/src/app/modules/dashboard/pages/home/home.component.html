@@ -1,1 +1,21 @@
-<p>home works!</p>
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-2">Bienvenido de nuevo</h1>
+    <p class="text-gray-400 mb-4">Tus motocicletas</p>
+
+    <div *ngIf="motorcycles.length === 0" class="text-center text-gray-500 mt-8">
+    No tienes motos agregadas, por favor agrega una usando el botón de abajo.
+    </div>
+
+    <div *ngIf="motorcycles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <app-motorcycle-card
+        *ngFor="let moto of motorcycles"
+        [motorcycle]="moto">
+    </app-motorcycle-card>
+    </div>
+
+    <div class="mt-6 text-center">
+    <button class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
+        + Agregar motocicleta
+    </button>
+    </div>
+</div>
