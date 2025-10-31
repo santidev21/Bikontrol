@@ -12,6 +12,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', loadComponent: () => import('./modules/dashboard/pages/home/home.component').then(c => c.HomeComponent) },
+      {  path: 'motorcycles/add',  loadComponent: () => import('./modules/dashboard/pages/motorcycles/add-motorcycle/add-motorcycle.component').then((m) => m.AddMotorcycleComponent)}
     ]
   },
 
