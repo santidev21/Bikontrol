@@ -1,12 +1,15 @@
 using Bikontrol.API.Middleware;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure.Authentication;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -65,6 +68,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddPersistence();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 
 var app = builder.Build();
 

@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Bikontrol.Domain\Bikontrol.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

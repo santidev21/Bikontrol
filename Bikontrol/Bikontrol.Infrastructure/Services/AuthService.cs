@@ -1,5 +1,6 @@
 ﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Exceptions;
 using Bikontrol.Persistence;
@@ -16,34 +17,33 @@ namespace Bikontrol.Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly AppDbContext _context;
+        private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly JwtTokenGenerator _jwtTokenGenerator;
 
-        public AuthService(AppDbContext context, IPasswordHasher<User> passwordHasher, JwtTokenGenerator jwtTokenGenerator)
+        public AuthService(
+            IUserRepository userRepository,
+            IPasswordHasher<User> passwordHasher,
+            JwtTokenGenerator jwtTokenGenerator)
         {
-            _context = context;
+            _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
         {
-            // Check existing email
-            if (_context.Users.Any(u => u.Email == request.Email))
+            if (await _userRepository.ExistsByEmailAsync(request.Email))
                 throw new AuthException("El usuario ya existe.", 409);
 
-            var user = new User
-            {
-                Email = request.Email,
-                FullName = request.FullName
-            };
+            var user = new User(
+                email: request.Email,
+                fullName: request.FullName,
+                passwordHash: _passwordHasher.HashPassword(null!, request.Password)
+            );
 
-            // Hash password
-            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _userRepository.AddAsync(user);
+            await _userRepository.SaveChangesAsync();
 
             var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
 
@@ -59,12 +59,11 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<LoginResponse> LoginAsync(LoginRequest dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null)
                 throw new AuthException("El correo o contraseña son inválidos.", 401);
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
-
             if (result != PasswordVerificationResult.Success)
                 throw new AuthException("El correo o contraseña son inválidos.", 401);
 
@@ -79,5 +78,4 @@ namespace Bikontrol.Infrastructure.Services
             };
         }
     }
-
 }
