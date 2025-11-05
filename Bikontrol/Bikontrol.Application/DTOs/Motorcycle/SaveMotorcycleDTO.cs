@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Bikontrol.Application.DTOs.Motorcycle
 {
-    public class UpdateMotorcycleDTO
+    public class SaveMotorcycleDTO
     {
         [Required(ErrorMessage = "El nombre es obligatorio.")]
         public string Name { get; set; } = string.Empty;

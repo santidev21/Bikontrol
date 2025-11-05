@@ -9,10 +9,10 @@ namespace Bikontrol.Application.Interfaces
 {
     public interface IMotorcycleService
     {
-        Task<MotorcycleDTO> CreateAsync(CreateMotorcycleDTO dto);
+        Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto);
         Task<MotorcycleDTO?> GetByIdAsync(Guid id);
         Task<IList<MotorcycleDTO>> GetByCurrentUserAsync();
-        Task UpdateAsync(Guid id, UpdateMotorcycleDTO dto);
+        Task UpdateAsync(Guid id, SaveMotorcycleDTO dto);
         Task SoftDeleteAsync(Guid id);
     }
 }

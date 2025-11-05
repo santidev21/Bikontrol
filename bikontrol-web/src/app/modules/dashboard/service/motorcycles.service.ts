@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateMotorcycleDTO, Motorcycle, UpdateMotorcycleDTO } from '../interfaces/motorcycle.interface';
+import {  Motorcycle, SaveMotorcycleDTO  } from '../interfaces/motorcycle.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -20,11 +20,11 @@ export class MotorcyclesService {
     return this.http.get<Motorcycle>(`${this.apiUrl}/${id}`);
   }
 
-  addMotorcycle(motorcycle: CreateMotorcycleDTO): Observable<Motorcycle> {
+  addMotorcycle(motorcycle: SaveMotorcycleDTO): Observable<Motorcycle> {
     return this.http.post<Motorcycle>(`${this.apiUrl}`, motorcycle);
   }
 
-  update(id: string, dto: UpdateMotorcycleDTO): Observable<void> {
+  updateMotorcycle(id: string, dto: SaveMotorcycleDTO): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
   }
 

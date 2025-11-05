@@ -11,17 +11,7 @@ export interface Motorcycle {
   isEnabled: boolean;
 }
 
-export interface CreateMotorcycleDTO {
-  name: string;
-  brand: string;
-  year: number;
-  nickname: string;
-  km: number;
-  displacement: number;
-  plate: string;
-}
-
-export interface UpdateMotorcycleDTO {
+export interface SaveMotorcycleDTO {
   name: string;
   brand: string;
   year: number;

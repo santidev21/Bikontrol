@@ -18,7 +18,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateMotorcycleDTO dto)
+        public async Task<IActionResult> Create([FromBody] SaveMotorcycleDTO dto)
         {
             var result = await _motorcycleService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
@@ -39,7 +39,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMotorcycleDTO dto)
+        public async Task<IActionResult> Update(Guid id, [FromBody] SaveMotorcycleDTO dto)
         {
             await _motorcycleService.UpdateAsync(id, dto);
             return NoContent();

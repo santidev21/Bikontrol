@@ -25,7 +25,7 @@ namespace Bikontrol.Infrastructure.Services
             _currentUser = currentUser;
         }
 
-        public async Task<MotorcycleDTO> CreateAsync(CreateMotorcycleDTO dto)
+        public async Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto)
         {
             var entity = _mapper.Map<Motorcycle>(dto);
             entity.UserId = _currentUser.UserId;
@@ -50,7 +50,7 @@ namespace Bikontrol.Infrastructure.Services
             return _mapper.Map<IList<MotorcycleDTO>>(motorcycles);
         }
 
-        public async Task UpdateAsync(Guid id, UpdateMotorcycleDTO dto)
+        public async Task UpdateAsync(Guid id, SaveMotorcycleDTO dto)
         {
             var entity = await _motorcycleRepository.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");

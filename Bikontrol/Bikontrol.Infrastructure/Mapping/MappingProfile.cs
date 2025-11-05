@@ -21,9 +21,8 @@ namespace Bikontrol.Infrastructure.Mapping
             CreateMap<User, LoginResponse>();
 
             // Motorcycle mapping
-            CreateMap<CreateMotorcycleDTO, Motorcycle>();
+            CreateMap<SaveMotorcycleDTO, Motorcycle>();
             CreateMap<Motorcycle, MotorcycleDTO>();
-            CreateMap<UpdateMotorcycleDTO, Motorcycle>();
         }
     }
 }

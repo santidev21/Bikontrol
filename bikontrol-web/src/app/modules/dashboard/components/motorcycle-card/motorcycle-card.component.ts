@@ -29,6 +29,10 @@ export class MotorcycleCardComponent {
 
   }
   
+  onEdit($e: any){
+    this.router.navigate(['/dashboard/motorcycles/edit', this.motorcycle.id]);
+  }
+
   deleteMotorcycle() {
     this.motorcyclesService.deleteMotorcycle(this.motorcycle.id!).subscribe({
         next: () => {
