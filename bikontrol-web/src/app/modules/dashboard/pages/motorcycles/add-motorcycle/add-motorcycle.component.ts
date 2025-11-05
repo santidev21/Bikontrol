@@ -2,8 +2,11 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
-import { Motorcycle } from '../../../interfaces/motorcycle.interface';
+import { CreateMotorcycleDTO, Motorcycle } from '../../../interfaces/motorcycle.interface';
 import { CommonModule } from '@angular/common';
+import { MotorcyclesService } from '../../../service/motorcycles.service';
+import { SwalService } from '../../../../../shared/services/swal.service';
+
 
 @Component({
   selector: 'app-add-motorcycle',
@@ -17,7 +20,10 @@ export class AddMotorcycleComponent {
   isSubmitting = false;
 
   constructor(
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private motorcyclesService: MotorcyclesService,
+    private router: Router,
+    private swal: SwalService
   ) {
     this.motorcycleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -42,28 +48,31 @@ export class AddMotorcycleComponent {
   onSubmit(): void {
     if (this.motorcycleForm.invalid) {
       this.motorcycleForm.markAllAsTouched();
-      Swal.fire('Formulario incompleto', 'Por favor completa todos los campos requeridos.', 'warning');
+      this.swal.warning(
+        'Formulario incompleto',
+        'Por favor completa todos los campos requeridos.'
+      );
       return;
     }
 
     this.isSubmitting = true;
-    const motorcycle: Motorcycle = this.motorcycleForm.value;
+    const motorcycle: CreateMotorcycleDTO = this.motorcycleForm.value;
 
-    // this.motorcyclesService.addMotorcycle(motorcycle).subscribe({
-    //   next: () => {
-    //     this.isSubmitting = false;
-    //     Swal.fire('¡Éxito!', 'Motocicleta agregada correctamente.', 'success');
-    //     this.motorcycleForm.reset({
-    //       image: '/assets/images/defaults/motorcycle-placeholder.webp',
-    //       isEnabled: true,
-    //     });
-    //   },
-    //   error: (err) => {
-    //     this.isSubmitting = false;
-    //     console.error(err);
-    //     Swal.fire('Error', 'No se pudo agregar la motocicleta.', 'error');
-    //   },
-    // });
+    this.motorcyclesService.addMotorcycle(motorcycle).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.swal.success('¡Éxito!', 'Motocicleta agregada correctamente.').then(
+          () => this.router.navigate(['/dashboard'])
+        );
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.swal.error(
+          'Error',
+          err?.error?.message || 'No se pudo agregar la motocicleta.'
+        );
+      },
+    });
   }
 
   hasError(field: string, type: string): boolean {

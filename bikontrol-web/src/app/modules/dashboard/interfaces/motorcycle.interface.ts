@@ -10,3 +10,23 @@ export interface Motorcycle {
   plate: string;
   isEnabled: boolean;
 }
+
+export interface CreateMotorcycleDTO {
+  name: string;
+  brand: string;
+  year: number;
+  nickname: string;
+  km: number;
+  displacement: number;
+  plate: string;
+}
+
+export interface UpdateMotorcycleDTO {
+  name: string;
+  brand: string;
+  year: number;
+  nickname: string;
+  km: number;
+  displacement: number;
+  plate: string;
+}

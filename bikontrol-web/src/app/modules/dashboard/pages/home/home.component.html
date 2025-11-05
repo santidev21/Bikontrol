@@ -9,7 +9,8 @@
     <div *ngIf="motorcycles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <app-motorcycle-card
         *ngFor="let moto of motorcycles"
-        [motorcycle]="moto">
+        [motorcycle]="moto"
+        (deleted)="loadMotorcycles()">
     </app-motorcycle-card>
     </div>
 

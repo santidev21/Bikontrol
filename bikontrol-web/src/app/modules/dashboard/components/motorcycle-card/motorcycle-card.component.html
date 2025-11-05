@@ -7,7 +7,11 @@
     (click)="goToDetails()"
   >
     <img
-      [src]="motorcycle.image"
+      [src]="
+        !motorcycle.image || motorcycle.image === 'default.png'
+          ? '/assets/images/defaults/motorcycle-placeholder.webp'
+          : motorcycle.image
+      "
       alt="{{ motorcycle.name }}"
       class="w-20 h-20 object-cover rounded-lg"
     />
