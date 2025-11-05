@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Bikontrol.Application\Bikontrol.Application.csproj" />
     <ProjectReference Include="..\Bikontrol.Infrastructure\Bikontrol.Infrastructure.csproj" />
+    <ProjectReference Include="..\Bikontrol.Shared\Bikontrol.Shared.csproj" />
   </ItemGroup>
 
 </Project>

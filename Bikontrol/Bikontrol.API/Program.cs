@@ -9,6 +9,7 @@ using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -100,6 +101,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Configure InvalidModelStateResponseFactory
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value.Errors.Count > 0)
+            .SelectMany(e => e.Value.Errors.Select(x => x.ErrorMessage))
+            .ToList();
+
+        var response = new { error = string.Join(" | ", errors) };
+        return new BadRequestObjectResult(response);
+    };
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

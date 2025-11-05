@@ -31,10 +31,10 @@ namespace Bikontrol.API.Controllers
             return result is null ? NotFound() : Ok(result);
         }
 
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetByUser(Guid userId)
+        [HttpGet("mine")]
+        public async Task<IActionResult> GetMyMotorcycles()
         {
-            var result = await _motorcycleService.GetByUserIdAsync(userId);
+            var result = await _motorcycleService.GetByCurrentUserAsync();
             return Ok(result);
         }
 

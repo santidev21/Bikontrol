@@ -11,7 +11,7 @@ namespace Bikontrol.Application.Interfaces
     {
         Task<MotorcycleDTO> CreateAsync(CreateMotorcycleDTO dto);
         Task<MotorcycleDTO?> GetByIdAsync(Guid id);
-        Task<IList<MotorcycleDTO>> GetByUserIdAsync(Guid userId);
+        Task<IList<MotorcycleDTO>> GetByCurrentUserAsync();
         Task UpdateAsync(Guid id, UpdateMotorcycleDTO dto);
         Task SoftDeleteAsync(Guid id);
     }

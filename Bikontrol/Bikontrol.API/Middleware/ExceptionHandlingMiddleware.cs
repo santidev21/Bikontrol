@@ -1,4 +1,4 @@
-﻿using Bikontrol.Infrastructure.Exceptions;
+﻿using Bikontrol.Shared.Exceptions;
 using System.Net;
 using System.Text.Json;
 
@@ -39,12 +39,17 @@ namespace Bikontrol.API.Middleware
                     message = authEx.Message;
                     break;
 
-                case UnauthorizedAccessException:
-                    statusCode = HttpStatusCode.Unauthorized;
+                case NotFoundException:
+                    statusCode = HttpStatusCode.NotFound;
                     message = exception.Message;
                     break;
 
-                case ArgumentException:
+                case ForbiddenAccessException:
+                    statusCode = HttpStatusCode.Forbidden;
+                    message = exception.Message;
+                    break;
+
+                case ValidationException:
                     statusCode = HttpStatusCode.BadRequest;
                     message = exception.Message;
                     break;

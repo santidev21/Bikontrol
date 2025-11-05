@@ -17,11 +17,14 @@ namespace Bikontrol.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
             services.AddScoped<JwtTokenGenerator>();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddAutoMapper(typeof(MappingProfile));
+
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IMotorcycleService, MotorcycleService>();
-            services.AddAutoMapper(typeof(MappingProfile));
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             return services;
         }
     }

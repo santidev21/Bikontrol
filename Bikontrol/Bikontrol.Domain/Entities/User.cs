@@ -1,4 +1,5 @@
 ﻿using Bikontrol.Domain.Entities;
+using Bikontrol.Shared.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +31,7 @@ namespace Bikontrol.Persistence.Entities
         public void SetPasswordHash(string hash)
         {
             if (string.IsNullOrWhiteSpace(hash))
-                throw new ArgumentException("La contraseña no puede estar vacia.", nameof(hash));
+                throw new ValidationException("La contraseña no puede estar vacia.");
 
             PasswordHash = hash;
         }

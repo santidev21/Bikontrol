@@ -3,7 +3,7 @@ using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
-using Bikontrol.Infrastructure.Exceptions;
+using Bikontrol.Shared.Exceptions;
 using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -57,11 +57,11 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null)
-                throw new AuthException("El correo o contraseña son inválidos.", 401);
+                throw new AuthException("El correo o contraseña son inválidos.");
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result != PasswordVerificationResult.Success)
-                throw new AuthException("El correo o contraseña son inválidos.", 401);
+                throw new AuthException("El correo o contraseña son inválidos.");
 
             var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
 
