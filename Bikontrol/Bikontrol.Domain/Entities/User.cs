@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bikontrol.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace Bikontrol.Persistence.Entities
         public string PasswordHash { get; private set; } = string.Empty;
         public string FullName { get; private set; } = string.Empty;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
-
+        public IList<Motorcycle> Motorcycles { get; set; } = new List<Motorcycle>();
 
         private User() { }
 
@@ -24,6 +25,14 @@ namespace Bikontrol.Persistence.Entities
             FullName = fullName;
             PasswordHash = passwordHash;
             CreatedAt = DateTime.UtcNow;
+        }
+
+        public void SetPasswordHash(string hash)
+        {
+            if (string.IsNullOrWhiteSpace(hash))
+                throw new ArgumentException("La contraseña no puede estar vacia.", nameof(hash));
+
+            PasswordHash = hash;
         }
 
         // Simple domain validation

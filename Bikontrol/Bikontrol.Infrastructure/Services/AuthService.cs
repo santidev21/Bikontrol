@@ -1,4 +1,5 @@
-﻿using Bikontrol.Application.DTOs.Auth;
+﻿using AutoMapper;
+using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
@@ -20,15 +21,18 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly JwtTokenGenerator _jwtTokenGenerator;
+        private readonly IMapper _mapper;
 
         public AuthService(
             IUserRepository userRepository,
             IPasswordHasher<User> passwordHasher,
-            JwtTokenGenerator jwtTokenGenerator)
+            JwtTokenGenerator jwtTokenGenerator,
+            IMapper mapper)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _jwtTokenGenerator = jwtTokenGenerator;
+            _mapper = mapper;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
@@ -36,25 +40,17 @@ namespace Bikontrol.Infrastructure.Services
             if (await _userRepository.ExistsByEmailAsync(request.Email))
                 throw new AuthException("El usuario ya existe.", 409);
 
-            var user = new User(
-                email: request.Email,
-                fullName: request.FullName,
-                passwordHash: _passwordHasher.HashPassword(null!, request.Password)
-            );
+            var user = _mapper.Map<User>(request);
+            user.SetPasswordHash(_passwordHasher.HashPassword(null!, request.Password));
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
 
             var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
 
-            return new RegisterResponse
-            {
-                Id = user.Id,
-                Email = user.Email,
-                FullName = user.FullName,
-                CreatedAt = user.CreatedAt,
-                Token = token
-            };
+            var response = _mapper.Map<RegisterResponse>(user);
+            response.Token = token;
+            return response;
         }
 
         public async Task<LoginResponse> LoginAsync(LoginRequest dto)
@@ -69,13 +65,9 @@ namespace Bikontrol.Infrastructure.Services
 
             var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
 
-            return new LoginResponse
-            {
-                Id = user.Id,
-                Email = user.Email,
-                FullName = user.FullName,
-                Token = token
-            };
+            var response = _mapper.Map<LoginResponse>(user);
+            response.Token = token;
+            return response;
         }
     }
 }

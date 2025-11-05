@@ -1,4 +1,7 @@
 ﻿using AutoMapper;
+using Bikontrol.Application.DTOs.Auth;
+using Bikontrol.Application.DTOs.Motorcycle;
+using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence.Entities;
 using System;
 using System.Collections.Generic;
@@ -12,7 +15,15 @@ namespace Bikontrol.Infrastructure.Mapping
     {
         public MappingProfile()
         {
-            CreateMap<User, UserEntity>().ReverseMap();
+            // User mapping
+            CreateMap<RegisterRequest, User>();
+            CreateMap<User, RegisterResponse>();
+            CreateMap<User, LoginResponse>();
+
+            // Motorcycle mapping
+            CreateMap<CreateMotorcycleDTO, Motorcycle>();
+            CreateMap<Motorcycle, MotorcycleDTO>();
+            CreateMap<UpdateMotorcycleDTO, Motorcycle>();
         }
     }
 }

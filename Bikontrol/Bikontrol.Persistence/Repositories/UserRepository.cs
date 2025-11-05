@@ -13,24 +13,20 @@ namespace Bikontrol.Persistence.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
 
-        public UserRepository(AppDbContext context, IMapper mapper)
+        public UserRepository(AppDbContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
 
         public async Task<User?> GetByEmailAsync(string email)
         {
-            var entity = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            return _mapper.Map<User?>(entity);
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task AddAsync(User user)
         {
-            var entity = _mapper.Map<UserEntity>(user);
-            await _context.Users.AddAsync(entity);
+            await _context.Users.AddAsync(user);
         }
 
         public async Task<bool> ExistsByEmailAsync(string email)

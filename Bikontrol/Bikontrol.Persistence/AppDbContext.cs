@@ -1,4 +1,5 @@
-﻿using Bikontrol.Persistence.Entities;
+﻿using Bikontrol.Domain.Entities;
+using Bikontrol.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,8 @@ namespace Bikontrol.Persistence
         {
         }
 
-        public DbSet<UserEntity> Users { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Motorcycle> Motorcycles { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
