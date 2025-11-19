@@ -23,6 +23,10 @@
 # Tailwind / PostCSS cache
 /bikontrol-web/.tailwindcss/
 
+# Coverage reports
+/bikontrol-web/coverage/
+
+
 # ==============================
 # .NET / Backend
 # ==============================
