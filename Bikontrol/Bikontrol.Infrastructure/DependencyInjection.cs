@@ -25,6 +25,7 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IMotorcycleService, MotorcycleService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IMaintenanceTypeService, MaintenanceTypeService>();
             return services;
         }
     }
