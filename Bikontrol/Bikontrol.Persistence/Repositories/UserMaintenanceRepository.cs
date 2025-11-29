@@ -50,5 +50,13 @@ namespace Bikontrol.Persistence.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<UserMaintenance?> GetByBaseIdAsync(Guid userId, Guid baseId)
+        {
+            return await _context.UserMaintenances
+                .Where(x => x.UserId == userId && x.BaseTypeId == baseId)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

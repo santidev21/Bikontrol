@@ -27,4 +27,9 @@ export class MaintenanceService {
   deleteMaintenance(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/mine/${id}`);
   }
+  
+  followDefaultMaintenance(defaultId: string): Observable<Maintenance> {
+    return this.http.post<Maintenance>(`${this.apiUrl}/follow`,  { defaultId });
+  }
+
 }

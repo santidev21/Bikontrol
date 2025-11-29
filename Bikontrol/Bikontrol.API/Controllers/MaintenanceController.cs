@@ -38,4 +38,11 @@ public class MaintenancesController : ControllerBase
         await _service.DeleteUserMaintenanceAsync(id);
         return NoContent();
     }
+
+    [HttpPost("follow")]
+    public async Task<IActionResult> FollowDefault([FromBody] FollowDefaultRequest request)
+    {
+        var result = await _service.FollowDefaultAsync(request.DefaultId);
+        return Ok(result);
+    }
 }

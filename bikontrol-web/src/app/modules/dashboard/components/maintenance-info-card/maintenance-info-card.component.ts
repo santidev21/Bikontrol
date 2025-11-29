@@ -16,7 +16,7 @@ import { SwalService } from '../../../../shared/services/swal.service';
 export class MaintenanceInfoCardComponent {
   @Input() maintenance!: Maintenance;
   @Input() isDefault!: boolean;;
-  @Output() deleted = new EventEmitter<void>();
+  @Output() refresh = new EventEmitter<void>();
 
   menuOpen = false;
 
@@ -39,6 +39,26 @@ export class MaintenanceInfoCardComponent {
     if (this.menuOpen) this.menuOpen = false;
   }
 
+  onFollow(event: MouseEvent) {
+    console.log("following..");
+    
+    event.stopPropagation();
+    this.maintenanceService.followDefaultMaintenance(this.maintenance.id).subscribe({
+        next: () => {
+          this.swal
+            .success('Agregado!', 'El mantenimiento fue agregado a tus mantenimientos.')
+            .then(() => this.refresh.emit());
+        },
+        error: (err) => {
+          console.error(err);
+          this.swal.error(
+            'Error',
+            err?.error?.message || 'No se pudo eliminar el mantenimiento.'
+          );
+        },
+      });
+  }
+
   onFavorite(event: MouseEvent) {
     event.stopPropagation();
   }
@@ -52,7 +72,7 @@ export class MaintenanceInfoCardComponent {
         next: () => {
           this.swal
             .success('¡Eliminada!', 'La motocicleta fue eliminada correctamente.')
-            .then(() => this.deleted.emit());
+            .then(() => this.refresh.emit());
         },
         error: (err) => {
           console.error(err);

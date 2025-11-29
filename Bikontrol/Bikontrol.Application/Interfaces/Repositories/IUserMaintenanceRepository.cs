@@ -11,5 +11,6 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task UpdateAsync(UserMaintenance entity);
 
         Task SoftDeleteAsync(Guid id);
+        Task<UserMaintenance?> GetByBaseIdAsync(Guid userId, Guid baseId);
     }
 }

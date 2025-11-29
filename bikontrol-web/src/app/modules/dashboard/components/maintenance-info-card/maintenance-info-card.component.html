@@ -55,9 +55,22 @@
       *ngIf="menuOpen"
       class="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-20"
     >
+      
+      <button *ngIf="isDefault"
+        class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-gray-100 rounded-lg"
+        (click)="onFollow($event)"
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          height="18px" 
+          viewBox="0 -960 960 960" 
+          width="18px" 
+          fill="currentColor">
+          <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+        <span>Seguir</span>
+      </button>
 
-
-      <button
+      <button *ngIf="!isDefault"
         class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-yellow-600 hover:bg-gray-100 rounded-lg"
         (click)="onFavorite($event)"
       >
@@ -76,7 +89,7 @@
         <span>Favorito</span>
       </button>
 
-      <button
+      <button *ngIf="!isDefault"
         class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 rounded-lg"
         (click)="onEdit($event)"
       >

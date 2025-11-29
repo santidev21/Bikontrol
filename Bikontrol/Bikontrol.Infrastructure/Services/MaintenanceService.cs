@@ -3,6 +3,8 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Persistence.Repositories;
+using Bikontrol.Shared.Exceptions;
 
 public class MaintenanceService : IMaintenanceService
 {
@@ -47,5 +49,42 @@ public class MaintenanceService : IMaintenanceService
     public async Task DeleteUserMaintenanceAsync(Guid id)
     {
         await _userRepo.SoftDeleteAsync(id);
+    }
+    
+    public async Task<MaintenanceDTO> FollowDefaultAsync(Guid defaultId)
+    {
+        var defaultEntity = await _repo.GetByIdAsync(defaultId);
+        if (defaultEntity == null)
+            throw new NotFoundException("Default maintenance type not found.");
+
+        // Check if already followed
+        var existing = await _userRepo.GetByBaseIdAsync(
+            _current.UserId, defaultId
+        );
+
+        if (existing != null)
+        {
+            if(existing.IsEnabled) throw new ValidationException("You are already following this maintenance.");
+            else
+            {
+                existing.IsEnabled = true;
+                await _userRepo.UpdateAsync(existing);
+                return _mapper.Map<MaintenanceDTO>(existing);
+            }
+        }
+
+        var entity = new UserMaintenance
+        {
+            UserId = _current.UserId,
+            BaseTypeId = defaultEntity.Id,
+            Name = defaultEntity.Name,
+            Description = defaultEntity.Description,
+            KmInterval = defaultEntity.DefaultKmInterval,
+            TimeIntervalWeeks = defaultEntity.DefaultTimeIntervalWeeks,
+            IsEnabled = true
+        };
+
+        var created = await _userRepo.AddAsync(entity);
+        return _mapper.Map<MaintenanceDTO>(created);
     }
 }
