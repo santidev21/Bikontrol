@@ -54,14 +54,14 @@ export class SaveMaintenanceComponent {
   }
 
   loadMaintenanceId(id: string): void {
-    // this.motorcyclesService.getById(id).subscribe({
-    //   next: (motorcycle) => {
-    //     this.motorcycleForm.patchValue(motorcycle);
-    //   },
-    //   error: () => {
-    //     this.swal.error('Error', 'No se pudo cargar la motocicleta.');
-    //   },
-    // });
+    this.maintenanceService.getById(id).subscribe({
+      next: (maintenance) => {
+        this.maintenanceForm.patchValue(maintenance);
+      },
+      error: () => {
+        this.swal.error('Error', 'No se pudo cargar la motocicleta.');
+      },
+    });
   }
 
   onSubmit(): void {
@@ -77,16 +77,37 @@ export class SaveMaintenanceComponent {
     this.isSubmitting = true;
     const maintenance: SaveMaintenanceDTO = this.maintenanceForm.value;
 
+    const timeValue = this.maintenanceForm.get('timeIntervalWeeks')?.value;
+    const timeUnit = this.maintenanceForm.get('timeIntervalUnit')?.value;
+
+    if (timeValue && timeUnit) {
+      maintenance.timeIntervalWeeks = this.convertToWeeks(timeValue, timeUnit);
+    }
+    
     if (this.isEditMode && this.maintenanceId) this.updateMaintenance(maintenance);
     else this.addMaintenance(maintenance);
   }
+
+  private convertToWeeks(value: number, unit: 'weeks' | 'months' | 'years'): number {
+    switch (unit) {
+      case 'weeks':
+        return value;
+      case 'months':
+        return value * 4;
+      case 'years':
+        return value * 52;
+      default:
+        return value;
+    }
+  }
+
 
   addMaintenance(maintenance: SaveMaintenanceDTO): void {
     this.maintenanceService.createUserMaintenance(maintenance).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.swal
-          .success('¡Éxito!', 'Mantenimiento agregadd correctamente.')
+          .success('¡Éxito!', 'Mantenimiento agregado correctamente.')
           .then(() => this.router.navigate(['/dashboard/maintenance']));
       },
       error: (err) => {
@@ -100,21 +121,21 @@ export class SaveMaintenanceComponent {
   }
 
   updateMaintenance(maintenance: SaveMaintenanceDTO): void {
-    // this.motorcyclesService.updateMotorcycle(this.motorcycleId ?? '', motorcycle).subscribe({
-    //     next: () => {
-    //       this.isSubmitting = false;
-    //       this.swal
-    //         .success('¡Éxito!', 'Motocicleta actualizada correctamente.')
-    //         .then(() => this.router.navigate(['/dashboard']));
-    //     },
-    //     error: (err) => {
-    //       this.isSubmitting = false;
-    //       this.swal.error(
-    //         'Error',
-    //         err?.error?.message || 'No se pudo actualizar la motocicleta.'
-    //       );
-    //     },
-    //   });
+    this.maintenanceService.updateMaintenance(this.maintenanceId ?? '', maintenance).subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          this.swal
+            .success('¡Éxito!', 'Mantenimiento actualizado correctamente.')
+            .then(() => this.router.navigate(['/dashboard/maintenance']));
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.swal.error(
+            'Error',
+            err?.error?.message || 'No se pudo actualizar el mantenimiento.'
+          );
+        },
+      });
   }
 
   hasError(field: string, type: string): boolean {

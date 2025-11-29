@@ -65,6 +65,7 @@ export class MaintenanceInfoCardComponent {
 
   onEdit(event: MouseEvent) {
     event.stopPropagation();
+    this.router.navigate(['/dashboard/maintenance/edit', this.maintenance.id]);
   }
 
   deleteMaintenance() {

@@ -1,4 +1,5 @@
 ﻿using Bikontrol.Application.DTOs.Maintenance;
+using Bikontrol.Application.DTOs.Motorcycle;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,12 @@ public class MaintenancesController : ControllerBase
         return Ok(await _service.GetUserMaintenanceAsync());
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return Ok(await _service.GetByIdAsync(id));
+    }
+
     [HttpPost("mine")]
     public async Task<IActionResult> CreateUser([FromBody] SaveMaintenanceDTO dto)
     {
@@ -44,5 +51,12 @@ public class MaintenancesController : ControllerBase
     {
         var result = await _service.FollowDefaultAsync(request.DefaultId);
         return Ok(result);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] SaveMaintenanceDTO dto)
+    {
+        await _service.UpdateAsync(id, dto);
+        return NoContent();
     }
 }

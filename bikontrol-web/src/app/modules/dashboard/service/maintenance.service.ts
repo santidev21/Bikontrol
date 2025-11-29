@@ -20,6 +20,10 @@ export class MaintenanceService {
     return this.http.get<Maintenance[]>(`${this.apiUrl}/mine`);
   }
 
+  getById(id: string): Observable<Maintenance> {
+    return this.http.get<Maintenance>(`${this.apiUrl}/${id}`);
+  }
+
   createUserMaintenance(maintenance: SaveMaintenanceDTO): Observable<Maintenance> {
     return this.http.post<Maintenance>(`${this.apiUrl}/mine`, maintenance);
   }
@@ -30,6 +34,10 @@ export class MaintenanceService {
   
   followDefaultMaintenance(defaultId: string): Observable<Maintenance> {
     return this.http.post<Maintenance>(`${this.apiUrl}/follow`,  { defaultId });
+  }
+
+  updateMaintenance(id: string, dto: SaveMaintenanceDTO): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
   }
 
 }

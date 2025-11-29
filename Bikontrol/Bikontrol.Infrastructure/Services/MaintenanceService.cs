@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
+using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
@@ -35,6 +36,12 @@ public class MaintenanceService : IMaintenanceService
     {
         var list = await _userRepo.GetByUserIdAsync(_current.UserId);
         return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+    }
+
+    public async Task<MaintenanceDTO?> GetByIdAsync(Guid id)
+    {
+        var maintenance = await _userRepo.GetByIdAsync(id);
+        return _mapper.Map<MaintenanceDTO>(maintenance);
     }
 
     public async Task<MaintenanceDTO> CreateUserMaintenanceAsync(SaveMaintenanceDTO dto)
@@ -86,5 +93,16 @@ public class MaintenanceService : IMaintenanceService
 
         var created = await _userRepo.AddAsync(entity);
         return _mapper.Map<MaintenanceDTO>(created);
+    }
+    public async Task UpdateAsync(Guid id, SaveMaintenanceDTO dto)
+    {
+        var entity = await _userRepo.GetByIdAsync(id);
+        if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.");
+
+        if (entity.UserId != _current.UserId)
+            throw new ForbiddenAccessException("No tienes permisos para editar este mantenimiento.");
+
+        _mapper.Map(dto, entity);
+        await _userRepo.UpdateAsync(entity);
     }
 }
