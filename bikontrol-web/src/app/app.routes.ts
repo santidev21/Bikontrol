@@ -16,6 +16,8 @@ export const routes: Routes = [
         .then((m) => m.SaveMotorcycleComponent)},
       { path: 'motorcycles/edit/:id', loadComponent: () => import('./modules/dashboard/pages/motorcycles/save-motorcycle/save-motorcycle.component')
         .then((m) => m.SaveMotorcycleComponent)},
+      { path: 'maintenance', loadComponent: () => import('./modules/dashboard/pages/maintenance/maintenance-page/maintenance-page.component')
+        .then(c => c.MaintenancePageComponent) },
     ]
   },
 

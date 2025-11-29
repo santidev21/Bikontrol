@@ -1,1 +1,123 @@
-<p>maintenance-info-card works!</p>
+<div
+  class="bg-white rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition-shadow relative mt-2"
+>
+  <!-- Left Section -->
+  <div class="flex-1 cursor-pointer" (click)="goToDetails()">
+    <h2 class="font-bold text-lg text-gray-900">{{ maintenance.name }}</h2>
+
+    <p class="text-gray-600 text-sm mt-1" *ngIf="maintenance.description">
+      {{ maintenance.description }}
+    </p>
+
+    <!-- Frequencies -->
+    <div class="mt-3 flex flex-col gap-1 text-gray-700 text-sm">
+
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="text-gray-700 mr-2">
+          <path d="M418-340q24 24 62 23.5t56-27.5l224-336-336 224q-27 18-28.5 55t22.5 61Zm62-460q59 
+          0 113.5 16.5T696-734l-76 48q-33-17-68.5-25.5T480-720q-133 0-226.5 93.5T160-400q0 42 11.5 
+          83t32.5 77h552q23-38 33.5-79t10.5-85q0-36-8.5-70T766-540l48-76q30 47 47.5 100T880-406q1 
+          57-13 109t-41 99q-11 18-30 28t-40 10H204q-21 0-40-10t-30-28q-26-45-40-95.5T80-400q0-83 
+          31.5-155.5t86-127Q252-737 325-768.5T480-800Zm7 313Z"/>
+        </svg>
+        <span class="mr-2">
+          <strong *ngIf="maintenance.kmInterval; else noKm">
+            {{ maintenance.kmInterval }} km
+          </strong>
+          <ng-template #noKm><strong>N/A</strong></ng-template>
+        </span>
+
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="text-gray-700 mr-2">
+          <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 
+          0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/>
+        </svg>
+        <span>
+          <strong *ngIf="maintenance.timeIntervalWeeks; else noTime">
+            <span>{{ maintenance.timeIntervalWeeks | intervalFormat }}</span>
+          </strong>
+          <ng-template #noTime><strong>N/A</strong></ng-template>
+        </span>
+      </div>
+      </div>
+  </div>
+
+  <!-- Right: Options -->
+  <div class="self-start relative" (click)="$event.stopPropagation()">
+    <button
+      class="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
+      (click)="toggleMenu($event)"
+    >
+      ⋮
+    </button>
+
+    <!-- Floating menu -->
+    <div
+      *ngIf="menuOpen"
+      class="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-20"
+    >
+
+
+      <button
+        class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-yellow-600 hover:bg-gray-100 rounded-lg"
+        (click)="onFavorite($event)"
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          height="18px" 
+          viewBox="0 -960 960 960" 
+          width="18px" 
+          fill="currentColor"
+          class="text-yellow-600"
+        >
+          <path d="m354-287 126-76 126 77-33-144 111-96-146-13-58-136-58 135-146 
+          13 111 97-33 143ZM233-120l65-281L80-590l288-25 112-265 112 265 288 25-218 
+          189 65 281-247-149-247 149Zm247-350Z"/>
+        </svg>
+        <span>Favorito</span>
+      </button>
+
+      <button
+        class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 rounded-lg"
+        (click)="onEdit($event)"
+      >
+        <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="18px"
+        viewBox="0 -960 960 960"
+        width="18px"
+        fill="currentColor"
+        class="text-blue-600"
+      >
+        <path
+          d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11
+          26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5
+          30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141
+          85-28-29 57 57-29-28Z"
+        />
+      </svg>
+        <span>Editar</span>
+      </button>
+
+      <button *ngIf="!maintenance.isSystem"
+        class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-lg"
+        (click)="onDelete($event)"
+      >
+        <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="18px"
+        viewBox="0 -960 960 960"
+        width="18px"
+        fill="currentColor"
+        class="text-red-600"
+        >
+        <path
+            d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520
+            q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160
+            0h80v-360h-80v360ZM280-720v520-520Z"
+        />
+        </svg>
+        <span>Borrar</span>
+      </button>
+    </div>
+  </div>
+</div>

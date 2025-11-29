@@ -1,1 +1,34 @@
-<p>maintenance-page works!</p>
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-2 text-center">
+        Mantenimientos
+    </h1>
+
+    <div class="text-center">
+        <button
+            routerLink="/dashboard/maintenance/add"
+            class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
+            + Agregar mantenimiento personalizado
+        </button>
+    </div>
+
+    <div class="mt-6">
+        <p class="text-gray-400 mb-4 text-center">Tus mantenimientos</p>
+
+        <app-maintenance-info-card
+            *ngFor="let item of userMaintenance"
+            [maintenance]="item">
+        </app-maintenance-info-card>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-b border-gray-700 my-6"></div>
+
+    <div>
+        <p class="text-gray-400 mb-4 text-center">Mantenimientos predefinidos</p>
+
+        <app-maintenance-info-card
+            *ngFor="let item of defaultMaintenance"
+            [maintenance]="item">
+        </app-maintenance-info-card>
+    </div>
+</div>
