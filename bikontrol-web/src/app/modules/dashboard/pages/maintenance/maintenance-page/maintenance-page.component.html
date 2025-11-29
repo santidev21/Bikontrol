@@ -16,7 +16,9 @@
 
         <app-maintenance-info-card
             *ngFor="let item of userMaintenance"
-            [maintenance]="item">
+            [maintenance]="item"
+            (deleted)="loadMaintenance()"
+            [isDefault]="false">
         </app-maintenance-info-card>
     </div>
 
@@ -28,7 +30,9 @@
 
         <app-maintenance-info-card
             *ngFor="let item of defaultMaintenance"
-            [maintenance]="item">
+            [maintenance]="item"
+            (deleted)="loadMaintenance()"
+            [isDefault]="true">
         </app-maintenance-info-card>
     </div>
 </div>

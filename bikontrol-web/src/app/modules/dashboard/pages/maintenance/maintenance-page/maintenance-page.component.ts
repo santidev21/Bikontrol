@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { MaintenanceType } from '../../../interfaces/maintenance.interface';
+import { Maintenance } from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MaintenanceInfoCardComponent } from "../../../components/maintenance-info-card/maintenance-info-card.component";
 
@@ -13,8 +13,8 @@ import { MaintenanceInfoCardComponent } from "../../../components/maintenance-in
   styleUrl: './maintenance-page.component.scss'
 })
 export class MaintenancePageComponent {
-  userMaintenance: MaintenanceType[] = [];
-  defaultMaintenance: MaintenanceType[] = [];
+  userMaintenance: Maintenance[] = [];
+  defaultMaintenance: Maintenance[] = [];
 
   constructor(private maintenanceService: MaintenanceService) {}
 
@@ -24,16 +24,21 @@ export class MaintenancePageComponent {
   }
 
   loadUserMaintenance() {
-    this.maintenanceService.getUserMaintenanceTypes().subscribe({
+    this.maintenanceService.getUserMaintenance().subscribe({
       next: res => this.userMaintenance = res,
       error: err => console.error(err)
     });
   }
 
   loadDefaultMaintenance() {
-    this.maintenanceService.getDefaultMaintenanceTypes().subscribe({
+    this.maintenanceService.getDefaultMaintenance().subscribe({
       next: res => this.defaultMaintenance = res,
       error: err => console.error(err)
     });
+  }
+
+  loadMaintenance(): void {
+    this.loadUserMaintenance();
+    this.loadDefaultMaintenance();
   }
 }

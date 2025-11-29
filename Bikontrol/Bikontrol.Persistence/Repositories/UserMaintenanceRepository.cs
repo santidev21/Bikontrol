@@ -4,36 +4,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bikontrol.Persistence.Repositories
 {
-    public class UserMaintenanceTypeRepository : IUserMaintenanceTypeRepository
+    public class UserMaintenanceRepository : IUserMaintenanceRepository
     {
         private readonly AppDbContext _context;
 
-        public UserMaintenanceTypeRepository(AppDbContext context)
+        public UserMaintenanceRepository(AppDbContext context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<UserMaintenanceType>> GetByUserIdAsync(Guid userId)
+        public async Task<IEnumerable<UserMaintenance>> GetByUserIdAsync(Guid userId)
         {
             return await _context.UserMaintenances
                 .Where(umt => umt.UserId == userId && umt.IsEnabled)
                 .ToListAsync();
         }
 
-        public async Task<UserMaintenanceType?> GetByIdAsync(Guid id)
+        public async Task<UserMaintenance?> GetByIdAsync(Guid id)
         {
             return await _context.UserMaintenances
                 .FirstOrDefaultAsync(umt => umt.Id == id && umt.IsEnabled);
         }
 
-        public async Task<UserMaintenanceType> AddAsync(UserMaintenanceType entity)
+        public async Task<UserMaintenance> AddAsync(UserMaintenance entity)
         {
             _context.UserMaintenances.Add(entity);
             await _context.SaveChangesAsync();
             return entity;
         }
 
-        public async Task UpdateAsync(UserMaintenanceType entity)
+        public async Task UpdateAsync(UserMaintenance entity)
         {
             _context.UserMaintenances.Update(entity);
             await _context.SaveChangesAsync();

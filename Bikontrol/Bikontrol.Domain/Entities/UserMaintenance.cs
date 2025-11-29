@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Bikontrol.Domain.Entities
 {
-    public class UserMaintenanceType
+    public class UserMaintenance
     {
         public Guid Id { get; set; }
 
@@ -25,7 +25,7 @@ namespace Bikontrol.Domain.Entities
 
         public bool IsEnabled { get; set; } = true;
 
-        public MaintenanceType? BaseType { get; set; }
+        public Maintenance? BaseType { get; set; }
         public User? User { get; set; }
     }
 }

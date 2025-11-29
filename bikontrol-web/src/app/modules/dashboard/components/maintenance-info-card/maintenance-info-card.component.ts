@@ -1,8 +1,10 @@
-import { Component, HostListener, Input } from '@angular/core';
-import { MaintenanceType } from '../../interfaces/maintenance.interface';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Maintenance } from '../../interfaces/maintenance.interface';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { IntervalFormatPipe } from '../../pipes/interval-format.pipe';
+import { MaintenanceService } from '../../service/maintenance.service';
+import { SwalService } from '../../../../shared/services/swal.service';
 
 @Component({
   selector: 'app-maintenance-info-card',
@@ -12,11 +14,16 @@ import { IntervalFormatPipe } from '../../pipes/interval-format.pipe';
   styleUrl: './maintenance-info-card.component.scss'
 })
 export class MaintenanceInfoCardComponent {
-  @Input() maintenance!: MaintenanceType;
+  @Input() maintenance!: Maintenance;
+  @Input() isDefault!: boolean;;
+  @Output() deleted = new EventEmitter<void>();
 
   menuOpen = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router,
+    private maintenanceService: MaintenanceService,
+        private swal : SwalService
+  ) {}
 
   goToDetails() {
     console.log('Maintenance clicked:', this.maintenance.id);
@@ -40,7 +47,38 @@ export class MaintenanceInfoCardComponent {
     event.stopPropagation();
   }
 
-  onDelete(event: MouseEvent) {
+  deleteMaintenance() {
+    this.maintenanceService.deleteMaintenance(this.maintenance.id).subscribe({
+        next: () => {
+          this.swal
+            .success('¡Eliminada!', 'La motocicleta fue eliminada correctamente.')
+            .then(() => this.deleted.emit());
+        },
+        error: (err) => {
+          console.error(err);
+          this.swal.error(
+            'Error',
+            err?.error?.message || 'No se pudo eliminar la motocicleta.'
+          );
+        },
+      });
+  }
+
+  confirmDelete(event: Event) {
     event.stopPropagation();
+
+    this.swal
+      .confirm(
+        '¿Estás seguro?',
+        `Esto eliminará permanentemente "${this.maintenance.name}".`,
+        'Sí, eliminar',
+        'Cancelar',
+        'warning'
+      )
+      .then((result) => {
+        if (result.isConfirmed) {
+          this.deleteMaintenance();
+        }
+      });
   }
 }

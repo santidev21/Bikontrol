@@ -1,4 +1,4 @@
-export interface MaintenanceType {
+export interface Maintenance {
   id: string;
   baseTypeId?: string | null;
   name: string;
@@ -7,4 +7,12 @@ export interface MaintenanceType {
   timeIntervalWeeks?: number | null;
   isEnabled: boolean;
   isSystem: boolean;
+}
+
+export interface SaveMaintenanceDTO {
+  baseTypeId?: string;
+  name: string;
+  description?: string;
+  kmInterval?: number;
+  timeIntervalWeeks?: number;
 }

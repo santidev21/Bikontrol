@@ -2,21 +2,29 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { MaintenanceType } from '../interfaces/maintenance.interface';
+import { Maintenance, SaveMaintenanceDTO } from '../interfaces/maintenance.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MaintenanceService {
- private apiUrl = `${environment.apiUrl}/maintenance`;
+ private apiUrl = `${environment.apiUrl}/maintenances`;
   
   constructor(private http: HttpClient) {}
 
-  getDefaultMaintenanceTypes(): Observable<MaintenanceType[]> {
-    return this.http.get<MaintenanceType[]>(`${this.apiUrl}/defaults`);
+  getDefaultMaintenance(): Observable<Maintenance[]> {
+    return this.http.get<Maintenance[]>(`${this.apiUrl}/defaults`);
   }
 
-  getUserMaintenanceTypes(): Observable<MaintenanceType[]> {
-    return this.http.get<MaintenanceType[]>(`${this.apiUrl}/mine`);
+  getUserMaintenance(): Observable<Maintenance[]> {
+    return this.http.get<Maintenance[]>(`${this.apiUrl}/mine`);
+  }
+
+  createUserMaintenance(maintenance: SaveMaintenanceDTO): Observable<Maintenance> {
+    return this.http.post<Maintenance>(`${this.apiUrl}/mine`, maintenance);
+  }
+
+  deleteMaintenance(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/mine/${id}`);
   }
 }

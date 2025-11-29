@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Bikontrol.Persistence.Configurations
 {
-    public class MaintenanceTypeConfiguration : IEntityTypeConfiguration<MaintenanceType>
+    public class MaintenanceConfiguration : IEntityTypeConfiguration<Maintenance>
     {
-        public void Configure(EntityTypeBuilder<MaintenanceType> builder)
+        public void Configure(EntityTypeBuilder<Maintenance> builder)
         {
             builder.ToTable("MaintenanceTypes");
 
@@ -39,7 +39,7 @@ namespace Bikontrol.Persistence.Configurations
                 .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasData(
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),
                     Name = "Cambio de Aceite",
@@ -48,7 +48,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null,
                     IsEnabled = true
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000002"),
                     Name = "Cambio de Filtro de Aceite",
@@ -57,7 +57,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null,
                     IsEnabled = true
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000003"),
                     Name = "Lubricación y Limpieza de Cadena",
@@ -66,7 +66,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = 2,
                     IsEnabled = true
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000004"),
                     Name = "Revisión General",
@@ -75,7 +75,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null,
                     IsEnabled = true
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000005"),
                     Name = "Mantenimiento Preventivo",
@@ -84,7 +84,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null,
                     IsEnabled = true
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000006"),
                     Name = "Filtro de Aire",
@@ -92,7 +92,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 6000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000007"),
                     Name = "Filtro de Gasolina",
@@ -100,7 +100,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 8000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000008"),
                     Name = "Presión de Llantas",
@@ -108,7 +108,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = null,
                     DefaultTimeIntervalWeeks = 1
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000009"),
                     Name = "Pastillas de Freno Delanteras",
@@ -116,7 +116,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 8000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000010"),
                     Name = "Pastillas de Freno Traseras",
@@ -124,7 +124,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 8000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000011"),
                     Name = "Disco de Freno Delantero",
@@ -132,7 +132,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 25000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000012"),
                     Name = "Disco de Freno Trasero",
@@ -141,7 +141,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000013"),
                     Name = "Líquido de Frenos Delantero",
@@ -149,7 +149,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = null,
                     DefaultTimeIntervalWeeks = 52
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000014"),
                     Name = "Líquido de Frenos Trasero",
@@ -158,7 +158,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = 52
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000015"),
                     Name = "Batería",
@@ -167,7 +167,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = 52
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000016"),
                     Name = "Suspensión",
@@ -176,7 +176,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000017"),
                     Name = "Tornillería",
@@ -185,7 +185,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = 8
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000018"),
                     Name = "Calibración de Válvulas",
@@ -193,7 +193,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 8000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000019"),
                     Name = "Kit de Arrastre - Piñón",
@@ -201,7 +201,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 12000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000020"),
                     Name = "Kit de Arrastre - Corona",
@@ -209,7 +209,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultKmInterval = 12000,
                     DefaultTimeIntervalWeeks = null
                 },
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000021"),
                     Name = "Kit de Arrastre - Cadena",
@@ -218,7 +218,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000022"),
                     Name = "Tensión de Cadena",
@@ -227,7 +227,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = 2
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000023"),
                     Name = "Sincronización",
@@ -236,7 +236,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000024"),
                     Name = "Bandas de Freno",
@@ -245,7 +245,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000025"),
                     Name = "Bujía",
@@ -254,7 +254,7 @@ namespace Bikontrol.Persistence.Configurations
                     DefaultTimeIntervalWeeks = null
                 },
 
-                new MaintenanceType
+                new Maintenance
                 {
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000026"),
                     Name = "Neumáticos",

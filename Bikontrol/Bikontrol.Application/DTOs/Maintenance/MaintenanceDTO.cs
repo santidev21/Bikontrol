@@ -1,6 +1,6 @@
 ﻿namespace Bikontrol.Application.DTOs.Maintenance
 {
-    public class MaintenanceTypeDTO
+    public class MaintenanceDTO
     {
         public Guid Id { get; set; }
         public Guid? BaseTypeId { get; set; }

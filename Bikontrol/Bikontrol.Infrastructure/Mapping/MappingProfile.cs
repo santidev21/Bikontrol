@@ -26,16 +26,16 @@ namespace Bikontrol.Infrastructure.Mapping
             CreateMap<Motorcycle, MotorcycleDTO>();
 
             // MaintenanceType mapping
-            CreateMap<MaintenanceType, MaintenanceTypeDTO>()
+            CreateMap<Maintenance, MaintenanceDTO>()
                 .ForMember(dest => dest.KmInterval, opt => opt.MapFrom(src => src.DefaultKmInterval))
                 .ForMember(dest => dest.TimeIntervalWeeks, opt => opt.MapFrom(src => src.DefaultTimeIntervalWeeks));
 
-            CreateMap<CreateMaintenanceTypeDTO, MaintenanceType>()
+            CreateMap<SaveMaintenanceDTO, Maintenance>()
                 .ForMember(dest => dest.DefaultKmInterval, opt => opt.MapFrom(src => src.KmInterval))
                 .ForMember(dest => dest.DefaultTimeIntervalWeeks, opt => opt.MapFrom(src => src.TimeIntervalWeeks));
 
-            CreateMap<UserMaintenanceType, MaintenanceTypeDTO>();
-            CreateMap<CreateMaintenanceTypeDTO, UserMaintenanceType>();
+            CreateMap<UserMaintenance, MaintenanceDTO>();
+            CreateMap<SaveMaintenanceDTO, UserMaintenance>();
 
 
         }

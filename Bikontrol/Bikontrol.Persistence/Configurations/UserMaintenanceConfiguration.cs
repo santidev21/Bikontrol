@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Bikontrol.Persistence.Configurations
 {
-    public class UserMaintenanceTypeConfiguration : IEntityTypeConfiguration<UserMaintenanceType>
+    public class UserMaintenanceConfiguration : IEntityTypeConfiguration<UserMaintenance>
     {
-        public void Configure(EntityTypeBuilder<UserMaintenanceType> builder)
+        public void Configure(EntityTypeBuilder<UserMaintenance> builder)
         {
             builder.ToTable("UserMaintenanceTypes");
 

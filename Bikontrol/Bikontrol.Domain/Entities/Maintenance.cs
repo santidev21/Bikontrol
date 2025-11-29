@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Bikontrol.Domain.Entities
 {
-    public class MaintenanceType
+    public class Maintenance
     {
         public Guid Id { get; set; }
 
@@ -20,6 +20,6 @@ namespace Bikontrol.Domain.Entities
 
         public bool IsEnabled { get; set; } = true;
 
-        public ICollection<UserMaintenanceType> UserMaintenanceTypes { get; set; } = new List<UserMaintenanceType>();
+        public ICollection<UserMaintenance> UserMaintenanceTypes { get; set; } = new List<UserMaintenance>();
     }
 }

@@ -18,6 +18,10 @@ export const routes: Routes = [
         .then((m) => m.SaveMotorcycleComponent)},
       { path: 'maintenance', loadComponent: () => import('./modules/dashboard/pages/maintenance/maintenance-page/maintenance-page.component')
         .then(c => c.MaintenancePageComponent) },
+      {  path: 'maintenance/add',  loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
+        .then((m) => m.SaveMaintenanceComponent)},
+      { path: 'maintenance/edit/:id', loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
+        .then((m) => m.SaveMaintenanceComponent)},
     ]
   },
 
