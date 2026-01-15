@@ -8,6 +8,7 @@
         public string? Description { get; set; }
         public int? KmInterval { get; set; }
         public int? TimeIntervalWeeks { get; set; }
+        public string TrackingType { get; set; } = "Km";
         public bool IsEnabled { get; set; }
         public bool IsSystem { get; set; }
     }

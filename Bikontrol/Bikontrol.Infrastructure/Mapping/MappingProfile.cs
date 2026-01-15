@@ -28,16 +28,21 @@ namespace Bikontrol.Infrastructure.Mapping
             // MaintenanceType mapping
             CreateMap<Maintenance, MaintenanceDTO>()
                 .ForMember(dest => dest.KmInterval, opt => opt.MapFrom(src => src.DefaultKmInterval))
-                .ForMember(dest => dest.TimeIntervalWeeks, opt => opt.MapFrom(src => src.DefaultTimeIntervalWeeks));
+                .ForMember(dest => dest.TimeIntervalWeeks, opt => opt.MapFrom(src => src.DefaultTimeIntervalWeeks))
+                .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
 
             CreateMap<SaveMaintenanceDTO, Maintenance>()
                 .ForMember(dest => dest.DefaultKmInterval, opt => opt.MapFrom(src => src.KmInterval))
-                .ForMember(dest => dest.DefaultTimeIntervalWeeks, opt => opt.MapFrom(src => src.TimeIntervalWeeks));
+                .ForMember(dest => dest.DefaultTimeIntervalWeeks, opt => opt.MapFrom(src => src.TimeIntervalWeeks))
+                .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
 
-            CreateMap<UserMaintenance, MaintenanceDTO>();
-            CreateMap<SaveMaintenanceDTO, UserMaintenance>();
+            CreateMap<UserMaintenance, MaintenanceDTO>()
+                .ForMember(dest => dest.KmInterval, opt => opt.MapFrom(src => src.KmInterval))
+                .ForMember(dest => dest.TimeIntervalWeeks, opt => opt.MapFrom(src => src.TimeIntervalWeeks))
+                .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
 
-
+            CreateMap<SaveMaintenanceDTO, UserMaintenance>()
+                .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
         }
     }
 }

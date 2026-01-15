@@ -28,6 +28,11 @@ namespace Bikontrol.Persistence.Configurations
 
             builder.Property(x => x.DefaultTimeIntervalWeeks);
 
+            builder.Property(x => x.TrackingType)
+                .IsRequired()
+                .HasMaxLength(10)
+                .HasDefaultValue("Km");
+
             builder.Property(x => x.IsEnabled)
                 .IsRequired()
                 .HasDefaultValue(true);
@@ -46,6 +51,7 @@ namespace Bikontrol.Persistence.Configurations
                     Description = "Reemplazo del aceite del motor.",
                     DefaultKmInterval = 1500,
                     DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km",
                     IsEnabled = true
                 },
                 new Maintenance
@@ -55,6 +61,7 @@ namespace Bikontrol.Persistence.Configurations
                     Description = "Sustitución del filtro de aceite del motor.",
                     DefaultKmInterval = 1500,
                     DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km",
                     IsEnabled = true
                 },
                 new Maintenance
@@ -62,8 +69,9 @@ namespace Bikontrol.Persistence.Configurations
                     Id = Guid.Parse("10000000-0000-0000-0000-000000000003"),
                     Name = "Lubricación y Limpieza de Cadena",
                     Description = "Limpieza y lubricación de la cadena de transmisión.",
-                    DefaultKmInterval = 500,
+                    DefaultKmInterval = null,
                     DefaultTimeIntervalWeeks = 2,
+                    TrackingType = "Time",
                     IsEnabled = true
                 },
                 new Maintenance
@@ -73,6 +81,7 @@ namespace Bikontrol.Persistence.Configurations
                     Description = "Chequeo completo del estado general de la motocicleta.",
                     DefaultKmInterval = 20000,
                     DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km",
                     IsEnabled = true
                 },
                 new Maintenance
@@ -82,6 +91,7 @@ namespace Bikontrol.Persistence.Configurations
                     Description = "Revisión preventiva del estado general de la motocicleta.",
                     DefaultKmInterval = 5000,
                     DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km",
                     IsEnabled = true
                 },
                 new Maintenance
@@ -90,7 +100,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Filtro de Aire",
                     Description = "Limpieza o reemplazo del filtro de aire.",
                     DefaultKmInterval = 6000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -98,7 +109,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Filtro de Gasolina",
                     Description = "Reemplazo o limpieza del filtro de gasolina.",
                     DefaultKmInterval = 8000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -106,7 +118,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Presión de Llantas",
                     Description = "Verificación y ajuste de la presión de las llantas.",
                     DefaultKmInterval = null,
-                    DefaultTimeIntervalWeeks = 1
+                    DefaultTimeIntervalWeeks = 1,
+                    TrackingType = "Time"
                 },
                 new Maintenance
                 {
@@ -114,7 +127,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Pastillas de Freno Delanteras",
                     Description = "Revisión y reemplazo de las pastillas de freno delanteras.",
                     DefaultKmInterval = 8000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -122,7 +136,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Pastillas de Freno Traseras",
                     Description = "Revisión y reemplazo de las pastillas de freno traseras.",
                     DefaultKmInterval = 8000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -130,7 +145,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Disco de Freno Delantero",
                     Description = "Revisión del disco de freno delantero.",
                     DefaultKmInterval = 25000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -138,7 +154,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Disco de Freno Trasero",
                     Description = "Revisión del disco de freno trasero.",
                     DefaultKmInterval = 25000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -147,7 +164,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Líquido de Frenos Delantero",
                     Description = "Reemplazo del líquido de frenos delantero.",
                     DefaultKmInterval = null,
-                    DefaultTimeIntervalWeeks = 52
+                    DefaultTimeIntervalWeeks = 52,
+                    TrackingType = "Time"
                 },
                 new Maintenance
                 {
@@ -155,7 +173,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Líquido de Frenos Trasero",
                     Description = "Reemplazo del líquido de frenos trasero.",
                     DefaultKmInterval = null,
-                    DefaultTimeIntervalWeeks = 52
+                    DefaultTimeIntervalWeeks = 52,
+                    TrackingType = "Time"
                 },
 
                 new Maintenance
@@ -164,7 +183,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Batería",
                     Description = "Revisión del estado y carga de la batería.",
                     DefaultKmInterval = null,
-                    DefaultTimeIntervalWeeks = 52
+                    DefaultTimeIntervalWeeks = 52,
+                    TrackingType = "Time"
                 },
 
                 new Maintenance
@@ -173,7 +193,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Suspensión",
                     Description = "Revisión de suspensión delantera y trasera.",
                     DefaultKmInterval = 10000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -182,7 +203,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Tornillería",
                     Description = "Ajuste general de tornillería.",
                     DefaultKmInterval = null,
-                    DefaultTimeIntervalWeeks = 8
+                    DefaultTimeIntervalWeeks = 8,
+                    TrackingType = "Time"
                 },
 
                 new Maintenance
@@ -191,7 +213,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Calibración de Válvulas",
                     Description = "Ajuste de holguras de válvulas.",
                     DefaultKmInterval = 8000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -199,7 +222,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Kit de Arrastre - Piñón",
                     Description = "Revisión o reemplazo del piñón.",
                     DefaultKmInterval = 12000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -207,7 +231,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Kit de Arrastre - Corona",
                     Description = "Revisión o reemplazo de la corona.",
                     DefaultKmInterval = 12000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
                 new Maintenance
                 {
@@ -215,7 +240,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Kit de Arrastre - Cadena",
                     Description = "Revisión o reemplazo de la cadena.",
                     DefaultKmInterval = 12000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -224,7 +250,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Tensión de Cadena",
                     Description = "Ajuste de la tensión de la cadena.",
                     DefaultKmInterval = 500,
-                    DefaultTimeIntervalWeeks = 2
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -233,7 +260,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Sincronización",
                     Description = "Ajuste de mezcla/ralentí o sistema de inyección.",
                     DefaultKmInterval = 8000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -242,7 +270,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Bandas de Freno",
                     Description = "Reemplazo de bandas de freno (frenos de tambor).",
                     DefaultKmInterval = 8000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -251,7 +280,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Bujía",
                     Description = "Revisión o reemplazo de bujía.",
                     DefaultKmInterval = 4000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 },
 
                 new Maintenance
@@ -260,7 +290,8 @@ namespace Bikontrol.Persistence.Configurations
                     Name = "Neumáticos",
                     Description = "Revisión del desgaste de los neumáticos.",
                     DefaultKmInterval = 15000,
-                    DefaultTimeIntervalWeeks = null
+                    DefaultTimeIntervalWeeks = null,
+                    TrackingType = "Km"
                 }
             );
         }

@@ -23,6 +23,8 @@ namespace Bikontrol.Domain.Entities
 
         public int? TimeIntervalWeeks { get; set; }
 
+        public string TrackingType { get; set; } = "Km";
+
         public bool IsEnabled { get; set; } = true;
 
         public Maintenance? BaseType { get; set; }

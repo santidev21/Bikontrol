@@ -28,6 +28,11 @@ namespace Bikontrol.Persistence.Configurations
 
             builder.Property(x => x.TimeIntervalWeeks);
 
+            builder.Property(x => x.TrackingType)
+                .IsRequired()
+                .HasMaxLength(10)
+                .HasDefaultValue("Km");
+
             builder.Property(x => x.IsEnabled)
                 .IsRequired()
                 .HasDefaultValue(true);

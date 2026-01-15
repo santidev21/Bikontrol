@@ -88,6 +88,7 @@ public class MaintenanceService : IMaintenanceService
             Description = defaultEntity.Description,
             KmInterval = defaultEntity.DefaultKmInterval,
             TimeIntervalWeeks = defaultEntity.DefaultTimeIntervalWeeks,
+            TrackingType = defaultEntity.TrackingType,
             IsEnabled = true
         };
 

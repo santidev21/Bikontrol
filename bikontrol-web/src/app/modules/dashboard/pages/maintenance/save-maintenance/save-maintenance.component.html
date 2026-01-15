@@ -35,56 +35,83 @@
       </small>
     </div>
 
-    <!-- Frecuencia Km -->
+    <!-- Tipo de Monitoreo -->
     <div>
-      <label class="block text-gray-700 font-semibold mb-1">Frecuencia en Km *</label>
-      <input
-        formControlName="kmInterval"
-        type="number"
-        class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-      />
+      <label class="block text-gray-700 font-semibold mb-2">Tipo de Monitoreo *</label>
+      <div class="flex gap-6">
+        <div class="flex items-center gap-2">
+          <label for="monitoringTypeKm" class="text-gray-700">Km</label>
+          <input
+            type="radio"
+            id="monitoringTypeKm"
+            formControlName="monitoringType"
+            value="km"
+            class="w-4 h-4 accent-primary"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="monitoringTypeTime" class="text-gray-700">Tiempo</label>
+          <input
+            type="radio"
+            id="monitoringTypeTime"
+            formControlName="monitoringType"
+            value="time"
+            class="w-4 h-4 accent-primary"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Frecuencia Km -->
+    <div *ngIf="maintenanceForm.get('monitoringType')?.value === 'km'">
+      <div class="flex gap-2 items-center">
+        <input
+          formControlName="kmInterval"
+          type="number"
+          class="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+          placeholder="0"
+        />
+        <span class="text-gray-700 font-semibold">Km</span>
+      </div>
       <small *ngIf="hasError('kmInterval', 'required')" class="text-red-500 font-bold">
         Campo requerido
       </small>
       <small *ngIf="hasError('kmInterval', 'min')" class="text-red-500 font-bold">
-        Debe ser positivo
+        Debe ser mayor a 1
       </small>
       <small *ngIf="hasError('kmInterval', 'max')" class="text-red-500 font-bold">
         No puede superar 1,000,000 km
       </small>
     </div>
 
-    <!-- Frecuencia Semanal -->
-    <div>
-    <label class="block text-gray-700 font-semibold mb-1">Frecuencia en Tiempo *</label>
-    <div class="flex gap-2">
-        <!-- Input numérico -->
+    <!-- Frecuencia en Tiempo -->
+    <div *ngIf="maintenanceForm.get('monitoringType')?.value === 'time'">
+      <div class="flex gap-2">
         <input
-        type="number"
-        formControlName="timeIntervalWeeks"
-        class="w-32 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        placeholder="Ej: 6"
+          type="number"
+          formControlName="timeIntervalWeeks"
+          class="w-32 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+          placeholder="0"
         />
-
-        <!-- Select: unidades -->
         <select
-        formControlName="timeIntervalUnit"
-        class="w-full border border-gray-300 rounded-lg p-2 bg-white focus:ring-2 focus:ring-primary focus:outline-none"
+          formControlName="timeIntervalUnit"
+          aria-label="Unidad de tiempo"
+          class="flex-1 border border-gray-300 rounded-lg p-2 bg-white focus:ring-2 focus:ring-primary focus:outline-none"
         >
-        <option value="weeks">Semanas</option>
-        <option value="months">Meses</option>
-        <option value="years">Años</option>
+          <option value="weeks">Semanas</option>
+          <option value="months">Meses</option>
+          <option value="years">Años</option>
         </select>
-    </div>
-    <small *ngIf="hasError('timeIntervalWeeks', 'required')" class="text-red-500 font-bold">
+      </div>
+      <small *ngIf="hasError('timeIntervalWeeks', 'required')" class="text-red-500 font-bold">
         Campo requerido
-    </small>
-    <small *ngIf="hasError('timeIntervalWeeks', 'min')" class="text-red-500 font-bold">
-        Debe ser positivo
-    </small>
-    <small *ngIf="hasError('timeIntervalWeeks', 'max')" class="text-red-500 font-bold">
+      </small>
+      <small *ngIf="hasError('timeIntervalWeeks', 'min')" class="text-red-500 font-bold">
+        Debe ser mayor a 1
+      </small>
+      <small *ngIf="hasError('timeIntervalWeeks', 'max')" class="text-red-500 font-bold">
         No puede superar 10 años
-    </small>
+      </small>
     </div>
 
 

@@ -18,6 +18,8 @@ namespace Bikontrol.Domain.Entities
 
         public int? DefaultTimeIntervalWeeks { get; set; }
 
+        public string TrackingType { get; set; } = "Km";
+
         public bool IsEnabled { get; set; } = true;
 
         public ICollection<UserMaintenance> UserMaintenanceTypes { get; set; } = new List<UserMaintenance>();
