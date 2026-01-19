@@ -1,0 +1,79 @@
+<div class="space-y-2 mt-2" [formGroup]="form">
+  <div>
+    <label class="block text-gray-700 font-semibold mb-2">Tipo de Monitoreo *</label>
+    <div class="flex gap-6">
+      <div class="flex items-center gap-2">
+        <input
+          type="radio"
+          id="monitoringTypeKm"
+          formControlName="monitoringType"
+          value="km"
+          class="w-4 h-4 accent-primary cursor-pointer"
+          [disabled]="isEditMode"
+        />
+        <label for="monitoringTypeKm" class="text-gray-700 cursor-pointer">Km</label>
+      </div>
+      <div class="flex items-center gap-2">
+        <input
+          type="radio"
+          id="monitoringTypeTime"
+          formControlName="monitoringType"
+          value="time"
+          class="w-4 h-4 accent-primary cursor-pointer"
+          [disabled]="isEditMode"
+        />
+        <label for="monitoringTypeTime" class="text-gray-700 cursor-pointer">Tiempo</label>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="form.get('monitoringType')?.value === 'km'">
+    <div class="flex gap-2 items-center">
+      <input
+        formControlName="kmInterval"
+        type="number"
+        class="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+        placeholder="0"
+      />
+      <span class="text-gray-700 font-semibold">Km</span>
+    </div>
+    <small *ngIf="hasError('kmInterval', 'required')" class="text-red-500 font-bold">
+      Campo requerido
+    </small>
+    <small *ngIf="hasError('kmInterval', 'min')" class="text-red-500 font-bold">
+      Debe ser mayor a 1
+    </small>
+    <small *ngIf="hasError('kmInterval', 'max')" class="text-red-500 font-bold">
+      No puede superar 1,000,000 km
+    </small>
+  </div>
+
+  <div *ngIf="form.get('monitoringType')?.value === 'time'">
+    <div class="flex gap-2">
+      <input
+        type="number"
+        formControlName="timeIntervalWeeks"
+        class="w-32 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+        placeholder="0"
+      />
+      <select
+        formControlName="timeIntervalUnit"
+        aria-label="Unidad de tiempo"
+        class="flex-1 border border-gray-300 rounded-lg p-2 bg-white focus:ring-2 focus:ring-primary focus:outline-none"
+      >
+        <option value="weeks">Semanas</option>
+        <option value="months">Meses</option>
+        <option value="years">Años</option>
+      </select>
+    </div>
+    <small *ngIf="hasError('timeIntervalWeeks', 'required')" class="text-red-500 font-bold">
+      Campo requerido
+    </small>
+    <small *ngIf="hasError('timeIntervalWeeks', 'min')" class="text-red-500 font-bold">
+      Debe ser mayor a 1
+    </small>
+    <small *ngIf="hasError('timeIntervalWeeks', 'max')" class="text-red-500 font-bold">
+      No puede superar 10 años
+    </small>
+  </div>
+</div>

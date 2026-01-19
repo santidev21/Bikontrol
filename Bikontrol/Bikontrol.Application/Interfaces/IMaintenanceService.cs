@@ -9,6 +9,6 @@ public interface IMaintenanceService
     Task<MaintenanceDTO?> GetByIdAsync(Guid id);
     Task<MaintenanceDTO> CreateUserMaintenanceAsync(SaveMaintenanceDTO dto);
     Task DeleteUserMaintenanceAsync(Guid id);
-    Task<MaintenanceDTO> FollowDefaultAsync(Guid defaultId);
+    Task<MaintenanceDTO> FollowDefaultAsync(Guid defaultId, int? KmInterval, int? TimeIntervalWeeks, string TrackingType);
     Task UpdateAsync(Guid id, SaveMaintenanceDTO dto);
 }

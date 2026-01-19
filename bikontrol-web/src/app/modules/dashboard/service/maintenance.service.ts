@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Maintenance, SaveMaintenanceDTO } from '../interfaces/maintenance.interface';
+import { Maintenance, SaveMaintenanceDTO, FollowMaintenancePayload } from '../interfaces/maintenance.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -32,8 +32,8 @@ export class MaintenanceService {
     return this.http.delete<void>(`${this.apiUrl}/mine/${id}`);
   }
   
-  followDefaultMaintenance(defaultId: string): Observable<Maintenance> {
-    return this.http.post<Maintenance>(`${this.apiUrl}/follow`,  { defaultId });
+  followDefaultMaintenance(payload: FollowMaintenancePayload): Observable<Maintenance> {
+    return this.http.post<Maintenance>(`${this.apiUrl}/follow`, payload);
   }
 
   updateMaintenance(id: string, dto: SaveMaintenanceDTO): Observable<void> {

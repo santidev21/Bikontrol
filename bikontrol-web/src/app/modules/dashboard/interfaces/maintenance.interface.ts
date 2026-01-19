@@ -18,3 +18,10 @@ export interface SaveMaintenanceDTO {
   timeIntervalWeeks?: number;
   TrackingType: 'Km' | 'Time';
 }
+
+export interface FollowMaintenancePayload {
+  defaultId: string;
+  trackingType: 'Km' | 'Time';
+  kmInterval: number;
+  timeIntervalWeeks: number;
+}

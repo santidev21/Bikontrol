@@ -5,11 +5,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { CommonModule } from '@angular/common';
 import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
+import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
 
 @Component({
   selector: 'app-save-maintenance',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, MonitoringTypeSelectorComponent],
   templateUrl: './save-maintenance.component.html',
   styleUrl: './save-maintenance.component.scss'
 })
@@ -148,17 +149,6 @@ export class SaveMaintenanceComponent {
 
   hasError(field: string, type: string): boolean {
     const control = this.maintenanceForm.get(field);
-    const monitoringType = this.maintenanceForm.get('monitoringType')?.value;
-    
-    // Only validate kmInterval if monitoringType is 'km'
-    if (field === 'kmInterval' && monitoringType !== 'km') {
-      return false;
-    }
-    
-    // Only validate time-related fields if monitoringType is 'time'
-    if ((field === 'timeIntervalWeeks' || field === 'timeIntervalUnit') && monitoringType !== 'time') {
-      return false;
-    }
     
     return !!control && control.hasError(type) && control.touched;
   }

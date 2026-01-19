@@ -58,7 +58,7 @@ public class MaintenanceService : IMaintenanceService
         await _userRepo.SoftDeleteAsync(id);
     }
     
-    public async Task<MaintenanceDTO> FollowDefaultAsync(Guid defaultId)
+    public async Task<MaintenanceDTO> FollowDefaultAsync(Guid defaultId, int? KmInterval, int? TimeIntervalWeeks, string TrackingType)
     {
         var defaultEntity = await _repo.GetByIdAsync(defaultId);
         if (defaultEntity == null)
@@ -86,9 +86,9 @@ public class MaintenanceService : IMaintenanceService
             BaseTypeId = defaultEntity.Id,
             Name = defaultEntity.Name,
             Description = defaultEntity.Description,
-            KmInterval = defaultEntity.DefaultKmInterval,
-            TimeIntervalWeeks = defaultEntity.DefaultTimeIntervalWeeks,
-            TrackingType = defaultEntity.TrackingType,
+            KmInterval = KmInterval,
+            TimeIntervalWeeks = TimeIntervalWeeks,
+            TrackingType = TrackingType,
             IsEnabled = true
         };
 

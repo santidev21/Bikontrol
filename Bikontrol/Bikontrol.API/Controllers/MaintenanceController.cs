@@ -49,7 +49,7 @@ public class MaintenancesController : ControllerBase
     [HttpPost("follow")]
     public async Task<IActionResult> FollowDefault([FromBody] FollowDefaultRequest request)
     {
-        var result = await _service.FollowDefaultAsync(request.DefaultId);
+        var result = await _service.FollowDefaultAsync(request.DefaultId, request.KmInterval, request.TimeIntervalWeeks, request.TrackingType);
         return Ok(result);
     }
 
