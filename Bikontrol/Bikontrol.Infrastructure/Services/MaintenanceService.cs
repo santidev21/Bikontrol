@@ -28,7 +28,7 @@ public class MaintenanceService : IMaintenanceService
 
     public async Task<IEnumerable<MaintenanceDTO>> GetDefaultsAsync()
     {
-        var list = await _repo.GetAllAsync();
+        var list = await _repo.GetAllForUserAsync(_current.UserId);
         return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
     }
 
