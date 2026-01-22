@@ -54,7 +54,7 @@ export class SaveMaintenanceComponent {
       next: (maintenance) => {
         const mappedMaintenance = {
           ...maintenance,
-          monitoringType: maintenance.TrackingType === 'Km' ? 'km' : 'time'
+          monitoringType: maintenance.trackingType === 'Km' ? 'km' : 'time'
         };
         this.maintenanceForm.patchValue(mappedMaintenance);
         this.maintenanceForm.get('monitoringType')?.disable();
@@ -81,7 +81,7 @@ export class SaveMaintenanceComponent {
 
     maintenance.kmInterval = 0;
     maintenance.timeIntervalWeeks = 0;
-    maintenance.TrackingType = monitoringType === 'km' ? 'Km' : 'Time';
+    maintenance.trackingType = monitoringType === 'km' ? 'Km' : 'Time';
 
     if (monitoringType === 'km') {
       maintenance.kmInterval = this.maintenanceForm.get('kmInterval')?.value;

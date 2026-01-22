@@ -13,30 +13,34 @@
     <div class="mt-3 flex flex-col gap-1 text-gray-700 text-sm">
 
       <div class="flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="text-gray-700 mr-2">
-          <path d="M418-340q24 24 62 23.5t56-27.5l224-336-336 224q-27 18-28.5 55t22.5 61Zm62-460q59 
-          0 113.5 16.5T696-734l-76 48q-33-17-68.5-25.5T480-720q-133 0-226.5 93.5T160-400q0 42 11.5 
-          83t32.5 77h552q23-38 33.5-79t10.5-85q0-36-8.5-70T766-540l48-76q30 47 47.5 100T880-406q1 
-          57-13 109t-41 99q-11 18-30 28t-40 10H204q-21 0-40-10t-30-28q-26-45-40-95.5T80-400q0-83 
-          31.5-155.5t86-127Q252-737 325-768.5T480-800Zm7 313Z"/>
-        </svg>
-        <span class="mr-2">
-          <strong *ngIf="maintenance.kmInterval; else noKm">
-            {{ maintenance.kmInterval }} km
-          </strong>
-          <ng-template #noKm><strong>N/A</strong></ng-template>
-        </span>
+        <ng-container *ngIf="isDefault || maintenance.trackingType === 'Km'">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="text-gray-700 mr-2">
+            <path d="M418-340q24 24 62 23.5t56-27.5l224-336-336 224q-27 18-28.5 55t22.5 61Zm62-460q59 
+            0 113.5 16.5T696-734l-76 48q-33-17-68.5-25.5T480-720q-133 0-226.5 93.5T160-400q0 42 11.5 
+            83t32.5 77h552q23-38 33.5-79t10.5-85q0-36-8.5-70T766-540l48-76q30 47 47.5 100T880-406q1 
+            57-13 109t-41 99q-11 18-30 28t-40 10H204q-21 0-40-10t-30-28q-26-45-40-95.5T80-400q0-83 
+            31.5-155.5t86-127Q252-737 325-768.5T480-800Zm7 313Z"/>
+          </svg>
+          <span class="mr-2">
+            <strong *ngIf="maintenance.kmInterval; else noKm">
+              {{ maintenance.kmInterval }} km
+            </strong>
+            <ng-template #noKm><strong>N/A</strong></ng-template>
+          </span>
+        </ng-container>
 
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="text-gray-700 mr-2">
-          <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 
-          0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/>
-        </svg>
-        <span>
-          <strong *ngIf="maintenance.timeIntervalWeeks; else noTime">
-            <span>{{ maintenance.timeIntervalWeeks | intervalFormat }}</span>
-          </strong>
-          <ng-template #noTime><strong>N/A</strong></ng-template>
-        </span>
+        <ng-container *ngIf="isDefault || maintenance.trackingType === 'Time'">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="text-gray-700 mr-2">
+            <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 
+            0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/>
+          </svg>
+          <span>
+            <strong *ngIf="maintenance.timeIntervalWeeks; else noTime">
+              <span>{{ maintenance.timeIntervalWeeks | intervalFormat }}</span>
+            </strong>
+            <ng-template #noTime><strong>N/A</strong></ng-template>
+          </span>
+        </ng-container>
       </div>
       </div>
   </div>

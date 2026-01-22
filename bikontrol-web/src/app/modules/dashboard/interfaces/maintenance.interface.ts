@@ -5,7 +5,7 @@ export interface Maintenance {
   description?: string | null;
   kmInterval?: number | null;
   timeIntervalWeeks?: number | null;
-  TrackingType: 'Km' | 'Time';
+  trackingType: 'Km' | 'Time';
   isEnabled: boolean;
   isSystem: boolean;
 }
@@ -16,7 +16,7 @@ export interface SaveMaintenanceDTO {
   description?: string;
   kmInterval?: number;
   timeIntervalWeeks?: number;
-  TrackingType: 'Km' | 'Time';
+  trackingType: 'Km' | 'Time';
 }
 
 export interface FollowMaintenancePayload {
