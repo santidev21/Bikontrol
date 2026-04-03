@@ -2,10 +2,7 @@
   class="bg-white rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition-shadow relative"
 >
   <!-- Left: Motorcycle image -->
-  <div
-    class="flex-shrink-0 cursor-pointer"
-    (click)="goToDetails()"
-  >
+  <div class="flex-shrink-0">
     <img
       [src]="
         !motorcycle.image || motorcycle.image === 'default.png'
@@ -18,8 +15,8 @@
   </div>
 
   <!-- Middle: Info -->
-  <div class="flex-1 px-4 cursor-pointer" (click)="goToDetails()">
-    <h2 class="font-bold text-lg text-gray-900">{{ motorcycle.name }}</h2>
+  <div class="flex-1 px-4">
+    <h2 class="font-bold text-lg text-gray-900 cursor-pointer hover:text-primary" (click)="goToDetails()">{{ motorcycle.name }}</h2>
     <p class="text-gray-500 text-sm">{{ motorcycle.brand }} - {{ motorcycle.year }}</p>
     <p class="text-sm mt-1 text-gray-700">Apodo: {{ motorcycle.nickname }}</p>
 
