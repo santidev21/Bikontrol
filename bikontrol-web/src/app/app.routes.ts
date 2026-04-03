@@ -12,6 +12,8 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', loadComponent: () => import('./modules/dashboard/pages/home/home.component').then(c => c.HomeComponent) },
+      {  path: 'motorcycles/summary',  loadComponent: () => import('./modules/dashboard/pages/motorcycles/motorcycle-summary/motorcycle-summary.component')
+        .then((m) => m.MotorcycleSummaryComponent)},
       {  path: 'motorcycles/add',  loadComponent: () => import('./modules/dashboard/pages/motorcycles/save-motorcycle/save-motorcycle.component')
         .then((m) => m.SaveMotorcycleComponent)},
       { path: 'motorcycles/edit/:id', loadComponent: () => import('./modules/dashboard/pages/motorcycles/save-motorcycle/save-motorcycle.component')

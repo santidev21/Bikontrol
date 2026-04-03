@@ -1,0 +1,78 @@
+
+.motorcycle-summary-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(60%) brightness(0.25);
+}
+
+.overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 16px;
+    color: white;
+    .first-row{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+.year-badge {
+    opacity: 0.9;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+.brand {
+font-size: 12px;
+opacity: 0.8;
+display: block;
+}
+
+.name {
+font-size: 20px;
+font-weight: bold;
+margin: 2px 0;
+}
+
+.nickname {
+font-size: 13px;
+opacity: 0.85;
+}
+
+.km-card{
+    color: white;
+
+    p{    
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+
+        img{filter: brightness(0) invert(1);}
+    }
+    
+}
+
+.maintenance-section{
+    h2{
+        font-weight: bold;
+    }
+}

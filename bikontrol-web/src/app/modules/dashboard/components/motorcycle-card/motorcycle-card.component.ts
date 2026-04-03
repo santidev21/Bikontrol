@@ -25,8 +25,9 @@ export class MotorcycleCardComponent {
   ) {}
 
   goToDetails() {
-    console.log('Navigating to motorcycle details:', this.motorcycle);
-
+    this.router.navigate(['/dashboard/motorcycles/summary'], {
+      state: { motorcycle: this.motorcycle }
+    });
   }
   
   onEdit($e: any){
