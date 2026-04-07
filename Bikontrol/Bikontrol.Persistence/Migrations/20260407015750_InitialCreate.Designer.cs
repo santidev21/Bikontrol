@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bikontrol.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260115125230_AddMaintenanceTables")]
-    partial class AddMaintenanceTables
+    [Migration("20260407015750_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,6 +66,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000001"),
                             DefaultKmInterval = 1500,
+                            DefaultTimeIntervalWeeks = 6,
                             Description = "Reemplazo del aceite del motor.",
                             IsEnabled = true,
                             Name = "Cambio de Aceite",
@@ -75,6 +76,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000002"),
                             DefaultKmInterval = 1500,
+                            DefaultTimeIntervalWeeks = 6,
                             Description = "Sustitución del filtro de aceite del motor.",
                             IsEnabled = true,
                             Name = "Cambio de Filtro de Aceite",
@@ -83,6 +85,7 @@ namespace Bikontrol.Persistence.Migrations
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000003"),
+                            DefaultKmInterval = 500,
                             DefaultTimeIntervalWeeks = 2,
                             Description = "Limpieza y lubricación de la cadena de transmisión.",
                             IsEnabled = true,
@@ -93,6 +96,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000004"),
                             DefaultKmInterval = 20000,
+                            DefaultTimeIntervalWeeks = 80,
                             Description = "Chequeo completo del estado general de la motocicleta.",
                             IsEnabled = true,
                             Name = "Revisión General",
@@ -102,6 +106,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000005"),
                             DefaultKmInterval = 5000,
+                            DefaultTimeIntervalWeeks = 20,
                             Description = "Revisión preventiva del estado general de la motocicleta.",
                             IsEnabled = true,
                             Name = "Mantenimiento Preventivo",
@@ -111,6 +116,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000006"),
                             DefaultKmInterval = 6000,
+                            DefaultTimeIntervalWeeks = 24,
                             Description = "Limpieza o reemplazo del filtro de aire.",
                             IsEnabled = true,
                             Name = "Filtro de Aire",
@@ -120,6 +126,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000007"),
                             DefaultKmInterval = 8000,
+                            DefaultTimeIntervalWeeks = 32,
                             Description = "Reemplazo o limpieza del filtro de gasolina.",
                             IsEnabled = true,
                             Name = "Filtro de Gasolina",
@@ -128,6 +135,7 @@ namespace Bikontrol.Persistence.Migrations
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000008"),
+                            DefaultKmInterval = 500,
                             DefaultTimeIntervalWeeks = 1,
                             Description = "Verificación y ajuste de la presión de las llantas.",
                             IsEnabled = true,
@@ -138,6 +146,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000009"),
                             DefaultKmInterval = 8000,
+                            DefaultTimeIntervalWeeks = 32,
                             Description = "Revisión y reemplazo de las pastillas de freno delanteras.",
                             IsEnabled = true,
                             Name = "Pastillas de Freno Delanteras",
@@ -147,6 +156,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000010"),
                             DefaultKmInterval = 8000,
+                            DefaultTimeIntervalWeeks = 32,
                             Description = "Revisión y reemplazo de las pastillas de freno traseras.",
                             IsEnabled = true,
                             Name = "Pastillas de Freno Traseras",
@@ -156,6 +166,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000011"),
                             DefaultKmInterval = 25000,
+                            DefaultTimeIntervalWeeks = 100,
                             Description = "Revisión del disco de freno delantero.",
                             IsEnabled = true,
                             Name = "Disco de Freno Delantero",
@@ -165,6 +176,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000012"),
                             DefaultKmInterval = 25000,
+                            DefaultTimeIntervalWeeks = 100,
                             Description = "Revisión del disco de freno trasero.",
                             IsEnabled = true,
                             Name = "Disco de Freno Trasero",
@@ -173,6 +185,7 @@ namespace Bikontrol.Persistence.Migrations
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000013"),
+                            DefaultKmInterval = 13000,
                             DefaultTimeIntervalWeeks = 52,
                             Description = "Reemplazo del líquido de frenos delantero.",
                             IsEnabled = true,
@@ -182,6 +195,7 @@ namespace Bikontrol.Persistence.Migrations
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000014"),
+                            DefaultKmInterval = 13000,
                             DefaultTimeIntervalWeeks = 52,
                             Description = "Reemplazo del líquido de frenos trasero.",
                             IsEnabled = true,
@@ -191,6 +205,7 @@ namespace Bikontrol.Persistence.Migrations
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000015"),
+                            DefaultKmInterval = 10000,
                             DefaultTimeIntervalWeeks = 52,
                             Description = "Revisión del estado y carga de la batería.",
                             IsEnabled = true,
@@ -201,6 +216,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000016"),
                             DefaultKmInterval = 10000,
+                            DefaultTimeIntervalWeeks = 40,
                             Description = "Revisión de suspensión delantera y trasera.",
                             IsEnabled = true,
                             Name = "Suspensión",
@@ -209,6 +225,7 @@ namespace Bikontrol.Persistence.Migrations
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000017"),
+                            DefaultKmInterval = 2000,
                             DefaultTimeIntervalWeeks = 8,
                             Description = "Ajuste general de tornillería.",
                             IsEnabled = true,
@@ -219,6 +236,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000018"),
                             DefaultKmInterval = 8000,
+                            DefaultTimeIntervalWeeks = 32,
                             Description = "Ajuste de holguras de válvulas.",
                             IsEnabled = true,
                             Name = "Calibración de Válvulas",
@@ -228,6 +246,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000019"),
                             DefaultKmInterval = 12000,
+                            DefaultTimeIntervalWeeks = 48,
                             Description = "Revisión o reemplazo del piñón.",
                             IsEnabled = true,
                             Name = "Kit de Arrastre - Piñón",
@@ -237,6 +256,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000020"),
                             DefaultKmInterval = 12000,
+                            DefaultTimeIntervalWeeks = 48,
                             Description = "Revisión o reemplazo de la corona.",
                             IsEnabled = true,
                             Name = "Kit de Arrastre - Corona",
@@ -246,6 +266,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000021"),
                             DefaultKmInterval = 12000,
+                            DefaultTimeIntervalWeeks = 48,
                             Description = "Revisión o reemplazo de la cadena.",
                             IsEnabled = true,
                             Name = "Kit de Arrastre - Cadena",
@@ -255,6 +276,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000022"),
                             DefaultKmInterval = 500,
+                            DefaultTimeIntervalWeeks = 2,
                             Description = "Ajuste de la tensión de la cadena.",
                             IsEnabled = true,
                             Name = "Tensión de Cadena",
@@ -264,6 +286,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000023"),
                             DefaultKmInterval = 8000,
+                            DefaultTimeIntervalWeeks = 32,
                             Description = "Ajuste de mezcla/ralentí o sistema de inyección.",
                             IsEnabled = true,
                             Name = "Sincronización",
@@ -273,6 +296,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000024"),
                             DefaultKmInterval = 8000,
+                            DefaultTimeIntervalWeeks = 32,
                             Description = "Reemplazo de bandas de freno (frenos de tambor).",
                             IsEnabled = true,
                             Name = "Bandas de Freno",
@@ -282,6 +306,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000025"),
                             DefaultKmInterval = 4000,
+                            DefaultTimeIntervalWeeks = 16,
                             Description = "Revisión o reemplazo de bujía.",
                             IsEnabled = true,
                             Name = "Bujía",
@@ -291,6 +316,7 @@ namespace Bikontrol.Persistence.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000026"),
                             DefaultKmInterval = 15000,
+                            DefaultTimeIntervalWeeks = 60,
                             Description = "Revisión del desgaste de los neumáticos.",
                             IsEnabled = true,
                             Name = "Neumáticos",
@@ -321,9 +347,6 @@ namespace Bikontrol.Persistence.Migrations
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("Km")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -349,6 +372,28 @@ namespace Bikontrol.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Motorcycles");
+                });
+
+            modelBuilder.Entity("Bikontrol.Domain.Entities.MotorcycleKmHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Km")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MotorcycleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotorcycleId", "RecordedAt");
+
+                    b.ToTable("MotorcycleKmHistories");
                 });
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
@@ -440,6 +485,17 @@ namespace Bikontrol.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.MotorcycleKmHistory", b =>
+                {
+                    b.HasOne("Bikontrol.Domain.Entities.Motorcycle", "Motorcycle")
+                        .WithMany("KmHistory")
+                        .HasForeignKey("MotorcycleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Motorcycle");
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
                 {
                     b.HasOne("Bikontrol.Domain.Entities.Maintenance", "BaseType")
@@ -461,6 +517,11 @@ namespace Bikontrol.Persistence.Migrations
             modelBuilder.Entity("Bikontrol.Domain.Entities.Maintenance", b =>
                 {
                     b.Navigation("UserMaintenanceTypes");
+                });
+
+            modelBuilder.Entity("Bikontrol.Domain.Entities.Motorcycle", b =>
+                {
+                    b.Navigation("KmHistory");
                 });
 
             modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>

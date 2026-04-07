@@ -15,12 +15,15 @@ namespace Bikontrol.Infrastructure.Services
     public class MotorcycleService : IMotorcycleService
     {
         private readonly IMotorcycleRepository _motorcycleRepository;
+        private readonly IKmHistoryRepository _kmHistoryRepository;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUser;
 
-        public MotorcycleService(IMotorcycleRepository motorcycleRepository, IMapper mapper, ICurrentUserService currentUser)
+        public MotorcycleService(IMotorcycleRepository motorcycleRepository, IKmHistoryRepository kmHistoryRepository,
+            IMapper mapper, ICurrentUserService currentUser)
         {
             _motorcycleRepository = motorcycleRepository;
+            _kmHistoryRepository = kmHistoryRepository;
             _mapper = mapper;
             _currentUser = currentUser;
         }
@@ -31,6 +34,13 @@ namespace Bikontrol.Infrastructure.Services
             entity.UserId = _currentUser.UserId;
             entity.Validate();
             var created = await _motorcycleRepository.AddAsync(entity);
+            var kmHistory = new MotorcycleKmHistory
+            {
+                MotorcycleId = created.Id,
+                Km = dto.Km
+            };
+            await _kmHistoryRepository.AddAsync(kmHistory);
+            await _kmHistoryRepository.SaveChangesAsync();
             return _mapper.Map<MotorcycleDTO>(created);
         }
 

@@ -17,4 +17,8 @@
     <ProjectReference Include="..\Bikontrol.Domain\Bikontrol.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

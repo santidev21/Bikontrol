@@ -1,4 +1,5 @@
 ﻿using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
@@ -26,6 +27,7 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<IMotorcycleService, MotorcycleService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IMaintenanceService, MaintenanceService>();
+            services.AddScoped<IKmHistoryService, KmHistoryService>();
             return services;
         }
     }

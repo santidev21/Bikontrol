@@ -17,6 +17,7 @@ namespace Bikontrol.Persistence
             services.AddScoped<IMotorcycleRepository, MotorcycleRepository>();
             services.AddScoped<IMaintenanceRepository, MaintenanceRepository>();
             services.AddScoped<IUserMaintenanceRepository, UserMaintenanceRepository>();
+            services.AddScoped<IKmHistoryRepository, KmHistoryRepository>();
             return services;
         }
     }

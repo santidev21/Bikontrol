@@ -20,6 +20,7 @@ namespace Bikontrol.Persistence
         public DbSet<Motorcycle> Motorcycles { get; set; } = default!;
         public DbSet<Maintenance> DefaultMaintenances { get; set; } = default!;
         public DbSet<UserMaintenance> UserMaintenances { get; set; } = default!;
+        public DbSet<MotorcycleKmHistory> MotorcycleKmHistories { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
