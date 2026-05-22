@@ -19,6 +19,7 @@ import { MonitoringTypeSelectorComponent } from '../../../dashboard/pages/mainte
 export class MaintenanceInfoCardComponent {
   @Input() maintenance!: Maintenance;
   @Input() isDefault!: boolean;;
+  @Input() motorcycleIdContext?: string;
   @Output() refresh = new EventEmitter<void>();
 
   menuOpen = false;
@@ -96,6 +97,7 @@ export class MaintenanceInfoCardComponent {
 
 
     const payload: FollowMaintenancePayload = {
+      motorcycleId: this.isDefault ? this.motorcycleIdContext : this.maintenance.motorcycleId,
       defaultId: this.maintenance.id,
       trackingType: trackingType,
       kmInterval: monitoringType === 'km' ? followData.kmInterval : 0,
@@ -103,6 +105,12 @@ export class MaintenanceInfoCardComponent {
         ? this.convertToWeeks(followData.timeIntervalWeeks, followData.timeIntervalUnit)
         : 0
     };
+
+    if (!payload.motorcycleId) {
+      this.isFollowing = false;
+      this.swal.error('Error', 'Debes seleccionar una motocicleta para asociar el mantenimiento.');
+      return;
+    }
 
     this.maintenanceService.followDefaultMaintenance(payload).subscribe({
       next: () => {
@@ -141,7 +149,9 @@ export class MaintenanceInfoCardComponent {
 
   onEdit(event: MouseEvent) {
     event.stopPropagation();
-    this.router.navigate(['/dashboard/maintenance/edit', this.maintenance.id]);
+    const motorcycleId = this.maintenance.motorcycleId || this.motorcycleIdContext;
+    if (!motorcycleId) return;
+    this.router.navigate(['/dashboard/motorcycles', motorcycleId, 'maintenance/edit', this.maintenance.id]);
   }
 
   deleteMaintenance() {

@@ -1,8 +1,7 @@
-
-.motorcycle-summary-card {
+﻿.motorcycle-summary-card {
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .image-container {
@@ -20,59 +19,252 @@
 }
 
 .overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 16px;
-    color: white;
-    .first-row{
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px;
+  color: white;
+
+  .first-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
 .year-badge {
-    opacity: 0.9;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 8px;
+  opacity: 0.9;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 .brand {
-font-size: 12px;
-opacity: 0.8;
-display: block;
+  font-size: 12px;
+  opacity: 0.8;
+  display: block;
 }
 
 .name {
-font-size: 20px;
-font-weight: bold;
-margin: 2px 0;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 2px 0;
 }
 
 .nickname {
-font-size: 13px;
-opacity: 0.85;
+  font-size: 13px;
+  opacity: 0.85;
 }
 
-.km-card{
+.km-card {
+  color: white;
+
+  .km-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  p {
+    font-size: 20px;
+    font-weight: bold;
     color: white;
 
-    p{    
-        font-size: 20px;
-        font-weight: bold;
-        color: white;
-
-        img{filter: brightness(0) invert(1);}
+    img {
+      filter: brightness(0) invert(1);
     }
-    
+  }
+
+  .edit-km-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: #334155;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+  }
+
+  .rollback-km-link {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #93c5fd;
+    text-decoration: underline;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .rollback-km-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-.maintenance-section{
-    h2{
-        font-weight: bold;
-    }
+.maintenance-section h2 {
+  font-weight: bold;
+}
+
+.maintenance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .maintenance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.maintenance-tile {
+  background: #ffffff;
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  padding: 12px;
+  color: #1f2937;
+}
+
+.tile-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  min-height: 40px;
+}
+
+.tile-ring-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.tile-remaining {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 18px;
+}
+
+.tile-last {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.life-ring {
+  width: 64px;
+  height: 64px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 64px;
+    height: 64px;
+    transform: rotate(-90deg);
+  }
+
+  .bg-track {
+    fill: none;
+    stroke: #cbd5e1;
+    stroke-width: 6;
+  }
+
+  .progress {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 150.8;
+  }
+
+  .progress.overdue {
+    stroke: #ef4444;
+  }
+
+  span {
+    position: absolute;
+    font-size: 12px;
+    font-weight: 700;
+    color: #374151;
+  }
+}
+
+.section-divider {
+  border: 0;
+  border-top: 1px solid #d6dbe5;
+  margin: 20px 0 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.km-modal {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+
+  h3 {
+    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+}
+
+.km-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #111827;
+}
+
+.km-modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cancel-btn,
+.accept-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.accept-btn {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.accept-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

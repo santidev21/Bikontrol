@@ -11,7 +11,8 @@ describe('MotorcyclesService (unit, mocked HttpClient)', () => {
       get: jest.fn(),
       post: jest.fn(),
       put: jest.fn(),
-      delete: jest.fn()
+      delete: jest.fn(),
+      request: jest.fn()
     };
     service = new MotorcyclesService(mockHttp as any);
   });
@@ -71,5 +72,41 @@ describe('MotorcyclesService (unit, mocked HttpClient)', () => {
       done();
     });
     expect(mockHttp.delete).toHaveBeenCalledWith(`${service['apiUrl']}/5`);
+  });
+
+  it('should get current km with correct endpoint', done => {
+    const mock = { km: 3456 };
+    mockHttp.get.mockReturnValue(of(mock));
+
+    service.getCurrentKm('moto-1').subscribe(res => {
+      expect(res).toEqual(mock);
+      done();
+    });
+
+    expect(mockHttp.get).toHaveBeenCalledWith(`${service['apiUrl']}/moto-1/km/current`);
+  });
+
+  it('should add km history with correct endpoint and body', done => {
+    mockHttp.post.mockReturnValue(of(undefined));
+
+    service.addKmHistory('moto-1', 4000).subscribe(res => {
+      expect(res).toBeUndefined();
+      done();
+    });
+
+    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/moto-1/km-history`, { km: 4000 });
+  });
+
+  it('should rollback last km with delete request and body', done => {
+    mockHttp.request.mockReturnValue(of(undefined));
+
+    service.rollbackLastKm('moto-1', 3500).subscribe(res => {
+      expect(res).toBeUndefined();
+      done();
+    });
+
+    expect(mockHttp.request).toHaveBeenCalledWith('delete', `${service['apiUrl']}/moto-1/km-history/last`, {
+      body: { newKm: 3500 }
+    });
   });
 });

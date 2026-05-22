@@ -20,3 +20,7 @@ export interface SaveMotorcycleDTO {
   displacement: number;
   plate: string;
 }
+
+export interface CurrentKmResponse {
+  km: number;
+}

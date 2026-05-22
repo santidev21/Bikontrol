@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import Swal from 'sweetalert2';
 import { MotorcyclesService } from '../../service/motorcycles.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 
@@ -13,16 +12,31 @@ import { SwalService } from '../../../../shared/services/swal.service';
   templateUrl: './motorcycle-card.component.html',
   styleUrl: './motorcycle-card.component.scss'
 })
-export class MotorcycleCardComponent {
+export class MotorcycleCardComponent implements OnInit {
   @Input() motorcycle: any;
   @Output() deleted = new EventEmitter<void>();
   menuOpen = false;
+  currentKm: number | null = null;
 
   constructor(
     private router: Router,
     private motorcyclesService: MotorcyclesService,
     private swal : SwalService
   ) {}
+
+  ngOnInit(): void {
+    const motorcycleId = this.motorcycle?.id;
+    if (!motorcycleId) return;
+
+    this.motorcyclesService.getCurrentKm(motorcycleId).subscribe({
+      next: (res) => {
+        this.currentKm = res.km;
+      },
+      error: () => {
+        this.currentKm = this.motorcycle?.km ?? 0;
+      }
+    });
+  }
 
   goToDetails() {
     this.router.navigate(['/dashboard/motorcycles/summary'], {
@@ -77,5 +91,9 @@ export class MotorcycleCardComponent {
   @HostListener('document:click')
   closeMenu() {
     if (this.menuOpen) this.menuOpen = false;
+  }
+
+  get displayedKm(): number {
+    return this.currentKm ?? this.motorcycle?.km ?? 0;
   }
 }

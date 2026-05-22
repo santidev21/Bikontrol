@@ -10,8 +10,10 @@ namespace Bikontrol.Application.Interfaces.Repositories
     public interface IKmHistoryRepository
     {
         Task AddAsync(MotorcycleKmHistory entity);
+        void Remove(MotorcycleKmHistory entity);
 
         Task<MotorcycleKmHistory?> GetLastByMotorcycleIdAsync(Guid motorcycleId);
+        Task<MotorcycleKmHistory?> GetFirstByMotorcycleIdAsync(Guid motorcycleId);
 
         Task<List<MotorcycleKmHistory>> GetByMotorcycleIdAsync(Guid motorcycleId);
 

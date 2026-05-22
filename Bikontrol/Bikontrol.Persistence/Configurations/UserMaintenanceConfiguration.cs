@@ -37,6 +37,9 @@ namespace Bikontrol.Persistence.Configurations
                 .IsRequired()
                 .HasDefaultValue(true);
 
+            builder.Property(x => x.MotorcycleId)
+                .IsRequired();
+
             builder
                 .HasOne(x => x.User)
                 .WithMany()
@@ -48,6 +51,14 @@ namespace Bikontrol.Persistence.Configurations
                 .WithMany(x => x.UserMaintenanceTypes)
                 .HasForeignKey(x => x.BaseTypeId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            builder
+                .HasOne(x => x.Motorcycle)
+                .WithMany(x => x.UserMaintenances)
+                .HasForeignKey(x => x.MotorcycleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(x => new { x.UserId, x.MotorcycleId, x.Name });
         }
     }
 }

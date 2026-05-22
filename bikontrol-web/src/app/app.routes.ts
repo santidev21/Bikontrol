@@ -14,15 +14,17 @@ export const routes: Routes = [
       { path: 'home', loadComponent: () => import('./modules/dashboard/pages/home/home.component').then(c => c.HomeComponent) },
       {  path: 'motorcycles/summary',  loadComponent: () => import('./modules/dashboard/pages/motorcycles/motorcycle-summary/motorcycle-summary.component')
         .then((m) => m.MotorcycleSummaryComponent)},
+      {  path: 'motorcycles/:motorcycleId/register-maintenance',  loadComponent: () => import('./modules/dashboard/pages/motorcycles/register-maintenance-record/register-maintenance-record.component')
+        .then((m) => m.RegisterMaintenanceRecordComponent)},
       {  path: 'motorcycles/add',  loadComponent: () => import('./modules/dashboard/pages/motorcycles/save-motorcycle/save-motorcycle.component')
         .then((m) => m.SaveMotorcycleComponent)},
       { path: 'motorcycles/edit/:id', loadComponent: () => import('./modules/dashboard/pages/motorcycles/save-motorcycle/save-motorcycle.component')
         .then((m) => m.SaveMotorcycleComponent)},
-      { path: 'maintenance', loadComponent: () => import('./modules/dashboard/pages/maintenance/maintenance-page/maintenance-page.component')
+      { path: 'motorcycles/:motorcycleId/maintenance', loadComponent: () => import('./modules/dashboard/pages/maintenance/maintenance-page/maintenance-page.component')
         .then(c => c.MaintenancePageComponent) },
-      {  path: 'maintenance/add',  loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
+      {  path: 'motorcycles/:motorcycleId/maintenance/add',  loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
         .then((m) => m.SaveMaintenanceComponent)},
-      { path: 'maintenance/edit/:id', loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
+      { path: 'motorcycles/:motorcycleId/maintenance/edit/:id', loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
         .then((m) => m.SaveMaintenanceComponent)},
     ]
   },

@@ -11,5 +11,7 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task AddKmAsync(Guid motorcycleId, int km);
 
         Task<int> GetCurrentKmAsync(Guid motorcycleId);
+        Task<DateTime?> GetInitialRecordedAtAsync(Guid motorcycleId);
+        Task RollbackLastKmAsync(Guid motorcycleId, int newKm);
     }
 }

@@ -16,14 +16,16 @@ namespace Bikontrol.Infrastructure.Services
     {
         private readonly IMotorcycleRepository _motorcycleRepository;
         private readonly IKmHistoryRepository _kmHistoryRepository;
+        private readonly IKmHistoryService _kmHistoryService;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUser;
 
         public MotorcycleService(IMotorcycleRepository motorcycleRepository, IKmHistoryRepository kmHistoryRepository,
-            IMapper mapper, ICurrentUserService currentUser)
+            IKmHistoryService kmHistoryService, IMapper mapper, ICurrentUserService currentUser)
         {
             _motorcycleRepository = motorcycleRepository;
             _kmHistoryRepository = kmHistoryRepository;
+            _kmHistoryService = kmHistoryService;
             _mapper = mapper;
             _currentUser = currentUser;
         }
@@ -58,6 +60,36 @@ namespace Bikontrol.Infrastructure.Services
         {
             var motorcycles = await _motorcycleRepository.GetByUserIdAsync(_currentUser.UserId);
             return _mapper.Map<IList<MotorcycleDTO>>(motorcycles);
+        }
+
+        public async Task<int> GetCurrentKmAsync(Guid id)
+        {
+            var entity = await _motorcycleRepository.GetByIdAsync(id);
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity.UserId != _currentUser.UserId)
+                throw new ForbiddenAccessException("No tienes permisos para ver esta motocicleta.");
+
+            return await _kmHistoryService.GetCurrentKmAsync(id);
+        }
+
+        public async Task AddKmHistoryAsync(Guid id, int km)
+        {
+            var entity = await _motorcycleRepository.GetByIdAsync(id);
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity.UserId != _currentUser.UserId)
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+
+            await _kmHistoryService.AddKmAsync(id, km);
+        }
+
+        public async Task RollbackLastKmAsync(Guid id, int newKm)
+        {
+            var entity = await _motorcycleRepository.GetByIdAsync(id);
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity.UserId != _currentUser.UserId)
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+
+            await _kmHistoryService.RollbackLastKmAsync(id, newKm);
         }
 
         public async Task UpdateAsync(Guid id, SaveMotorcycleDTO dto)

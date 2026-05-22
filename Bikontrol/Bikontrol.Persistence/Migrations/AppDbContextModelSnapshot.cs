@@ -393,6 +393,36 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("MotorcycleKmHistories");
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.MotorcycleMaintenanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MotorcycleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PerformedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("PerformedKm")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserMaintenanceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotorcycleId", "PerformedAt");
+
+                    b.HasIndex("UserMaintenanceId", "PerformedAt");
+
+                    b.ToTable("MotorcycleMaintenanceRecords", (string)null);
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -412,6 +442,9 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.Property<int?>("KmInterval")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("MotorcycleId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -435,7 +468,9 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.HasIndex("BaseTypeId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("MotorcycleId");
+
+                    b.HasIndex("UserId", "MotorcycleId", "Name");
 
                     b.ToTable("UserMaintenanceTypes", (string)null);
                 });
@@ -493,12 +528,37 @@ namespace Bikontrol.Persistence.Migrations
                     b.Navigation("Motorcycle");
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.MotorcycleMaintenanceRecord", b =>
+                {
+                    b.HasOne("Bikontrol.Domain.Entities.Motorcycle", "Motorcycle")
+                        .WithMany("MaintenanceRecords")
+                        .HasForeignKey("MotorcycleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bikontrol.Domain.Entities.UserMaintenance", "UserMaintenance")
+                        .WithMany("MaintenanceRecords")
+                        .HasForeignKey("UserMaintenanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Motorcycle");
+
+                    b.Navigation("UserMaintenance");
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
                 {
                     b.HasOne("Bikontrol.Domain.Entities.Maintenance", "BaseType")
                         .WithMany("UserMaintenanceTypes")
                         .HasForeignKey("BaseTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Bikontrol.Domain.Entities.Motorcycle", "Motorcycle")
+                        .WithMany("UserMaintenances")
+                        .HasForeignKey("MotorcycleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Bikontrol.Persistence.Entities.User", "User")
                         .WithMany()
@@ -507,6 +567,8 @@ namespace Bikontrol.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("BaseType");
+
+                    b.Navigation("Motorcycle");
 
                     b.Navigation("User");
                 });
@@ -519,6 +581,15 @@ namespace Bikontrol.Persistence.Migrations
             modelBuilder.Entity("Bikontrol.Domain.Entities.Motorcycle", b =>
                 {
                     b.Navigation("KmHistory");
+
+                    b.Navigation("MaintenanceRecords");
+
+                    b.Navigation("UserMaintenances");
+                });
+
+            modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
+                {
+                    b.Navigation("MaintenanceRecords");
                 });
 
             modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>

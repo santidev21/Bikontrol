@@ -12,6 +12,7 @@ namespace Bikontrol.Domain.Entities
         public Guid Id { get; set; }
 
         public Guid UserId { get; set; }
+        public Guid MotorcycleId { get; set; }
 
         public Guid? BaseTypeId { get; set; }
 
@@ -29,5 +30,7 @@ namespace Bikontrol.Domain.Entities
 
         public Maintenance? BaseType { get; set; }
         public User? User { get; set; }
+        public Motorcycle? Motorcycle { get; set; }
+        public ICollection<MotorcycleMaintenanceRecord> MaintenanceRecords { get; set; } = new List<MotorcycleMaintenanceRecord>();
     }
 }

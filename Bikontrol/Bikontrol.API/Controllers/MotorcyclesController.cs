@@ -38,6 +38,27 @@ namespace Bikontrol.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}/km/current")]
+        public async Task<IActionResult> GetCurrentKm(Guid id)
+        {
+            var result = await _motorcycleService.GetCurrentKmAsync(id);
+            return Ok(new { km = result });
+        }
+
+        [HttpPost("{id}/km-history")]
+        public async Task<IActionResult> AddKmHistory(Guid id, [FromBody] AddKmHistoryRequest request)
+        {
+            await _motorcycleService.AddKmHistoryAsync(id, request.Km);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}/km-history/last")]
+        public async Task<IActionResult> RollbackLastKm(Guid id, [FromBody] RollbackKmHistoryRequest request)
+        {
+            await _motorcycleService.RollbackLastKmAsync(id, request.NewKm);
+            return NoContent();
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] SaveMotorcycleDTO dto)
         {

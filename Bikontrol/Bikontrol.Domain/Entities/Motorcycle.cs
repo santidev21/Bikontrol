@@ -24,6 +24,8 @@ namespace Bikontrol.Domain.Entities
         public Guid UserId { get; set; }
         public User User { get; set; } = default!;
         public ICollection<MotorcycleKmHistory> KmHistory { get; set; } = new List<MotorcycleKmHistory>();
+        public ICollection<UserMaintenance> UserMaintenances { get; set; } = new List<UserMaintenance>();
+        public ICollection<MotorcycleMaintenanceRecord> MaintenanceRecords { get; set; } = new List<MotorcycleMaintenanceRecord>();
 
         protected Motorcycle() { }
 

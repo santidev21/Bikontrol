@@ -27,6 +27,12 @@ public class MaintenancesController : ControllerBase
         return Ok(await _service.GetUserMaintenanceAsync());
     }
 
+    [HttpGet("mine/motorcycle/{motorcycleId:guid}")]
+    public async Task<IActionResult> GetMineByMotorcycle(Guid motorcycleId)
+    {
+        return Ok(await _service.GetUserMaintenanceByMotorcycleAsync(motorcycleId));
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -49,7 +55,28 @@ public class MaintenancesController : ControllerBase
     [HttpPost("follow")]
     public async Task<IActionResult> FollowDefault([FromBody] FollowDefaultRequest request)
     {
-        var result = await _service.FollowDefaultAsync(request.DefaultId, request.KmInterval, request.TimeIntervalWeeks, request.TrackingType);
+        var result = await _service.FollowDefaultAsync(request.MotorcycleId, request.DefaultId, request.KmInterval, request.TimeIntervalWeeks, request.TrackingType);
+        return Ok(result);
+    }
+
+    [HttpPost("records")]
+    public async Task<IActionResult> RegisterRecord([FromBody] CreateMaintenanceRecordRequest request)
+    {
+        var result = await _service.RegisterMaintenanceRecordAsync(request);
+        return Ok(result);
+    }
+
+    [HttpGet("motorcycle/{motorcycleId:guid}/records")]
+    public async Task<IActionResult> GetMotorcycleRecords(Guid motorcycleId)
+    {
+        var result = await _service.GetMaintenanceRecordsByMotorcycleAsync(motorcycleId);
+        return Ok(result);
+    }
+
+    [HttpGet("motorcycle/{motorcycleId:guid}/upcoming")]
+    public async Task<IActionResult> GetMotorcycleUpcoming(Guid motorcycleId)
+    {
+        var result = await _service.GetUpcomingByMotorcycleAsync(motorcycleId);
         return Ok(result);
     }
 

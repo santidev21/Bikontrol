@@ -2,7 +2,14 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Maintenance, SaveMaintenanceDTO, FollowMaintenancePayload } from '../interfaces/maintenance.interface';
+import {
+  Maintenance,
+  SaveMaintenanceDTO,
+  FollowMaintenancePayload,
+  CreateMaintenanceRecordRequest,
+  MaintenanceRecord,
+  UpcomingMaintenance
+} from '../interfaces/maintenance.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +25,10 @@ export class MaintenanceService {
 
   getUserMaintenance(): Observable<Maintenance[]> {
     return this.http.get<Maintenance[]>(`${this.apiUrl}/mine`);
+  }
+
+  getUserMaintenanceByMotorcycle(motorcycleId: string): Observable<Maintenance[]> {
+    return this.http.get<Maintenance[]>(`${this.apiUrl}/mine/motorcycle/${motorcycleId}`);
   }
 
   getById(id: string): Observable<Maintenance> {
@@ -38,6 +49,18 @@ export class MaintenanceService {
 
   updateMaintenance(id: string, dto: SaveMaintenanceDTO): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  registerMaintenanceRecord(payload: CreateMaintenanceRecordRequest): Observable<MaintenanceRecord> {
+    return this.http.post<MaintenanceRecord>(`${this.apiUrl}/records`, payload);
+  }
+
+  getMaintenanceRecordsByMotorcycle(motorcycleId: string): Observable<MaintenanceRecord[]> {
+    return this.http.get<MaintenanceRecord[]>(`${this.apiUrl}/motorcycle/${motorcycleId}/records`);
+  }
+
+  getUpcomingByMotorcycle(motorcycleId: string): Observable<UpcomingMaintenance[]> {
+    return this.http.get<UpcomingMaintenance[]>(`${this.apiUrl}/motorcycle/${motorcycleId}/upcoming`);
   }
 
 }

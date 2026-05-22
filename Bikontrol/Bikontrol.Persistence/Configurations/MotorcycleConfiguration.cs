@@ -23,6 +23,11 @@ namespace Bikontrol.Persistence.Configurations
                    .WithMany(u => u.Motorcycles)
                    .HasForeignKey(m => m.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(m => m.UserMaintenances)
+                .WithOne(um => um.Motorcycle)
+                .HasForeignKey(um => um.MotorcycleId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

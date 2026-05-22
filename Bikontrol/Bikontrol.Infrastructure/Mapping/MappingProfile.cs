@@ -37,12 +37,16 @@ namespace Bikontrol.Infrastructure.Mapping
                 .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
 
             CreateMap<UserMaintenance, MaintenanceDTO>()
+                .ForMember(dest => dest.MotorcycleId, opt => opt.MapFrom(src => src.MotorcycleId))
                 .ForMember(dest => dest.KmInterval, opt => opt.MapFrom(src => src.KmInterval))
                 .ForMember(dest => dest.TimeIntervalWeeks, opt => opt.MapFrom(src => src.TimeIntervalWeeks))
                 .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
 
             CreateMap<SaveMaintenanceDTO, UserMaintenance>()
                 .ForMember(dest => dest.TrackingType, opt => opt.MapFrom(src => src.TrackingType));
+
+            CreateMap<MotorcycleMaintenanceRecord, MaintenanceRecordDTO>()
+                .ForMember(dest => dest.MaintenanceName, opt => opt.MapFrom(src => src.UserMaintenance.Name));
         }
     }
 }

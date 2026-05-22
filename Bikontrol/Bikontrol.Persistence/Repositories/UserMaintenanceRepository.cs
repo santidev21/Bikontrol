@@ -20,6 +20,13 @@ namespace Bikontrol.Persistence.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<UserMaintenance>> GetByUserIdAndMotorcycleIdAsync(Guid userId, Guid motorcycleId)
+        {
+            return await _context.UserMaintenances
+                .Where(umt => umt.UserId == userId && umt.MotorcycleId == motorcycleId && umt.IsEnabled)
+                .ToListAsync();
+        }
+
         public async Task<UserMaintenance?> GetByIdAsync(Guid id)
         {
             return await _context.UserMaintenances
@@ -51,10 +58,10 @@ namespace Bikontrol.Persistence.Repositories
             }
         }
 
-        public async Task<UserMaintenance?> GetByBaseIdAsync(Guid userId, Guid baseId)
+        public async Task<UserMaintenance?> GetByBaseIdAsync(Guid userId, Guid motorcycleId, Guid baseId)
         {
             return await _context.UserMaintenances
-                .Where(x => x.UserId == userId && x.BaseTypeId == baseId)
+                .Where(x => x.UserId == userId && x.MotorcycleId == motorcycleId && x.BaseTypeId == baseId)
                 .FirstOrDefaultAsync();
         }
 

@@ -2,6 +2,7 @@
 {
     public class SaveMaintenanceDTO
     {
+        public Guid MotorcycleId { get; set; }
         public Guid? BaseTypeId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }

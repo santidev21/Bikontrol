@@ -8,6 +8,7 @@ namespace Bikontrol.Application.DTOs.Maintenance
 {
     public class FollowDefaultRequest
     {
+        public Guid MotorcycleId { get; set; }
         public Guid DefaultId { get; set; }
         public int? KmInterval { get; set; }
         public int? TimeIntervalWeeks { get; set; }

@@ -1,63 +1,111 @@
-<div *ngIf="motorcycle as m; else noMotorcycle" class="p-4">
-    <div class="motorcycle-summary-card">
+﻿<div *ngIf="motorcycle as m; else noMotorcycle" class="p-4">
+  <div class="motorcycle-summary-card">
     <div class="image-container">
-        <img
-        [src]="m.image && m.image !== 'default.png' ? m.image : '/assets/images/defaults/motorcycle-placeholder.webp'"
-        alt="{{ m.name }}"
-        />
-        <div class="overlay">
-            <div class="first-row">
-                <span class="year-badge bg-gray-800">{{ m.year }}</span>
-                <span class="brand">{{ m.brand }}</span>
-            </div>
+      <img [src]="m.image && m.image !== 'default.png' ? m.image : '/assets/images/defaults/motorcycle-placeholder.webp'" alt="{{ m.name }}" />
+      <div class="overlay">
+        <div class="first-row">
+          <span class="year-badge bg-gray-800">{{ m.year }}</span>
+          <span class="brand">{{ m.brand }}</span>
+        </div>
         <h1 class="name">{{ m.name }}</h1>
         <span class="nickname">{{ m.nickname || 'Sin apodo' }}</span>
-        </div>
+      </div>
     </div>
-    </div>
+  </div>
 
-    <div class="km-card bg-gray-800 rounded-xl shadow-md p-4 my-6 hover:shadow-lg transition-shadow relative">
-        <span>Kilometraje Actual</span>
-        <p class="mt-2 flex items-center text-gray-600 text-sm">
-        <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
-        {{ motorcycle.km }} km
+  <div class="km-card bg-gray-800 rounded-xl shadow-md p-4 my-6 hover:shadow-lg transition-shadow relative">
+    <div class="km-header">
+      <span>Kilometraje Actual</span>
+      <button class="edit-km-btn" (click)="openEditKmModal()" aria-label="Editar kilometraje">
+        <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor">
+          <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
+        </svg>
+      </button>
+    </div>
+    <p class="mt-2 flex items-center text-gray-600 text-sm">
+      <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
+      {{ currentKm }} km
+    </p>
+    <button class="rollback-km-link" (click)="rollbackLastKm()" [disabled]="isRollingBackKm">
+      ¿Te equivocaste con el kilometraje? Reviértelo aquí.
+    </button>
+  </div>
+
+  <div class="maintenance-section">
+    <h2 class="text-center">Proximos Mantenimientos</h2>
+
+    <button
+      (click)="goToRegisterMaintenanceRecord()"
+      [disabled]="!canRegisterMaintenance"
+      class="w-full mt-4 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+      + Registrar mantenimiento
+    </button>
+
+    <div *ngIf="upcomingMaintenances.length > 0; else noMaintenance" class="maintenance-grid mt-4">
+      <div *ngFor="let maintenance of upcomingMaintenances" class="maintenance-tile">
+        <h3 class="tile-title">{{ maintenance.name }}</h3>
+
+        <div class="tile-ring-wrapper">
+          <div class="life-ring">
+            <svg viewBox="0 0 60 60">
+              <circle class="bg-track" cx="30" cy="30" r="24"></circle>
+              <circle
+                class="progress"
+                [class.overdue]="maintenance.isOverdue"
+                cx="30"
+                cy="30"
+                r="24"
+                [style.stroke-dashoffset]="getStrokeDashoffset(maintenance.lifePercent)">
+              </circle>
+            </svg>
+            <span [class.text-red-400]="maintenance.isOverdue">{{ maintenance.lifePercent }}%</span>
+          </div>
+        </div>
+
+        <div class="tile-remaining">
+          <div *ngIf="maintenance.trackingType === 'Km'" [class.text-red-400]="maintenance.isOverdue">
+            {{ maintenance.isOverdue ? 'Vencido por ' + (maintenance.remainingKm * -1) + ' km' : 'Faltan ' + maintenance.remainingKm + ' km' }}
+          </div>
+          <div *ngIf="maintenance.trackingType === 'Time'" [class.text-red-400]="maintenance.isOverdue">
+            {{ maintenance.isOverdue ? 'Vencido por ' + (maintenance.remainingDays * -1) + ' día(s)' : 'Faltan ' + maintenance.remainingDays + ' día(s)' }}
+          </div>
+        </div>
+
+        <p class="tile-last" *ngIf="maintenance.lastPerformedAt">
+          Último mantenimiento: {{ maintenance.lastPerformedAt | date:'yyyy-MM-dd' }}
         </p>
+      </div>
     </div>
 
-    <div class="maintenance-section">
-        <h2 class="text-center"> Proximos Mantenimientos </h2>
+    <ng-template #noMaintenance>
+      <p class="text-gray-400 text-center my-4">Aún no has agregado mantenimientos para esta moto.</p>
+    </ng-template>
 
-        <div *ngIf="maintenances && maintenances.length > 0; else noMaintenance">
-            <div *ngFor="let maintenance of maintenances" class="bg-gray-800 rounded-xl shadow-md p-4 my-3 hover:shadow-lg transition-shadow">
-                <h3 class="font-bold text-lg text-gray-100">{{ maintenance.name }}</h3>
-                <p class="text-gray-400 text-sm mt-1" *ngIf="maintenance.description">
-                    {{ maintenance.description }}
-                </p>
-                <div class="mt-3 flex flex-col gap-1 text-gray-300 text-sm">
-                    <div class="flex items-center" *ngIf="maintenance.trackingType === 'Km' && maintenance.kmInterval">
-                        <img src="/icons/route.svg" class="w-5 h-5 mr-2 text-primary" alt="km icon" />
-                        <span>{{ maintenance.kmInterval }} km</span>
-                    </div>
-                    <div class="flex items-center" *ngIf="maintenance.trackingType === 'Time' && maintenance.timeIntervalWeeks">
-                        <img src="/icons/calendar.svg" class="w-5 h-5 mr-2 text-primary" alt="time icon" />
-                        <span>Cada {{ maintenance.timeIntervalWeeks }} semana(s)</span>
-                    </div>
-                </div>
-            </div>
+    <button
+      (click)="goToMaintenanceCatalog()"
+      class="w-full mt-6 py-2 bg-gray-700 text-textlight rounded-lg hover:bg-gray-600 transition-colors font-semibold">
+      + Agregar mantenimientos
+    </button>
+  </div>
+
+  <hr class="section-divider" />
+
+  <div class="maintenance-section mt-6">
+    <h2 class="text-center">Registro de mantenimientos</h2>
+    <div *ngIf="maintenanceRecords.length > 0; else noRecords">
+      <div *ngFor="let record of maintenanceRecords" class="bg-gray-800 rounded-xl shadow-md p-4 my-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-gray-100">{{ record.maintenanceName }}</h3>
+          <span class="text-xs text-gray-400">{{ record.performedAt | date:'yyyy-MM-dd' }}</span>
         </div>
-
-        <ng-template #noMaintenance>
-            <p class="text-gray-400 text-center my-4">Aún no has agregado mantenimientos para esta moto.</p>
-        </ng-template>
-
-        <button 
-            routerLink="/dashboard/maintenance" 
-            class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold">
-            + Agregar Mantenimiento
-        </button>
+        <p class="text-sm text-gray-300 mt-1" *ngIf="record.performedKm != null">Km: {{ record.performedKm }}</p>
+      </div>
     </div>
+    <ng-template #noRecords>
+      <p class="text-gray-400 text-center my-4">Aún no hay registros de mantenimientos para esta moto.</p>
+    </ng-template>
+  </div>
 </div>
-
 
 <ng-template #noMotorcycle>
   <div class="p-4 text-center">
@@ -65,3 +113,20 @@
     <p class="text-gray-600">Serás redirigido al inicio en breve.</p>
   </div>
 </ng-template>
+
+<div class="modal-backdrop" *ngIf="isEditKmModalOpen">
+  <div class="km-modal">
+    <h3>Ingrese el nuevo Kilometraje de su motocicleta</h3>
+    <input
+      type="number"
+      min="0"
+      [(ngModel)]="editableKm"
+      class="km-input"
+      placeholder="Kilometraje"
+    />
+    <div class="km-modal-actions">
+      <button class="cancel-btn" (click)="closeEditKmModal()">Cancelar</button>
+      <button class="accept-btn" [disabled]="isSubmittingKm" (click)="saveKm()">Aceptar</button>
+    </div>
+  </div>
+</div>

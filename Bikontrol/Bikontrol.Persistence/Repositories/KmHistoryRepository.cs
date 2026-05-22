@@ -22,11 +22,24 @@ namespace Bikontrol.Persistence.Repositories
             await _context.MotorcycleKmHistories.AddAsync(entity);
         }
 
+        public void Remove(MotorcycleKmHistory entity)
+        {
+            _context.MotorcycleKmHistories.Remove(entity);
+        }
+
         public async Task<MotorcycleKmHistory?> GetLastByMotorcycleIdAsync(Guid motorcycleId)
         {
             return await _context.MotorcycleKmHistories
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.RecordedAt)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<MotorcycleKmHistory?> GetFirstByMotorcycleIdAsync(Guid motorcycleId)
+        {
+            return await _context.MotorcycleKmHistories
+                .Where(x => x.MotorcycleId == motorcycleId)
+                .OrderBy(x => x.RecordedAt)
                 .FirstOrDefaultAsync();
         }
 

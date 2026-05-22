@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +19,7 @@ export class SaveMaintenanceComponent {
   isSubmitting = false;
   isEditMode = false;
   maintenanceId?: string;
-  currentYear = new Date().getFullYear();
+  motorcycleId = '';
 
   constructor(
     private fb: FormBuilder,
@@ -39,6 +39,11 @@ export class SaveMaintenanceComponent {
   }
 
   ngOnInit(): void {
+    const motorcycleId = this.route.snapshot.paramMap.get('motorcycleId');
+    if (motorcycleId) {
+      this.motorcycleId = motorcycleId;
+    }
+
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (id) {
@@ -56,6 +61,11 @@ export class SaveMaintenanceComponent {
           ...maintenance,
           monitoringType: maintenance.trackingType === 'Km' ? 'km' : 'time'
         };
+
+        if (!this.motorcycleId && maintenance.motorcycleId) {
+          this.motorcycleId = maintenance.motorcycleId;
+        }
+
         this.maintenanceForm.patchValue(mappedMaintenance);
         this.maintenanceForm.get('monitoringType')?.disable();
       },
@@ -68,10 +78,7 @@ export class SaveMaintenanceComponent {
   onSubmit(): void {
     if (this.maintenanceForm.invalid) {
       this.maintenanceForm.markAllAsTouched();
-      this.swal.warning(
-        'Formulario incompleto',
-        'Por favor completa todos los campos requeridos.'
-      );
+      this.swal.warning('Formulario incompleto', 'Por favor completa todos los campos requeridos.');
       return;
     }
 
@@ -79,6 +86,7 @@ export class SaveMaintenanceComponent {
     const maintenance: SaveMaintenanceDTO = this.maintenanceForm.value;
     const monitoringType = this.maintenanceForm.get('monitoringType')?.value;
 
+    maintenance.motorcycleId = this.motorcycleId;
     maintenance.kmInterval = 0;
     maintenance.timeIntervalWeeks = 0;
     maintenance.trackingType = monitoringType === 'km' ? 'Km' : 'Time';
@@ -92,9 +100,12 @@ export class SaveMaintenanceComponent {
         maintenance.timeIntervalWeeks = this.convertToWeeks(timeValue, timeUnit);
       }
     }
-    
-    if (this.isEditMode && this.maintenanceId) this.updateMaintenance(maintenance);
-    else this.addMaintenance(maintenance);
+
+    if (this.isEditMode && this.maintenanceId) {
+      this.updateMaintenance(maintenance);
+    } else {
+      this.addMaintenance(maintenance);
+    }
   }
 
   private convertToWeeks(value: number, unit: 'weeks' | 'months' | 'years'): number {
@@ -110,46 +121,44 @@ export class SaveMaintenanceComponent {
     }
   }
 
-
   addMaintenance(maintenance: SaveMaintenanceDTO): void {
+    if (!maintenance.motorcycleId) {
+      this.swal.error('Error', 'Debes seleccionar una motocicleta para crear el mantenimiento.');
+      this.isSubmitting = false;
+      return;
+    }
+
     this.maintenanceService.createUserMaintenance(maintenance).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.swal
-          .success('¡Éxito!', 'Mantenimiento agregado correctamente.')
-          .then(() => this.router.navigate(['/dashboard/maintenance']));
+        this.swal.success('Éxito', 'Mantenimiento agregado correctamente.').then(() => {
+          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId, 'maintenance']);
+        });
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.swal.error(
-          'Error',
-          err?.error?.message || 'No se pudo agregar el mantenimiento.'
-        );
+        this.swal.error('Error', err?.error?.message || 'No se pudo agregar el mantenimiento.');
       },
     });
   }
 
   updateMaintenance(maintenance: SaveMaintenanceDTO): void {
     this.maintenanceService.updateMaintenance(this.maintenanceId ?? '', maintenance).subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.swal
-            .success('¡Éxito!', 'Mantenimiento actualizado correctamente.')
-            .then(() => this.router.navigate(['/dashboard/maintenance']));
-        },
-        error: (err) => {
-          this.isSubmitting = false;
-          this.swal.error(
-            'Error',
-            err?.error?.message || 'No se pudo actualizar el mantenimiento.'
-          );
-        },
-      });
+      next: () => {
+        this.isSubmitting = false;
+        this.swal.success('Éxito', 'Mantenimiento actualizado correctamente.').then(() => {
+          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId || maintenance.motorcycleId, 'maintenance']);
+        });
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.swal.error('Error', err?.error?.message || 'No se pudo actualizar el mantenimiento.');
+      },
+    });
   }
 
   hasError(field: string, type: string): boolean {
     const control = this.maintenanceForm.get(field);
-    
     return !!control && control.hasError(type) && control.touched;
   }
 }
