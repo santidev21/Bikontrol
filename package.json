@@ -1,0 +1,20 @@
+{
+  "name": "bikontrol-root",
+  "private": true,
+  "scripts": {
+    "start": "npm run bikontrol",
+    "bikontrol": "node ./scripts/run-bikontrol.mjs all",
+    "bikontrol-ui": "node ./scripts/run-bikontrol.mjs ui",
+    "bikontrol-api": "node ./scripts/run-bikontrol.mjs api",
+    "build": "npm run build:ui && npm run build:api",
+    "build:ui": "npm --prefix bikontrol-web run build",
+    "build:api": "dotnet build Bikontrol/Bikontrol.sln",
+    "test": "npm run test:ui && npm run test:api",
+    "test:ui": "npm --prefix bikontrol-web run test",
+    "test:api": "dotnet test Bikontrol/Bikontrol.sln",
+    "db:update": "dotnet ef database update --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",
+    "db:migration:add": "dotnet ef migrations add --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",
+    "db:migration:remove": "dotnet ef migrations remove --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",
+    "db:drop": "dotnet ef database drop --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj --force"
+  }
+}
