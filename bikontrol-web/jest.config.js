@@ -5,7 +5,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/setup-jest.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^@env/(.*)$': '<rootDir>/src/environments/$1',
+    '^@env/environment$': '<rootDir>/src/environments/environment.ts',
     '\\.(scss|css|svg|png|jpg)$': '<rootDir>/__mocks__/styleMock.js'
   },
   transform: {
