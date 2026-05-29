@@ -58,4 +58,5 @@ If you want only one side:
 ## Continuous Integration
 - A GitHub Actions workflow runs on every push and pull request to `main`.
 - It executes backend tests with `dotnet test` and frontend tests with `npm test`.
+- The frontend job uses `npm install` so it stays resilient while the lockfile is being aligned.
 - The workflow lives in `.github/workflows/ci.yml`.

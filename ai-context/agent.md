@@ -576,6 +576,7 @@ These commands live in `C:\Dev\Bikontrol\package.json` and let you work from the
 - A GitHub Actions workflow lives at `.github/workflows/ci.yml`.
 - It runs on every push and pull request to `main`.
 - It executes backend tests with `dotnet test` and frontend tests with `npm test`.
+- The frontend job uses `npm install` so it remains resilient while the lockfile is being aligned.
 
 ## Rules for the AI
 - Always review the specs before implementing.

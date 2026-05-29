@@ -53,7 +53,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: bikontrol-web
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Run frontend tests
         working-directory: bikontrol-web
