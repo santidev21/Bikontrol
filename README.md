@@ -54,3 +54,8 @@ If you want only one side:
 - Add a migration with `npm run db:migration:add -- YourMigrationName`.
 - The API runner skips `launchSettings.json` and forces `https://localhost:7179` so it does not collide with the default HTTP port.
 - The frontend runner forces `http://localhost:4201` so it does not collide with the default Angular port.
+
+## Continuous Integration
+- A GitHub Actions workflow runs on every push and pull request to `main`.
+- It executes backend tests with `dotnet test` and frontend tests with `npm test`.
+- The workflow lives in `.github/workflows/ci.yml`.

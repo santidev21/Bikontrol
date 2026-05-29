@@ -571,6 +571,12 @@ These commands live in `C:\Dev\Bikontrol\package.json` and let you work from the
 - The backend runner ignores `launchSettings.json` and forces `https://localhost:7179` to avoid conflicts with `5202`.
 - The frontend runner forces `http://localhost:4201` to avoid conflicts with `4200`.
 
+## Continuous Integration
+
+- A GitHub Actions workflow lives at `.github/workflows/ci.yml`.
+- It runs on every push and pull request to `main`.
+- It executes backend tests with `dotnet test` and frontend tests with `npm test`.
+
 ## Rules for the AI
 - Always review the specs before implementing.
 - Do not invent requirements outside the specs.
