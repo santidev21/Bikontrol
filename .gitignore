@@ -15,7 +15,9 @@
 /bikontrol-web/yarn-error.log*
 /bikontrol-web/pnpm-debug.log*
 # Environment files
-/bikontrol-web/src/environments/*.ts
+/bikontrol-web/src/environments/*.local.ts
+/bikontrol-web/src/environments/environment.*.ts
+!/bikontrol-web/src/environments/environment.ts
 # IDE files
 /bikontrol-web/.vscode/
 /bikontrol-web/.idea/

@@ -9,15 +9,12 @@ module.exports = {
     '\\.(scss|css|svg|png|jpg)$': '<rootDir>/__mocks__/styleMock.js'
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': 'ts-jest'
-  },
-  transformIgnorePatterns: ['/node_modules/(?!@angular|rxjs)'],
-  globals: {
-    'ts-jest': {
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': ['ts-jest', {
       tsconfig: 'tsconfig.spec.json',
       diagnostics: false
-    }
+    }]
   },
+  transformIgnorePatterns: ['/node_modules/(?!@angular|rxjs)'],
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
   moduleFileExtensions: ['ts','mjs','js','json','html']
 };
