@@ -1,16 +1,17 @@
-import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { MaintenanceService } from './maintenance.service';
 
-describe('MaintenanceService', () => {
-  let service: MaintenanceService;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(MaintenanceService);
-  });
+describe('MaintenanceService (class)', () => {
+  const httpClientMock = {
+    get: jest.fn().mockReturnValue(of([])),
+    post: jest.fn().mockReturnValue(of({})),
+    put: jest.fn().mockReturnValue(of(undefined)),
+    delete: jest.fn().mockReturnValue(of(undefined))
+  } as any;
 
   it('should be created', () => {
+    const service = new MaintenanceService(httpClientMock);
     expect(service).toBeTruthy();
   });
 });
