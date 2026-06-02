@@ -32,6 +32,19 @@ If you want only one side:
 - `npm run bikontrol-ui`
 - `npm run bikontrol-api`
 
+
+
+## Backend setup
+The API loads `Bikontrol/Bikontrol.API/appsettings.Development.json` when `ASPNETCORE_ENVIRONMENT=Development`.
+
+Before running the API for the first time on a new clone, generate a JWT secret and put it in that file:
+
+```bash
+openssl rand -base64 48
+```
+
+Put the generated value in `Jwt:Key` inside `Bikontrol/Bikontrol.API/appsettings.Development.json`. Keep `appsettings.json` for shared defaults only.
+
 ## Root scripts
 
 | Command | Purpose |
