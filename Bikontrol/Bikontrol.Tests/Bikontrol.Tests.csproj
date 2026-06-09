@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Bikontrol.API\Bikontrol.API.csproj" />
     <ProjectReference Include="..\Bikontrol.Application\Bikontrol.Application.csproj" />
     <ProjectReference Include="..\Bikontrol.Domain\Bikontrol.Domain.csproj" />
     <ProjectReference Include="..\Bikontrol.Infrastructure\Bikontrol.Infrastructure.csproj" />
