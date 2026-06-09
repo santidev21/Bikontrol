@@ -5,6 +5,7 @@ import { Maintenance } from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MaintenanceInfoCardComponent } from "../../../components/maintenance-info-card/maintenance-info-card.component";
 import { SwalService } from '../../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-maintenance-page',
@@ -22,7 +23,8 @@ export class MaintenancePageComponent {
     private maintenanceService: MaintenanceService,
     private route: ActivatedRoute,
     private router: Router,
-    private swal: SwalService
+    private swal: SwalService,
+    private httpError: HttpErrorService
   ) {}
 
   ngOnInit(): void {
@@ -40,14 +42,18 @@ export class MaintenancePageComponent {
   loadUserMaintenance() {
     this.maintenanceService.getUserMaintenanceByMotorcycle(this.motorcycleId).subscribe({
       next: res => this.userMaintenance = res,
-      error: err => console.error(err)
+      error: err => {
+        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar tus mantenimientos.'));
+      }
     });
   }
 
   loadDefaultMaintenance() {
     this.maintenanceService.getDefaultMaintenance().subscribe({
       next: res => this.defaultMaintenance = res,
-      error: err => console.error(err)
+      error: err => {
+        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar los mantenimientos predeterminados.'));
+      }
     });
   }
 

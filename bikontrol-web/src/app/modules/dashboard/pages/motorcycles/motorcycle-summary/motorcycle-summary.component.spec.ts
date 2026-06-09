@@ -37,6 +37,12 @@ describe('MotorcycleSummaryComponent (class)', () => {
     confirm: jest.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
   } as any;
 
+  const httpErrorMock = {
+    message: jest.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
+      return error?.error?.error || error?.error?.message || error?.message || fallback;
+    })
+  } as any;
+
   let component: MotorcycleSummaryComponent;
 
   beforeEach(() => {
@@ -45,7 +51,8 @@ describe('MotorcycleSummaryComponent (class)', () => {
       activatedRouteMock,
       maintenanceServiceMock,
       motorcyclesServiceMock,
-      swalServiceMock
+      swalServiceMock,
+      httpErrorMock
     );
     component.motorcycle = { id: 'm1' } as any;
     component.currentKm = 1000;

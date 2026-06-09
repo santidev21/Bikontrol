@@ -7,6 +7,7 @@ import { MaintenanceRecord, UpcomingMaintenance } from '../../../interfaces/main
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-motorcycle-summary',
@@ -34,7 +35,8 @@ export class MotorcycleSummaryComponent implements OnInit {
     private route: ActivatedRoute,
     private maintenanceService: MaintenanceService,
     private motorcyclesService: MotorcyclesService,
-    private swal: SwalService
+    private swal: SwalService,
+    private httpError: HttpErrorService
   ) {}
 
   ngOnInit(): void {
@@ -79,7 +81,7 @@ export class MotorcycleSummaryComponent implements OnInit {
         this.upcomingMaintenances = res;
       },
       error: (err) => {
-        console.error('Error loading upcoming maintenances:', err);
+        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar los mantenimientos próximos.'));
       }
     });
 
@@ -88,7 +90,7 @@ export class MotorcycleSummaryComponent implements OnInit {
         this.maintenanceRecords = res;
       },
       error: (err) => {
-        console.error('Error loading maintenance records:', err);
+        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar los registros de mantenimiento.'));
       }
     });
   }
@@ -139,7 +141,7 @@ export class MotorcycleSummaryComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmittingKm = false;
-        this.swal.error('Error', err?.error?.message || 'No se pudo actualizar el kilometraje.');
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar el kilometraje.'));
       }
     });
   }
@@ -163,7 +165,7 @@ export class MotorcycleSummaryComponent implements OnInit {
           });
         },
         error: (err) => {
-          this.swal.error('Error', err?.error?.message || 'No se pudo revertir el kilometraje.');
+          this.swal.error('Error', this.httpError.message(err, 'No se pudo revertir el kilometraje.'));
         },
         complete: () => {
           this.isRollingBackKm = false;

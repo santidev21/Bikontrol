@@ -3,6 +3,7 @@ import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@a
 import { Router } from '@angular/router';
 import { MotorcyclesService } from '../../service/motorcycles.service';
 import { SwalService } from '../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 
 @Component({
@@ -21,7 +22,8 @@ export class MotorcycleCardComponent implements OnInit {
   constructor(
     private router: Router,
     private motorcyclesService: MotorcyclesService,
-    private swal : SwalService
+    private swal : SwalService,
+    private httpError: HttpErrorService
   ) {}
 
   ngOnInit(): void {
@@ -56,10 +58,9 @@ export class MotorcycleCardComponent implements OnInit {
             .then(() => this.deleted.emit());
         },
         error: (err) => {
-          console.error(err);
           this.swal.error(
             'Error',
-            err?.error?.message || 'No se pudo eliminar la motocicleta.'
+            this.httpError.message(err, 'No se pudo eliminar la motocicleta.')
           );
         },
       });

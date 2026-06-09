@@ -8,6 +8,7 @@ import { FollowMaintenancePayload } from '../../interfaces/maintenance.interface
 import { SwalService } from '../../../../shared/services/swal.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MonitoringTypeSelectorComponent } from '../../../dashboard/pages/maintenance/components/monitoring-type-selector/monitoring-type-selector.component';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-maintenance-info-card',
@@ -30,7 +31,8 @@ export class MaintenanceInfoCardComponent {
   constructor(private router: Router,
     private maintenanceService: MaintenanceService,
     private swal : SwalService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private httpError: HttpErrorService
   ) {
     this.initFollowForm();
   }
@@ -47,7 +49,7 @@ export class MaintenanceInfoCardComponent {
   }
 
   goToDetails() {
-    console.log('Maintenance clicked:', this.maintenance.id);
+    return;
   }
 
   toggleMenu(event: MouseEvent) {
@@ -124,7 +126,7 @@ export class MaintenanceInfoCardComponent {
         this.isFollowing = false;
         this.swal.error(
           'Error',
-          err?.error?.message || 'No se pudo agregar el mantenimiento.'
+          this.httpError.message(err, 'No se pudo agregar el mantenimiento.')
         );
       },
     });
@@ -162,10 +164,9 @@ export class MaintenanceInfoCardComponent {
             .then(() => this.refresh.emit());
         },
         error: (err) => {
-          console.error(err);
           this.swal.error(
             'Error',
-            err?.error?.message || 'No se pudo eliminar la motocicleta.'
+            this.httpError.message(err, 'No se pudo eliminar la motocicleta.')
           );
         },
       });

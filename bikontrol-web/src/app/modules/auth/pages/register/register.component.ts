@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { AUTH_IMPORTS } from '../../auth-imports';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-register',
@@ -12,14 +13,15 @@ import { AUTH_IMPORTS } from '../../auth-imports';
   styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
-registerForm: FormGroup;
+  registerForm: FormGroup;
   submitted = false;
-  errorMessage: string | null = null; 
+  errorMessage: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private httpError: HttpErrorService
   ) {
     this.registerForm = this.fb.group(
       {
@@ -41,7 +43,6 @@ registerForm: FormGroup;
     return !!(control && control.invalid && (control.touched || control.dirty || this.submitted));
   }
 
-
   passwordMatchValidator(form: FormGroup) {
     const pass = form.get('password')?.value;
     const confirm = form.get('confirmPassword')?.value;
@@ -54,21 +55,19 @@ registerForm: FormGroup;
 
     if (this.registerForm.invalid) return;
 
-     const payload = {
+    const payload = {
       fullName: this.registerForm.value.fullName,
       email: this.registerForm.value.email,
       password: this.registerForm.value.password
     };
 
     this.authService.register(payload).subscribe({
-      next: (response) => {
+      next: () => {
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        console.error(error);
-        this.errorMessage = error.error?.error || 'Error inesperado en el servidor.';
+        this.errorMessage = this.httpError.message(error);
       }
     });
-    
   }
 }

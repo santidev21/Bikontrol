@@ -17,9 +17,14 @@ describe('MotorcycleCardComponent (class)', () => {
     error: jest.fn().mockReturnValue(Promise.resolve({})),
     confirm: jest.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
   } as any;
+  const httpErrorMock = {
+    message: jest.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
+      return error?.error?.error || error?.error?.message || error?.message || fallback;
+    })
+  } as any;
 
   it('should load current km from service and expose displayedKm', () => {
-    const component = new MotorcycleCardComponent(routerMock, motorcyclesServiceMock, swalServiceMock);
+    const component = new MotorcycleCardComponent(routerMock, motorcyclesServiceMock, swalServiceMock, httpErrorMock);
     component.motorcycle = { id: 'm1', km: 1000, name: 'Moto' };
 
     component.ngOnInit();
@@ -28,4 +33,3 @@ describe('MotorcycleCardComponent (class)', () => {
     expect(component.displayedKm).toBe(4567);
   });
 });
-

@@ -3,6 +3,7 @@ import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AUTH_IMPORTS } from '../../auth-imports';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-login',
@@ -17,9 +18,10 @@ export class LoginComponent {
   errorMessage: string | null = null;
 
   constructor(
-    private fb: FormBuilder, 
-    private authService: AuthService, 
-    private router: Router
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private httpError: HttpErrorService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -50,8 +52,7 @@ export class LoginComponent {
     this.authService.login(payload.email, payload.password).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
-        console.error(error);
-        this.errorMessage = error.error?.error || 'Error inesperado en el servidor.';
+        this.errorMessage = this.httpError.message(error);
       }
     });
   }

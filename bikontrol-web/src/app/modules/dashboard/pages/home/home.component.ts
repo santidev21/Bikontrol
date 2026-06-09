@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MotorcyclesService } from '../../service/motorcycles.service';
 import { Motorcycle } from '../../interfaces/motorcycle.interface';
+import { SwalService } from '../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-home',
@@ -13,10 +15,12 @@ import { Motorcycle } from '../../interfaces/motorcycle.interface';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {
- motorcycles: Motorcycle[] = [];
+  motorcycles: Motorcycle[] = [];
 
   constructor(
-    private motorcyclesService: MotorcyclesService
+    private motorcyclesService: MotorcyclesService,
+    private swal: SwalService,
+    private httpError: HttpErrorService
   ) {}
 
   ngOnInit(): void {
@@ -24,9 +28,11 @@ export class HomeComponent implements OnInit {
   }
 
   loadMotorcycles(): void {
-  this.motorcyclesService.getMyMotorcycles().subscribe({
-    next: (data) => (this.motorcycles = data),
-    error: (err) => console.error(err),
-  });
+    this.motorcyclesService.getMyMotorcycles().subscribe({
+      next: (data) => (this.motorcycles = data),
+      error: (err) => {
+        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar tus motocicletas.'));
+      },
+    });
   }
 }
