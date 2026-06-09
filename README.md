@@ -10,12 +10,18 @@ Bikontrol is a full-stack web app for motorcycle owners to track motorcycles, km
 
 ## Repository layout
 ```text
-C:\Dev\Bikontrol
-├─ Bikontrol/        # .NET solution
+/home/santidev21/Dev/Bikontrol
+├─ Bikontrol/        # .NET solution and backend tests
 ├─ bikontrol-web/    # Angular application
-├─ ai-context/       # project context and working specs
-└─ package.json      # root orchestration scripts
+├─ ai-context/       # project context, playbooks, and AI notes
+├─ scripts/          # orchestration scripts
+└─ package.json      # root scripts for local dev and CI parity
 ```
+
+## Source of truth for AI work
+- [ai-context/agent.md](/home/santidev21/Dev/Bikontrol/ai-context/agent.md) is the canonical project context.
+- `ai-context/helpers/` contains smaller repo-specific playbooks when they are needed.
+- If you add more specialized instructions later, keep them close to the context that uses them.
 
 ## Quick start
 From the repository root:
@@ -31,8 +37,6 @@ That command starts both apps together:
 If you want only one side:
 - `npm run bikontrol-ui`
 - `npm run bikontrol-api`
-
-
 
 ## Backend setup
 The API loads `Bikontrol/Bikontrol.API/appsettings.Development.json` when `ASPNETCORE_ENVIRONMENT=Development`.
@@ -66,7 +70,8 @@ Put the generated value in `Jwt:Key` inside `Bikontrol/Bikontrol.API/appsettings
 - Use `npm run db:update` after creating or receiving new EF migrations.
 - Add a migration with `npm run db:migration:add -- YourMigrationName`.
 - The API runner skips `launchSettings.json` and forces `https://localhost:7179` so it does not collide with the default HTTP port.
-- The frontend runner forces `http://localhost:4201` so it does not collide with the default Angular port.
+- The root frontend runner forces `http://localhost:4201` so it does not collide with the default Angular port.
+- If you run Angular directly from `bikontrol-web/` with `npm start`, it still uses the default `4200` unless you pass a different port.
 
 ## Continuous Integration
 - A GitHub Actions workflow runs on every push and pull request to `main`.
