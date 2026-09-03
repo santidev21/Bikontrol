@@ -1,0 +1,20 @@
+# Bikontrol frontend (Angular 18) — build stage
+FROM node:20-alpine AS build
+ARG API_URL=https://bikontrol.santidev21.tech/api
+WORKDIR /src
+
+COPY bikontrol-web/package.json bikontrol-web/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY bikontrol-web/ ./
+RUN npm run build
+
+# Override the API URL baked into the bundle (used by docker-compose.local.yml).
+RUN find /src/dist/bikontrol-web/browser -name '*.js' -exec sed -i "s|https://bikontrol.santidev21.tech/api|${API_URL}|g" {} +
+
+# Serve stage
+FROM nginx:1.27-alpine
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /src/dist/bikontrol-web/browser /usr/share/nginx/html
+
+EXPOSE 80

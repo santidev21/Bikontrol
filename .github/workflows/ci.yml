@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -58,3 +58,41 @@ jobs:
       - name: Run frontend tests
         working-directory: bikontrol-web
         run: npm test
+
+  docker-compose-validate:
+    name: Validate docker compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate compose files
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.local.yml config --quiet
+        env:
+          POSTGRES_DB: bikontrol_db
+          POSTGRES_USER: bikontrol
+          POSTGRES_PASSWORD: ci_dummy_password
+          ConnectionStrings__DefaultConnection: Host=bikontrol-db;Port=5432;Database=bikontrol_db;Username=bikontrol;Password=ci_dummy_password
+          Jwt__Key: ci_dummy_key_0123456789abcdef0123456789abcdef
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, docker-compose-validate]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/bikontrol
+            ./scripts/deploy.sh deploy

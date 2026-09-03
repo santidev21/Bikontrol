@@ -1,0 +1,15 @@
+<Project>
+  <ItemGroup>
+    <!--
+      AutoMapper < 15.1.1 is affected by GHSA-rvv3-g6hj-g44x (DoS via uncontrolled
+      recursion when mapping deeply nested self-referencing object graphs).
+
+      Bikontrol only maps flat, fixed-shape DTOs (no recursive/self-referencing
+      graphs reachable from user input), so the DoS vector does not apply.
+      Upgrading to 15.1.1+ is not feasible: it requires a paid license and pulls
+      .NET 9/10 + Microsoft.IdentityModel 8.x dependencies that conflict with the
+      net8.0 JWT stack. See README "Known dependency notes".
+    -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
+  </ItemGroup>
+</Project>

@@ -73,8 +73,60 @@ Put the generated value in `Jwt:Key` inside `Bikontrol/Bikontrol.API/appsettings
 - The root frontend runner forces `http://localhost:4201` so it does not collide with the default Angular port.
 - If you run Angular directly from `bikontrol-web/` with `npm start`, it still uses the default `4200` unless you pass a different port.
 
+### Known dependency notes
+- `AutoMapper` is pinned to `12.0.1`. Versions `>= 15` require a paid license and pull .NET 9/10 + `Microsoft.IdentityModel` 8.x dependencies that conflict with the net8.0 JWT stack. The upstream advisory `GHSA-rvv3-g6hj-g44x` (DoS via deep recursive object graphs) does not apply here: Bikontrol only maps flat, fixed-shape DTOs with no recursive/self-referencing graphs reachable from user input. The advisory is suppressed in `Bikontrol/Directory.Build.props` with that rationale.
+
+## Production deployment
+
+Bikontrol is served at `https://bikontrol.santidev21.tech/` behind the `vps-gateway` reverse proxy.
+
+Architecture (per `vps-gateway/docs/STANDARD.md`):
+
+```
+Internet → gateway (nginx) → bikontrol (Angular, :80)
+                          → bikontrol-api (.NET, :8080) → bikontrol-db (PostgreSQL)
+```
+
+- `bikontrol-net` (external, shared with the gateway): `bikontrol` + `bikontrol-api`.
+- `bikontrol-internal-net` (internal): database only. The DB is **never** on the shared network.
+
+One-time VPS setup:
+
+```bash
+git clone <repo> /opt/bikontrol
+cd /opt/bikontrol
+cp .env.example .env   # fill in real values, no CHANGE_ME left
+# create the shared networks (or let the gateway's init-networks.sh do it)
+docker network create bikontrol-net
+docker network create bikontrol-internal-net
+```
+
+Deploy (automatic on push to `main` via GitHub Actions, or manual):
+
+```bash
+cd /opt/bikontrol && ./scripts/deploy.sh deploy
+```
+
+### Gateway integration
+
+1. Create DNS A record `bikontrol.santidev21.tech` → VPS IP.
+2. Issue the certificate (see `vps-gateway/AGENTS.md`).
+3. Copy `deploy/bikontrol.santidev21.tech.conf` into the gateway's `sites-enabled/` and add `bikontrol-net` to the gateway `docker-compose.yml` networks and `init-networks.sh`.
+4. Reload: `docker exec gateway nginx -t && docker exec gateway nginx -s reload`.
+
+### Required secrets (`.env`, never committed)
+
+| Variable | Purpose |
+|---|---|
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | Database credentials |
+| `ConnectionStrings__DefaultConnection` | Full Npgsql connection string |
+| `Jwt__Key` | JWT signing key (generate with `openssl rand -base64 48`) |
+| `Jwt__Issuer` / `Jwt__Audience` | JWT issuer/audience (defaults provided) |
+| `Cors__AllowedOrigins` | Comma-separated browser origins |
+
 ## Continuous Integration
 - A GitHub Actions workflow runs on every push and pull request to `main`.
 - It executes backend tests with `dotnet test` and frontend tests with `npm test`.
+- It validates the compose files and deploys to the VPS on push to `main` (requires `VPS_SSH_PRIVATE_KEY`, `VPS_HOST`, `VPS_USER` secrets).
 - The frontend job uses `npm install` so it stays resilient while the lockfile is being aligned.
 - The workflow lives in `.github/workflows/ci.yml`.

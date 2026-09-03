@@ -14,10 +14,8 @@
 /bikontrol-web/yarn-debug.log*
 /bikontrol-web/yarn-error.log*
 /bikontrol-web/pnpm-debug.log*
-# Environment files
+# Environment files (local overrides only — public URLs are not secrets)
 /bikontrol-web/src/environments/*.local.ts
-/bikontrol-web/src/environments/environment.*.ts
-!/bikontrol-web/src/environments/environment.ts
 # IDE files
 /bikontrol-web/.vscode/
 /bikontrol-web/.idea/
@@ -65,6 +63,7 @@
 # Environment
 /Bikontrol/**/*.env
 /Bikontrol/**/*.local
+/.env
 
 # ==============================
 # System / OS

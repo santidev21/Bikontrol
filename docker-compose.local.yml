@@ -1,0 +1,28 @@
+# Local development overrides. Run together with docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:5433:5432"
+
+  api:
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  web:
+    build:
+      args:
+        API_URL: http://localhost:8080/api
+    ports:
+      - "127.0.0.1:4200:80"
+
+networks:
+  bikontrol-net:
+    name: bikontrol-net
+    driver: bridge
+    external: false
+  bikontrol-internal-net:
+    name: bikontrol-internal-net
+    driver: bridge
+    external: false

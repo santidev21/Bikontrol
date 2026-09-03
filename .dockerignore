@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+.env
+*.md
+ai-context
+scripts
+**/node_modules
+**/dist
+**/bin
+**/obj
+**/TestResults
+**/.angular
+bikontrol-web/.angular
