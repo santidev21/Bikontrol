@@ -2,6 +2,23 @@
 
 Bikontrol is a full-stack web app for motorcycle owners to track motorcycles, km history, and maintenance plans.
 
+## To Do
+
+- [ ] Add Google OAuth authentication.
+- [ ] Add password recovery on login.
+- [ ] Bottom nav: pressing "Estadísticas" or "Perfil" redirects to login — it should do nothing (or go to home), not log the user out.
+- [ ] Fix sessions expiring too frequently.
+- [ ] Edit motorcycle: the km field shows 0 in Edit — it should show the current value but disabled.
+- [ ] Allow uploading a custom motorcycle image.
+- [ ] "Add custom maintenance" redirects to login (nonexistent route?).
+- [ ] Predefined maintenance items don't appear — the DB migration was likely never run.
+- [ ] Create a migrator that automatically applies new tables to the production DB.
+- [ ] Create a read-only demo user (view-only, no edits) so people can try the app.
+- [ ] Add the missing tests.
+- [ ] DB backup and security.
+- [ ] Add the statistics view.
+- [ ] Add the profile view.
+
 ## Tech stack
 - Frontend: Angular 18, SCSS, Tailwind CSS, Jest
 - Backend: .NET 8, Clean Architecture, EF Core, xUnit
