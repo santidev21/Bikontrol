@@ -46,4 +46,8 @@ cd /opt/bikontrol && ./scripts/deploy.sh deploy
 | `ConnectionStrings__DefaultConnection` | Full Npgsql connection string |
 | `Jwt__Key` | JWT signing key (generate with `openssl rand -base64 48`) |
 | `Jwt__Issuer` / `Jwt__Audience` | JWT issuer/audience (defaults provided) |
+| `Jwt__ExpireMinutes` / `Jwt__RefreshExpireDays` | Token lifetimes (defaults: 15 min / 30 days) |
+| `Google__ClientId` | Google OAuth client ID (**required** for Sign in with Google; public value) |
+| `Frontend__BaseUrl` | Base URL for password-reset links (default `https://bikontrol.santidev21.tech`) |
+| `Smtp__Host` / `Smtp__Port` / `Smtp__Username` / `Smtp__Password` / `Smtp__FromEmail` (+ `Smtp__FromName`, `Smtp__EnableSsl`) | SMTP for recovery emails (**required** in prod, otherwise reset links are only logged) |
 | `Cors__AllowedOrigins` | Comma-separated browser origins |
