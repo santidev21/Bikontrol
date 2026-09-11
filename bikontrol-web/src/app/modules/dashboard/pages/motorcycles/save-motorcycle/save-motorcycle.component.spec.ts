@@ -14,6 +14,7 @@ describe("SaveMotorcycleComponent", () => {
     routeParamMap$ = new Subject<any>();
     motorcyclesServiceMock = {
       getById: jest.fn(),
+      getCurrentKm: jest.fn(),
       addMotorcycle: jest.fn(),
       updateMotorcycle: jest.fn()
     };
@@ -121,13 +122,14 @@ describe("SaveMotorcycleComponent", () => {
         brand: "Yamaha",
         year: 2023,
         nickname: "La negra",
-        km: 2000,
+        km: 0,
         displacement: 150,
         plate: "XYZ789",
         image: "default.png",
         isEnabled: true
       })
     );
+    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2000 }));
 
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
@@ -136,6 +138,31 @@ describe("SaveMotorcycleComponent", () => {
     expect(component.motorcycleId).toBe("moto-2");
     expect(motorcyclesServiceMock.getById).toHaveBeenCalledWith("moto-2");
     expect(component.motorcycleForm.get("name")?.value).toBe("XTZ");
+  });
+
+  it("should show the current km and disable it in edit mode", () => {
+    motorcyclesServiceMock.getById.mockReturnValue(
+      of({
+        id: "moto-2",
+        name: "XTZ",
+        brand: "Yamaha",
+        year: 2023,
+        nickname: "La negra",
+        km: 0,
+        displacement: 150,
+        plate: "XYZ789",
+        image: "default.png",
+        isEnabled: true
+      })
+    );
+    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 4500 }));
+
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
+
+    expect(motorcyclesServiceMock.getCurrentKm).toHaveBeenCalledWith("moto-2");
+    expect(component.motorcycleForm.get("km")?.value).toBe(4500);
+    expect(component.motorcycleForm.get("km")?.disabled).toBe(true);
   });
 
   it("should update a motorcycle and navigate on success", async () => {
@@ -178,5 +205,59 @@ describe("SaveMotorcycleComponent", () => {
     control?.markAsTouched();
 
     expect(component.hasError("name", "required")).toBe(true);
+  });
+
+  it("should show the placeholder preview when the image is the default", () => {
+    component.motorcycleForm.patchValue({ image: "default.png" });
+
+    expect(component.previewSrc).toBe("/assets/images/defaults/motorcycle-placeholder.webp");
+  });
+
+  it("should show the custom image preview when one is set", () => {
+    component.motorcycleForm.patchValue({ image: "data:image/jpeg;base64,abc" });
+
+    expect(component.previewSrc).toBe("data:image/jpeg;base64,abc");
+  });
+
+  it("should reset the image to the default when removing it", () => {
+    component.motorcycleForm.patchValue({ image: "data:image/jpeg;base64,abc" });
+
+    component.removeImage();
+
+    expect(component.motorcycleForm.get("image")?.value).toBe("default.png");
+  });
+
+  it("should reject non-image files", () => {
+    const input = { value: "x", files: [{ name: "doc.pdf", type: "application/pdf", size: 100 }] } as any;
+
+    component.onImageSelected({ target: input } as any);
+
+    expect(swalMock.warning).toHaveBeenCalledWith("Archivo inválido", "Selecciona un archivo de imagen válido.");
+    expect(input.value).toBe("");
+  });
+
+  it("should reject images larger than 2 MB", () => {
+    const input = { value: "x", files: [{ name: "big.png", type: "image/png", size: 3 * 1024 * 1024 }] } as any;
+
+    component.onImageSelected({ target: input } as any);
+
+    expect(swalMock.warning).toHaveBeenCalledWith("Archivo muy grande", "La imagen no puede superar 2 MB.");
+    expect(input.value).toBe("");
+  });
+
+  it("should resize a valid image and store it in the form", () => {
+    const resizeSpy = jest.spyOn(component as any, "resizeImage").mockImplementation(() => {});
+    const holder: { fn?: () => void } = {};
+    (window as any).FileReader = jest.fn().mockImplementation(() => ({
+      result: "data-url",
+      set onload(fn: () => void) { holder.fn = fn; },
+      readAsDataURL: jest.fn()
+    }));
+    const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
+
+    component.onImageSelected({ target: input } as any);
+    holder.fn?.();
+
+    expect(resizeSpy).toHaveBeenCalledWith("data-url", input);
   });
 });

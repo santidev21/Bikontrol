@@ -70,11 +70,81 @@ export class SaveMotorcycleComponent implements OnInit {
     this.motorcyclesService.getById(id).subscribe({
       next: (motorcycle) => {
         this.motorcycleForm.patchValue(motorcycle);
+        if (this.isEditMode) {
+          this.loadCurrentKm();
+        }
       },
       error: () => {
         this.swal.error('Error', 'No se pudo cargar la motocicleta.');
       },
     });
+  }
+
+  loadCurrentKm(): void {
+    if (!this.motorcycleId) {
+      return;
+    }
+    this.motorcyclesService.getCurrentKm(this.motorcycleId).subscribe({
+      next: (res) => {
+        this.motorcycleForm.patchValue({ km: res.km });
+        this.motorcycleForm.get('km')?.disable();
+      },
+      error: () => {
+        this.motorcycleForm.get('km')?.disable();
+      },
+    });
+  }
+
+  get previewSrc(): string {
+    const image = this.motorcycleForm.get('image')?.value;
+    return image && image !== 'default.png'
+      ? image
+      : '/assets/images/defaults/motorcycle-placeholder.webp';
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      this.swal.warning('Archivo inválido', 'Selecciona un archivo de imagen válido.');
+      input.value = '';
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      this.swal.warning('Archivo muy grande', 'La imagen no puede superar 2 MB.');
+      input.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.resizeImage(reader.result as string, input);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeImage(): void {
+    this.motorcycleForm.patchValue({ image: 'default.png' });
+  }
+
+  private resizeImage(dataUrl: string, input: HTMLInputElement): void {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 400;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      this.motorcycleForm.patchValue({ image: canvas.toDataURL('image/jpeg', 0.8) });
+    };
+    img.onerror = () => {
+      this.swal.warning('Archivo inválido', 'No se pudo leer la imagen seleccionada.');
+      input.value = '';
+    };
+    img.src = dataUrl;
   }
 
   onSubmit(): void {

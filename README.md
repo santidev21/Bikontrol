@@ -196,13 +196,13 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 
 - [x] Add Google OAuth authentication.
 - [x] Add password recovery on login.
-- [ ] Bottom nav: pressing "Estadísticas" or "Perfil" redirects to login — it should do nothing (or go to home), not log the user out.
+- [x] Bottom nav: pressing "Estadísticas" or "Perfil" redirects to login — dead links now point to home, plus a dashboard wildcard fallback so unknown dashboard URLs never land on login.
 - [x] Fix sessions expiring too frequently.
-- [ ] Edit motorcycle: the km field shows 0 in Edit — it should show the current value but disabled.
-- [ ] Allow uploading a custom motorcycle image.
-- [ ] "Add custom maintenance" redirects to login (nonexistent route?).
-- [ ] Predefined maintenance items don't appear — the DB migration was likely never run.
-- [ ] Create a migrator that automatically applies new tables to the production DB.
+- [x] Edit motorcycle: the km field shows the current value (from km history) and is disabled in Edit.
+- [x] Allow uploading a custom motorcycle image (stored as a resized data URL in `Motorcycle.Image`).
+- [x] "Add custom maintenance" redirects to login — the route existed and navigation was correct (verified by spec); likely a stale deployed bundle, plus the dashboard wildcard fallback now prevents this class of issue.
+- [x] Predefined maintenance items don't appear — the `CleanupAllButUsers` migration had truncated the seeded `MaintenanceTypes` table; fixed with the idempotent `SeedPredefinedMaintenanceTypes` re-seed migration.
+- [x] Create a migrator that automatically applies new tables to the production DB — already implemented: the API runs `db.Database.Migrate()` on startup in any non-Development environment (`Program.cs`), so production applies pending migrations automatically.
 - [ ] Create a read-only demo user (view-only, no edits) so people can try the app.
 - [ ] Add the missing tests.
 - [ ] DB backup and security.

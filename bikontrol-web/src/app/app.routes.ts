@@ -32,6 +32,8 @@ export const routes: Routes = [
         .then((m) => m.SaveMaintenanceComponent)},
       { path: 'motorcycles/:motorcycleId/maintenance/edit/:id', loadComponent: () => import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component')
         .then((m) => m.SaveMaintenanceComponent)},
+      // Defensive fallback: unknown dashboard URLs go to home, never to login
+      { path: '**', redirectTo: 'home' },
     ]
   },
 

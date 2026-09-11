@@ -12,7 +12,7 @@ Migrations live in `Bikontrol/Bikontrol.Persistence`. Prefer the root scripts, f
 npm run db:migration:add -- YourMigrationName
 
 # Apply pending migrations
-npm run db:update
+npm run db:migrate
 ```
 
 Raw form:
@@ -24,5 +24,5 @@ dotnet ef database update --project Bikontrol/Bikontrol.Persistence/Bikontrol.Pe
 
 Rules:
 - Never edit an applied migration — add a new one.
-- Run `npm run db:update` after creating or receiving new migrations.
-- Production DB updates currently require a manual migration run (see the To Do list).
+- Run `npm run db:migrate` after creating or receiving new migrations.
+- Production applies pending migrations automatically: the API runs `db.Database.Migrate()` on startup in any non-Development environment (`Bikontrol.API/Program.cs`), so no manual migration step is needed on deploy. Local dev applies them manually via `npm run db:migrate`.

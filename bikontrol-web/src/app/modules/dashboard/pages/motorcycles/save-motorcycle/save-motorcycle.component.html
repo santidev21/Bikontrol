@@ -60,9 +60,12 @@
         <input
           formControlName="km"
           type="number"
-          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
           placeholder="Ej: 15000"
         />
+        <small *ngIf="isEditMode" class="text-gray-500">
+          Km actual (no editable, se gestiona desde el resumen)
+        </small>
         <small *ngIf="hasError('km', 'required')" class="text-red-500 font-bold">
           Campo requerido
         </small>
@@ -126,11 +129,27 @@
     <!-- Imagen -->
     <div class="flex flex-col items-center mt-4">
       <img
-        src="/assets/images/defaults/motorcycle-placeholder.webp"
+        [src]="previewSrc"
         alt="Preview"
         class="w-24 h-24 object-cover rounded-lg shadow-sm mb-2"
       />
-      <p class="text-sm text-gray-500">Imagen por defecto</p>
+      <label class="text-sm text-primary font-semibold cursor-pointer hover:underline">
+        {{ motorcycleForm.get('image')?.value === 'default.png' ? 'Subir imagen' : 'Cambiar imagen' }}
+        <input
+          type="file"
+          accept="image/*"
+          class="hidden"
+          (change)="onImageSelected($event)"
+        />
+      </label>
+      <button
+        *ngIf="motorcycleForm.get('image')?.value !== 'default.png'"
+        type="button"
+        (click)="removeImage()"
+        class="text-sm text-gray-500 hover:underline mt-1"
+      >
+        Quitar imagen
+      </button>
     </div>
 
     <!-- Botón -->

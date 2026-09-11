@@ -29,5 +29,8 @@ namespace Bikontrol.Application.DTOs.Motorcycle
 
         [Required(ErrorMessage = "La placa es obligatoria.")]
         public string Plate { get; set; } = string.Empty;
+
+        [StringLength(1_400_000, ErrorMessage = "La imagen es demasiado grande.")]
+        public string? Image { get; set; }
     }
 }
