@@ -6,9 +6,9 @@ This file is the working context for Bikontrol. Keep it updated when architectur
 Motorcycle tracking and maintenance app:
 - Angular 18 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests)
 - .NET 8 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
-- PostgreSQL 16 via EF Core (migrations in Persistence, applied via root `db:update` script)
+- PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
 - JWT authentication (login/register), per-user salt password hashing, soft deletes
-- Root `package.json` orchestrates both sides (`bikontrol`, `build`, `test`, `db:*` scripts)
+- Root `package.json` orchestrates local dev (`dev`, `dev:ui/dev:api`, `db:*`, `docker:dev` scripts)
 
 ## Repository Layout
 ```text
@@ -29,24 +29,25 @@ Bikontrol/
 ```
 
 ## Backend Architecture
-Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. API loads `Bikontrol.API/appsettings.Development.json` in Development; JWT secret generated per clone (`openssl rand -base64 48` into `Jwt:Key`).
+Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. In Development the API takes DB/JWT values from `.env` via the root scripts (fallback: `Bikontrol.API/appsettings.Development.json`, gitignored, created from the committed `.example` template).
 
 ## Frontend Architecture
 Angular 18 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Jest (`npm test` → `jest --passWithNoTests --runInBand`).
 
 ## Commands (run from repo root via root scripts unless noted)
-- Both: `npm run build` · `npm run test` (see `/test`)
+- Both: `npm run dev` (DB in Docker + frontend + backend, hot reload) · `npm run build` · `npm run test` (see `/test`)
+- Single side: `npm run dev:ui` · `npm run dev:api`
 - Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`) · `npm run build:api` (see `backend-test` skill)
 - Frontend: `npm run test:ui` · `npm run build:ui` (see `frontend-test`)
-- Migrations: `npm run db:migration:add -- <Name>` · `npm run db:update` (see `db-migrations`, or `/migrate`)
-- Single side: `npm run bikontrol-ui` · `npm run bikontrol-api`
-- Docker: `docker compose -f docker-compose.yml -f docker-compose.local.yml up --build` (see `docker-dev`)
+- Migrations: `npm run db:migrate` (= `dotnet ef database update …`) · `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`)
+- DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down`
+- Docker: `npm run docker:dev` (= `docker compose -f docker-compose.yml -f docker-compose.local.yml up --build`) (see `docker-dev`)
 
 ## Ports
 | Context | API | Frontend | DB |
 |---|---|---|---|
-| Manual dev | `https://localhost:7179` (`http://localhost:5202`) | `http://localhost:4201` (`:4200` if run directly from `bikontrol-web/`) | local Postgres |
-| Docker local | `127.0.0.1:8080` | `127.0.0.1:4200` | `127.0.0.1:5433` |
+| Native dev (`npm run dev`) | `https://localhost:7179` (`http://localhost:5202`) | `http://localhost:4201` (`:4200` if run directly from `bikontrol-web/`) | `127.0.0.1:5434` (docker, same volume) |
+| Docker local (`npm run docker:dev`) | `127.0.0.1:8080` | `127.0.0.1:4200` | internal only |
 
 ## AI Setup
 - `.opencode/` is the AI home (tracked in git): `skills/` (task playbooks in `SKILL.md` format), `agent/` (per-area playbooks: backend, frontend, reviewer), `command/` (shortcuts: /test, /migrate). Local plugin scaffold (`node_modules`, `package.json`) is ignored.
@@ -56,7 +57,8 @@ Angular 18 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 ## Working Rules For This Repo
 - Prefer small, focused changes.
 - Keep API contracts, frontend types, and tests aligned in the same pass.
-- EF migrations live in `Bikontrol.Persistence`; never edit applied migrations — use `npm run db:migration:add -- <Name>` then `npm run db:update`.
-- Prefer the root scripts (`npm run test/build/db:*`) over per-folder commands — they are the CI parity layer.
-- Never commit secrets: JWT key lives in `.env` / `appsettings.Development.json` only.
+- EF migrations live in `Bikontrol.Persistence`; never edit applied migrations — use `npm run db:migration:add -- <Name>` then `npm run db:migrate`.
+- Prefer the root scripts (`npm run dev/db:*/build/test`) over per-folder commands — they are the CI parity layer; they inject `.env` values into the API so native dev matches the Docker DB.
+- DB always runs in Docker (`npm run db:up`); raw compose ALWAYS uses both `-f` flags: `docker compose -f docker-compose.yml -f docker-compose.local.yml …`.
+- Never commit secrets: JWT key lives in `.env` / `appsettings.Development.json` only (both gitignored).
 - Keep the root README and this file synchronized when behavior changes.

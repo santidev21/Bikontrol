@@ -12,7 +12,7 @@ Internet → gateway (nginx) → bikontrol (Angular, :80)
 ## Docker Services (detail)
 | Service | Description |
 |---|---|
-| `db` | PostgreSQL 16 (internal network only, loopback `:5433` locally) |
+| `db` | PostgreSQL 16 (internal network only, loopback `:5434` locally) |
 | `api` | .NET 8 API (`:8080`, health at `/health`, waits for healthy DB) |
 | `web` | Angular 18 via nginx (`:80`, loopback `:4200` locally) |
 

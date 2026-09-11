@@ -58,57 +58,98 @@ Bikontrol/
 
 ---
 
-## Getting Started
+## Local Development
 
-### Quick start
-From the repository root:
+The database (PostgreSQL 16) **always runs in Docker** — loopback-only (`127.0.0.1:5434`), never exposed externally. Only where the app itself runs changes:
 
-```bash
-npm run bikontrol
-```
+- `npm run docker:dev` → everything (DB + API + frontend) in Docker, closest to prod.
+- `npm run dev` → DB in Docker, API + frontend native (`dotnet run` / `ng serve`) with hot reload, against the **same** `bikontrol_db_data` volume.
 
-That command starts both apps together:
-- Frontend at `http://localhost:4201`
-- API at `https://localhost:7179`
+### Prerequisites
 
-If you want only one side:
-- `npm run bikontrol-ui`
-- `npm run bikontrol-api`
+- Node.js 20+
+- .NET 8 SDK
+- Docker Desktop (running)
 
-### Backend setup
-The API loads `Bikontrol/Bikontrol.API/appsettings.Development.json` when `ASPNETCORE_ENVIRONMENT=Development`.
-
-Before running the API for the first time on a new clone, generate a JWT secret and put it in that file:
+### 1. Environment setup
 
 ```bash
-openssl rand -base64 48
+cp .env.example .env
+# Fill POSTGRES_PASSWORD (avoid '$'; wrap '#' or spaces in single quotes),
+# Jwt__Key (generate with: openssl rand -base64 48)
 ```
 
-Put the generated value in `Jwt:Key` inside `Bikontrol/Bikontrol.API/appsettings.Development.json`. Keep `appsettings.json` for shared defaults only.
+### 2. Run everything in Docker (closest to prod)
 
-### Root scripts
+```bash
+npm run docker:dev
+# = docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+```
+
+- API: `http://127.0.0.1:8080` (health at `/health`)
+- Web: `http://127.0.0.1:4200`
+- DB: `127.0.0.1:5434` (loopback-only)
+- Data persists in the `bikontrol_db_data` volume; `docker compose … down -v` wipes it.
+
+### 3. Run natively with hot reload
+
+```bash
+npm run dev
+```
+
+Starts Postgres in Docker, then runs the frontend (`http://localhost:4201`) and the API (`https://localhost:7179`) together. On first run it creates `Bikontrol/Bikontrol.API/appsettings.Development.json` from the committed `.example` template — review `ConnectionStrings:DefaultConnection` (`127.0.0.1:5434`) and `Jwt:Key`.
+
+Single side:
+
+```bash
+npm run dev:ui    # Angular app only (:4201)
+npm run dev:api   # API only (:7179)
+```
+
+> If you run Angular directly from `bikontrol-web/` with `npm start`, it uses the default `:4200` unless you pass `--port 4201`.
+
+### 4. Database & migrations
+
+```bash
+npm run db:up       # start Postgres only (127.0.0.1:5434, loopback-only)
+npm run db:down     # stop it (data persists in the volume)
+npm run db:migrate  # apply EF migrations (dotnet ef database update)
+# New migration:
+npm run db:migration:add -- YourMigrationName
+```
+
+Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they always match the Docker Postgres.
+
+### Commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run bikontrol` | Starts frontend and backend together |
-| `npm run bikontrol-ui` | Starts only the Angular app |
-| `npm run bikontrol-api` | Starts only the API |
-| `npm run build` | Builds frontend and backend |
-| `npm run test` | Runs frontend and backend tests |
+| `npm run dev` | DB (Docker) + frontend + backend with hot reload |
+| `npm run dev:ui` / `npm run dev:api` | Frontend / API only |
+| `npm run db:up` / `npm run db:down` | Start / stop Postgres in Docker |
+| `npm run db:migrate` | Apply EF migrations |
+| `npm run docker:dev` | Full stack in Docker (like prod) |
+| `npm run build` | Build frontend and backend |
+| `npm run test` | Run frontend and backend tests |
 
 ### Useful backend paths
+
 - API project: `Bikontrol/Bikontrol.API`
 - Persistence project: `Bikontrol/Bikontrol.Persistence`
 - Backend solution: `Bikontrol/Bikontrol.sln`
 
 ### Notes
-- The root `package.json` is an orchestration layer; the frontend keeps its own Angular scripts inside `bikontrol-web/package.json`.
-- Run `npm run bikontrol-ui` or `npm run bikontrol-api` when you want to work on only one side.
-- Use `npm run db:update` after creating or receiving new EF migrations.
-- Add a migration with `npm run db:migration:add -- YourMigrationName`.
+
+- The root `package.json` is the orchestration layer; the frontend keeps its own Angular scripts inside `bikontrol-web/package.json`.
 - The API runner skips `launchSettings.json` and forces `https://localhost:7179` so it does not collide with the default HTTP port.
 - The root frontend runner forces `http://localhost:4201` so it does not collide with the default Angular port.
-- If you run Angular directly from `bikontrol-web/` with `npm start`, it still uses the default `4200` unless you pass a different port.
+
+### Gotchas
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Login returns `504 Gateway Timeout` but the API is healthy | Stale PWA service worker cached in the browser | Hard-refresh (`Ctrl+Shift+R`) or clear site data for `localhost:4200` |
+| `npm run dev` → API auth fails against Docker Postgres | `.env` `POSTGRES_PASSWORD` / `Jwt__Key` still `CHANGE_ME` | Fill `.env` (the root scripts inject it into the API) |
 
 #### Known dependency notes
 - `AutoMapper` is pinned to `12.0.1`. Versions `>= 15` require a paid license and pull .NET 9/10 + `Microsoft.IdentityModel` 8.x dependencies that conflict with the net8.0 JWT stack. The upstream advisory `GHSA-rvv3-g6hj-g44x` (DoS via deep recursive object graphs) does not apply here: Bikontrol only maps flat, fixed-shape DTOs with no recursive/self-referencing graphs reachable from user input. The advisory is suppressed in `Bikontrol/Directory.Build.props` with that rationale.
