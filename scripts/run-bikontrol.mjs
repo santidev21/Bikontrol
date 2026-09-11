@@ -51,14 +51,58 @@ function backendEnvironment() {
   if (jwtKey && !jwtKey.startsWith('CHANGE_ME')) {
     env.Jwt__Key = jwtKey;
   }
+  const expireMinutes = dotEnv.Jwt__ExpireMinutes;
+  if (expireMinutes) {
+    env.Jwt__ExpireMinutes = expireMinutes;
+  }
+  const refreshExpireDays = dotEnv.Jwt__RefreshExpireDays;
+  if (refreshExpireDays) {
+    env.Jwt__RefreshExpireDays = refreshExpireDays;
+  }
+  const googleClientId = dotEnv.Google__ClientId;
+  if (googleClientId && !googleClientId.startsWith('CHANGE_ME')) {
+    env.Google__ClientId = googleClientId;
+  }
+  const frontendBaseUrl = dotEnv.Frontend__BaseUrl;
+  if (frontendBaseUrl) {
+    env.Frontend__BaseUrl = frontendBaseUrl;
+  }
+  for (const key of [
+    'Smtp__Host',
+    'Smtp__Port',
+    'Smtp__Username',
+    'Smtp__Password',
+    'Smtp__FromEmail',
+    'Smtp__FromName',
+    'Smtp__EnableSsl'
+  ]) {
+    const value = dotEnv[key];
+    if (value && !value.startsWith('CHANGE_ME')) {
+      env[key] = value;
+    }
+  }
 
   return env;
 }
 
 const frontendDirectory = path.join(rootDirectory, 'bikontrol-web');
 const backendProjectPath = path.join(rootDirectory, 'Bikontrol', 'Bikontrol.API', 'Bikontrol.API.csproj');
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const frontendPort = '4201';
+
+// Node 24 on Windows throws EINVAL when spawning the npm.cmd shim, so run
+// npm's CLI through node directly (same behavior, no shell needed).
+function resolveNpm() {
+  const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (existsSync(npmCli)) {
+    return { command: process.execPath, argsPrefix: [npmCli], shell: false };
+  }
+  return {
+    command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    argsPrefix: [],
+    shell: process.platform === 'win32'
+  };
+}
+const npm = resolveNpm();
 
 function createCommand(command, args, options = {}) {
   return {
@@ -66,19 +110,22 @@ function createCommand(command, args, options = {}) {
     args,
     cwd: options.cwd ?? rootDirectory,
     env: options.env ?? {},
+    shell: options.shell ?? false,
     label: options.label ?? command
   };
 }
 
+function uiCommand() {
+  return createCommand(
+    npm.command,
+    [...npm.argsPrefix, '--prefix', frontendDirectory, 'run', 'start', '--', '--port', frontendPort, '--no-open', ...extraArgs],
+    { label: 'ui', shell: npm.shell }
+  );
+}
+
 function buildCommands(selectedMode, apiEnv) {
   if (selectedMode === 'ui') {
-    return [
-      createCommand(
-        npmCommand,
-        ['--prefix', frontendDirectory, 'run', 'start', '--', '--port', frontendPort, '--no-open', ...extraArgs],
-        { label: 'ui' }
-      )
-    ];
+    return [uiCommand()];
   }
 
   if (selectedMode === 'api') {
@@ -92,11 +139,7 @@ function buildCommands(selectedMode, apiEnv) {
 
   if (selectedMode === 'all') {
     return [
-      createCommand(
-        npmCommand,
-        ['--prefix', frontendDirectory, 'run', 'start', '--', '--port', frontendPort, '--no-open', ...extraArgs],
-        { label: 'ui' }
-      ),
+      uiCommand(),
       createCommand('dotnet', ['run', '--no-launch-profile', '--project', backendProjectPath, ...extraArgs], {
         label: 'api',
         env: apiEnv
@@ -130,7 +173,7 @@ function runSingle(commandConfig) {
       cwd: commandConfig.cwd,
       env: { ...process.env, ...commandConfig.env },
       stdio: ['inherit', 'pipe', 'pipe'],
-      shell: false
+      shell: commandConfig.shell ?? false
     });
 
     child.stdout.on('data', chunk => writeOutput(commandConfig.label, chunk));
@@ -199,7 +242,7 @@ function runCombined(commands) {
         cwd: commandConfig.cwd,
         env: { ...process.env, ...commandConfig.env },
         stdio: ['inherit', 'pipe', 'pipe'],
-        shell: false
+        shell: commandConfig.shell ?? false
       });
 
       children.push(child);

@@ -7,7 +7,7 @@ Motorcycle tracking and maintenance app:
 - Angular 18 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests)
 - .NET 8 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
 - PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
-- JWT authentication (login/register), per-user salt password hashing, soft deletes
+- JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, per-user salt password hashing, password recovery via SMTP email, soft deletes
 - Root `package.json` orchestrates local dev (`dev`, `dev:ui/dev:api`, `db:*`, `docker:dev` scripts)
 
 ## Repository Layout

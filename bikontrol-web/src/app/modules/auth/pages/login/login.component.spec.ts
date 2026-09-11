@@ -10,7 +10,8 @@ describe("LoginComponent", () => {
 
   beforeEach(() => {
     authServiceMock = {
-      login: jest.fn()
+      login: jest.fn(),
+      googleLogin: jest.fn()
     };
     routerMock = {
       navigate: jest.fn()
@@ -83,5 +84,32 @@ describe("LoginComponent", () => {
     component.onSubmit();
 
     expect(component.errorMessage).toBe("Error inesperado en el servidor.");
+  });
+
+  it("should navigate to dashboard after a successful google login", () => {
+    authServiceMock.googleLogin.mockReturnValue(of({ token: "google-token", refreshToken: "g-refresh" }));
+
+    component.onGoogleCredential({ credential: "id-token-abc" });
+
+    expect(authServiceMock.googleLogin).toHaveBeenCalledWith("id-token-abc");
+    expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
+  });
+
+  it("should set an error when google credential is missing", () => {
+    component.onGoogleCredential({});
+
+    expect(authServiceMock.googleLogin).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain("Google");
+  });
+
+  it("should expose the backend error message on google login failure", () => {
+    authServiceMock.googleLogin.mockReturnValue(
+      throwError(() => ({ error: { error: "Token invalido" } }))
+    );
+
+    component.onGoogleCredential({ credential: "id-token-abc" });
+
+    expect(component.errorMessage).toBe("Token invalido");
+    expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 });

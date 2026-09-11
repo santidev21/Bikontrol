@@ -17,6 +17,7 @@ namespace Bikontrol.Persistence
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
         public DbSet<Motorcycle> Motorcycles { get; set; } = default!;
         public DbSet<Maintenance> DefaultMaintenances { get; set; } = default!;
         public DbSet<UserMaintenance> UserMaintenances { get; set; } = default!;

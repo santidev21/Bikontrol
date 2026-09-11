@@ -15,6 +15,8 @@ namespace Bikontrol.Persistence.Entities
         public string PasswordHash { get; private set; } = string.Empty;
         public string FullName { get; private set; } = string.Empty;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+        public string? ResetPasswordTokenHash { get; private set; }
+        public DateTime? ResetPasswordTokenExpires { get; private set; }
         public IList<Motorcycle> Motorcycles { get; set; } = new List<Motorcycle>();
 
         private User() { }
@@ -40,6 +42,18 @@ namespace Bikontrol.Persistence.Entities
         public void UpdatePassword(string newHash)
         {
             PasswordHash = newHash ?? throw new ArgumentNullException(nameof(newHash));
+        }
+
+        public void SetResetPasswordToken(string tokenHash, DateTime expiresAt)
+        {
+            ResetPasswordTokenHash = tokenHash ?? throw new ArgumentNullException(nameof(tokenHash));
+            ResetPasswordTokenExpires = expiresAt;
+        }
+
+        public void ClearResetPasswordToken()
+        {
+            ResetPasswordTokenHash = null;
+            ResetPasswordTokenExpires = null;
         }
     }
 }

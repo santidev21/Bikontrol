@@ -38,7 +38,18 @@ services:
       Jwt__Key: ${Jwt__Key}
       Jwt__Issuer: ${Jwt__Issuer:-BikontrolAPI}
       Jwt__Audience: ${Jwt__Audience:-BikontrolClient}
-      Cors__AllowedOrigins: ${Cors__AllowedOrigins:-https://bikontrol.santidev21.tech}
+      Jwt__ExpireMinutes: ${Jwt__ExpireMinutes:-15}
+      Jwt__RefreshExpireDays: ${Jwt__RefreshExpireDays:-30}
+      Google__ClientId: ${Google__ClientId:-}
+      Frontend__BaseUrl: ${Frontend__BaseUrl:-https://bikontrol.santidev21.tech}
+      Smtp__Host: ${Smtp__Host:-}
+      Smtp__Port: ${Smtp__Port:-587}
+      Smtp__Username: ${Smtp__Username:-}
+      Smtp__Password: ${Smtp__Password:-}
+      Smtp__FromEmail: ${Smtp__FromEmail:-}
+      Smtp__FromName: ${Smtp__FromName:-Bikontrol}
+      Smtp__EnableSsl: ${Smtp__EnableSsl:-true}
+      Cors__AllowedOrigins: ${Cors__AllowedOrigins:-https://bikontrol.santidev21.tech,http://127.0.0.1:4200,http://127.0.0.1:4201}
     networks:
       - bikontrol-net
       - bikontrol-internal-net

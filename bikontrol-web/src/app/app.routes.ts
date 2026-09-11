@@ -1,9 +1,15 @@
 import { Routes } from '@angular/router';
+import { guestGuard } from './shared/guards/guest.guard';
+import { rootRedirectGuard } from './shared/guards/root-redirect.guard';
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', canActivate: [rootRedirectGuard], loadComponent: () => import('./modules/auth/pages/login/login.component').then(c => c.LoginComponent) },
+
   // Auth
-  { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(c => c.LoginComponent) },
-  { path: 'register', loadComponent: () => import('./modules/auth/pages/register/register.component').then(c => c.RegisterComponent) },
+  { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./modules/auth/pages/login/login.component').then(c => c.LoginComponent) },
+  { path: 'register', canActivate: [guestGuard], loadComponent: () => import('./modules/auth/pages/register/register.component').then(c => c.RegisterComponent) },
+  { path: 'forgot-password', loadComponent: () => import('./modules/auth/pages/forgot-password/forgot-password.component').then(c => c.ForgotPasswordComponent) },
+  { path: 'reset-password', loadComponent: () => import('./modules/auth/pages/reset-password/reset-password.component').then(c => c.ResetPasswordComponent) },
 
   // Dashboard
   {

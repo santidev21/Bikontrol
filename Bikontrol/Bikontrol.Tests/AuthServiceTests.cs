@@ -3,6 +3,7 @@ using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Authentication;
+using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence.Entities;
@@ -16,6 +17,8 @@ public class AuthServiceTests
 {
     private readonly IMapper _mapper;
     private readonly JwtTokenGenerator _tokenGenerator;
+    private FakeRefreshTokenRepository _refreshRepository = new();
+    private FakeEmailSender _emailSender = new();
 
     public AuthServiceTests()
     {
@@ -40,10 +43,13 @@ public class AuthServiceTests
         Assert.Equal(request.Email, response.Email);
         Assert.Equal(request.FullName, response.FullName);
         Assert.False(string.IsNullOrWhiteSpace(response.Token));
+        Assert.False(string.IsNullOrWhiteSpace(response.RefreshToken));
+        Assert.True(response.ExpiresIn > 0);
         Assert.Single(repository.Users);
         Assert.Equal(request.Email, repository.Users[0].Email);
         Assert.Equal("hashed:Secret123!", repository.Users[0].PasswordHash);
         Assert.Equal(1, repository.SaveChangesCalls);
+        Assert.Single(_refreshRepository.Tokens);
     }
 
     [Fact]
@@ -81,6 +87,7 @@ public class AuthServiceTests
         Assert.Equal(user.Email, response.Email);
         Assert.Equal(user.FullName, response.FullName);
         Assert.False(string.IsNullOrWhiteSpace(response.Token));
+        Assert.False(string.IsNullOrWhiteSpace(response.RefreshToken));
     }
 
     [Fact]
@@ -116,9 +123,146 @@ public class AuthServiceTests
         Assert.Equal(401, exception.StatusCode);
     }
 
+    [Fact]
+    public async Task RefreshAsync_WhenTokenIsValid_ShouldRotateAndReturnNewTokens()
+    {
+        var user = new User("test@bikontrol.com", "Test User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository);
+        var login = await service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" });
+
+        var refreshed = await service.RefreshAsync(new RefreshTokenRequest { RefreshToken = login.RefreshToken });
+
+        Assert.False(string.IsNullOrWhiteSpace(refreshed.Token));
+        Assert.NotEqual(login.RefreshToken, refreshed.RefreshToken);
+        // The old token must be revoked and a new one issued.
+        Assert.Equal(2, _refreshRepository.Tokens.Count);
+        Assert.Single(_refreshRepository.Tokens, t => t.RevokedAt is null);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTokenIsUnknown_ShouldThrowAuthException()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.RefreshAsync(new RefreshTokenRequest { RefreshToken = "does-not-exist" }));
+
+        Assert.Equal(401, exception.StatusCode);
+    }
+
+    [Fact]
+    public async Task ForgotPasswordAsync_WhenUserExists_ShouldSendEmailWithResetLink()
+    {
+        var user = new User("test@bikontrol.com", "Test User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository);
+
+        await service.ForgotPasswordAsync(new ForgotPasswordRequest { Email = user.Email });
+
+        Assert.NotNull(user.ResetPasswordTokenHash);
+        Assert.NotNull(user.ResetPasswordTokenExpires);
+        var email = Assert.Single(_emailSender.Sent);
+        Assert.Equal(user.Email, email.To);
+        Assert.Contains("/reset-password?token=", email.Body);
+    }
+
+    [Fact]
+    public async Task ForgotPasswordAsync_WhenUserDoesNotExist_ShouldNotSendEmail()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+
+        await service.ForgotPasswordAsync(new ForgotPasswordRequest { Email = "missing@bikontrol.com" });
+
+        Assert.Empty(_emailSender.Sent);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_WithValidToken_ShouldUpdatePasswordAndClearToken()
+    {
+        var user = new User("test@bikontrol.com", "Test User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository);
+        await service.ForgotPasswordAsync(new ForgotPasswordRequest { Email = user.Email });
+        var token = ExtractToken(_emailSender.Sent.Single().Body);
+
+        await service.ResetPasswordAsync(new ResetPasswordRequest
+        {
+            Email = user.Email,
+            Token = token,
+            NewPassword = "NewSecret123!"
+        });
+
+        Assert.Equal("hashed:NewSecret123!", user.PasswordHash);
+        Assert.Null(user.ResetPasswordTokenHash);
+        Assert.Null(user.ResetPasswordTokenExpires);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_WithInvalidToken_ShouldThrowAuthException()
+    {
+        var user = new User("test@bikontrol.com", "Test User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository);
+        await service.ForgotPasswordAsync(new ForgotPasswordRequest { Email = user.Email });
+
+        var exception = await Assert.ThrowsAsync<AuthException>(() => service.ResetPasswordAsync(new ResetPasswordRequest
+        {
+            Email = user.Email,
+            Token = "wrong-token",
+            NewPassword = "NewSecret123!"
+        }));
+
+        Assert.Equal(401, exception.StatusCode);
+        Assert.Equal("hashed:Secret123!", user.PasswordHash);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_WhenClientIdIsMissing_ShouldThrow503()
+    {
+        var repository = new FakeUserRepository();
+        var service = new AuthService(
+            repository,
+            new FakeRefreshTokenRepository(),
+            new FakePasswordHasher(),
+            _tokenGenerator,
+            new FakeEmailSender(),
+            _mapper,
+            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
+                ["Jwt:Issuer"] = "Bikontrol",
+                ["Jwt:Audience"] = "Bikontrol.Tests"
+            }).Build());
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.GoogleLoginAsync(new GoogleLoginRequest { IdToken = "whatever" }));
+
+        Assert.Equal(503, exception.StatusCode);
+    }
+
+    private static string ExtractToken(string body)
+    {
+        var marker = "token=";
+        var start = body.IndexOf(marker, StringComparison.Ordinal) + marker.Length;
+        var end = body.IndexOf('&', start);
+        return Uri.UnescapeDataString(body.Substring(start, end - start));
+    }
+
     private AuthService CreateService(FakeUserRepository repository)
     {
-        return new AuthService(repository, new FakePasswordHasher(), _tokenGenerator, _mapper);
+        _refreshRepository = new FakeRefreshTokenRepository(repository.Users);
+        _emailSender = new FakeEmailSender();
+        return new AuthService(
+            repository,
+            _refreshRepository,
+            new FakePasswordHasher(),
+            _tokenGenerator,
+            _emailSender,
+            _mapper,
+            BuildConfiguration());
     }
 
     private static IConfiguration BuildConfiguration()
@@ -128,7 +272,10 @@ public class AuthServiceTests
             {
                 ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
                 ["Jwt:Issuer"] = "Bikontrol",
-                ["Jwt:Audience"] = "Bikontrol.Tests"
+                ["Jwt:Audience"] = "Bikontrol.Tests",
+                ["Jwt:ExpireMinutes"] = "15",
+                ["Jwt:RefreshExpireDays"] = "30",
+                ["Frontend:BaseUrl"] = "http://localhost:4200"
             })
             .Build();
     }
@@ -168,6 +315,47 @@ public class AuthServiceTests
         public Task SaveChangesAsync()
         {
             SaveChangesCalls++;
+            return Task.CompletedTask;
+        }
+    }
+
+private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
+    {
+        private readonly List<User> _users;
+
+        public FakeRefreshTokenRepository(List<User>? users = null)
+        {
+            _users = users ?? new List<User>();
+        }
+
+        public List<RefreshToken> Tokens { get; } = new();
+
+        public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash)
+        {
+            var token = Tokens.FirstOrDefault(t => t.TokenHash == tokenHash);
+            if (token is not null)
+            {
+                token.User = _users.FirstOrDefault(u => u.Id == token.UserId);
+            }
+            return Task.FromResult(token);
+        }
+
+        public Task AddAsync(RefreshToken refreshToken)
+        {
+            Tokens.Add(refreshToken);
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync() => Task.CompletedTask;
+    }
+
+    private sealed class FakeEmailSender : IEmailSender
+    {
+        public List<(string To, string Subject, string Body)> Sent { get; } = new();
+
+        public Task SendAsync(string toEmail, string subject, string body)
+        {
+            Sent.Add((toEmail, subject, body));
             return Task.CompletedTask;
         }
     }

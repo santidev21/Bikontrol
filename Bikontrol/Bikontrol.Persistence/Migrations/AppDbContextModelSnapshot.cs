@@ -475,6 +475,39 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("UserMaintenanceTypes", (string)null);
                 });
 
+            modelBuilder.Entity("Bikontrol.Persistence.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("refresh_tokens", (string)null);
+                });
+
             modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -497,6 +530,13 @@ namespace Bikontrol.Persistence.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResetPasswordTokenExpires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResetPasswordTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.HasKey("Id");
 
@@ -569,6 +609,17 @@ namespace Bikontrol.Persistence.Migrations
                     b.Navigation("BaseType");
 
                     b.Navigation("Motorcycle");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Bikontrol.Persistence.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

@@ -1,6 +1,7 @@
 ﻿using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
+using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence.Entities;
@@ -21,6 +22,7 @@ namespace Bikontrol.Infrastructure
             services.AddHttpContextAccessor();
             services.AddScoped<JwtTokenGenerator>();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
             services.AddAutoMapper(typeof(MappingProfile));
 
             services.AddScoped<IAuthService, AuthService>();

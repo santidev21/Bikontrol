@@ -172,6 +172,9 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 ## Security
 
 - JWT auth with a server-side signing key (stored in `.env` / `appsettings.Development.json`, never committed)
+- Sliding sessions: short-lived access token + long-lived refresh token (rotated on each use, stored hashed in the DB)
+- Google OAuth "Sign in with Google" (ID-token flow; the Google Client ID is public, no Client Secret required)
+- Password recovery via email (SMTP configured in `.env`; reset tokens are hashed and time-limited)
 - Password hashing with a per-user salt
 - Database isolated on an internal Docker network, never on the shared network
 - Security headers (HTTPS, HSTS) applied by the gateway
@@ -191,10 +194,10 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 
 ## To Do
 
-- [ ] Add Google OAuth authentication.
-- [ ] Add password recovery on login.
+- [x] Add Google OAuth authentication.
+- [x] Add password recovery on login.
 - [ ] Bottom nav: pressing "Estadísticas" or "Perfil" redirects to login — it should do nothing (or go to home), not log the user out.
-- [ ] Fix sessions expiring too frequently.
+- [x] Fix sessions expiring too frequently.
 - [ ] Edit motorcycle: the km field shows 0 in Edit — it should show the current value but disabled.
 - [ ] Allow uploading a custom motorcycle image.
 - [ ] "Add custom maintenance" redirects to login (nonexistent route?).

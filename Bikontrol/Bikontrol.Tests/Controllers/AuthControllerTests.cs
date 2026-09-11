@@ -42,7 +42,9 @@ public class AuthControllerTests
             Id = Guid.NewGuid(),
             Email = "user@bikontrol.com",
             FullName = "Test User",
-            Token = "token-456"
+            Token = "token-456",
+            RefreshToken = "refresh-456",
+            ExpiresIn = 900
         };
         var service = new FakeAuthService { LoginResult = response };
         var controller = new AuthController(service);
@@ -76,6 +78,26 @@ public class AuthControllerTests
         {
             LastLoginRequest = dto;
             return Task.FromResult(LoginResult);
+        }
+
+        public Task<LoginResponse> GoogleLoginAsync(GoogleLoginRequest request)
+        {
+            return Task.FromResult(LoginResult);
+        }
+
+        public Task<LoginResponse> RefreshAsync(RefreshTokenRequest request)
+        {
+            return Task.FromResult(LoginResult);
+        }
+
+        public Task ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            return Task.CompletedTask;
         }
     }
 }

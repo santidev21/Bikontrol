@@ -1,9 +1,16 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AUTH_IMPORTS } from '../../auth-imports';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
+import { environment } from '@env/environment';
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
 @Component({
   selector: 'app-login',
@@ -12,7 +19,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
   loginForm: FormGroup;
   submitted = false;
   errorMessage: string | null = null;
@@ -27,6 +34,19 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  ngAfterViewInit(): void {
+    if (window.google?.accounts?.id) {
+      this.renderGoogleButton();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => this.renderGoogleButton();
+    document.body.appendChild(script);
   }
 
   get f() {
@@ -50,6 +70,39 @@ export class LoginComponent {
     };
 
     this.authService.login(payload.email, payload.password).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: (error) => {
+        this.errorMessage = this.httpError.message(error);
+      }
+    });
+  }
+
+  private renderGoogleButton(): void {
+    if (!window.google?.accounts?.id) return;
+
+    window.google.accounts.id.initialize({
+      client_id: environment.googleClientId,
+      callback: (response: any) => this.onGoogleCredential(response)
+    });
+
+    const element = document.getElementById('google-button');
+    if (element) {
+      window.google.accounts.id.renderButton(element, {
+        theme: 'outline',
+        size: 'large',
+        width: 280,
+        shape: 'rectangular'
+      });
+    }
+  }
+
+  onGoogleCredential(response: { credential?: string }): void {
+    if (!response?.credential) {
+      this.errorMessage = 'No se pudo obtener la credencial de Google.';
+      return;
+    }
+
+    this.authService.googleLogin(response.credential).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
         this.errorMessage = this.httpError.message(error);

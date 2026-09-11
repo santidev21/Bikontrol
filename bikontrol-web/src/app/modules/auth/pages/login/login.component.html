@@ -22,7 +22,7 @@
         </small>
       </div>
 
-      <div class="mb-6">
+      <div class="mb-2">
         <label class="block text-sm font-medium text-textdark mb-1">Contraseña</label>
         <input
           type="password"
@@ -38,6 +38,10 @@
         </small>
       </div>
 
+      <div class="text-right mb-4">
+        <a routerLink="/forgot-password" class="text-xs text-secondary hover:underline">¿Olvidaste tu contraseña?</a>
+      </div>
+
       <button
         type="submit"
         [disabled]="loginForm.invalid"
@@ -49,14 +53,22 @@
       <small *ngIf="errorMessage" class="text-red-500 text-xs block text-center mt-3 font-bold">
         {{ errorMessage }}
       </small>
-
-      <button
-        type="button"
-        routerLink="/register"
-        class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
-      >
-        Registrarse
-      </button>
     </form>
+
+    <div class="flex items-center gap-3 my-4">
+      <span class="flex-1 border-t border-accent"></span>
+      <span class="text-xs text-textdark">o continuar con</span>
+      <span class="flex-1 border-t border-accent"></span>
+    </div>
+
+    <div id="google-button" class="flex justify-center"></div>
+
+    <button
+      type="button"
+      routerLink="/register"
+      class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
+    >
+      Registrarse
+    </button>
   </div>
 </div>

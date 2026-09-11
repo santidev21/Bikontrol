@@ -19,6 +19,15 @@ namespace Bikontrol.Infrastructure.Authentication
             _configuration = configuration;
         }
 
+        public int ExpiresInSeconds
+        {
+            get
+            {
+                var minutes = int.TryParse(_configuration["Jwt:ExpireMinutes"], out var m) ? m : 30;
+                return Math.Max(1, minutes) * 60;
+            }
+        }
+
         public string GenerateToken(Guid userId, string email, string fullName)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
@@ -36,7 +45,7 @@ namespace Bikontrol.Infrastructure.Authentication
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(30),
+                expires: DateTime.UtcNow.AddSeconds(ExpiresInSeconds),
                 signingCredentials: creds
             );
 

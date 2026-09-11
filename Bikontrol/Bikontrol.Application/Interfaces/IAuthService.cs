@@ -11,5 +11,9 @@ namespace Bikontrol.Application.Interfaces
     {
         Task<RegisterResponse> RegisterAsync(RegisterRequest request);
         Task<LoginResponse> LoginAsync(LoginRequest dto);
+        Task<LoginResponse> GoogleLoginAsync(GoogleLoginRequest request);
+        Task<LoginResponse> RefreshAsync(RefreshTokenRequest request);
+        Task ForgotPasswordAsync(ForgotPasswordRequest request);
+        Task ResetPasswordAsync(ResetPasswordRequest request);
     }
 }

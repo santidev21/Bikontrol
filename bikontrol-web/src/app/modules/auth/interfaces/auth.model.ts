@@ -1,14 +1,22 @@
-export interface LoginResponse {
+export interface AuthSession {
   id: string;
   email: string;
   fullName: string;
   token: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
-export interface RegisterResponse {
-  id: string;
-  email: string;
-  fullName: string;
+export type LoginResponse = AuthSession;
+
+export interface RegisterResponse extends AuthSession {
   createdAt: string;
-  token: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
 }
