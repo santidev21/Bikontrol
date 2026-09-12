@@ -58,5 +58,12 @@ namespace Bikontrol.API.Controllers
             await _authService.ResetPasswordAsync(request);
             return Ok(new { message = "Contraseña actualizada. Ya puedes iniciar sesión." });
         }
+
+        [HttpPost("demo")]
+        public async Task<IActionResult> DemoLogin()
+        {
+            var result = await _authService.DemoLoginAsync();
+            return Ok(result);
+        }
     }
 }

@@ -243,6 +243,48 @@ public class AuthServiceTests
         Assert.Equal(503, exception.StatusCode);
     }
 
+    [Fact]
+    public async Task DemoLoginAsync_ShouldCreateDemoUserAndReturnTokenWithRoleDemo()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+
+        var response = await service.DemoLoginAsync();
+
+        Assert.Equal("demo@bikontrol.com", response.Email);
+        Assert.Equal("Demo", response.Role);
+        Assert.False(string.IsNullOrWhiteSpace(response.Token));
+        Assert.Single(repository.Users);
+        Assert.Equal("Demo", repository.Users.Single().Role);
+        // token should contain role claim
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(response.Token);
+        Assert.Equal("Demo", jwt.Claims.First(c => c.Type == "role").Value);
+    }
+
+    [Fact]
+    public async Task DemoLoginAsync_WhenDemoUserAlreadyExists_ShouldReuseExisting()
+    {
+        var existingDemo = new User("demo@bikontrol.com", "Usuario Demo", "hashed:random", "Demo");
+        var repository = new FakeUserRepository(existingUsers: [existingDemo]);
+        var service = CreateService(repository);
+
+        var response = await service.DemoLoginAsync();
+
+        Assert.Equal(existingDemo.Id, response.Id);
+        Assert.Single(repository.Users);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_ShouldSetRoleToUserByDefault()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+        var response = await service.RegisterAsync(new RegisterRequest { Email = "new@bikontrol.com", FullName = "New User", Password = "Secret123!" });
+        Assert.Equal("User", response.Role);
+        Assert.Equal("User", repository.Users.Single().Role);
+    }
+
     private static string ExtractToken(string body)
     {
         var marker = "token=";

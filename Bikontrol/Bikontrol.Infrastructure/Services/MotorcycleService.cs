@@ -30,8 +30,15 @@ namespace Bikontrol.Infrastructure.Services
             _currentUser = currentUser;
         }
 
+        private void EnsureCanWrite()
+        {
+            if (_currentUser.IsDemo)
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+        }
+
         public async Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto)
         {
+            EnsureCanWrite();
             var entity = _mapper.Map<Motorcycle>(dto);
             entity.UserId = _currentUser.UserId;
             entity.Validate();
@@ -74,6 +81,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task AddKmHistoryAsync(Guid id, int km)
         {
+            EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
             if (entity.UserId != _currentUser.UserId)
@@ -84,6 +92,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task RollbackLastKmAsync(Guid id, int newKm)
         {
+            EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
             if (entity.UserId != _currentUser.UserId)
@@ -94,6 +103,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task UpdateAsync(Guid id, SaveMotorcycleDTO dto)
         {
+            EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
 
@@ -106,6 +116,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task SoftDeleteAsync(Guid id)
         {
+            EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
 

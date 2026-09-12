@@ -8,6 +8,7 @@ import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-motorcycle-summary',
@@ -36,8 +37,13 @@ export class MotorcycleSummaryComponent implements OnInit {
     private maintenanceService: MaintenanceService,
     private motorcyclesService: MotorcyclesService,
     private swal: SwalService,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private authService: AuthService
   ) {}
+
+  get isDemo(): boolean {
+    return this.authService.isDemo();
+  }
 
   ngOnInit(): void {
     const navState = this.router.getCurrentNavigation()?.extras?.state as { motorcycle?: Motorcycle };

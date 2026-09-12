@@ -6,6 +6,7 @@ import { MaintenanceService } from '../../../service/maintenance.service';
 import { MaintenanceInfoCardComponent } from "../../../components/maintenance-info-card/maintenance-info-card.component";
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-maintenance-page',
@@ -24,8 +25,13 @@ export class MaintenancePageComponent {
     private route: ActivatedRoute,
     private router: Router,
     private swal: SwalService,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private authService: AuthService
   ) {}
+
+  get isDemo(): boolean {
+    return this.authService.isDemo();
+  }
 
   ngOnInit(): void {
     const motorcycleId = this.route.snapshot.paramMap.get('motorcycleId');

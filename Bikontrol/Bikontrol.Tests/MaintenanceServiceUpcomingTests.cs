@@ -110,8 +110,14 @@ public class MaintenanceServiceUpcomingTests
 
     private sealed class FakeCurrentUserService : ICurrentUserService
     {
-        public FakeCurrentUserService(Guid userId) => UserId = userId;
+        public FakeCurrentUserService(Guid userId, string role = Persistence.Entities.UserRole.User)
+        {
+            UserId = userId;
+            Role = role;
+        }
         public Guid UserId { get; }
+        public string Role { get; }
+        public bool IsDemo => Role == Persistence.Entities.UserRole.Demo;
     }
 
     private static Motorcycle CreateMotorcycle(Guid motorcycleId, Guid userId)

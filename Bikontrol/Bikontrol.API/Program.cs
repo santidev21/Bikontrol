@@ -4,6 +4,7 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Mapping;
+using Bikontrol.Infrastructure.Seed;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
@@ -185,6 +186,16 @@ if (!app.Environment.IsDevelopment())
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
     }
+}
+
+try
+{
+    await DemoUserSeeder.SeedAsync(app.Services);
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    logger.LogWarning(ex, "Demo seeding failed: {Message}", ex.Message);
 }
 
 app.Run();

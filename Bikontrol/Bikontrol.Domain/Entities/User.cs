@@ -15,18 +15,20 @@ namespace Bikontrol.Persistence.Entities
         public string PasswordHash { get; private set; } = string.Empty;
         public string FullName { get; private set; } = string.Empty;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+        public string Role { get; private set; } = UserRole.User;
         public string? ResetPasswordTokenHash { get; private set; }
         public DateTime? ResetPasswordTokenExpires { get; private set; }
         public IList<Motorcycle> Motorcycles { get; set; } = new List<Motorcycle>();
 
         private User() { }
 
-        public User(string email, string fullName, string passwordHash)
+        public User(string email, string fullName, string passwordHash, string? role = null)
         {
             Id = Guid.NewGuid();
             Email = email;
             FullName = fullName;
             PasswordHash = passwordHash;
+            Role = string.IsNullOrWhiteSpace(role) ? UserRole.User : role;
             CreatedAt = DateTime.UtcNow;
         }
 
@@ -55,5 +57,7 @@ namespace Bikontrol.Persistence.Entities
             ResetPasswordTokenHash = null;
             ResetPasswordTokenExpires = null;
         }
+
+        public bool IsDemo => Role == UserRole.Demo;
     }
 }

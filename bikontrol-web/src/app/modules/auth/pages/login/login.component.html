@@ -70,5 +70,14 @@
     >
       Registrarse
     </button>
+
+    <button
+      type="button"
+      (click)="onDemoLogin()"
+      [disabled]="demoLoading"
+      class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
+    >
+      {{ demoLoading ? 'Cargando demo...' : '¿Querés probar la demo?' }}
+    </button>
   </div>
 </div>

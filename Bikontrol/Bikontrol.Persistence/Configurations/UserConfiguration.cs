@@ -19,6 +19,7 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(u => u.Email).IsRequired().HasMaxLength(150);
             builder.Property(u => u.PasswordHash).IsRequired();
             builder.Property(u => u.FullName).IsRequired().HasMaxLength(200);
+            builder.Property(u => u.Role).IsRequired().HasMaxLength(20).HasDefaultValue(UserRole.User);
             builder.Property(u => u.CreatedAt).IsRequired();
             builder.Property(u => u.ResetPasswordTokenHash).HasMaxLength(128);
             builder.Property(u => u.ResetPasswordTokenExpires);

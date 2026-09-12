@@ -16,7 +16,7 @@
   <div class="km-card bg-gray-800 rounded-xl shadow-md p-4 my-6 hover:shadow-lg transition-shadow relative">
     <div class="km-header">
       <span>Kilometraje Actual</span>
-      <button class="edit-km-btn" (click)="openEditKmModal()" aria-label="Editar kilometraje">
+      <button *ngIf="!isDemo" class="edit-km-btn" (click)="openEditKmModal()" aria-label="Editar kilometraje">
         <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor">
           <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
         </svg>
@@ -26,7 +26,7 @@
       <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
       {{ currentKm }} km
     </p>
-    <button class="rollback-km-link" (click)="rollbackLastKm()" [disabled]="isRollingBackKm">
+    <button *ngIf="!isDemo" class="rollback-km-link" (click)="rollbackLastKm()" [disabled]="isRollingBackKm">
       ¿Te equivocaste con el kilometraje? Reviértelo aquí.
     </button>
   </div>
@@ -35,6 +35,7 @@
     <h2 class="text-center">Proximos Mantenimientos</h2>
 
     <button
+      *ngIf="!isDemo"
       (click)="goToRegisterMaintenanceRecord()"
       [disabled]="!canRegisterMaintenance"
       class="w-full mt-4 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
@@ -82,6 +83,7 @@
     </ng-template>
 
     <button
+      *ngIf="!isDemo"
       (click)="goToMaintenanceCatalog()"
       class="w-full mt-6 py-2 bg-gray-700 text-textlight rounded-lg hover:bg-gray-600 transition-colors font-semibold">
       + Agregar mantenimientos

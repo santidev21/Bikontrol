@@ -15,5 +15,6 @@ namespace Bikontrol.Application.Interfaces
         Task<LoginResponse> RefreshAsync(RefreshTokenRequest request);
         Task ForgotPasswordAsync(ForgotPasswordRequest request);
         Task ResetPasswordAsync(ResetPasswordRequest request);
+        Task<LoginResponse> DemoLoginAsync();
     }
 }

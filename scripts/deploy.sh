@@ -7,7 +7,8 @@ set -euo pipefail
 DEPLOY_DIR="/opt/bikontrol"
 LOG_FILE="/tmp/bikontrol-deploy.log"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-BACKUP_DIR="/tmp/bikontrol-backup-${TIMESTAMP}"
+BACKUP_DIR="${DEPLOY_DIR}/backups/backup-${TIMESTAMP}"
+BACKUP_RETENTION=7
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -42,11 +43,13 @@ validate_config() {
 }
 
 backup() {
+    mkdir -p "$(dirname "$BACKUP_DIR")"
     if [ -d "$DEPLOY_DIR" ]; then
         log "Creating config backup at ${BACKUP_DIR}.tgz..."
         tar czf "${BACKUP_DIR}.tgz" -C / \
             --exclude=opt/bikontrol/.git \
             --exclude=opt/bikontrol/.env \
+            --exclude=opt/bikontrol/backups \
             opt/bikontrol 2>/dev/null || true
         chmod 700 "${BACKUP_DIR}.tgz"
         log "Backup created."
@@ -62,12 +65,53 @@ backup_database() {
     source "$DEPLOY_DIR/.env"
     set +a
 
+    mkdir -p "$(dirname "$BACKUP_DIR")"
+    mkdir -p "$BACKUP_DIR"
     if docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps -q db >/dev/null 2>&1; then
-        log "Backing up database..."
+        log "Backing up database to ${BACKUP_DIR}/db.sql.gz ..."
         docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
-            pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" > "${BACKUP_DIR}/db.sql" \
+            pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>/dev/null | gzip > "${BACKUP_DIR}/db.sql.gz" \
             || log "WARNING: database backup failed (continuing)"
+        # prune old backups, keep last N
+        log "Pruning old backups (keeping last $BACKUP_RETENTION) ..."
+        ls -dt "${DEPLOY_DIR}/backups"/backup-* 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -rf
+        ls -t "${DEPLOY_DIR}/backups"/backup-*/db.sql.gz 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -f || true
     fi
+}
+
+backup_only() {
+    BACKUP_DIR="${DEPLOY_DIR}/backups/backup-${TIMESTAMP}"
+    log "=== Manual backup: ${BACKUP_DIR} ==="
+    mkdir -p "$BACKUP_DIR"
+    backup_database
+    log "Backup complete at ${BACKUP_DIR}"
+    ls -lh "${BACKUP_DIR}/" 2>/dev/null || true
+}
+
+install_cron() {
+    local schedule="0 2 * * 0"
+    local cmd="${DEPLOY_DIR}/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1"
+    local cron_line="${schedule} ${cmd}"
+    # Allow custom schedule: ./scripts/deploy.sh install-cron "0 3 * * 0"
+    if [ -n "${2:-}" ]; then
+        # second argument overrides schedule
+        cron_line="${2} ${cmd}"
+    fi
+    log "Installing weekly backup cron: ${cron_line}"
+    # Ensure backup dir + log file exist
+    mkdir -p "${DEPLOY_DIR}/backups"
+    touch /var/log/bikontrol-backup.log 2>/dev/null || true
+    # Remove any previous bikontrol backup crons to avoid duplicates
+    (crontab -l 2>/dev/null | grep -v "bikontrol.*backup-db" || true; echo "$cron_line") | crontab -
+    log "Cron installed. Current crontab:"
+    crontab -l 2>/dev/null | grep bikontrol || true
+    log "Backups run weekly on Sunday 02:00 UTC. Change with: ./scripts/deploy.sh install-cron \"<cron>\""
+}
+
+remove_cron() {
+    log "Removing bikontrol backup cron..."
+    (crontab -l 2>/dev/null | grep -v "bikontrol.*backup-db" || true) | crontab -
+    log "Cron removed."
 }
 
 pull() {
@@ -129,7 +173,12 @@ rollback() {
     log "Rolling back..."
     (cd "$DEPLOY_DIR" && docker compose down) || true
 
-    if [ -f "${BACKUP_DIR}/db.sql" ] && [ -f "$DEPLOY_DIR/.env" ]; then
+    # Support both .sql and .sql.gz backups
+    local _dump=""
+    if [ -f "${BACKUP_DIR}/db.sql.gz" ]; then _dump="${BACKUP_DIR}/db.sql.gz"
+    elif [ -f "${BACKUP_DIR}/db.sql" ]; then _dump="${BACKUP_DIR}/db.sql"
+    fi
+    if [ -n "$_dump" ] && [ -f "$DEPLOY_DIR/.env" ]; then
         set -a
         # shellcheck disable=SC1091
         source "$DEPLOY_DIR/.env"
@@ -137,9 +186,15 @@ rollback() {
         log "Starting db to restore dump..."
         (cd "$DEPLOY_DIR" && docker compose up -d db)
         sleep 10
-        docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
-            psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" < "${BACKUP_DIR}/db.sql" \
-            || log "WARNING: database restore failed"
+        if [[ "$_dump" == *.gz ]]; then
+            gunzip -c "$_dump" | docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
+                psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" \
+                || log "WARNING: database restore failed"
+        else
+            docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
+                psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" < "$_dump" \
+                || log "WARNING: database restore failed"
+        fi
     fi
 
     if [ -f "${BACKUP_DIR}.tgz" ]; then
@@ -190,8 +245,11 @@ case "${1:-deploy}" in
     logs) logs ;;
     verify) verify ;;
     rollback) rollback ;;
+    backup|backup-db|backup-only) backup_only ;;
+    install-cron) install_cron "$@" ;;
+    remove-cron) remove_cron ;;
     *)
-        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|rollback]"
+        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|rollback|backup-db|install-cron|remove-cron]"
         exit 1
         ;;
 esac

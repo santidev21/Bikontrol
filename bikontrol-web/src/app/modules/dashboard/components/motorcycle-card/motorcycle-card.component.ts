@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { MotorcyclesService } from '../../service/motorcycles.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 
 @Component({
@@ -23,8 +24,13 @@ export class MotorcycleCardComponent implements OnInit {
     private router: Router,
     private motorcyclesService: MotorcyclesService,
     private swal : SwalService,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private authService: AuthService
   ) {}
+
+  get isDemo(): boolean {
+    return this.authService.isDemo();
+  }
 
   ngOnInit(): void {
     const motorcycleId = this.motorcycle?.id;

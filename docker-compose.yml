@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - bikontrol_db_data:/var/lib/postgresql/data
+      - ./docker/db/init-ssl.sh:/usr/local/bin/init-ssl.sh:ro
+    entrypoint: ["sh", "/usr/local/bin/init-ssl.sh"]
     networks:
       - bikontrol-internal-net
     healthcheck:

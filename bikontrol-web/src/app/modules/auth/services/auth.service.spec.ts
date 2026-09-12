@@ -139,4 +139,31 @@ describe("AuthService (unit, mocked HttpClient)", () => {
   it("isAuthenticated should return false when storage is empty", () => {
     expect(service.isAuthenticated()).toBeFalsy();
   });
+
+  it("demoLogin should call POST /demo and store session with Demo role", done => {
+    const mock: any = { token: btoa('h') + '.' + btoa(JSON.stringify({ role: 'Demo' })) + '.' + btoa('s'), refreshToken: "demo-refresh", role: "Demo" };
+    mockHttp.post.mockReturnValue(of(mock));
+    service.demoLogin().subscribe(res => {
+      expect(localStorage.getItem("token")).toBe(mock.token);
+      expect(localStorage.getItem("role")).toBe("Demo");
+      expect(service.isDemo()).toBeTruthy();
+      expect(service.getRole()).toBe("Demo");
+      done();
+    });
+    expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/demo`, {});
+  });
+
+  it("isDemo should decode role from JWT when localStorage empty", () => {
+    const payload = btoa(JSON.stringify({ role: "Demo" }));
+    const token = `header.${payload}.sig`;
+    localStorage.setItem("token", token);
+    expect(service.isDemo()).toBeTruthy();
+    expect(service.getRole()).toBe("Demo");
+  });
+
+  it("logout should clear role", () => {
+    localStorage.setItem("role", "Demo");
+    service.logout();
+    expect(localStorage.getItem("role")).toBeNull();
+  });
 });

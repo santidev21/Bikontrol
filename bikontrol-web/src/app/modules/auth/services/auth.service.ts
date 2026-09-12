@@ -6,6 +6,7 @@ import { ForgotPasswordResponse, LoginResponse, RegisterResponse, ResetPasswordR
 
 const TOKEN_KEY = 'token';
 const REFRESH_TOKEN_KEY = 'refreshToken';
+const ROLE_KEY = 'role';
 
 @Injectable({
   providedIn: 'root'
@@ -33,6 +34,12 @@ export class AuthService {
     );
   }
 
+  demoLogin(): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/demo`, {}).pipe(
+      tap(response => this.storeSession(response))
+    );
+  }
+
   forgotPassword(email: string): Observable<ForgotPasswordResponse> {
     return this.http.post<ForgotPasswordResponse>(`${this.apiUrl}/forgot-password`, { email });
   }
@@ -55,6 +62,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(ROLE_KEY);
   }
 
   getToken(): string | null {
@@ -69,8 +77,36 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  private storeSession(response: { token: string; refreshToken: string }): void {
+  getRole(): string {
+    const stored = localStorage.getItem(ROLE_KEY);
+    if (stored) return stored;
+    const token = this.getToken();
+    if (!token) return 'User';
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.role ?? payload.Role ?? 'User';
+    } catch {
+      return 'User';
+    }
+  }
+
+  isDemo(): boolean {
+    return this.getRole() === 'Demo';
+  }
+
+  private storeSession(response: { token: string; refreshToken: string; role?: string }): void {
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
+    const role = (response as any).role ?? this.decodeRole(response.token) ?? 'User';
+    localStorage.setItem(ROLE_KEY, role);
+  }
+
+  private decodeRole(token: string): string | null {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.role ?? payload.Role ?? null;
+    } catch {
+      return null;
+    }
   }
 }

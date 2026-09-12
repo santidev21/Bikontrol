@@ -27,7 +27,7 @@
   </div>
 
   <!-- Right: Options -->
-  <div class="self-start relative" (click)="$event.stopPropagation()">
+  <div *ngIf="!isDemo" class="self-start relative" (click)="$event.stopPropagation()">
     <button
       class="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
       (click)="toggleMenu($event)">

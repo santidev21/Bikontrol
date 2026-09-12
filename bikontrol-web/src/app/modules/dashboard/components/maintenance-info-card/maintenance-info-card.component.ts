@@ -9,6 +9,7 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MonitoringTypeSelectorComponent } from '../../../dashboard/pages/maintenance/components/monitoring-type-selector/monitoring-type-selector.component';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-maintenance-info-card',
@@ -32,9 +33,14 @@ export class MaintenanceInfoCardComponent {
     private maintenanceService: MaintenanceService,
     private swal : SwalService,
     private fb: FormBuilder,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private authService: AuthService
   ) {
     this.initFollowForm();
+  }
+
+  get isDemo(): boolean {
+    return this.authService.isDemo();
   }
 
   private initFollowForm(): void {

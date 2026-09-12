@@ -63,7 +63,7 @@ namespace Bikontrol.Infrastructure.Services
             await _userRepository.SaveChangesAsync();
 
             var response = _mapper.Map<RegisterResponse>(user);
-            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
+            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;
             return response;
@@ -181,10 +181,30 @@ namespace Bikontrol.Infrastructure.Services
             await _userRepository.SaveChangesAsync();
         }
 
+        public async Task<LoginResponse> DemoLoginAsync()
+        {
+            var demoEmail = _configuration["DemoUser:Email"] ?? "demo@bikontrol.com";
+            var demoName = _configuration["DemoUser:FullName"] ?? "Usuario Demo";
+
+            var user = await _userRepository.GetByEmailAsync(demoEmail);
+            if (user == null)
+            {
+                var randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+                user = new User(demoEmail, demoName, _passwordHasher.HashPassword(null!, randomPassword), UserRole.Demo);
+                await _userRepository.AddAsync(user);
+                await _userRepository.SaveChangesAsync();
+            }
+
+            var refreshToken = await IssueRefreshTokenAsync(user.Id);
+            await _userRepository.SaveChangesAsync();
+
+            return BuildLoginResponse(user, refreshToken);
+        }
+
         private LoginResponse BuildLoginResponse(User user, string refreshToken)
         {
             var response = _mapper.Map<LoginResponse>(user);
-            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName);
+            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;
             return response;

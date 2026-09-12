@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { MotorcycleCardComponent } from '../../components/motorcycle-card/motorcycle-card.component';
+import { AuthService } from '../../../auth/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MotorcyclesService } from '../../service/motorcycles.service';
@@ -20,8 +21,13 @@ export class HomeComponent implements OnInit {
   constructor(
     private motorcyclesService: MotorcyclesService,
     private swal: SwalService,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private authService: AuthService
   ) {}
+
+  get isDemo(): boolean {
+    return this.authService.isDemo();
+  }
 
   ngOnInit(): void {
     this.loadMotorcycles();

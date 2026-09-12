@@ -2,6 +2,7 @@ export interface AuthSession {
   id: string;
   email: string;
   fullName: string;
+  role: string;
   token: string;
   refreshToken: string;
   expiresIn: number;

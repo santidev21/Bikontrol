@@ -23,6 +23,7 @@ export class LoginComponent implements AfterViewInit {
   loginForm: FormGroup;
   submitted = false;
   errorMessage: string | null = null;
+  demoLoading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -73,6 +74,18 @@ export class LoginComponent implements AfterViewInit {
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
         this.errorMessage = this.httpError.message(error);
+      }
+    });
+  }
+
+  onDemoLogin(): void {
+    this.demoLoading = true;
+    this.errorMessage = null;
+    this.authService.demoLogin().subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: (error) => {
+        this.demoLoading = false;
+        this.errorMessage = this.httpError.message(error, 'No se pudo iniciar la demo.');
       }
     });
   }

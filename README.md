@@ -171,12 +171,14 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 
 ## Security
 
-- JWT auth with a server-side signing key (stored in `.env` / `appsettings.Development.json`, never committed)
+- JWT auth with a server-side signing key (stored in `.env` / `appsettings.Development.json`, never committed) — now includes `role` claim (`User`/`Demo`)
 - Sliding sessions: short-lived access token + long-lived refresh token (rotated on each use, stored hashed in the DB)
 - Google OAuth "Sign in with Google" (ID-token flow; the Google Client ID is public, no Client Secret required)
+- Demo user: read-only account (`demo@bikontrol.com`, `Role=Demo`) via `POST /api/auth/demo` + frontend one-click demo; write operations enforced server-side (403) and hidden in UI
 - Password recovery via email (SMTP configured in `.env`; reset tokens are hashed and time-limited)
 - Password hashing with a per-user salt
-- Database isolated on an internal Docker network, never on the shared network
+- Database isolated on an internal Docker network, never on the shared network; transport encrypted with TLS (`ssl=on` + self-signed, `SslMode=Require`)
+- Automated DB backups: local `npm run db:backup`/`db:restore` (7-copy retention) + VPS `deploy.sh backup-db` in persistent `backups/` + cron example in `docs/DEPLOYMENT.md`
 - Security headers (HTTPS, HSTS) applied by the gateway
 
 ---
@@ -203,8 +205,8 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - [x] "Add custom maintenance" redirects to login — the route existed and navigation was correct (verified by spec); likely a stale deployed bundle, plus the dashboard wildcard fallback now prevents this class of issue.
 - [x] Predefined maintenance items don't appear — the `CleanupAllButUsers` migration had truncated the seeded `MaintenanceTypes` table; fixed with the idempotent `SeedPredefinedMaintenanceTypes` re-seed migration.
 - [x] Create a migrator that automatically applies new tables to the production DB — already implemented: the API runs `db.Database.Migrate()` on startup in any non-Development environment (`Program.cs`), so production applies pending migrations automatically.
-- [ ] Create a read-only demo user (view-only, no edits) so people can try the app.
-- [ ] Add the missing tests.
-- [ ] DB backup and security.
+- [x] Create a read-only demo user (view-only, no edits) so people can try the app. — `POST /api/auth/demo` (auto-creates `demo@bikontrol.com` with `Role=Demo`), JWT carries `role` claim, write endpoints return 403 for Demo, frontend shows "Probar demo" button on login + modo solo lectura banner.
+- [x] Add the missing tests. — 67 backend tests (MotorcycleService/MaintenanceService demo guards, CurrentUserService, JwtToken role claim, AuthController 6/6 endpoints, AuthService DemoLogin) + 128 frontend Jest tests (interval-format, swal, auth.interceptor, monitoring-type-selector, demoLogin).
+- [x] DB backup and security. — `npm run db:backup` / `db:restore` (compressed, retention 7), `deploy.sh backup-db` in persistent `backups/`, Postgres SSL (`ssl=on` + self-signed, `SslMode=Require;Trust Server Certificate=true`).
 - [ ] Add the statistics view.
 - [ ] Add the profile view.

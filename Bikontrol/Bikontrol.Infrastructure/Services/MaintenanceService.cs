@@ -64,8 +64,15 @@ namespace Bikontrol.Infrastructure.Services
             return _mapper.Map<MaintenanceDTO>(maintenance);
         }
 
+        private void EnsureCanWrite()
+        {
+            if (_current.IsDemo)
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+        }
+
         public async Task<MaintenanceDTO> CreateUserMaintenanceAsync(SaveMaintenanceDTO dto)
         {
+            EnsureCanWrite();
             await EnsureMotorcycleOwnershipAsync(dto.MotorcycleId);
 
             var entity = _mapper.Map<UserMaintenance>(dto);
@@ -78,6 +85,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task DeleteUserMaintenanceAsync(Guid id)
         {
+            EnsureCanWrite();
             var entity = await _userRepo.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.");
             if (entity.UserId != _current.UserId)
@@ -88,6 +96,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<MaintenanceDTO> FollowDefaultAsync(Guid motorcycleId, Guid defaultId, int? kmInterval, int? timeIntervalWeeks, string trackingType)
         {
+            EnsureCanWrite();
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
 
             var defaultEntity = await _repo.GetByIdAsync(defaultId);
@@ -125,6 +134,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task UpdateAsync(Guid id, SaveMaintenanceDTO dto)
         {
+            EnsureCanWrite();
             var entity = await _userRepo.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.");
             if (entity.UserId != _current.UserId)
@@ -139,6 +149,7 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<MaintenanceRecordDTO> RegisterMaintenanceRecordAsync(CreateMaintenanceRecordRequest request)
         {
+            EnsureCanWrite();
             if (request.PerformedAt.Date > DateTime.UtcNow.Date)
                 throw new ValidationException("No puedes agregar mantenimientos posteriores al dia de hoy");
 

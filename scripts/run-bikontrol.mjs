@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, readFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync, mkdirSync, readdirSync, statSync, unlinkSync, createWriteStream } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,7 +45,7 @@ function backendEnvironment() {
   const user = dotEnv.POSTGRES_USER;
   const password = dotEnv.POSTGRES_PASSWORD;
   if (db && user && password && !password.startsWith('CHANGE_ME')) {
-    env.ConnectionStrings__DefaultConnection = `Host=127.0.0.1;Port=5434;Database=${db};Username=${user};Password=${password}`;
+    env.ConnectionStrings__DefaultConnection = `Host=127.0.0.1;Port=5434;Database=${db};Username=${user};Password=${password};SslMode=Require;Trust Server Certificate=true`;
   }
   const jwtKey = dotEnv.Jwt__Key;
   if (jwtKey && !jwtKey.startsWith('CHANGE_ME')) {
@@ -306,6 +306,76 @@ if (mode === 'migrate') {
     process.exit(1);
   }
 
+  process.exit(0);
+}
+
+if (mode === 'backup') {
+  ensureBackendPrereqs();
+  const dotEnv = existsSync(envFilePath) ? parseDotEnv(envFilePath) : {};
+  const dbName = dotEnv.POSTGRES_DB ?? 'bikontrol_db';
+  const dbUser = dotEnv.POSTGRES_USER ?? 'bikontrol';
+  const backupDir = path.join(rootDirectory, 'backups');
+  mkdirSync(backupDir, { recursive: true });
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const fileName = `bikontrol-db-${ts}.sql.gz`;
+  const filePath = path.join(backupDir, fileName);
+  console.log(`[db:backup] Dumping "${dbName}" to backups/${fileName} ...`);
+  const dockerCmd = process.platform === 'win32' ? 'docker.exe' : 'docker';
+  // pg_dump via exec, pipe through gzip on host
+  const dump = spawnSync(dockerCmd, ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.local.yml', 'exec', '-T', 'db', 'pg_dump', '-U', dbUser, '-d', dbName], { cwd: rootDirectory, encoding: 'buffer', maxBuffer: 200 * 1024 * 1024, shell: process.platform === 'win32' });
+  if (dump.error ?? dump.status !== 0) {
+    console.error('[db:backup] pg_dump failed. Is the DB running? (`npm run db:up`)');
+    if (dump.stderr) console.error(dump.stderr.toString());
+    process.exit(1);
+  }
+  // gzip on host (Node)
+  const { gzipSync } = await import('node:zlib');
+  const gz = gzipSync(dump.stdout);
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(filePath, gz);
+  console.log(`[db:backup] Saved ${fileName} (${(gz.length / 1024).toFixed(1)} KB)`);
+  // retention: keep last 7
+  const files = readdirSync(backupDir).filter(f => f.startsWith('bikontrol-db-') && f.endsWith('.sql.gz')).sort().reverse();
+  for (const old of files.slice(7)) {
+    try { unlinkSync(path.join(backupDir, old)); console.log(`[db:backup] Pruned ${old}`); } catch {}
+  }
+  process.exit(0);
+}
+
+if (mode === 'restore') {
+  ensureBackendPrereqs();
+  const backupFile = extraArgs[0];
+  if (!backupFile) {
+    console.error('Usage: node scripts/run-bikontrol.mjs restore <backups/bikontrol-db-XXXX.sql.gz | .sql>');
+    process.exit(1);
+  }
+  const resolved = path.isAbsolute(backupFile) ? backupFile : path.join(rootDirectory, backupFile);
+  if (!existsSync(resolved)) {
+    console.error(`[db:restore] file not found: ${resolved}`);
+    process.exit(1);
+  }
+  const dotEnv = existsSync(envFilePath) ? parseDotEnv(envFilePath) : {};
+  const dbName = dotEnv.POSTGRES_DB ?? 'bikontrol_db';
+  const dbUser = dotEnv.POSTGRES_USER ?? 'bikontrol';
+  // wait healthy
+  console.log(`[db:restore] Restoring ${resolved} into ${dbName} ...`);
+  const dockerCmd2 = process.platform === 'win32' ? 'docker.exe' : 'docker';
+  // decompress if gz
+  let sqlBuffer = readFileSync(resolved);
+  if (resolved.endsWith('.gz')) {
+    const { gunzipSync } = await import('node:zlib');
+    sqlBuffer = gunzipSync(sqlBuffer);
+  }
+  // feed to psql via stdin
+  const psql = spawn(dockerCmd2, ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.local.yml', 'exec', '-T', 'db', 'psql', '-U', dbUser, '-d', dbName, '-v', 'ON_ERROR_STOP=1'], { cwd: rootDirectory, stdio: ['pipe', 'inherit', 'inherit'], shell: process.platform === 'win32' });
+  psql.stdin.write(sqlBuffer);
+  psql.stdin.end();
+  const code = await new Promise(res => psql.on('close', c => res(c)));
+  if (code !== 0) {
+    console.error('[db:restore] psql restore failed');
+    process.exit(1);
+  }
+  console.log('[db:restore] Restore complete.');
   process.exit(0);
 }
 

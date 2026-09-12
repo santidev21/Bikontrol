@@ -28,7 +28,7 @@ namespace Bikontrol.Infrastructure.Authentication
             }
         }
 
-        public string GenerateToken(Guid userId, string email, string fullName)
+        public string GenerateToken(Guid userId, string email, string fullName, string role = Persistence.Entities.UserRole.User)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -38,6 +38,7 @@ namespace Bikontrol.Infrastructure.Authentication
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, email),
                 new Claim("fullName", fullName),
+                new Claim("role", string.IsNullOrWhiteSpace(role) ? Persistence.Entities.UserRole.User : role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

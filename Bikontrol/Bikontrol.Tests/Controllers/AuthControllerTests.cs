@@ -61,6 +61,55 @@ public class AuthControllerTests
         Assert.Same(request, service.LastLoginRequest);
     }
 
+    [Fact]
+    public async Task DemoLogin_ShouldReturnOkWithServiceResponse()
+    {
+        var response = new LoginResponse { Id = Guid.NewGuid(), Email = "demo@bikontrol.com", FullName = "Usuario Demo", Token = "demo-token", Role = "Demo", RefreshToken = "r", ExpiresIn = 900 };
+        var service = new FakeAuthService { LoginResult = response };
+        var controller = new AuthController(service);
+        var result = await controller.DemoLogin();
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(response, ok.Value);
+    }
+
+    [Fact]
+    public async Task GoogleLogin_ShouldReturnOk()
+    {
+        var response = new LoginResponse { Id = Guid.NewGuid(), Email = "user@bikontrol.com", FullName = "Test", Token = "t", RefreshToken = "r", ExpiresIn = 900 };
+        var service = new FakeAuthService { LoginResult = response };
+        var controller = new AuthController(service);
+        var result = await controller.GoogleLogin(new GoogleLoginRequest { IdToken = "tok" });
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task Refresh_ShouldReturnOk()
+    {
+        var response = new LoginResponse { Id = Guid.NewGuid(), Email = "user@bikontrol.com", FullName = "Test", Token = "t", RefreshToken = "r", ExpiresIn = 900 };
+        var service = new FakeAuthService { LoginResult = response };
+        var controller = new AuthController(service);
+        var result = await controller.Refresh(new RefreshTokenRequest { RefreshToken = "tok" });
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturnOk()
+    {
+        var service = new FakeAuthService();
+        var controller = new AuthController(service);
+        var result = await controller.ForgotPassword(new ForgotPasswordRequest { Email = "a@b.com" });
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldReturnOk()
+    {
+        var service = new FakeAuthService();
+        var controller = new AuthController(service);
+        var result = await controller.ResetPassword(new ResetPasswordRequest { Email = "a@b.com", Token = "t", NewPassword = "Secret123!" });
+        Assert.IsType<OkObjectResult>(result);
+    }
+
     private sealed class FakeAuthService : IAuthService
     {
         public RegisterRequest? LastRegisterRequest { get; private set; }
@@ -98,6 +147,11 @@ public class AuthControllerTests
         public Task ResetPasswordAsync(ResetPasswordRequest request)
         {
             return Task.CompletedTask;
+        }
+
+        public Task<LoginResponse> DemoLoginAsync()
+        {
+            return Task.FromResult(LoginResult);
         }
     }
 }

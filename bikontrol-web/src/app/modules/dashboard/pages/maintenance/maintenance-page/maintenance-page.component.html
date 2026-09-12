@@ -3,7 +3,7 @@
         Mantenimientos
     </h1>
 
-    <div class="text-center">
+    <div *ngIf="!isDemo" class="text-center">
         <button
             (click)="goToAddMaintenance()"
             class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
