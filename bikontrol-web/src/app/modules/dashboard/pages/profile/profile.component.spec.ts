@@ -22,6 +22,10 @@ describe("ProfileComponent (class)", () => {
       return error?.error?.error || error?.error?.message || error?.message || fallback;
     })
   } as any;
+  const updateServiceMock = {
+    appVersion: "0.1.0",
+    swVersion: "abc1234"
+  } as any;
 
   const profileMock: any = {
     id: "u1",
@@ -33,7 +37,7 @@ describe("ProfileComponent (class)", () => {
   };
 
   function createComponent() {
-    return new ProfileComponent(userServiceMock, authServiceMock, routerMock, swalMock, httpErrorMock);
+    return new ProfileComponent(userServiceMock, authServiceMock, routerMock, swalMock, httpErrorMock, updateServiceMock);
   }
 
   beforeEach(() => {
@@ -163,6 +167,13 @@ describe("ProfileComponent (class)", () => {
 
     expect(component.isDemo).toBe(true);
     expect(component.canChangePassword).toBe(false);
+  });
+
+  it("should expose the app and service worker versions", () => {
+    const component = createComponent();
+
+    expect(component.appVersion).toBe("0.1.0");
+    expect(component.swVersion).toBe("abc1234");
   });
 
   it("should logout and navigate to login", () => {

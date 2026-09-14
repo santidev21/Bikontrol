@@ -40,6 +40,10 @@
         <span class="row-label">Miembro desde</span>
         <span class="row-value">{{ p.createdAt | date:'yyyy-MM-dd' }}</span>
       </div>
+      <div class="profile-row">
+        <span class="row-label">Versión</span>
+        <span class="row-value">v{{ appVersion }}<span *ngIf="swVersion"> · {{ swVersion }}</span></span>
+      </div>
     </div>
 
     <div class="profile-actions">

@@ -151,6 +151,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 | Problem | Cause | Fix |
 |---|---|---|
 | Login returns `504 Gateway Timeout` but the API is healthy | Stale PWA service worker cached in the browser | Hard-refresh (`Ctrl+Shift+R`) or clear site data for `localhost:4200` |
+| Users see an old version after a deploy | Normal PWA behavior | The app detects the new version and shows a "Nueva versión disponible" prompt (reload when ready). Check the served version in Perfil → Versión |
 | `npm run dev` → API auth fails against Docker Postgres | `.env` `POSTGRES_PASSWORD` / `Jwt__Key` still `CHANGE_ME` | Fill `.env` (the root scripts inject it into the API) |
 
 #### Known dependency notes

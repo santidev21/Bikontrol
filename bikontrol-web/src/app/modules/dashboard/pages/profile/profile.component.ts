@@ -7,6 +7,7 @@ import { UserService } from '../../service/user.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { AuthService } from '../../../auth/services/auth.service';
+import { UpdateService } from '../../../../shared/services/update.service';
 
 @Component({
   selector: 'app-profile',
@@ -34,8 +35,17 @@ export class ProfileComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private swal: SwalService,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private updateService: UpdateService
   ) {}
+
+  get appVersion(): string {
+    return this.updateService.appVersion;
+  }
+
+  get swVersion(): string | null {
+    return this.updateService.swVersion;
+  }
 
   get isDemo(): boolean {
     return this.authService.isDemo();
