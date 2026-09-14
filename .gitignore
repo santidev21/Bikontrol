@@ -80,4 +80,5 @@ Bikontrol/.github/copilot-instructions.md
 # DB backups (local)
 backups/
 *.sql.gz
-*.sql
+# Nota: no ignorar *.sql en general; los scripts .sql del repo
+# (p. ej. scripts/db-integrity-audit.sql) sí se versionan.
