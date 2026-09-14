@@ -4,10 +4,11 @@ This file is the working context for Bikontrol. Keep it updated when architectur
 
 ## Project Snapshot
 Motorcycle tracking and maintenance app:
-- Angular 18 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests)
+- Angular 18 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests) — views: home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
 - .NET 8 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
 - PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
 - JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, per-user salt password hashing, password recovery via SMTP email, soft deletes
+- Read-only statistics aggregation (`GET /api/statistics/summary`); profile endpoints (`GET/PUT /api/users/me`, `POST /api/users/me/password`); multi-step writes run in transactions (`ITransactionManager`); optimistic concurrency via Postgres `xmin`; CHECK constraints on km/intervals
 - Root `package.json` orchestrates local dev (`dev`, `dev:ui/dev:api`, `db:*`, `docker:dev` scripts)
 
 ## Repository Layout
@@ -39,8 +40,9 @@ Angular 18 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - Single side: `npm run dev:ui` · `npm run dev:api`
 - Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`) · `npm run build:api` (see `backend-test` skill)
 - Frontend: `npm run test:ui` · `npm run build:ui` (see `frontend-test`)
-- Migrations: `npm run db:migrate` (= `dotnet ef database update …`) · `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`)
-- DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down`
+- Migrations: `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`) · `npm run db:migrate` (= `dotnet ef database update …`)
+- DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down` · `npm run db:backup` / `db:restore` (compressed, 7-copy retention)
+- Pre-deploy with real users: `npm run db:backup` first, then run `scripts/db-integrity-audit.sql` (read-only; every block must return 0 rows), then deploy (prod auto-applies migrations at startup)
 - Docker: `npm run docker:dev` (= `docker compose -f docker-compose.yml -f docker-compose.local.yml up --build`) (see `docker-dev`)
 
 ## Ports

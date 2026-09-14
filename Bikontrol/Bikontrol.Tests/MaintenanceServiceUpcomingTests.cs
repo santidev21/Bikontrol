@@ -37,7 +37,8 @@ public class MaintenanceServiceUpcomingTests
             new FakeKmHistoryService(8000),
             new FakeRecordRepository(),
             mapper,
-            new FakeCurrentUserService(userId));
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
 
         var firstResult = (await service.GetUpcomingByMotorcycleAsync(motorcycleId)).ToList();
         Assert.Single(firstResult);
@@ -63,7 +64,8 @@ public class MaintenanceServiceUpcomingTests
             new FakeKmHistoryService(8000),
             new FakeRecordRepository(),
             mapper,
-            new FakeCurrentUserService(userId));
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
 
         var secondResult = (await serviceWithNewFrequency.GetUpcomingByMotorcycleAsync(motorcycleId)).ToList();
         Assert.Single(secondResult);
@@ -99,7 +101,8 @@ public class MaintenanceServiceUpcomingTests
             new FakeKmHistoryService(5000, initialDate),
             new FakeRecordRepository(),
             mapper,
-            new FakeCurrentUserService(userId));
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
 
         var result = (await service.GetUpcomingByMotorcycleAsync(motorcycleId)).ToList();
         Assert.Single(result);
@@ -184,5 +187,14 @@ public class MaintenanceServiceUpcomingTests
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) =>
             Task.FromResult<MotorcycleMaintenanceRecord?>(null);
+    }
+
+    private sealed class FakeTransactionManager : ITransactionManager
+    {
+        public Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+            => action();
+
+        public Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default)
+            => action();
     }
 }

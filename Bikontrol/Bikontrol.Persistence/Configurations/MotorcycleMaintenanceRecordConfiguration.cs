@@ -8,7 +8,9 @@ namespace Bikontrol.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<MotorcycleMaintenanceRecord> builder)
         {
-            builder.ToTable("MotorcycleMaintenanceRecords");
+            builder.ToTable("MotorcycleMaintenanceRecords", t => t.HasCheckConstraint(
+                "CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative",
+                "\"PerformedKm\" IS NULL OR \"PerformedKm\" >= 0"));
 
             builder.HasKey(x => x.Id);
 

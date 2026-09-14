@@ -55,7 +55,17 @@ public class MaintenanceServiceDemoTests
             new FakeKmHistoryService(),
             new FakeRecordRepository(),
             _mapper,
-            current);
+            current,
+            new FakeTransactionManager());
+    }
+
+    private sealed class FakeTransactionManager : ITransactionManager
+    {
+        public Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+            => action();
+
+        public Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default)
+            => action();
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService

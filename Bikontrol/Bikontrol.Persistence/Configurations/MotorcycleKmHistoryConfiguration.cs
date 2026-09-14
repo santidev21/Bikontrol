@@ -16,6 +16,10 @@ namespace Bikontrol.Persistence.Configurations
         {
             builder.HasKey(x => x.Id);
 
+            builder.ToTable("MotorcycleKmHistories", t => t.HasCheckConstraint(
+                "CK_MotorcycleKmHistories_Km_NonNegative",
+                "\"Km\" >= 0"));
+
             builder.Property(x => x.Km)
                 .IsRequired();
 

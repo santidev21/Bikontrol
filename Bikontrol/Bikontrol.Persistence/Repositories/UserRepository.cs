@@ -24,9 +24,20 @@ namespace Bikontrol.Persistence.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        public async Task<User?> GetByIdAsync(Guid id)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        }
+
         public async Task AddAsync(User user)
         {
             await _context.Users.AddAsync(user);
+        }
+
+        public Task UpdateAsync(User user)
+        {
+            _context.Users.Update(user);
+            return Task.CompletedTask;
         }
 
         public async Task<bool> ExistsByEmailAsync(string email)

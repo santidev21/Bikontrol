@@ -1,4 +1,5 @@
 ﻿using Bikontrol.Shared.Exceptions;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text.Json;
 
@@ -52,6 +53,12 @@ namespace Bikontrol.API.Middleware
                 case ValidationException:
                     statusCode = HttpStatusCode.BadRequest;
                     message = exception.Message;
+                    break;
+
+                case DbUpdateConcurrencyException:
+                    statusCode = HttpStatusCode.Conflict;
+                    message = "Los datos cambiaron mientras los editabas. Recarga e inténtalo de nuevo.";
+                    logger.LogWarning(exception, "Concurrency conflict: {Message}", exception.Message);
                     break;
 
                 default:

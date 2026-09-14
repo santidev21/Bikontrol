@@ -18,6 +18,12 @@ namespace Bikontrol.Persistence.Entities
         public string Role { get; private set; } = UserRole.User;
         public string? ResetPasswordTokenHash { get; private set; }
         public DateTime? ResetPasswordTokenExpires { get; private set; }
+
+        /// <summary>
+        /// Origen de la cuenta: null/"Email" = registro con contraseña,
+        /// "Google" = creada vía Google (sin contraseña usable).
+        /// </summary>
+        public string? AuthProvider { get; private set; }
         public IList<Motorcycle> Motorcycles { get; set; } = new List<Motorcycle>();
 
         private User() { }
@@ -57,6 +63,21 @@ namespace Bikontrol.Persistence.Entities
             ResetPasswordTokenHash = null;
             ResetPasswordTokenExpires = null;
         }
+
+        public void SetAuthProvider(string? provider)
+        {
+            AuthProvider = string.IsNullOrWhiteSpace(provider) ? null : provider;
+        }
+
+        public void UpdateFullName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                throw new ValidationException("El nombre no puede estar vacio.");
+
+            FullName = fullName.Trim();
+        }
+
+        public bool HasPassword => AuthProvider != "Google";
 
         public bool IsDemo => Role == UserRole.Demo;
     }

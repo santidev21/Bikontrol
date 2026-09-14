@@ -1,3 +1,4 @@
+using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
@@ -7,10 +8,12 @@ namespace Bikontrol.Infrastructure.Services
     public class KmHistoryService : IKmHistoryService
     {
         private readonly IKmHistoryRepository _repository;
+        private readonly ITransactionManager _transactions;
 
-        public KmHistoryService(IKmHistoryRepository repository)
+        public KmHistoryService(IKmHistoryRepository repository, ITransactionManager transactions)
         {
             _repository = repository;
+            _transactions = transactions;
         }
 
         public async Task AddKmAsync(Guid motorcycleId, int km)
@@ -60,16 +63,20 @@ namespace Bikontrol.Infrastructure.Services
             if (newKm < previous.Km)
                 throw new ValidationException("El nuevo kilometraje no puede ser menor al penultimo registro.");
 
-            _repository.Remove(last);
-            await _repository.SaveChangesAsync();
+            // Eliminar + re-agregar en una sola transacción.
+            await _transactions.ExecuteInTransactionAsync(async () =>
+            {
+                _repository.Remove(last);
+                await _repository.SaveChangesAsync();
 
-            if (newKm == last.Km)
-                return;
+                if (newKm == last.Km)
+                    return;
 
-            if (newKm == previous.Km)
-                return;
+                if (newKm == previous.Km)
+                    return;
 
-            await AddKmAsync(motorcycleId, newKm);
+                await AddKmAsync(motorcycleId, newKm);
+            });
         }
     }
 }

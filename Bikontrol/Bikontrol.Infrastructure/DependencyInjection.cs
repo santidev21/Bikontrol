@@ -30,6 +30,8 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IMaintenanceService, MaintenanceService>();
             services.AddScoped<IKmHistoryService, KmHistoryService>();
+            services.AddScoped<IStatisticsService, StatisticsService>();
+            services.AddScoped<IUserService, UserService>();
             return services;
         }
     }

@@ -341,6 +341,12 @@ public class AuthServiceTests
             return Task.FromResult(user);
         }
 
+        public Task<User?> GetByIdAsync(Guid id)
+        {
+            var user = _seed.FirstOrDefault(x => x.Id == id);
+            return Task.FromResult(user);
+        }
+
         public Task<bool> ExistsByEmailAsync(string email)
         {
             var exists = _seed.Any(x => x.Email == email);
@@ -351,6 +357,11 @@ public class AuthServiceTests
         {
             _seed.Add(user);
             UsersCreated.Add(user);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateAsync(User user)
+        {
             return Task.CompletedTask;
         }
 

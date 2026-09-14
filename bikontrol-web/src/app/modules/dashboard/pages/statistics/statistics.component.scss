@@ -1,0 +1,161 @@
+.stats-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.stats-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.kpi-card {
+  border-radius: 14px;
+  padding: 14px 12px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.kpi-label {
+  font-size: 12px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.kpi-alert .kpi-value {
+  color: #f87171;
+}
+
+.kpi-warn .kpi-value {
+  color: #fbbf24;
+}
+
+.stats-section {
+  margin-top: 24px;
+
+  h2 {
+    font-weight: bold;
+  }
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.bar-name {
+  width: 90px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  flex: 1;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 0;
+}
+
+.bar-count {
+  width: 64px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.month-bars {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.month-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.month-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.month-track {
+  height: 110px;
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.month-fill {
+  width: 100%;
+  background: #003559;
+  border-radius: 8px 8px 0 0;
+  min-height: 0;
+}
+
+.month-name {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.tile-last {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #6b7280;
+}

@@ -118,6 +118,7 @@ namespace Bikontrol.Infrastructure.Services
                 // through the password-recovery flow.
                 var randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
                 user = new User(payload.Email, fullName, _passwordHasher.HashPassword(null!, randomPassword));
+                user.SetAuthProvider("Google");
                 await _userRepository.AddAsync(user);
             }
 
@@ -178,6 +179,8 @@ namespace Bikontrol.Infrastructure.Services
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
+            // Si era una cuenta Google, ahora tiene contraseña usable.
+            user.SetAuthProvider(null);
             await _userRepository.SaveChangesAsync();
         }
 

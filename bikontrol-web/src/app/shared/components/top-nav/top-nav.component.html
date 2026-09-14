@@ -23,6 +23,7 @@
         </button>
 
         <ul *ngIf="profileOpen" class="absolute right-0 mt-2 w-36 bg-white text-gray-800 rounded shadow-lg">
+          <li class="px-4 py-2 hover:bg-gray-100"><a routerLink="/dashboard/profile" (click)="toggleProfile()">Mi perfil</a></li>
           <li class="px-4 py-2 hover:bg-gray-100"><button (click)="logout()">Cerrar sesión</button></li>
         </ul>
       </div>
@@ -37,7 +38,7 @@
       <ul class="mt-4 flex flex-col gap-2">
         <li><a routerLink="/dashboard/home" (click)="closeSidebar()" class="block px-4 py-2 hover:bg-gray-700 rounded">Inicio</a></li>
         <li><a routerLink="/dashboard/home" (click)="closeSidebar()" class="block px-4 py-2 hover:bg-gray-700 rounded">Mantenimiento</a></li>
-        <li><a routerLink="/dashboard/home" (click)="closeSidebar()" class="block px-4 py-2 hover:bg-gray-700 rounded">Estadísticas</a></li>
+        <li><a routerLink="/dashboard/statistics" (click)="closeSidebar()" class="block px-4 py-2 hover:bg-gray-700 rounded">Estadísticas</a></li>
       </ul>
     </div>
 

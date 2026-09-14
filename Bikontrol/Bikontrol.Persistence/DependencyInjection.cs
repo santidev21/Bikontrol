@@ -1,4 +1,5 @@
-﻿using Bikontrol.Application.Interfaces.Repositories;
+﻿using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Persistence.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -20,6 +21,7 @@ namespace Bikontrol.Persistence
             services.AddScoped<IUserMaintenanceRepository, UserMaintenanceRepository>();
             services.AddScoped<IKmHistoryRepository, KmHistoryRepository>();
             services.AddScoped<IMotorcycleMaintenanceRecordRepository, MotorcycleMaintenanceRecordRepository>();
+            services.AddScoped<ITransactionManager, TransactionManager>();
             return services;
         }
     }

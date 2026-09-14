@@ -2,6 +2,7 @@
 using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
+using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence.Entities;
 using System;
@@ -20,6 +21,7 @@ namespace Bikontrol.Infrastructure.Mapping
             CreateMap<RegisterRequest, User>();
             CreateMap<User, RegisterResponse>();
             CreateMap<User, LoginResponse>();
+            CreateMap<User, ProfileDTO>();
 
             // Motorcycle mapping
             CreateMap<SaveMotorcycleDTO, Motorcycle>();

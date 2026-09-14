@@ -19,15 +19,18 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IKmHistoryService _kmHistoryService;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUser;
+        private readonly ITransactionManager _transactions;
 
         public MotorcycleService(IMotorcycleRepository motorcycleRepository, IKmHistoryRepository kmHistoryRepository,
-            IKmHistoryService kmHistoryService, IMapper mapper, ICurrentUserService currentUser)
+            IKmHistoryService kmHistoryService, IMapper mapper, ICurrentUserService currentUser,
+            ITransactionManager transactions)
         {
             _motorcycleRepository = motorcycleRepository;
             _kmHistoryRepository = kmHistoryRepository;
             _kmHistoryService = kmHistoryService;
             _mapper = mapper;
             _currentUser = currentUser;
+            _transactions = transactions;
         }
 
         private void EnsureCanWrite()
@@ -42,15 +45,21 @@ namespace Bikontrol.Infrastructure.Services
             var entity = _mapper.Map<Motorcycle>(dto);
             entity.UserId = _currentUser.UserId;
             entity.Validate();
-            var created = await _motorcycleRepository.AddAsync(entity);
-            var kmHistory = new MotorcycleKmHistory
+
+            // Moto + km inicial en una sola transacción: antes eran dos
+            // SaveChanges separados y un fallo dejaba la moto sin historial.
+            return await _transactions.ExecuteInTransactionAsync(async () =>
             {
-                MotorcycleId = created.Id,
-                Km = dto.Km
-            };
-            await _kmHistoryRepository.AddAsync(kmHistory);
-            await _kmHistoryRepository.SaveChangesAsync();
-            return _mapper.Map<MotorcycleDTO>(created);
+                var created = await _motorcycleRepository.AddAsync(entity);
+                var kmHistory = new MotorcycleKmHistory
+                {
+                    MotorcycleId = created.Id,
+                    Km = dto.Km
+                };
+                await _kmHistoryRepository.AddAsync(kmHistory);
+                await _kmHistoryRepository.SaveChangesAsync();
+                return _mapper.Map<MotorcycleDTO>(created);
+            });
         }
 
         public async Task<MotorcycleDTO?> GetByIdAsync(Guid id)

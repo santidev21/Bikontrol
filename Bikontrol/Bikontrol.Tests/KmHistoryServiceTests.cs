@@ -1,3 +1,4 @@
+using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Services;
@@ -16,7 +17,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = motorcycleId, Km = 1200, RecordedAt = DateTime.UtcNow.AddDays(-2) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await service.AddKmAsync(motorcycleId, 1500);
 
@@ -34,7 +35,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = motorcycleId, Km = 1800, RecordedAt = DateTime.UtcNow.AddDays(-2) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await Assert.ThrowsAsync<ValidationException>(() => service.AddKmAsync(motorcycleId, 1600));
     }
@@ -47,7 +48,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = Guid.NewGuid(), Km = 1200, RecordedAt = DateTime.UtcNow.AddDays(-2) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await Assert.ThrowsAsync<ValidationException>(() =>
             service.RollbackLastKmAsync(Guid.NewGuid(), 1000));
@@ -63,7 +64,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = motorcycleId, Km = 2500, RecordedAt = DateTime.UtcNow.AddDays(-1) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await Assert.ThrowsAsync<ValidationException>(() =>
             service.RollbackLastKmAsync(motorcycleId, 2600));
@@ -79,7 +80,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = motorcycleId, Km = 2500, RecordedAt = DateTime.UtcNow.AddDays(-1) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await service.RollbackLastKmAsync(motorcycleId, 2000);
 
@@ -99,7 +100,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = motorcycleId, Km = 2600, RecordedAt = DateTime.UtcNow.AddDays(-1) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await service.RollbackLastKmAsync(motorcycleId, 2500);
 
@@ -119,7 +120,7 @@ public class KmHistoryServiceTests
             new() { MotorcycleId = motorcycleId, Km = 2600, RecordedAt = DateTime.UtcNow.AddDays(-1) }
         });
 
-        var service = new KmHistoryService(repository);
+        var service = new KmHistoryService(repository, new FakeTransactionManager());
 
         await service.RollbackLastKmAsync(motorcycleId, 2600);
 
@@ -176,5 +177,14 @@ public class KmHistoryServiceTests
         }
 
         public Task SaveChangesAsync() => Task.CompletedTask;
+    }
+
+    private sealed class FakeTransactionManager : ITransactionManager
+    {
+        public Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+            => action();
+
+        public Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default)
+            => action();
     }
 }

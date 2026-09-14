@@ -1,0 +1,207 @@
+.profile-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.profile-header {
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.profile-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  display: inline;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.edit-name-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: #334155;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.profile-email {
+  font-size: 13px;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.role-badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #334155;
+}
+
+.edit-name-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 140px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #111827;
+}
+
+.profile-card {
+  background: #ffffff;
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  padding: 6px 14px;
+  margin-top: 16px;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef1f6;
+  font-size: 14px;
+}
+
+.profile-row:last-child {
+  border-bottom: 0;
+}
+
+.row-label {
+  color: #6b7280;
+}
+
+.row-value {
+  font-weight: 600;
+  color: #1f2937;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.google-note {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.password-modal {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+
+  h3 {
+    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+}
+
+.modal-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.modal-input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #111827;
+  font-weight: 400;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cancel-btn,
+.accept-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.accept-btn {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.accept-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

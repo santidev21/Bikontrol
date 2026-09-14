@@ -1,0 +1,92 @@
+<div class="p-4">
+  <h1 class="stats-title">Estadísticas</h1>
+
+  <p *ngIf="isLoading" class="text-gray-400 text-center my-4">Cargando estadísticas…</p>
+
+  <div *ngIf="!isLoading && summary as s">
+    <div *ngIf="s.totalMotorcycles === 0; else statsContent" class="text-center my-6">
+      <p class="text-gray-400">Aún no tienes motocicletas para mostrar estadísticas.</p>
+      <a routerLink="/dashboard/home" class="stats-link">Ir al inicio</a>
+    </div>
+
+    <ng-template #statsContent>
+      <div class="kpi-grid">
+        <div class="kpi-card bg-gray-800">
+          <span class="kpi-value">{{ s.totalMotorcycles }}</span>
+          <span class="kpi-label">Motos</span>
+        </div>
+        <div class="kpi-card bg-gray-800">
+          <span class="kpi-value">{{ s.totalKm }}</span>
+          <span class="kpi-label">Km totales</span>
+        </div>
+        <div class="kpi-card bg-gray-800">
+          <span class="kpi-value">{{ s.totalMaintenanceRecords }}</span>
+          <span class="kpi-label">Mantenimientos</span>
+        </div>
+        <div class="kpi-card bg-gray-800" [class.kpi-alert]="s.overdueCount > 0">
+          <span class="kpi-value">{{ s.overdueCount }}</span>
+          <span class="kpi-label">Vencidos</span>
+        </div>
+        <div class="kpi-card bg-gray-800" [class.kpi-warn]="s.dueSoonCount > 0">
+          <span class="kpi-value">{{ s.dueSoonCount }}</span>
+          <span class="kpi-label">Vencen pronto</span>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h2 class="text-center">Salud de mantenimientos</h2>
+        <div class="stat-card">
+          <div *ngFor="let h of s.health" class="bar-row">
+            <span class="bar-name">{{ h.bucket }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="barWidth(h.count, maxHealthCount())" [style.background]="healthColor(h.bucket)"></div>
+            </div>
+            <span class="bar-count">{{ h.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h2 class="text-center">Kilometraje por moto</h2>
+        <div class="stat-card">
+          <div *ngFor="let m of s.kmByMotorcycle" class="bar-row">
+            <span class="bar-name">{{ m.name }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="barWidth(m.km, maxKm())" [style.background]="'#003559'"></div>
+            </div>
+            <span class="bar-count">{{ m.km }} km</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section" *ngIf="s.recordsByType.length > 0">
+        <h2 class="text-center">Mantenimientos por tipo</h2>
+        <div class="stat-card">
+          <div *ngFor="let t of s.recordsByType" class="bar-row">
+            <span class="bar-name">{{ t.name }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="barWidth(t.count, maxTypeCount())" [style.background]="'#10b981'"></div>
+            </div>
+            <span class="bar-count">{{ t.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h2 class="text-center">Actividad (últimos 6 meses)</h2>
+        <div class="stat-card">
+          <div class="month-bars">
+            <div *ngFor="let m of s.last6Months" class="month-col">
+              <span class="month-count">{{ m.count }}</span>
+              <div class="month-track">
+                <div class="month-fill" [style.height.%]="barWidth(m.count, maxMonthCount())"></div>
+              </div>
+              <span class="month-name">{{ monthLabel(m.yearMonth) }}</span>
+            </div>
+          </div>
+          <p class="tile-last" *ngIf="s.lastActivityAt">Última actividad: {{ s.lastActivityAt | date:'yyyy-MM-dd' }}</p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -364,6 +364,12 @@ namespace Bikontrol.Persistence.Migrations
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
@@ -390,7 +396,10 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.HasIndex("MotorcycleId", "RecordedAt");
 
-                    b.ToTable("MotorcycleKmHistories");
+                    b.ToTable("MotorcycleKmHistories", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MotorcycleKmHistories_Km_NonNegative", "\"Km\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.MotorcycleMaintenanceRecord", b =>
@@ -420,7 +429,10 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.HasIndex("UserMaintenanceId", "PerformedAt");
 
-                    b.ToTable("MotorcycleMaintenanceRecords", (string)null);
+                    b.ToTable("MotorcycleMaintenanceRecords", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative", "\"PerformedKm\" IS NULL OR \"PerformedKm\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
@@ -464,6 +476,12 @@ namespace Bikontrol.Persistence.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BaseTypeId");
@@ -472,7 +490,10 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.HasIndex("UserId", "MotorcycleId", "Name");
 
-                    b.ToTable("UserMaintenanceTypes", (string)null);
+                    b.ToTable("UserMaintenanceTypes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserMaintenanceTypes_PositiveInterval", "(\"TrackingType\" = 'Km' AND \"KmInterval\" IS NOT NULL AND \"KmInterval\" > 0) OR (\"TrackingType\" = 'Time' AND \"TimeIntervalWeeks\" IS NOT NULL AND \"TimeIntervalWeeks\" > 0)");
+                        });
                 });
 
             modelBuilder.Entity("Bikontrol.Persistence.Entities.RefreshToken", b =>
@@ -514,6 +535,10 @@ namespace Bikontrol.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AuthProvider")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -544,6 +569,12 @@ namespace Bikontrol.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasDefaultValue("User");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 

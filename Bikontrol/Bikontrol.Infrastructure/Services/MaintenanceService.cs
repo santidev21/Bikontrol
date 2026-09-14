@@ -16,6 +16,7 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
+        private readonly ITransactionManager _transactions;
 
         public MaintenanceService(
             IMaintenanceRepository repo,
@@ -24,7 +25,8 @@ namespace Bikontrol.Infrastructure.Services
             IKmHistoryService kmHistoryService,
             IMotorcycleMaintenanceRecordRepository recordRepository,
             IMapper mapper,
-            ICurrentUserService current)
+            ICurrentUserService current,
+            ITransactionManager transactions)
         {
             _repo = repo;
             _userRepo = userRepo;
@@ -33,6 +35,7 @@ namespace Bikontrol.Infrastructure.Services
             _recordRepository = recordRepository;
             _mapper = mapper;
             _current = current;
+            _transactions = transactions;
         }
 
         public async Task<IEnumerable<MaintenanceDTO>> GetDefaultsAsync()
@@ -70,9 +73,19 @@ namespace Bikontrol.Infrastructure.Services
                 throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
         }
 
+        private static void EnsureValidInterval(string trackingType, int? kmInterval, int? timeIntervalWeeks)
+        {
+            if (trackingType == "Km" && (!kmInterval.HasValue || kmInterval.Value <= 0))
+                throw new ValidationException("Debes indicar un intervalo de kilometraje mayor a cero.");
+
+            if (trackingType == "Time" && (!timeIntervalWeeks.HasValue || timeIntervalWeeks.Value <= 0))
+                throw new ValidationException("Debes indicar un intervalo de tiempo mayor a cero.");
+        }
+
         public async Task<MaintenanceDTO> CreateUserMaintenanceAsync(SaveMaintenanceDTO dto)
         {
             EnsureCanWrite();
+            EnsureValidInterval(dto.TrackingType, dto.KmInterval, dto.TimeIntervalWeeks);
             await EnsureMotorcycleOwnershipAsync(dto.MotorcycleId);
 
             var entity = _mapper.Map<UserMaintenance>(dto);
@@ -97,6 +110,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<MaintenanceDTO> FollowDefaultAsync(Guid motorcycleId, Guid defaultId, int? kmInterval, int? timeIntervalWeeks, string trackingType)
         {
             EnsureCanWrite();
+            EnsureValidInterval(trackingType, kmInterval, timeIntervalWeeks);
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
 
             var defaultEntity = await _repo.GetByIdAsync(defaultId);
@@ -135,6 +149,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task UpdateAsync(Guid id, SaveMaintenanceDTO dto)
         {
             EnsureCanWrite();
+            EnsureValidInterval(dto.TrackingType, dto.KmInterval, dto.TimeIntervalWeeks);
             var entity = await _userRepo.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.");
             if (entity.UserId != _current.UserId)
@@ -180,14 +195,27 @@ namespace Bikontrol.Infrastructure.Services
                 PerformedKm = request.PerformedKm
             };
 
-            var created = await _recordRepository.AddAsync(record);
+            // Registro + avance de odómetro en una sola transacción: antes eran
+            // dos SaveChanges separados y un km inválido dejaba el registro
+            // guardado sin su km (escritura parcial).
+            return await _transactions.ExecuteInTransactionAsync(async () =>
+            {
+                var created = await _recordRepository.AddAsync(record);
 
-            if (request.PerformedKm.HasValue)
-                await _kmHistoryService.AddKmAsync(request.MotorcycleId, request.PerformedKm.Value);
+                if (request.PerformedKm.HasValue)
+                {
+                    // Solo avanza el odómetro si el km registrado es mayor al actual.
+                    // Un registro histórico (km menor al odómetro) no debe moverlo
+                    // ni romper la operación.
+                    var currentKm = await _kmHistoryService.GetCurrentKmAsync(request.MotorcycleId);
+                    if (request.PerformedKm.Value > currentKm)
+                        await _kmHistoryService.AddKmAsync(request.MotorcycleId, request.PerformedKm.Value);
+                }
 
-            var dto = _mapper.Map<MaintenanceRecordDTO>(created);
-            dto.MaintenanceName = maintenance.Name;
-            return dto;
+                var dto = _mapper.Map<MaintenanceRecordDTO>(created);
+                dto.MaintenanceName = maintenance.Name;
+                return dto;
+            });
         }
 
         public async Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId)
