@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { Motorcycle } from '../../interfaces/motorcycle.interface';
 import { MotorcyclesService } from '../../service/motorcycles.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -15,7 +16,7 @@ import { AuthService } from '../../../auth/services/auth.service';
   styleUrl: './motorcycle-card.component.scss'
 })
 export class MotorcycleCardComponent implements OnInit {
-  @Input() motorcycle: any;
+  @Input() motorcycle!: Motorcycle;
   @Output() deleted = new EventEmitter<void>();
   menuOpen = false;
   currentKm: number | null = null;
@@ -52,7 +53,7 @@ export class MotorcycleCardComponent implements OnInit {
     });
   }
   
-  onEdit($e: any){
+  onEdit(_e: Event) {
     this.router.navigate(['/dashboard/motorcycles/edit', this.motorcycle.id]);
   }
 

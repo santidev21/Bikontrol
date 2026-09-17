@@ -95,7 +95,7 @@ export class LoginComponent implements AfterViewInit {
 
     window.google.accounts.id.initialize({
       client_id: environment.googleClientId,
-      callback: (response: any) => this.onGoogleCredential(response)
+      callback: (response: { credential?: string }) => this.onGoogleCredential(response)
     });
 
     const element = document.getElementById('google-button');

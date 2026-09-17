@@ -14,6 +14,12 @@ export interface RegisterResponse extends AuthSession {
   createdAt: string;
 }
 
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
 export interface ForgotPasswordResponse {
   message: string;
 }

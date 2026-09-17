@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Maintenance, CreateMaintenanceRecordRequest } from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
 @Component({
   selector: 'app-register-maintenance-record',
@@ -14,7 +16,7 @@ import { SwalService } from '../../../../../shared/services/swal.service';
   templateUrl: './register-maintenance-record.component.html',
   styleUrl: './register-maintenance-record.component.scss'
 })
-export class RegisterMaintenanceRecordComponent implements OnInit {
+export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
   motorcycleId = '';
   maintenances: Maintenance[] = [];
   selectedMaintenance?: Maintenance;
@@ -24,13 +26,16 @@ export class RegisterMaintenanceRecordComponent implements OnInit {
 
   form: FormGroup;
 
+  private readonly subscriptions = new Subscription();
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private maintenanceService: MaintenanceService,
     private motorcyclesService: MotorcyclesService,
-    private swal: SwalService
+    private swal: SwalService,
+    private httpError: HttpErrorService
   ) {
     this.form = this.fb.group({
       userMaintenanceId: ['', Validators.required],
@@ -40,22 +45,30 @@ export class RegisterMaintenanceRecordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      const motorcycleId = params.get('motorcycleId');
-      if (!motorcycleId) {
-        this.router.navigate(['/dashboard/home']);
-        return;
-      }
+    this.subscriptions.add(
+      this.route.paramMap.subscribe((params) => {
+        const motorcycleId = params.get('motorcycleId');
+        if (!motorcycleId) {
+          this.router.navigate(['/dashboard/home']);
+          return;
+        }
 
-      this.motorcycleId = motorcycleId;
-      this.loadData();
-    });
+        this.motorcycleId = motorcycleId;
+        this.loadData();
+      })
+    );
 
-    this.form.get('userMaintenanceId')?.valueChanges.subscribe((maintenanceId: string) => {
-      this.selectedMaintenance = this.maintenances.find((m) => m.id === maintenanceId);
-      this.updateKmControlByTrackingType();
-      this.loadLastMaintenanceKm();
-    });
+    this.subscriptions.add(
+      this.form.get('userMaintenanceId')?.valueChanges.subscribe((maintenanceId: string) => {
+        this.selectedMaintenance = this.maintenances.find((m) => m.id === maintenanceId);
+        this.updateKmControlByTrackingType();
+        this.loadLastMaintenanceKm();
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   private loadData(): void {
@@ -147,7 +160,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.swal.error('Error', err?.error?.error || 'No se pudo registrar el mantenimiento.');
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo registrar el mantenimiento.'));
       }
     });
   }

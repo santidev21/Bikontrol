@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +12,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
   templateUrl: './reset-password.component.html',
   styleUrl: './reset-password.component.scss'
 })
-export class ResetPasswordComponent implements OnInit {
+export class ResetPasswordComponent implements OnInit, OnDestroy {
   form: FormGroup;
   submitted = false;
   errorMessage: string | null = null;
@@ -21,6 +21,7 @@ export class ResetPasswordComponent implements OnInit {
 
   private token: string | null = null;
   private email: string | null = null;
+  private redirectTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private fb: FormBuilder,
@@ -69,11 +70,17 @@ export class ResetPasswordComponent implements OnInit {
     this.authService.resetPassword(this.email!, this.token!, this.form.value.newPassword).subscribe({
       next: (response) => {
         this.successMessage = response.message;
-        setTimeout(() => this.router.navigate(['/login']), 2000);
+        this.redirectTimer = setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error: (error) => {
         this.errorMessage = this.httpError.message(error);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+    }
   }
 }

@@ -49,7 +49,7 @@ describe("AuthService (unit, mocked HttpClient)", () => {
     const mock: any = { token: "reg-token", refreshToken: "refresh-reg" };
     mockHttp.post.mockReturnValue(of(mock));
 
-    const data = { email: "x@y.com", password: "pw" };
+    const data = { fullName: "Test User", email: "x@y.com", password: "pw" };
     service.register(data).subscribe(res => {
       expect(res).toEqual(mock);
       expect(localStorage.getItem("token")).toBe("reg-token");

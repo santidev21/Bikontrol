@@ -9,6 +9,7 @@ describe("SaveMotorcycleComponent", () => {
   let routerMock: any;
   let routeParamMap$: Subject<any>;
   let swalMock: any;
+  let httpErrorMock: any;
 
   beforeEach(() => {
     routeParamMap$ = new Subject<any>();
@@ -26,6 +27,12 @@ describe("SaveMotorcycleComponent", () => {
       warning: jest.fn(),
       success: jest.fn().mockResolvedValue(true)
     };
+    httpErrorMock = {
+      message: jest.fn(
+        (error: any, fallback = "Error inesperado en el servidor.") =>
+          error?.error?.error || error?.error?.message || error?.message || fallback
+      )
+    };
 
     component = new SaveMotorcycleComponent(
       new FormBuilder(),
@@ -34,7 +41,8 @@ describe("SaveMotorcycleComponent", () => {
       {
         paramMap: routeParamMap$.asObservable()
       } as any,
-      swalMock
+      swalMock,
+      httpErrorMock
     );
   });
 

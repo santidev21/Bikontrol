@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { SaveMotorcycleDTO , Motorcycle } from '../../../interfaces/motorcycle.interface';
 import { CommonModule } from '@angular/common';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
 
 @Component({
@@ -15,19 +17,22 @@ import { SwalService } from '../../../../../shared/services/swal.service';
   templateUrl: './save-motorcycle.component.html',
   styleUrl: './save-motorcycle.component.scss'
 })
-export class SaveMotorcycleComponent implements OnInit {
+export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   motorcycleForm: FormGroup;
   isSubmitting = false;
   isEditMode = false;
   motorcycleId?: string;
   currentYear = new Date().getFullYear();
 
+  private readonly subscriptions = new Subscription();
+
   constructor(
     private fb: FormBuilder,
     private motorcyclesService: MotorcyclesService,
     private router: Router,
     private route: ActivatedRoute,
-    private swal: SwalService
+    private swal: SwalService,
+    private httpError: HttpErrorService
   ) {
     this.motorcycleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -56,14 +61,20 @@ export class SaveMotorcycleComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      if (id) {
-        this.isEditMode = true;
-        this.motorcycleId = id;
-        this.loadMotorcycle(this.motorcycleId);
-      }
-    });
+    this.subscriptions.add(
+      this.route.paramMap.subscribe((params) => {
+        const id = params.get('id');
+        if (id) {
+          this.isEditMode = true;
+          this.motorcycleId = id;
+          this.loadMotorcycle(this.motorcycleId);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   loadMotorcycle(id: string): void {
@@ -74,8 +85,8 @@ export class SaveMotorcycleComponent implements OnInit {
           this.loadCurrentKm();
         }
       },
-      error: () => {
-        this.swal.error('Error', 'No se pudo cargar la motocicleta.');
+      error: (err) => {
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo cargar la motocicleta.'));
       },
     });
   }
@@ -176,7 +187,7 @@ export class SaveMotorcycleComponent implements OnInit {
         this.isSubmitting = false;
         this.swal.error(
           'Error',
-          err?.error?.message || 'No se pudo agregar la motocicleta.'
+          this.httpError.message(err, 'No se pudo agregar la motocicleta.')
         );
       },
     });
@@ -194,7 +205,7 @@ export class SaveMotorcycleComponent implements OnInit {
           this.isSubmitting = false;
           this.swal.error(
             'Error',
-            err?.error?.message || 'No se pudo actualizar la motocicleta.'
+            this.httpError.message(err, 'No se pudo actualizar la motocicleta.')
           );
         },
       });

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map, tap, throwError } from 'rxjs';
 import { environment } from '@env/environment';
-import { ForgotPasswordResponse, LoginResponse, RegisterResponse, ResetPasswordResponse } from '../interfaces/auth.model';
+import { ForgotPasswordResponse, LoginResponse, RegisterRequest, RegisterResponse, ResetPasswordResponse } from '../interfaces/auth.model';
 
 const TOKEN_KEY = 'token';
 const REFRESH_TOKEN_KEY = 'refreshToken';
@@ -22,7 +22,7 @@ export class AuthService {
     );
   }
 
-  register(data: any): Observable<RegisterResponse> {
+  register(data: RegisterRequest): Observable<RegisterResponse> {
     return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data).pipe(
       tap(response => this.storeSession(response))
     );
@@ -97,7 +97,7 @@ export class AuthService {
   private storeSession(response: { token: string; refreshToken: string; role?: string }): void {
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
-    const role = (response as any).role ?? this.decodeRole(response.token) ?? 'User';
+    const role = response.role ?? this.decodeRole(response.token) ?? 'User';
     localStorage.setItem(ROLE_KEY, role);
   }
 

@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy } from '@angular/core';
 import { NavigationEnd } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../modules/auth/services/auth.service';
-import { filter } from 'rxjs';
+import { Subscription, filter } from 'rxjs';
 
 @Component({
   selector: 'app-top-nav',
@@ -12,10 +12,12 @@ import { filter } from 'rxjs';
   templateUrl: './top-nav.component.html',
   styleUrl: './top-nav.component.scss'
 })
-export class TopNavComponent {
+export class TopNavComponent implements OnDestroy {
   sidebarOpen = false;
   profileOpen = false;
   currentUrl = '';
+
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private router: Router,
@@ -24,11 +26,17 @@ export class TopNavComponent {
   
   ngOnInit(): void {
     this.currentUrl = this.router.url;
-    this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe((event) => {
-        this.currentUrl = (event as NavigationEnd).urlAfterRedirects;
-      });
+    this.subscriptions.add(
+      this.router.events
+        .pipe(filter((event) => event instanceof NavigationEnd))
+        .subscribe((event) => {
+          this.currentUrl = (event as NavigationEnd).urlAfterRedirects;
+        })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   get showBackButton(): boolean {

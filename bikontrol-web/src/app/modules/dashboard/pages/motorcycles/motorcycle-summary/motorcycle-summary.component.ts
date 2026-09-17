@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Motorcycle } from '../../../interfaces/motorcycle.interface';
@@ -17,7 +17,7 @@ import { AuthService } from '../../../../auth/services/auth.service';
   templateUrl: './motorcycle-summary.component.html',
   styleUrl: './motorcycle-summary.component.scss'
 })
-export class MotorcycleSummaryComponent implements OnInit {
+export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   motorcycle?: Motorcycle;
   upcomingMaintenances: UpcomingMaintenance[] = [];
   maintenanceRecords: MaintenanceRecord[] = [];
@@ -26,6 +26,8 @@ export class MotorcycleSummaryComponent implements OnInit {
   isEditKmModalOpen = false;
   isSubmittingKm = false;
   isRollingBackKm = false;
+
+  private redirectTimer?: ReturnType<typeof setTimeout>;
 
   get canRegisterMaintenance(): boolean {
     return this.upcomingMaintenances.length > 0;
@@ -62,11 +64,17 @@ export class MotorcycleSummaryComponent implements OnInit {
     }
 
     if (!this.motorcycle) {
-      setTimeout(() => {
+      this.redirectTimer = setTimeout(() => {
         this.router.navigate(['/dashboard/home']);
       }, 1500);
     } else {
       this.loadSummaryData();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
     }
   }
 

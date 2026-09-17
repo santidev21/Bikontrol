@@ -3,8 +3,8 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="bg-gray-800 rounded-xl p-4 space-y-4">
     <div>
-      <label class="block text-sm text-gray-300 mb-1">Mantenimiento</label>
-      <select formControlName="userMaintenanceId" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700">
+      <label for="record-maintenance" class="block text-sm text-gray-300 mb-1">Mantenimiento</label>
+      <select id="record-maintenance" formControlName="userMaintenanceId" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700">
         <option value="">Selecciona un mantenimiento</option>
         <option *ngFor="let maintenance of maintenances" [value]="maintenance.id">
           {{ maintenance.name }} ({{ maintenance.trackingType }})
@@ -13,14 +13,14 @@
     </div>
 
     <div>
-      <label class="block text-sm text-gray-300 mb-1">Fecha</label>
-      <input type="date" formControlName="performedAt" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700" />
+      <label for="record-date" class="block text-sm text-gray-300 mb-1">Fecha</label>
+      <input id="record-date" type="date" formControlName="performedAt" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700" />
     </div>
 
     <div *ngIf="selectedMaintenance?.trackingType === 'Km'">
-      <label class="block text-sm text-gray-300 mb-1">Kilometraje</label>
-      <input type="number" formControlName="performedKm" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700" />
-      <p class="text-xs text-gray-400 mt-1">Km actual: {{ currentKm }} | Último de este mantenimiento: {{ lastMaintenanceKm ?? 'Sin registro' }}</p>
+      <label for="record-km" class="block text-sm text-gray-300 mb-1">Kilometraje</label>
+      <input id="record-km" type="number" formControlName="performedKm" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700" />
+      <p class="text-xs text-gray-400 mt-1">Km actual: {{ currentKm }} | Ãšltimo de este mantenimiento: {{ lastMaintenanceKm ?? 'Sin registro' }}</p>
     </div>
 
     <button

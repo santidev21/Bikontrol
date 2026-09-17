@@ -10,6 +10,7 @@ describe("RegisterMaintenanceRecordComponent", () => {
   let routerMock: any;
   let routeParamMap$: Subject<any>;
   let swalMock: any;
+  let httpErrorMock: any;
 
   beforeEach(() => {
     routeParamMap$ = new Subject<any>();
@@ -29,6 +30,12 @@ describe("RegisterMaintenanceRecordComponent", () => {
       warning: jest.fn(),
       success: jest.fn().mockResolvedValue(true)
     };
+    httpErrorMock = {
+      message: jest.fn(
+        (error: any, fallback = "Error inesperado en el servidor.") =>
+          error?.error?.error || error?.error?.message || error?.message || fallback
+      )
+    };
 
     component = new RegisterMaintenanceRecordComponent(
       new FormBuilder(),
@@ -38,7 +45,8 @@ describe("RegisterMaintenanceRecordComponent", () => {
       routerMock,
       maintenanceServiceMock,
       motorcyclesServiceMock,
-      swalMock
+      swalMock,
+      httpErrorMock
     );
   });
 

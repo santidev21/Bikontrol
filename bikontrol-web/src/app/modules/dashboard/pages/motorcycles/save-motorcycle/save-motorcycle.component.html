@@ -6,8 +6,9 @@
   <form [formGroup]="motorcycleForm" (ngSubmit)="onSubmit()" class="space-y-4">
     <!-- Nombre -->
     <div>
-      <label class="block text-gray-700 font-semibold mb-1">Nombre *</label>
+      <label for="moto-name" class="block text-gray-700 font-semibold mb-1">Nombre *</label>
       <input
+        id="moto-name"
         formControlName="name"
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
@@ -23,8 +24,9 @@
 
     <!-- Marca -->
     <div>
-      <label class="block text-gray-700 font-semibold mb-1">Marca *</label>
+      <label for="moto-brand" class="block text-gray-700 font-semibold mb-1">Marca *</label>
       <input
+        id="moto-brand"
         formControlName="brand"
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
@@ -38,8 +40,9 @@
     <!-- Año y Kilometraje -->
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="block text-gray-700 font-semibold mb-1">Modelo *</label>
+        <label for="moto-year" class="block text-gray-700 font-semibold mb-1">Modelo *</label>
         <input
+          id="moto-year"
           formControlName="year"
           type="number"
           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
@@ -56,8 +59,9 @@
       </div>
 
       <div>
-        <label class="block text-gray-700 font-semibold mb-1">Kilometraje *</label>
+        <label for="moto-km" class="block text-gray-700 font-semibold mb-1">Kilometraje *</label>
         <input
+          id="moto-km"
           formControlName="km"
           type="number"
           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -80,8 +84,9 @@
 
     <!-- Apodo -->
     <div>
-      <label class="block text-gray-700 font-semibold mb-1">Apodo *</label>
+      <label for="moto-nickname" class="block text-gray-700 font-semibold mb-1">Apodo *</label>
       <input
+        id="moto-nickname"
         formControlName="nickname"
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
@@ -95,8 +100,9 @@
     <!-- Cilindraje y Placa -->
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="block text-gray-700 font-semibold mb-1">Cilindraje (cc) *</label>
+        <label for="moto-displacement" class="block text-gray-700 font-semibold mb-1">Cilindraje (cc) *</label>
         <input
+          id="moto-displacement"
           formControlName="displacement"
           type="number"
           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
@@ -113,8 +119,9 @@
       </div>
 
       <div>
-        <label class="block text-gray-700 font-semibold mb-1">Placa *</label>
+        <label for="moto-plate" class="block text-gray-700 font-semibold mb-1">Placa *</label>
         <input
+          id="moto-plate"
           formControlName="plate"
           type="text"
           class="w-full border border-gray-300 rounded-lg p-2 uppercase focus:ring-2 focus:ring-primary focus:outline-none"

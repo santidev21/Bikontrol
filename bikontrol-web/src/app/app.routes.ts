@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './shared/guards/auth.guard';
 import { guestGuard } from './shared/guards/guest.guard';
 import { rootRedirectGuard } from './shared/guards/root-redirect.guard';
 
@@ -14,6 +15,7 @@ export const routes: Routes = [
   // Dashboard
   {
     path: 'dashboard',
+    canActivate: [authGuard],
     loadComponent: () => import('./modules/dashboard/components/dashboard-layout/dashboard-layout.component').then(c => c.DashboardLayoutComponent),
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },

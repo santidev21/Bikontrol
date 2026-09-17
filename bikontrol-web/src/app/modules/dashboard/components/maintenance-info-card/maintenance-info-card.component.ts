@@ -166,13 +166,13 @@ export class MaintenanceInfoCardComponent {
     this.maintenanceService.deleteMaintenance(this.maintenance.id).subscribe({
         next: () => {
           this.swal
-            .success('¡Eliminada!', 'La motocicleta fue eliminada correctamente.')
+            .success('¡Eliminado!', 'El mantenimiento fue eliminado correctamente.')
             .then(() => this.refresh.emit());
         },
         error: (err) => {
           this.swal.error(
             'Error',
-            this.httpError.message(err, 'No se pudo eliminar la motocicleta.')
+            this.httpError.message(err, 'No se pudo eliminar el mantenimiento.')
           );
         },
       });

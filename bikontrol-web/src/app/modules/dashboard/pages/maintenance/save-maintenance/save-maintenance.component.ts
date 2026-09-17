@@ -1,8 +1,10 @@
-﻿import { Component } from '@angular/core';
+﻿import { Component, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { SwalService } from '../../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { CommonModule } from '@angular/common';
 import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
@@ -14,19 +16,22 @@ import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-s
   templateUrl: './save-maintenance.component.html',
   styleUrl: './save-maintenance.component.scss'
 })
-export class SaveMaintenanceComponent {
+export class SaveMaintenanceComponent implements OnDestroy {
   maintenanceForm: FormGroup;
   isSubmitting = false;
   isEditMode = false;
   maintenanceId?: string;
   motorcycleId = '';
 
+  private readonly subscriptions = new Subscription();
+
   constructor(
     private fb: FormBuilder,
     private maintenanceService: MaintenanceService,
     private router: Router,
     private route: ActivatedRoute,
-    private swal: SwalService
+    private swal: SwalService,
+    private httpError: HttpErrorService
   ) {
     this.maintenanceForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -44,14 +49,20 @@ export class SaveMaintenanceComponent {
       this.motorcycleId = motorcycleId;
     }
 
-    this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      if (id) {
-        this.isEditMode = true;
-        this.maintenanceId = id;
-        this.loadMaintenanceId(this.maintenanceId);
-      }
-    });
+    this.subscriptions.add(
+      this.route.paramMap.subscribe((params) => {
+        const id = params.get('id');
+        if (id) {
+          this.isEditMode = true;
+          this.maintenanceId = id;
+          this.loadMaintenanceId(this.maintenanceId);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   loadMaintenanceId(id: string): void {
@@ -69,8 +80,8 @@ export class SaveMaintenanceComponent {
         this.maintenanceForm.patchValue(mappedMaintenance);
         this.maintenanceForm.get('monitoringType')?.disable();
       },
-      error: () => {
-        this.swal.error('Error', 'No se pudo cargar la motocicleta.');
+      error: (err) => {
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo cargar el mantenimiento.'));
       },
     });
   }
@@ -137,7 +148,7 @@ export class SaveMaintenanceComponent {
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.swal.error('Error', err?.error?.message || 'No se pudo agregar el mantenimiento.');
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo agregar el mantenimiento.'));
       },
     });
   }
@@ -152,7 +163,7 @@ export class SaveMaintenanceComponent {
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.swal.error('Error', err?.error?.message || 'No se pudo actualizar el mantenimiento.');
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar el mantenimiento.'));
       },
     });
   }
