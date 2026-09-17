@@ -53,7 +53,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: bikontrol-web
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Run frontend tests
         working-directory: bikontrol-web
@@ -76,6 +76,37 @@ jobs:
           POSTGRES_PASSWORD: ci_dummy_password
           ConnectionStrings__DefaultConnection: Host=bikontrol-db;Port=5432;Database=bikontrol_db;Username=bikontrol;Password=ci_dummy_password
           Jwt__Key: ci_dummy_key_0123456789abcdef0123456789abcdef
+
+  dependency-audit:
+    name: Dependency vulnerability report (non-blocking)
+    runs-on: ubuntu-latest
+    # Report only: the Angular 18 advisories require a major upgrade (tracked
+    # separately) and the AutoMapper 12 advisory is consciously suppressed, so
+    # this must not block the pipeline.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: .NET vulnerable packages
+        continue-on-error: true
+        run: dotnet list Bikontrol/Bikontrol.sln package --vulnerable --include-transitive
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bikontrol-web/package-lock.json
+
+      - name: npm audit (production dependencies)
+        continue-on-error: true
+        working-directory: bikontrol-web
+        run: npm audit --omit=dev --audit-level=high
 
   deploy:
     name: Deploy to VPS

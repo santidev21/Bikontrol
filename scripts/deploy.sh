@@ -69,9 +69,13 @@ backup_database() {
     mkdir -p "$BACKUP_DIR"
     if docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps -q db >/dev/null 2>&1; then
         log "Backing up database to ${BACKUP_DIR}/db.sql.gz ..."
-        docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
-            pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>/dev/null | gzip > "${BACKUP_DIR}/db.sql.gz" \
-            || log "WARNING: database backup failed (continuing)"
+        if ! docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
+            pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>/dev/null | gzip > "${BACKUP_DIR}/db.sql.gz"; then
+            error_exit "database backup failed — aborting"
+        fi
+        if ! gzip -t "${BACKUP_DIR}/db.sql.gz" 2>/dev/null; then
+            error_exit "database backup looks corrupt (${BACKUP_DIR}/db.sql.gz) — aborting"
+        fi
         # prune old backups, keep last N
         log "Pruning old backups (keeping last $BACKUP_RETENTION) ..."
         ls -dt "${DEPLOY_DIR}/backups"/backup-* 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -rf
@@ -86,6 +90,41 @@ backup_only() {
     backup_database
     log "Backup complete at ${BACKUP_DIR}"
     ls -lh "${BACKUP_DIR}/" 2>/dev/null || true
+}
+
+# Read-only data integrity audit (scripts/db-integrity-audit.sql).
+# Every block must return 0 rows; any output aborts the deploy.
+audit_database() {
+    if [ ! -f "$DEPLOY_DIR/.env" ]; then
+        return 0
+    fi
+    set -a
+    # shellcheck disable=SC1091
+    source "$DEPLOY_DIR/.env"
+    set +a
+
+    local audit_sql="${DEPLOY_DIR}/scripts/db-integrity-audit.sql"
+    if [ ! -f "$audit_sql" ]; then
+        log "WARNING: ${audit_sql} not found — skipping integrity audit"
+        return 0
+    fi
+    if ! docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps -q db >/dev/null 2>&1; then
+        log "WARNING: db service not running — skipping integrity audit"
+        return 0
+    fi
+
+    log "Running read-only integrity audit..."
+    local findings
+    findings="$(docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
+        psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -A -q -v ON_ERROR_STOP=1 -f - \
+        < "$audit_sql" 2>/dev/null || true)"
+
+    if [ -n "$findings" ]; then
+        log "ERROR: integrity audit returned findings:"
+        echo "$findings" | tee -a "$LOG_FILE"
+        error_exit "integrity audit failed — fix the data before deploying"
+    fi
+    log "Integrity audit clean (0 rows)."
 }
 
 install_cron() {
@@ -213,6 +252,7 @@ deploy() {
     validate_config
     backup
     backup_database
+    audit_database
     pull
     build
     up
@@ -246,10 +286,11 @@ case "${1:-deploy}" in
     verify) verify ;;
     rollback) rollback ;;
     backup|backup-db|backup-only) backup_only ;;
+    audit-db) audit_database ;;
     install-cron) install_cron "$@" ;;
     remove-cron) remove_cron ;;
     *)
-        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|rollback|backup-db|install-cron|remove-cron]"
+        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|rollback|backup-db|audit-db|install-cron|remove-cron]"
         exit 1
         ;;
 esac

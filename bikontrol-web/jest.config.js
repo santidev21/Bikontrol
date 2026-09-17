@@ -11,7 +11,7 @@ module.exports = {
   transform: {
     '^.+\\.(ts|tsx|js|jsx|mjs)$': ['ts-jest', {
       tsconfig: 'tsconfig.spec.json',
-      diagnostics: false
+      diagnostics: true
     }]
   },
   transformIgnorePatterns: ['/node_modules/(?!@angular|rxjs)'],

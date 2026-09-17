@@ -19,4 +19,7 @@ EXPOSE 8080
 
 COPY --from=build /app/publish .
 
+# Run as the non-root user defined by the .NET 8 image (APP_UID=1654).
+USER $APP_UID
+
 ENTRYPOINT ["dotnet", "Bikontrol.API.dll"]

@@ -7,10 +7,12 @@ COPY bikontrol-web/package.json bikontrol-web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
 COPY bikontrol-web/ ./
-RUN npm run build
 
-# Override the API URL baked into the bundle (used by docker-compose.local.yml).
-RUN find /src/dist/bikontrol-web/browser -name '*.js' -exec sed -i "s|https://bikontrol.santidev21.tech/api|${API_URL}|g" {} +
+# La API URL se fija ANTES del build. Reescribir los .js ya hasheados después
+# (como se hacía antes) invalida los hashes de integridad de ngsw.json y rompe
+# la verificación del service worker.
+RUN sed -i "s|apiUrl: '[^']*'|apiUrl: '${API_URL}'|" src/environments/environment.prod.ts
+RUN npm run build
 
 # Serve stage
 FROM nginx:1.27-alpine
