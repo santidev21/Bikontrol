@@ -1,11 +1,11 @@
 ---
 name: angular-best-practices
-description: Angular 19 conventions and quality rules for Bikontrol. Use when writing or reviewing components, services, guards, interceptors, pipes, templates, RxJS streams, routing, forms, or state in bikontrol-web/.
+description: Angular 20 conventions and quality rules for Bikontrol. Use when writing or reviewing components, services, guards, interceptors, pipes, templates, RxJS streams, routing, forms, or state in bikontrol-web/.
 ---
 
-# Angular 19 best practices (Bikontrol)
+# Angular 20 best practices (Bikontrol)
 
-Applies to `bikontrol-web/`. Angular 19, standalone components, Tailwind + SCSS, PWA, Jest.
+Applies to `bikontrol-web/`. Angular 20, standalone components, Tailwind + SCSS, PWA, Jest.
 
 ## Components
 - Standalone only (`standalone: true`), no `NgModule`. Import what the template uses.

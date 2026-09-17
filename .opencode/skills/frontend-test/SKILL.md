@@ -3,7 +3,7 @@ name: frontend-test
 description: Build and run the Bikontrol Angular unit tests. Use when running frontend tests, npm test, jest, Angular build, or checking frontend coverage.
 ---
 
-# Frontend tests (Angular 19 + Jest)
+# Frontend tests (Angular 20 + Jest)
 
 Prefer the root scripts, from the repo root:
 
@@ -20,5 +20,5 @@ npm run build
 ```
 
 Rules:
-- Tests are **Jest**, not karma (karma deps exist but the `test` script is jest). Write `.spec.ts` colocated with the unit under test.
+- Tests are **Jest** via `jest-preset-angular` (config in `bikontrol-web/jest.config.js`, env setup in `src/setup-jest.ts`). Write `.spec.ts` colocated with the unit under test.
 - Root runner forces `http://localhost:4201`; direct `npm start` from `bikontrol-web/` uses `:4200`.

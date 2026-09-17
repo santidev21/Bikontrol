@@ -1,20 +1,11 @@
-/** Jest configuration for Bikontrol (Angular 19) */
+/** Jest configuration for Bikontrol (Angular 20, via jest-preset-angular) */
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'jsdom',
+  preset: 'jest-preset-angular',
   setupFilesAfterEnv: ['<rootDir>/src/setup-jest.ts'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
     '^@env/environment$': '<rootDir>/src/environments/environment.ts',
+    '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(scss|css|svg|png|jpg)$': '<rootDir>/__mocks__/styleMock.js'
   },
-  transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': ['ts-jest', {
-      tsconfig: 'tsconfig.spec.json',
-      diagnostics: true
-    }]
-  },
-  transformIgnorePatterns: ['/node_modules/(?!@angular|rxjs)'],
-  testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
-  moduleFileExtensions: ['ts','mjs','js','json','html']
+  testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)']
 };
