@@ -52,7 +52,8 @@ Angular 18 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 | Docker local (`npm run docker:dev`) | `127.0.0.1:8080` | `127.0.0.1:4200` | internal only |
 
 ## AI Setup
-- `.opencode/` is the AI home (tracked in git): `skills/` (task playbooks in `SKILL.md` format), `agent/` (per-area playbooks: backend, frontend, reviewer), `command/` (shortcuts: /test, /migrate). Local plugin scaffold (`node_modules`, `package.json`) is ignored.
+- `.opencode/` is the AI home (tracked in git): `skills/` (task playbooks in `SKILL.md` format, e.g. `api-contract`, `angular-best-practices`, `security-review`), `agent/` (playbooks: backend, frontend, reviewer, repo-auditor), `command/` (shortcuts: /test, /migrate, /review). Local plugin scaffold (`node_modules`, `package.json`) is ignored.
+- Code review: use the `reviewer` agent for a diff/PR and the `repo-auditor` agent for a whole-repo, graded quality + security report. `/review [repo|all]` orchestrates either; both are read-only and confirm findings against `npm run test`.
 - `opencode.json` holds instructions, MCP servers and permissions. Skills, agents and commands need no config — opencode auto-discovers `.opencode/`.
 - `AGENTS.md` is the single source of truth; `docs/specs/` holds details.
 

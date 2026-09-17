@@ -190,9 +190,9 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 
 - [AGENTS.md](AGENTS.md) — project snapshot (stack, layout, commands, working rules)
 - [opencode.json](opencode.json) — instructions, MCP servers and permissions
-- [.opencode/agent/](.opencode/agent/) — per-area playbooks (backend, frontend, reviewer)
-- [.opencode/skills/](.opencode/skills/) — task playbooks (migrations, tests, docker, contracts)
-- [.opencode/command/](.opencode/command/) — shortcuts (`/test`, `/migrate`)
+- [.opencode/agent/](.opencode/agent/) — per-area playbooks (backend, frontend, reviewer, repo-auditor)
+- [.opencode/skills/](.opencode/skills/) — task playbooks (migrations, tests, docker, contracts, angular, security)
+- [.opencode/command/](.opencode/command/) — shortcuts (`/test`, `/migrate`, `/review`)
 - [docs/specs/](docs/specs/) — architecture, auth, database detail specs
 
 ---
@@ -209,7 +209,7 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - [x] Predefined maintenance items don't appear — the `CleanupAllButUsers` migration had truncated the seeded `MaintenanceTypes` table; fixed with the idempotent `SeedPredefinedMaintenanceTypes` re-seed migration.
 - [x] Create a migrator that automatically applies new tables to the production DB — already implemented: the API runs `db.Database.Migrate()` on startup in any non-Development environment (`Program.cs`), so production applies pending migrations automatically.
 - [x] Create a read-only demo user (view-only, no edits) so people can try the app. — `POST /api/auth/demo` (auto-creates `demo@bikontrol.com` with `Role=Demo`), JWT carries `role` claim, write endpoints return 403 for Demo, frontend shows "Probar demo" button on login + modo solo lectura banner.
-- [x] Add the missing tests. — 109 backend tests (interval/%-remaining matrix, write-path integrity, statistics, profile, demo guards, auth) + 149 frontend Jest tests (statistics/profile views and services included).
+- [x] Add the missing tests. — 139 backend tests (interval/%-remaining matrix, write-path integrity, statistics, profile, demo guards, auth, motorcycle CRUD + mapping + DTO validation) + 157 frontend Jest tests (statistics/profile views, services, guards included).
 - [x] DB backup and security. — `npm run db:backup` / `db:restore` (compressed, retention 7), `deploy.sh backup-db` in persistent `backups/`, Postgres SSL (`ssl=on` + self-signed, `SslMode=Require;Trust Server Certificate=true`). Multi-step writes run in transactions, optimistic concurrency via `xmin`, CHECK constraints on km/intervals, read-only audit in `scripts/db-integrity-audit.sql` (run it + a backup before every deploy with real users).
 - [x] Add the statistics view. — `/dashboard/statistics` backed by read-only `GET /api/statistics/summary` (KPIs, maintenance health, km per bike, records by type, 6-month activity; hand-rolled SVG/CSS charts).
 - [x] Add the profile view. — `/dashboard/profile` backed by `GET/PUT /api/users/me` + `POST /api/users/me/password` (name editable for all; password change only for password accounts).
