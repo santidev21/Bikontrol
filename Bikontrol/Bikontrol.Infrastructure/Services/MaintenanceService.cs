@@ -75,6 +75,9 @@ namespace Bikontrol.Infrastructure.Services
 
         private static void EnsureValidInterval(string trackingType, int? kmInterval, int? timeIntervalWeeks)
         {
+            if (trackingType != "Km" && trackingType != "Time")
+                throw new ValidationException("El tipo de seguimiento debe ser 'Km' o 'Time'.");
+
             if (trackingType == "Km" && (!kmInterval.HasValue || kmInterval.Value <= 0))
                 throw new ValidationException("Debes indicar un intervalo de kilometraje mayor a cero.");
 
@@ -115,12 +118,12 @@ namespace Bikontrol.Infrastructure.Services
 
             var defaultEntity = await _repo.GetByIdAsync(defaultId);
             if (defaultEntity == null)
-                throw new NotFoundException("Default maintenance type not found.");
+                throw new NotFoundException("No se encontró el mantenimiento predeterminado.");
 
             var existing = await _userRepo.GetByBaseIdAsync(_current.UserId, motorcycleId, defaultId);
             if (existing != null)
             {
-                if (existing.IsEnabled) throw new ValidationException("You are already following this maintenance.");
+                if (existing.IsEnabled) throw new ValidationException("Ya estás siguiendo este mantenimiento.");
                 existing.IsEnabled = true;
                 existing.KmInterval = kmInterval;
                 existing.TimeIntervalWeeks = timeIntervalWeeks;
@@ -231,20 +234,74 @@ namespace Bikontrol.Infrastructure.Services
 
             var currentKm = await _kmHistoryService.GetCurrentKmAsync(motorcycleId);
             var initialRecordedAt = await _kmHistoryService.GetInitialRecordedAtAsync(motorcycleId);
-            var maintenances = await _userRepo.GetByUserIdAndMotorcycleIdAsync(_current.UserId, motorcycleId);
+            var maintenances = (await _userRepo.GetByUserIdAndMotorcycleIdAsync(_current.UserId, motorcycleId)).ToList();
 
-            var result = new List<UpcomingMaintenanceDTO>();
+            // Último registro por mantenimiento en una sola consulta (antes era N+1).
+            var lastRecords = await _recordRepository.GetLastByUserMaintenanceIdsAsync(maintenances.Select(m => m.Id));
 
-            foreach (var maintenance in maintenances)
-            {
-                var lastRecord = await _recordRepository.GetLastByUserMaintenanceIdAsync(maintenance.Id);
-                result.Add(CalculateUpcoming(maintenance, lastRecord, currentKm, initialRecordedAt));
-            }
-
-            return result
+            return maintenances
+                .Select(maintenance => CalculateUpcoming(
+                    maintenance,
+                    lastRecords.TryGetValue(maintenance.Id, out var last) ? last : null,
+                    currentKm,
+                    initialRecordedAt))
                 .OrderBy(x => x.LifePercent)
                 .ThenBy(x => x.Name)
                 .ToList();
+        }
+
+        public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<UpcomingMaintenanceDTO>>> GetUpcomingByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var ids = motorcycleIds.Distinct().ToList();
+            var result = new Dictionary<Guid, IReadOnlyList<UpcomingMaintenanceDTO>>();
+            if (ids.Count == 0)
+                return result;
+
+            await EnsureMotorcyclesOwnershipAsync(ids);
+
+            var maintenances = (await _userRepo.GetByUserIdAsync(_current.UserId))
+                .Where(m => ids.Contains(m.MotorcycleId))
+                .ToList();
+            var lastRecords = await _recordRepository.GetLastByUserMaintenanceIdsAsync(maintenances.Select(m => m.Id));
+            var currentKms = await _kmHistoryService.GetCurrentKmByMotorcycleIdsAsync(ids);
+            var initialDates = await _kmHistoryService.GetInitialRecordedAtByMotorcycleIdsAsync(ids);
+
+            foreach (var id in ids)
+            {
+                var currentKm = currentKms.TryGetValue(id, out var km) ? km : 0;
+                initialDates.TryGetValue(id, out var initialRecordedAt);
+
+                result[id] = maintenances
+                    .Where(m => m.MotorcycleId == id)
+                    .Select(m => CalculateUpcoming(
+                        m,
+                        lastRecords.TryGetValue(m.Id, out var last) ? last : null,
+                        currentKm,
+                        initialRecordedAt))
+                    .OrderBy(x => x.LifePercent)
+                    .ThenBy(x => x.Name)
+                    .ToList();
+            }
+
+            return result;
+        }
+
+        public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>> GetMaintenanceRecordsByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var ids = motorcycleIds.Distinct().ToList();
+            var result = new Dictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>();
+            if (ids.Count == 0)
+                return result;
+
+            await EnsureMotorcyclesOwnershipAsync(ids);
+
+            var mapped = _mapper.Map<List<MaintenanceRecordDTO>>(await _recordRepository.GetByMotorcycleIdsAsync(ids));
+            foreach (var id in ids)
+            {
+                result[id] = mapped.Where(r => r.MotorcycleId == id).ToList();
+            }
+
+            return result;
         }
 
         private UpcomingMaintenanceDTO CalculateUpcoming(UserMaintenance maintenance, MotorcycleMaintenanceRecord? lastRecord, int currentKm, DateTime? initialRecordedAt)
@@ -321,6 +378,16 @@ namespace Bikontrol.Infrastructure.Services
             if (motorcycle is null) throw new NotFoundException("Motocicleta no encontrada.");
             if (motorcycle.UserId != _current.UserId)
                 throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.");
+        }
+
+        private async Task EnsureMotorcyclesOwnershipAsync(IReadOnlyCollection<Guid> motorcycleIds)
+        {
+            var owned = (await _motorcycleRepository.GetByUserIdAsync(_current.UserId))
+                .Select(m => m.Id)
+                .ToHashSet();
+
+            if (motorcycleIds.Any(id => !owned.Contains(id)))
+                throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.");
         }
     }
 }

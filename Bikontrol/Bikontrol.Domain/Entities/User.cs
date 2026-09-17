@@ -31,12 +31,19 @@ namespace Bikontrol.Persistence.Entities
         public User(string email, string fullName, string passwordHash, string? role = null)
         {
             Id = Guid.NewGuid();
-            Email = email;
+            Email = NormalizeEmail(email);
             FullName = fullName;
             PasswordHash = passwordHash;
             Role = string.IsNullOrWhiteSpace(role) ? UserRole.User : role;
             CreatedAt = DateTime.UtcNow;
         }
+
+        /// <summary>
+        /// El email se guarda y se compara normalizado (trim + minúsculas) para
+        /// evitar cuentas duplicadas por diferencias de mayúsculas/espacios.
+        /// </summary>
+        public static string NormalizeEmail(string? email) =>
+            (email ?? string.Empty).Trim().ToLowerInvariant();
 
         public void SetPasswordHash(string hash)
         {

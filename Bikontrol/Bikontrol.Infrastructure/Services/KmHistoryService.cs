@@ -48,6 +48,12 @@ namespace Bikontrol.Infrastructure.Services
             return first?.RecordedAt;
         }
 
+        public async Task<IReadOnlyDictionary<Guid, int>> GetCurrentKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
+            => await _repository.GetLatestKmByMotorcycleIdsAsync(motorcycleIds);
+
+        public async Task<IReadOnlyDictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
+            => await _repository.GetInitialRecordedAtByMotorcycleIdsAsync(motorcycleIds);
+
         public async Task RollbackLastKmAsync(Guid motorcycleId, int newKm)
         {
             var history = await _repository.GetByMotorcycleIdAsync(motorcycleId);

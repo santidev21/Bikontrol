@@ -148,5 +148,21 @@ public class StatisticsServiceTests
             Task.FromResult(_records.TryGetValue(motorcycleId, out var r) ? r.AsEnumerable() : Enumerable.Empty<MaintenanceRecordDTO>());
         public Task<IEnumerable<UpcomingMaintenanceDTO>> GetUpcomingByMotorcycleAsync(Guid motorcycleId) =>
             Task.FromResult(_upcoming.TryGetValue(motorcycleId, out var u) ? u.AsEnumerable() : Enumerable.Empty<UpcomingMaintenanceDTO>());
+
+        public Task<IReadOnlyDictionary<Guid, IReadOnlyList<UpcomingMaintenanceDTO>>> GetUpcomingByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var result = new Dictionary<Guid, IReadOnlyList<UpcomingMaintenanceDTO>>();
+            foreach (var id in motorcycleIds)
+                result[id] = _upcoming.TryGetValue(id, out var u) ? u : new List<UpcomingMaintenanceDTO>();
+            return Task.FromResult<IReadOnlyDictionary<Guid, IReadOnlyList<UpcomingMaintenanceDTO>>>(result);
+        }
+
+        public Task<IReadOnlyDictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>> GetMaintenanceRecordsByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var result = new Dictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>();
+            foreach (var id in motorcycleIds)
+                result[id] = _records.TryGetValue(id, out var r) ? r : new List<MaintenanceRecordDTO>();
+            return Task.FromResult<IReadOnlyDictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>>(result);
+        }
     }
 }

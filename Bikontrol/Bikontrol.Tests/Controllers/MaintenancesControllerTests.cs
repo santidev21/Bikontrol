@@ -271,5 +271,11 @@ public class MaintenancesControllerTests
             LastUpcomingMotorcycleId = motorcycleId;
             return Task.FromResult(Upcoming);
         }
+
+        public Task<IReadOnlyDictionary<Guid, IReadOnlyList<UpcomingMaintenanceDTO>>> GetUpcomingByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+            => throw new NotImplementedException();
+
+        public Task<IReadOnlyDictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>> GetMaintenanceRecordsByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+            => throw new NotImplementedException();
     }
 }

@@ -553,6 +553,10 @@ public class MaintenanceServiceIntervalTests
         }
         public Task<int> GetCurrentKmAsync(Guid motorcycleId) => Task.FromResult(_currentKm);
         public Task<DateTime?> GetInitialRecordedAtAsync(Guid motorcycleId) => Task.FromResult(_initialRecordedAt);
+        public Task<IReadOnlyDictionary<Guid, int>> GetCurrentKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, int>>(motorcycleIds.Distinct().ToDictionary(id => id, _ => _currentKm));
+        public Task<IReadOnlyDictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, DateTime?>>(motorcycleIds.Distinct().ToDictionary(id => id, _ => _initialRecordedAt));
         public Task RollbackLastKmAsync(Guid motorcycleId, int newKm) => Task.CompletedTask;
     }
 
@@ -564,8 +568,20 @@ public class MaintenanceServiceIntervalTests
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) =>
             Task.FromResult(_lastByMaintenance.TryGetValue(userMaintenanceId, out var r) ? r : null);
+        public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds)
+        {
+            var result = new Dictionary<Guid, MotorcycleMaintenanceRecord>();
+            foreach (var id in userMaintenanceIds.Distinct())
+            {
+                if (_lastByMaintenance.TryGetValue(id, out var record) && record is not null)
+                    result[id] = record;
+            }
+            return Task.FromResult(result);
+        }
     }
 
     private sealed class FakeTransactionManager : ITransactionManager

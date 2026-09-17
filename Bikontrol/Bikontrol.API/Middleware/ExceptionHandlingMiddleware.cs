@@ -30,6 +30,14 @@ namespace Bikontrol.API.Middleware
 
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception, ILogger logger)
         {
+            if (context.Response.HasStarted)
+            {
+                // La respuesta ya empezó a enviarse: no se puede reescribir el
+                // status/body sin romper el stream, así que solo se registra.
+                logger.LogWarning(exception, "Exception after response started: {Message}", exception.Message);
+                return;
+            }
+
             HttpStatusCode statusCode;
             string message;
 

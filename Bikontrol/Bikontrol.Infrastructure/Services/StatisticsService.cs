@@ -29,6 +29,12 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<StatisticsSummaryDTO> GetSummaryAsync()
         {
             var motorcycles = (await _motorcycles.GetByCurrentUserAsync()).ToList();
+            var motorcycleIds = motorcycles.Select(m => m.Id).ToList();
+
+            // Una sola pasada por mantenimientos/registros para toda la flota
+            // (antes eran 2 consultas por moto).
+            var upcomingByMotorcycle = await _maintenances.GetUpcomingByMotorcyclesAsync(motorcycleIds);
+            var recordsByMotorcycle = await _maintenances.GetMaintenanceRecordsByMotorcyclesAsync(motorcycleIds);
 
             var summary = new StatisticsSummaryDTO
             {
@@ -51,7 +57,9 @@ namespace Bikontrol.Infrastructure.Services
                     Km = moto.Km
                 });
 
-                var upcoming = await _maintenances.GetUpcomingByMotorcycleAsync(moto.Id);
+                var upcoming = upcomingByMotorcycle.TryGetValue(moto.Id, out var up)
+                    ? up
+                    : Array.Empty<UpcomingMaintenanceDTO>();
                 foreach (var u in upcoming)
                 {
                     if (u.IsOverdue)
@@ -73,8 +81,8 @@ namespace Bikontrol.Infrastructure.Services
                     }
                 }
 
-                var records = await _maintenances.GetMaintenanceRecordsByMotorcycleAsync(moto.Id);
-                allRecords.AddRange(records);
+                if (recordsByMotorcycle.TryGetValue(moto.Id, out var records))
+                    allRecords.AddRange(records);
             }
 
             summary.OverdueCount = overdue;

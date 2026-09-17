@@ -5,6 +5,7 @@ using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
+using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;
 
@@ -111,6 +112,57 @@ public class MaintenanceServiceUpcomingTests
         Assert.Equal(initialDate, result[0].LastPerformedAt?.Date);
     }
 
+    [Fact]
+    public async Task GetUpcomingByMotorcyclesAsync_ShouldGroupResultsPerMotorcycle()
+    {
+        var userId = Guid.NewGuid();
+        var motoA = Guid.NewGuid();
+        var motoB = Guid.NewGuid();
+
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
+        var service = new MaintenanceService(
+            new FakeMaintenanceRepository(),
+            new FakeUserMaintenanceRepository(new List<UserMaintenance>
+            {
+                new() { Id = Guid.NewGuid(), UserId = userId, MotorcycleId = motoA, Name = "Aceite", TrackingType = "Km", KmInterval = 1000, IsEnabled = true },
+                new() { Id = Guid.NewGuid(), UserId = userId, MotorcycleId = motoB, Name = "Cadena", TrackingType = "Km", KmInterval = 1000, IsEnabled = true }
+            }),
+            new FakeMotorcycleRepository(CreateMotorcycle(motoA, userId), CreateMotorcycle(motoB, userId)),
+            new FakeKmHistoryService(500),
+            new FakeRecordRepository(),
+            mapper,
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
+
+        var result = await service.GetUpcomingByMotorcyclesAsync(new[] { motoA, motoB });
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Aceite", Assert.Single(result[motoA]).Name);
+        Assert.Equal("Cadena", Assert.Single(result[motoB]).Name);
+    }
+
+    [Fact]
+    public async Task GetUpcomingByMotorcyclesAsync_NotOwnedMotorcycle_ShouldThrowForbidden()
+    {
+        var userId = Guid.NewGuid();
+        var owned = Guid.NewGuid();
+        var foreign = Guid.NewGuid();
+
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
+        var service = new MaintenanceService(
+            new FakeMaintenanceRepository(),
+            new FakeUserMaintenanceRepository(new List<UserMaintenance>()),
+            new FakeMotorcycleRepository(CreateMotorcycle(owned, userId)),
+            new FakeKmHistoryService(0),
+            new FakeRecordRepository(),
+            mapper,
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
+
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
+            service.GetUpcomingByMotorcyclesAsync(new[] { owned, foreign }));
+    }
+
     private sealed class FakeCurrentUserService : ICurrentUserService
     {
         public FakeCurrentUserService(Guid userId, string role = Persistence.Entities.UserRole.User)
@@ -156,11 +208,11 @@ public class MaintenanceServiceUpcomingTests
 
     private sealed class FakeMotorcycleRepository : IMotorcycleRepository
     {
-        private readonly Motorcycle _motorcycle;
-        public FakeMotorcycleRepository(Motorcycle motorcycle) => _motorcycle = motorcycle;
+        private readonly List<Motorcycle> _motorcycles;
+        public FakeMotorcycleRepository(params Motorcycle[] motorcycles) => _motorcycles = motorcycles.ToList();
         public Task<Motorcycle> AddAsync(Motorcycle motorcycle) => Task.FromResult(motorcycle);
-        public Task<Motorcycle?> GetByIdAsync(Guid id) => Task.FromResult(id == _motorcycle.Id ? _motorcycle : null);
-        public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => Task.FromResult(Enumerable.Empty<Motorcycle>());
+        public Task<Motorcycle?> GetByIdAsync(Guid id) => Task.FromResult(_motorcycles.FirstOrDefault(m => m.Id == id));
+        public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => Task.FromResult(_motorcycles.Where(m => m.UserId == userId).AsEnumerable());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
     }
@@ -177,6 +229,10 @@ public class MaintenanceServiceUpcomingTests
         public Task AddKmAsync(Guid motorcycleId, int km) => Task.CompletedTask;
         public Task<int> GetCurrentKmAsync(Guid motorcycleId) => Task.FromResult(_currentKm);
         public Task<DateTime?> GetInitialRecordedAtAsync(Guid motorcycleId) => Task.FromResult(_initialRecordedAt);
+        public Task<IReadOnlyDictionary<Guid, int>> GetCurrentKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, int>>(motorcycleIds.Distinct().ToDictionary(id => id, _ => _currentKm));
+        public Task<IReadOnlyDictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, DateTime?>>(motorcycleIds.Distinct().ToDictionary(id => id, _ => _initialRecordedAt));
         public Task RollbackLastKmAsync(Guid motorcycleId, int newKm) => Task.CompletedTask;
     }
 
@@ -185,8 +241,12 @@ public class MaintenanceServiceUpcomingTests
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) =>
             Task.FromResult<MotorcycleMaintenanceRecord?>(null);
+        public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds) =>
+            Task.FromResult(new Dictionary<Guid, MotorcycleMaintenanceRecord>());
     }
 
     private sealed class FakeTransactionManager : ITransactionManager

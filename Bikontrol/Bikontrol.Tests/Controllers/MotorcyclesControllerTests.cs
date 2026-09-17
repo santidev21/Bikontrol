@@ -1,6 +1,7 @@
 using Bikontrol.API.Controllers;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bikontrol.Tests.Controllers;
@@ -47,14 +48,13 @@ public class MotorcyclesControllerTests
     }
 
     [Fact]
-    public async Task GetById_WhenMotorcycleDoesNotExist_ShouldReturnNotFound()
+    public async Task GetById_WhenServiceThrowsNotFound_ShouldPropagate()
     {
-        var service = new FakeMotorcycleService { GetByIdResult = null };
+        // El "no encontrado" ahora vive en el servicio (NotFound → 404 vía middleware).
+        var service = new FakeMotorcycleService { GetByIdThrows = new NotFoundException("Motocicleta no encontrada.") };
         var controller = new MotorcyclesController(service);
 
-        var result = await controller.GetById(Guid.NewGuid());
-
-        Assert.IsType<NotFoundResult>(result);
+        await Assert.ThrowsAsync<NotFoundException>(() => controller.GetById(Guid.NewGuid()));
     }
 
     [Fact]
@@ -156,6 +156,7 @@ public class MotorcyclesControllerTests
         public int? LastKmToAdd { get; private set; }
         public int? LastRollbackKm { get; private set; }
         public MotorcycleDTO? GetByIdResult { get; set; }
+        public Exception? GetByIdThrows { get; set; }
         public IList<MotorcycleDTO> GetMineResult { get; set; } = new List<MotorcycleDTO>();
         public int CurrentKm { get; set; }
         public MotorcycleDTO CreateResult { get; set; } = new();
@@ -166,7 +167,10 @@ public class MotorcyclesControllerTests
             return Task.FromResult(CreateResult);
         }
 
-        public Task<MotorcycleDTO?> GetByIdAsync(Guid id) => Task.FromResult(GetByIdResult);
+        public Task<MotorcycleDTO?> GetByIdAsync(Guid id) =>
+            GetByIdThrows is not null
+                ? Task.FromException<MotorcycleDTO?>(GetByIdThrows)
+                : Task.FromResult(GetByIdResult);
         public Task<IList<MotorcycleDTO>> GetByCurrentUserAsync() => Task.FromResult(GetMineResult);
         public Task<int> GetCurrentKmAsync(Guid id) => Task.FromResult(CurrentKm);
         public Task AddKmHistoryAsync(Guid id, int km)

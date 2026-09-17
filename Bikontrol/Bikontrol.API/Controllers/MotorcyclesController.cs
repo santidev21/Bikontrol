@@ -27,8 +27,7 @@ namespace Bikontrol.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _motorcycleService.GetByIdAsync(id);
-            return result is null ? NotFound() : Ok(result);
+            return Ok(await _motorcycleService.GetByIdAsync(id));
         }
 
         [HttpGet("mine")]
