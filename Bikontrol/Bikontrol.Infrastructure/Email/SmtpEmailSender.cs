@@ -1,6 +1,7 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
@@ -12,11 +13,13 @@ namespace Bikontrol.Infrastructure.Email
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<SmtpEmailSender> _logger;
+        private readonly IHostEnvironment _environment;
 
-        public SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSender> logger)
+        public SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSender> logger, IHostEnvironment environment)
         {
             _configuration = configuration;
             _logger = logger;
+            _environment = environment;
         }
 
         public async Task SendAsync(string toEmail, string subject, string body)
@@ -33,11 +36,21 @@ namespace Bikontrol.Infrastructure.Email
 
             if (!hostConfigured || !credentialsConfigured)
             {
-                // No SMTP configured (e.g. local dev): log the message so the
-                // reset link is still usable without an email provider.
-                _logger.LogWarning(
-                    "[SMTP] not configured — email to {Email} was not sent. Subject: {Subject}. Body: {Body}",
-                    toEmail, subject, body);
+                if (_environment.IsDevelopment())
+                {
+                    // No SMTP configured in local dev: log the message so the
+                    // reset link is still usable without an email provider.
+                    _logger.LogWarning(
+                        "[SMTP] not configured — email to {Email} was not sent. Subject: {Subject}. Body: {Body}",
+                        toEmail, subject, body);
+                }
+                else
+                {
+                    // Never log the body (it may contain a live reset token).
+                    _logger.LogWarning(
+                        "[SMTP] not configured — email to {Email} was not sent. Subject: {Subject}.",
+                        toEmail, subject);
+                }
                 return;
             }
 

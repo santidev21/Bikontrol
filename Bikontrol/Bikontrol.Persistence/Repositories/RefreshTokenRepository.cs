@@ -30,6 +30,18 @@ namespace Bikontrol.Persistence.Repositories
             await _context.RefreshTokens.AddAsync(refreshToken);
         }
 
+        public async Task<int> RevokeAllForUserAsync(Guid userId)
+        {
+            var active = await _context.RefreshTokens
+                .Where(t => t.UserId == userId && t.RevokedAt == null)
+                .ToListAsync();
+
+            foreach (var token in active)
+                token.Revoke();
+
+            return active.Count;
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

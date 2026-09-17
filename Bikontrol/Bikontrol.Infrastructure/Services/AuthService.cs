@@ -181,6 +181,8 @@ namespace Bikontrol.Infrastructure.Services
             user.ClearResetPasswordToken();
             // Si era una cuenta Google, ahora tiene contraseña usable.
             user.SetAuthProvider(null);
+            // Restablecer la contraseña cierra todas las sesiones existentes.
+            await _refreshTokenRepository.RevokeAllForUserAsync(user.Id);
             await _userRepository.SaveChangesAsync();
         }
 

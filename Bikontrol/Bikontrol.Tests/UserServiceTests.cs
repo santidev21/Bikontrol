@@ -103,6 +103,23 @@ public class UserServiceTests
     }
 
     [Fact]
+    public async Task ChangePasswordAsync_ShouldRevokeExistingRefreshTokens()
+    {
+        var user = new User("user@bikontrol.com", "Santi", "hashed:old");
+        var service = CreateService(user, role: UserRole.User);
+        _refreshTokenRepository.Tokens.Add(new RefreshToken(user.Id, "hash-1", DateTime.UtcNow.AddDays(30)));
+        _refreshTokenRepository.Tokens.Add(new RefreshToken(user.Id, "hash-2", DateTime.UtcNow.AddDays(30)));
+
+        await service.ChangePasswordAsync(new ChangePasswordRequest
+        {
+            CurrentPassword = "old",
+            NewPassword = "newsecret"
+        });
+
+        Assert.All(_refreshTokenRepository.Tokens, t => Assert.NotNull(t.RevokedAt));
+    }
+
+    [Fact]
     public async Task ChangePasswordAsync_WrongCurrent_ShouldThrowValidation()
     {
         var user = new User("user@bikontrol.com", "Santi", "hashed:old");
@@ -145,17 +162,45 @@ public class UserServiceTests
             }));
     }
 
-    private static UserService CreateService(User? user, string role)
+    private FakeRefreshTokenRepository _refreshTokenRepository = new();
+
+    private UserService CreateService(User? user, string role)
         => CreateService(new FakeUserRepository(user), role);
 
-    private static UserService CreateService(FakeUserRepository repository, string role)
+    private UserService CreateService(FakeUserRepository repository, string role)
     {
         var userId = repository.Users.FirstOrDefault()?.Id ?? Guid.NewGuid();
+        _refreshTokenRepository = new FakeRefreshTokenRepository();
         return new UserService(
             repository,
+            _refreshTokenRepository,
             new FakePasswordHasher(),
             Mapper,
             new FakeCurrentUserService(userId, role));
+    }
+
+    private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
+    {
+        public List<RefreshToken> Tokens { get; } = new();
+
+        public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash) =>
+            Task.FromResult(Tokens.FirstOrDefault(t => t.TokenHash == tokenHash));
+
+        public Task AddAsync(RefreshToken refreshToken)
+        {
+            Tokens.Add(refreshToken);
+            return Task.CompletedTask;
+        }
+
+        public Task<int> RevokeAllForUserAsync(Guid userId)
+        {
+            var active = Tokens.Where(t => t.UserId == userId && t.RevokedAt is null).ToList();
+            foreach (var token in active)
+                token.Revoke();
+            return Task.FromResult(active.Count);
+        }
+
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeUserRepository : IUserRepository

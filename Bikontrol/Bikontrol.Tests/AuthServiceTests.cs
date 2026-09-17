@@ -220,6 +220,28 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task ResetPasswordAsync_ShouldRevokeExistingRefreshTokens()
+    {
+        var user = new User("test@bikontrol.com", "Test User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository);
+        await service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" });
+        Assert.Single(_refreshRepository.Tokens, t => t.RevokedAt is null);
+
+        await service.ForgotPasswordAsync(new ForgotPasswordRequest { Email = user.Email });
+        var token = ExtractToken(_emailSender.Sent.Single().Body);
+
+        await service.ResetPasswordAsync(new ResetPasswordRequest
+        {
+            Email = user.Email,
+            Token = token,
+            NewPassword = "NewSecret123!"
+        });
+
+        Assert.All(_refreshRepository.Tokens, t => Assert.NotNull(t.RevokedAt));
+    }
+
+    [Fact]
     public async Task GoogleLoginAsync_WhenClientIdIsMissing_ShouldThrow503()
     {
         var repository = new FakeUserRepository();
@@ -397,6 +419,14 @@ private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
         {
             Tokens.Add(refreshToken);
             return Task.CompletedTask;
+        }
+
+        public Task<int> RevokeAllForUserAsync(Guid userId)
+        {
+            var active = Tokens.Where(t => t.UserId == userId && t.RevokedAt is null).ToList();
+            foreach (var token in active)
+                token.Revoke();
+            return Task.FromResult(active.Count);
         }
 
         public Task SaveChangesAsync() => Task.CompletedTask;

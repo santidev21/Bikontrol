@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
+using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,22 +74,42 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Trust forwarded headers from the nginx gateway.
+// Trust forwarded headers only from the reverse-proxy network (nginx gateway).
+// Set ReverseProxy:KnownNetworks (comma-separated CIDRs) to the gateway network;
+// defaults to the private ranges Docker/loopback use.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    var configuredNetworks = builder.Configuration["ReverseProxy:KnownNetworks"]?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    var networks = configuredNetworks is { Length: > 0 }
+        ? configuredNetworks
+        : new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.1/32", "::1/128", "fc00::/7" };
+
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
+    foreach (var cidr in networks)
+    {
+        if (IPNetwork.TryParse(cidr, out var network))
+            options.KnownNetworks.Add(network);
+    }
 });
 
-// Rate limiting (auth endpoints).
+// Rate limiting (auth endpoints). Partitioned per client IP: the previous
+// single fixed window throttled the whole application to 10 auth requests/min.
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    options.AddPolicy("auth", httpContext =>
     {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 0;
+        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
     });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });

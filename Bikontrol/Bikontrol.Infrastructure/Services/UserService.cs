@@ -13,17 +13,20 @@ namespace Bikontrol.Infrastructure.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
 
         public UserService(
             IUserRepository userRepository,
+            IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher,
             IMapper mapper,
             ICurrentUserService current)
         {
             _userRepository = userRepository;
+            _refreshTokenRepository = refreshTokenRepository;
             _passwordHasher = passwordHasher;
             _mapper = mapper;
             _current = current;
@@ -59,6 +62,9 @@ namespace Bikontrol.Infrastructure.Services
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
+            // Cambiar la contraseña cierra todas las sesiones: los refresh tokens
+            // previos dejan de ser válidos (se persisten en el mismo SaveChanges).
+            await _refreshTokenRepository.RevokeAllForUserAsync(user.Id);
             await _userRepository.UpdateAsync(user);
             await _userRepository.SaveChangesAsync();
         }
