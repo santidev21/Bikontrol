@@ -13,44 +13,50 @@
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
         placeholder="Ej: Cambio de aceite"
-      />
-      <small *ngIf="hasError('name', 'required')" class="text-red-500 font-bold">
-        Campo requerido
-      </small>
-      <small *ngIf="hasError('name', 'minlength')" class="text-red-500 font-bold">
-        Mínimo 2 caracteres
-      </small>
+        />
+        @if (hasError('name', 'required')) {
+          <small class="text-red-500 font-bold">
+            Campo requerido
+          </small>
+        }
+        @if (hasError('name', 'minlength')) {
+          <small class="text-red-500 font-bold">
+            Mínimo 2 caracteres
+          </small>
+        }
+      </div>
+
+      <!-- Descripcion -->
+      <div>
+        <label for="maint-description" class="block text-gray-700 font-semibold mb-1">Descripcion *</label>
+        <input
+          id="maint-description"
+          formControlName="description"
+          type="text"
+          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+          placeholder="Ej: Realizar cambio de aceite frecuente"
+          />
+          @if (hasError('description', 'required')) {
+            <small class="text-red-500 font-bold">
+              Campo requerido
+            </small>
+          }
+        </div>
+
+        <!-- Tipo de Monitoreo -->
+        <app-monitoring-type-selector
+          [form]="maintenanceForm"
+          [isEditMode]="isEditMode">
+        </app-monitoring-type-selector>
+
+
+        <!-- Botón -->
+        <button
+          type="submit"
+          [disabled]="isSubmitting"
+          class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors"
+          >
+          {{ isSubmitting ? 'Guardando...' : (isEditMode ? 'Actualizar Mantenimiento' : 'Guardar Mantenimiento') }}
+        </button>
+      </form>
     </div>
-
-    <!-- Descripcion -->
-    <div>
-      <label for="maint-description" class="block text-gray-700 font-semibold mb-1">Descripcion *</label>
-      <input
-        id="maint-description"
-        formControlName="description"
-        type="text"
-        class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        placeholder="Ej: Realizar cambio de aceite frecuente"
-      />
-      <small *ngIf="hasError('description', 'required')" class="text-red-500 font-bold">
-        Campo requerido
-      </small>
-    </div>
-
-    <!-- Tipo de Monitoreo -->
-    <app-monitoring-type-selector 
-      [form]="maintenanceForm"
-      [isEditMode]="isEditMode">
-    </app-monitoring-type-selector>
-
-
-    <!-- Botón -->
-    <button
-      type="submit"
-      [disabled]="isSubmitting"
-      class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors"
-    >
-      {{ isSubmitting ? 'Guardando...' : (isEditMode ? 'Actualizar Mantenimiento' : 'Guardar Mantenimiento') }}
-    </button>
-  </form>
-</div>

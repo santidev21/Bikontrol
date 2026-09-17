@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { Maintenance } from '../../interfaces/maintenance.interface';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { IntervalFormatPipe } from '../../pipes/interval-format.pipe';
 import { MaintenanceService } from '../../service/maintenance.service';
 import { FollowMaintenancePayload } from '../../interfaces/maintenance.interface';
@@ -13,7 +13,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
     selector: 'app-maintenance-info-card',
-    imports: [CommonModule, IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
+    imports: [IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
     templateUrl: './maintenance-info-card.component.html',
     styleUrl: './maintenance-info-card.component.scss'
 })

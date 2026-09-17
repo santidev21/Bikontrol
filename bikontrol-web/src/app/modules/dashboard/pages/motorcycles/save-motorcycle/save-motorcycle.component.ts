@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { SaveMotorcycleDTO , Motorcycle } from '../../../interfaces/motorcycle.interface';
-import { CommonModule } from '@angular/common';
+
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
@@ -12,7 +12,7 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 
 @Component({
     selector: 'app-save-motorcycle',
-    imports: [ReactiveFormsModule, CommonModule],
+    imports: [ReactiveFormsModule],
     templateUrl: './save-motorcycle.component.html',
     styleUrl: './save-motorcycle.component.scss'
 })

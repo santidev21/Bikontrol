@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 
 @Component({
     selector: 'app-register-maintenance-record',
-    imports: [CommonModule, ReactiveFormsModule],
+    imports: [ReactiveFormsModule],
     templateUrl: './register-maintenance-record.component.html',
     styleUrl: './register-maintenance-record.component.scss'
 })

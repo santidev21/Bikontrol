@@ -1,22 +1,29 @@
 <div class="p-4">
-    <h1 class="text-2xl font-bold mb-2 text-center">Bienvenido de nuevo</h1>
-    <p class="text-gray-400 mb-4 text-center">Tus motocicletas</p>
+  <h1 class="text-2xl font-bold mb-2 text-center">Bienvenido de nuevo</h1>
+  <p class="text-gray-400 mb-4 text-center">Tus motocicletas</p>
 
-    <div *ngIf="motorcycles.length === 0" class="text-center text-gray-500 mt-8">
-    No tienes motos agregadas, por favor agrega una usando el botón de abajo.
+  @if (motorcycles.length === 0) {
+    <div class="text-center text-gray-500 mt-8">
+      No tienes motos agregadas, por favor agrega una usando el botón de abajo.
     </div>
+  }
 
-    <div *ngIf="motorcycles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <app-motorcycle-card
-        *ngFor="let moto of motorcycles"
-        [motorcycle]="moto"
-        (deleted)="loadMotorcycles()">
-    </app-motorcycle-card>
+  @if (motorcycles.length > 0) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (moto of motorcycles; track moto) {
+        <app-motorcycle-card
+          [motorcycle]="moto"
+          (deleted)="loadMotorcycles()">
+        </app-motorcycle-card>
+      }
     </div>
+  }
 
-    <div *ngIf="!isDemo" class="mt-6 text-center">
-    <button routerLink="/dashboard/motorcycles/add" class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
+  @if (!isDemo) {
+    <div class="mt-6 text-center">
+      <button routerLink="/dashboard/motorcycles/add" class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
         + Agregar motocicleta
-    </button>
+      </button>
     </div>
+  }
 </div>

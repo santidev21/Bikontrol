@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Maintenance } from '../../../interfaces/maintenance.interface';
@@ -10,7 +10,7 @@ import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
     selector: 'app-maintenance-page',
-    imports: [CommonModule, RouterModule, MaintenanceInfoCardComponent],
+    imports: [RouterModule, MaintenanceInfoCardComponent],
     templateUrl: './maintenance-page.component.html',
     styleUrl: './maintenance-page.component.scss'
 })

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { Motorcycle } from '../../interfaces/motorcycle.interface';
@@ -10,7 +10,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
     selector: 'app-motorcycle-card',
-    imports: [CommonModule],
+    imports: [],
     templateUrl: './motorcycle-card.component.html',
     styleUrl: './motorcycle-card.component.scss'
 })

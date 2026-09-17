@@ -14,13 +14,17 @@
           formControlName="email"
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="correo@example.com"
-        />
-        <small *ngIf="isInvalid('email') && f['email'].errors?.['required']" class="text-red-500 text-xs font-bold">
-          El correo es obligatorio.
-        </small>
-        <small *ngIf="isInvalid('email') && f['email'].errors?.['email']" class="text-red-500 text-xs font-bold">
-          Ingresa un correo válido.
-        </small>
+          />
+        @if (isInvalid('email') && f['email'].errors?.['required']) {
+          <small class="text-red-500 text-xs font-bold">
+            El correo es obligatorio.
+          </small>
+        }
+        @if (isInvalid('email') && f['email'].errors?.['email']) {
+          <small class="text-red-500 text-xs font-bold">
+            Ingresa un correo válido.
+          </small>
+        }
       </div>
 
       <div class="mb-2">
@@ -31,13 +35,17 @@
           formControlName="password"
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="••••••••"
-        />
-        <small *ngIf="isInvalid('password') && f['password'].errors?.['required']" class="text-red-500 text-xs font-bold">
-          La contraseña es obligatoria.
-        </small>
-        <small *ngIf="isInvalid('password') && f['password'].errors?.['minlength']" class="text-red-500 text-xs font-bold">
-          Debe tener al menos 6 caracteres.
-        </small>
+          />
+        @if (isInvalid('password') && f['password'].errors?.['required']) {
+          <small class="text-red-500 text-xs font-bold">
+            La contraseña es obligatoria.
+          </small>
+        }
+        @if (isInvalid('password') && f['password'].errors?.['minlength']) {
+          <small class="text-red-500 text-xs font-bold">
+            Debe tener al menos 6 caracteres.
+          </small>
+        }
       </div>
 
       <div class="text-right mb-4">
@@ -48,13 +56,15 @@
         type="submit"
         [disabled]="loginForm.invalid"
         class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
-      >
+        >
         Ingresar
       </button>
 
-      <small *ngIf="errorMessage" class="text-red-500 text-xs block text-center mt-3 font-bold">
-        {{ errorMessage }}
-      </small>
+      @if (errorMessage) {
+        <small class="text-red-500 text-xs block text-center mt-3 font-bold">
+          {{ errorMessage }}
+        </small>
+      }
     </form>
 
     <div class="flex items-center gap-3 my-4">
@@ -69,7 +79,7 @@
       type="button"
       routerLink="/register"
       class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
-    >
+      >
       Registrarse
     </button>
 
@@ -78,7 +88,7 @@
       (click)="onDemoLogin()"
       [disabled]="demoLoading"
       class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
-    >
+      >
       {{ demoLoading ? 'Cargando demo...' : '¿Querés probar la demo?' }}
     </button>
   </div>

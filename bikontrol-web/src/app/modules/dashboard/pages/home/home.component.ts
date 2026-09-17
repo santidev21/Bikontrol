@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MotorcycleCardComponent } from '../../components/motorcycle-card/motorcycle-card.component';
 import { AuthService } from '../../../auth/services/auth.service';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { MotorcyclesService } from '../../service/motorcycles.service';
 import { Motorcycle } from '../../interfaces/motorcycle.interface';
@@ -10,7 +10,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 
 @Component({
     selector: 'app-home',
-    imports: [CommonModule, MotorcycleCardComponent, RouterModule],
+    imports: [MotorcycleCardComponent, RouterModule],
     templateUrl: './home.component.html',
     styleUrl: './home.component.scss'
 })

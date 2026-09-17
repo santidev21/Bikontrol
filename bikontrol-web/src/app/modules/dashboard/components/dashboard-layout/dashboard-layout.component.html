@@ -1,11 +1,13 @@
 <app-top-nav></app-top-nav>
 
-<div *ngIf="isDemo" class="fixed top-16 left-0 right-0 z-10 bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-sm py-2 px-4">
-  Estás viendo la demo en modo solo lectura — los cambios están deshabilitados.
-</div>
+@if (isDemo) {
+  <div class="fixed top-16 left-0 right-0 z-10 bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-sm py-2 px-4">
+    Estás viendo la demo en modo solo lectura — los cambios están deshabilitados.
+  </div>
+}
 
 <main class="pt-20 pb-16" [class.pt-28]="isDemo">
-    <router-outlet></router-outlet>
+  <router-outlet></router-outlet>
 </main>
 
 <app-bottom-nav></app-bottom-nav>

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -7,7 +7,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 
 @Component({
     selector: 'app-forgot-password',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+    imports: [FormsModule, ReactiveFormsModule, RouterModule],
     templateUrl: './forgot-password.component.html',
     styleUrl: './forgot-password.component.scss'
 })

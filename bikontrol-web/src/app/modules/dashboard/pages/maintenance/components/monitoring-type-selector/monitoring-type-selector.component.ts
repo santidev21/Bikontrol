@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
     selector: 'app-monitoring-type-selector',
-    imports: [ReactiveFormsModule, CommonModule],
+    imports: [ReactiveFormsModule],
     templateUrl: './monitoring-type-selector.component.html',
     styleUrl: './monitoring-type-selector.component.scss'
 })

@@ -5,13 +5,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
-import { CommonModule } from '@angular/common';
+
 import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
 
 @Component({
     selector: 'app-save-maintenance',
-    imports: [ReactiveFormsModule, CommonModule, MonitoringTypeSelectorComponent],
+    imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
     templateUrl: './save-maintenance.component.html',
     styleUrl: './save-maintenance.component.scss'
 })

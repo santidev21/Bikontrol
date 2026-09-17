@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,7 +7,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 
 @Component({
     selector: 'app-reset-password',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+    imports: [FormsModule, ReactiveFormsModule, RouterModule],
     templateUrl: './reset-password.component.html',
     styleUrl: './reset-password.component.scss'
 })

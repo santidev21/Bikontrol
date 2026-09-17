@@ -13,159 +13,190 @@
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
         placeholder="Ej: TTR 200"
-      />
-      <small *ngIf="hasError('name', 'required')" class="text-red-500 font-bold">
-        Campo requerido
-      </small>
-      <small *ngIf="hasError('name', 'minlength')" class="text-red-500 font-bold">
-        Mínimo 2 caracteres
-      </small>
-    </div>
-
-    <!-- Marca -->
-    <div>
-      <label for="moto-brand" class="block text-gray-700 font-semibold mb-1">Marca *</label>
-      <input
-        id="moto-brand"
-        formControlName="brand"
-        type="text"
-        class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        placeholder="Ej: Yamaha"
-      />
-      <small *ngIf="hasError('brand', 'required')" class="text-red-500 font-bold">
-        Campo requerido
-      </small>
-    </div>
-
-    <!-- Año y Kilometraje -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label for="moto-year" class="block text-gray-700 font-semibold mb-1">Modelo *</label>
-        <input
-          id="moto-year"
-          formControlName="year"
-          type="number"
-          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
         />
-        <small *ngIf="hasError('year', 'required')" class="text-red-500 font-bold">
-          Campo requerido
-        </small>
-        <small *ngIf="hasError('year', 'min')" class="text-red-500 font-bold">
-          Debe ser mayor o igual a 1950
-        </small>
-        <small *ngIf="hasError('year', 'max')" class="text-red-500 font-bold">
-          Debe ser menor o igual a {{ currentYear + 1 }}
-        </small>
+        @if (hasError('name', 'required')) {
+          <small class="text-red-500 font-bold">
+            Campo requerido
+          </small>
+        }
+        @if (hasError('name', 'minlength')) {
+          <small class="text-red-500 font-bold">
+            Mínimo 2 caracteres
+          </small>
+        }
       </div>
 
+      <!-- Marca -->
       <div>
-        <label for="moto-km" class="block text-gray-700 font-semibold mb-1">Kilometraje *</label>
+        <label for="moto-brand" class="block text-gray-700 font-semibold mb-1">Marca *</label>
         <input
-          id="moto-km"
-          formControlName="km"
-          type="number"
-          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-          placeholder="Ej: 15000"
-        />
-        <small *ngIf="isEditMode" class="text-gray-500">
-          Km actual (no editable, se gestiona desde el resumen)
-        </small>
-        <small *ngIf="hasError('km', 'required')" class="text-red-500 font-bold">
-          Campo requerido
-        </small>
-        <small *ngIf="hasError('km', 'min')" class="text-red-500 font-bold">
-          Debe ser positivo
-        </small>
-        <small *ngIf="hasError('km', 'max')" class="text-red-500 font-bold">
-          No puede superar 1,000,000 km
-        </small>
-      </div>
-    </div>
-
-    <!-- Apodo -->
-    <div>
-      <label for="moto-nickname" class="block text-gray-700 font-semibold mb-1">Apodo *</label>
-      <input
-        id="moto-nickname"
-        formControlName="nickname"
-        type="text"
-        class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        placeholder="Ej: Rayo"
-      />
-      <small *ngIf="hasError('nickname', 'required')" class="text-red-500 font-bold">
-        Campo requerido
-      </small>
-    </div>
-
-    <!-- Cilindraje y Placa -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label for="moto-displacement" class="block text-gray-700 font-semibold mb-1">Cilindraje (cc) *</label>
-        <input
-          id="moto-displacement"
-          formControlName="displacement"
-          type="number"
-          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        />
-        <small *ngIf="hasError('displacement', 'required')" class="text-red-500 font-bold">
-          Campo requerido
-        </small>
-        <small *ngIf="hasError('displacement', 'min')" class="text-red-500 font-bold">
-          Debe ser positivo
-        </small>
-        <small *ngIf="hasError('displacement', 'max')" class="text-red-500 font-bold">
-          No puede superar 2300 cc
-        </small>
-      </div>
-
-      <div>
-        <label for="moto-plate" class="block text-gray-700 font-semibold mb-1">Placa *</label>
-        <input
-          id="moto-plate"
-          formControlName="plate"
+          id="moto-brand"
+          formControlName="brand"
           type="text"
-          class="w-full border border-gray-300 rounded-lg p-2 uppercase focus:ring-2 focus:ring-primary focus:outline-none"
-          placeholder="Ej: ABC123"
-        />
-        <small *ngIf="hasError('plate', 'required')" class="text-red-500 font-bold">
-          Campo requerido
-        </small>
-      </div>
-    </div>
+          class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+          placeholder="Ej: Yamaha"
+          />
+          @if (hasError('brand', 'required')) {
+            <small class="text-red-500 font-bold">
+              Campo requerido
+            </small>
+          }
+        </div>
 
-    <!-- Imagen -->
-    <div class="flex flex-col items-center mt-4">
-      <img
-        [src]="previewSrc"
-        alt="Preview"
-        class="w-24 h-24 object-cover rounded-lg shadow-sm mb-2"
-      />
-      <label class="text-sm text-primary font-semibold cursor-pointer hover:underline">
-        {{ motorcycleForm.get('image')?.value === 'default.png' ? 'Subir imagen' : 'Cambiar imagen' }}
-        <input
-          type="file"
-          accept="image/*"
-          class="hidden"
-          (change)="onImageSelected($event)"
-        />
-      </label>
-      <button
-        *ngIf="motorcycleForm.get('image')?.value !== 'default.png'"
-        type="button"
-        (click)="removeImage()"
-        class="text-sm text-gray-500 hover:underline mt-1"
-      >
-        Quitar imagen
-      </button>
-    </div>
+        <!-- Año y Kilometraje -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="moto-year" class="block text-gray-700 font-semibold mb-1">Modelo *</label>
+            <input
+              id="moto-year"
+              formControlName="year"
+              type="number"
+              class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+              />
+              @if (hasError('year', 'required')) {
+                <small class="text-red-500 font-bold">
+                  Campo requerido
+                </small>
+              }
+              @if (hasError('year', 'min')) {
+                <small class="text-red-500 font-bold">
+                  Debe ser mayor o igual a 1950
+                </small>
+              }
+              @if (hasError('year', 'max')) {
+                <small class="text-red-500 font-bold">
+                  Debe ser menor o igual a {{ currentYear + 1 }}
+                </small>
+              }
+            </div>
 
-    <!-- Botón -->
-    <button
-      type="submit"
-      [disabled]="isSubmitting"
-      class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors"
-    >
-      {{ isSubmitting ? 'Guardando...' : (isEditMode ? 'Actualizar Motocicleta' : 'Guardar Motocicleta') }}
-    </button>
-  </form>
-</div>
+            <div>
+              <label for="moto-km" class="block text-gray-700 font-semibold mb-1">Kilometraje *</label>
+              <input
+                id="moto-km"
+                formControlName="km"
+                type="number"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                placeholder="Ej: 15000"
+                />
+                @if (isEditMode) {
+                  <small class="text-gray-500">
+                    Km actual (no editable, se gestiona desde el resumen)
+                  </small>
+                }
+                @if (hasError('km', 'required')) {
+                  <small class="text-red-500 font-bold">
+                    Campo requerido
+                  </small>
+                }
+                @if (hasError('km', 'min')) {
+                  <small class="text-red-500 font-bold">
+                    Debe ser positivo
+                  </small>
+                }
+                @if (hasError('km', 'max')) {
+                  <small class="text-red-500 font-bold">
+                    No puede superar 1,000,000 km
+                  </small>
+                }
+              </div>
+            </div>
+
+            <!-- Apodo -->
+            <div>
+              <label for="moto-nickname" class="block text-gray-700 font-semibold mb-1">Apodo *</label>
+              <input
+                id="moto-nickname"
+                formControlName="nickname"
+                type="text"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                placeholder="Ej: Rayo"
+                />
+                @if (hasError('nickname', 'required')) {
+                  <small class="text-red-500 font-bold">
+                    Campo requerido
+                  </small>
+                }
+              </div>
+
+              <!-- Cilindraje y Placa -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="moto-displacement" class="block text-gray-700 font-semibold mb-1">Cilindraje (cc) *</label>
+                  <input
+                    id="moto-displacement"
+                    formControlName="displacement"
+                    type="number"
+                    class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                    />
+                    @if (hasError('displacement', 'required')) {
+                      <small class="text-red-500 font-bold">
+                        Campo requerido
+                      </small>
+                    }
+                    @if (hasError('displacement', 'min')) {
+                      <small class="text-red-500 font-bold">
+                        Debe ser positivo
+                      </small>
+                    }
+                    @if (hasError('displacement', 'max')) {
+                      <small class="text-red-500 font-bold">
+                        No puede superar 2300 cc
+                      </small>
+                    }
+                  </div>
+
+                  <div>
+                    <label for="moto-plate" class="block text-gray-700 font-semibold mb-1">Placa *</label>
+                    <input
+                      id="moto-plate"
+                      formControlName="plate"
+                      type="text"
+                      class="w-full border border-gray-300 rounded-lg p-2 uppercase focus:ring-2 focus:ring-primary focus:outline-none"
+                      placeholder="Ej: ABC123"
+                      />
+                      @if (hasError('plate', 'required')) {
+                        <small class="text-red-500 font-bold">
+                          Campo requerido
+                        </small>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Imagen -->
+                  <div class="flex flex-col items-center mt-4">
+                    <img
+                      [src]="previewSrc"
+                      alt="Preview"
+                      class="w-24 h-24 object-cover rounded-lg shadow-sm mb-2"
+                      />
+                      <label class="text-sm text-primary font-semibold cursor-pointer hover:underline">
+                        {{ motorcycleForm.get('image')?.value === 'default.png' ? 'Subir imagen' : 'Cambiar imagen' }}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          class="hidden"
+                          (change)="onImageSelected($event)"
+                          />
+                        </label>
+                        @if (motorcycleForm.get('image')?.value !== 'default.png') {
+                          <button
+                            type="button"
+                            (click)="removeImage()"
+                            class="text-sm text-gray-500 hover:underline mt-1"
+                            >
+                            Quitar imagen
+                          </button>
+                        }
+                      </div>
+
+                      <!-- Botón -->
+                      <button
+                        type="submit"
+                        [disabled]="isSubmitting"
+                        class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors"
+                        >
+                        {{ isSubmitting ? 'Guardando...' : (isEditMode ? 'Actualizar Motocicleta' : 'Guardar Motocicleta') }}
+                      </button>
+                    </form>
+                  </div>

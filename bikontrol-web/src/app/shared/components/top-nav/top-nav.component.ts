@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, HostListener, OnDestroy } from '@angular/core';
 import { NavigationEnd } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
@@ -7,7 +7,7 @@ import { Subscription, filter } from 'rxjs';
 
 @Component({
     selector: 'app-top-nav',
-    imports: [CommonModule, RouterModule],
+    imports: [RouterModule],
     templateUrl: './top-nav.component.html',
     styleUrl: './top-nav.component.scss'
 })
@@ -87,7 +87,7 @@ export class TopNavComponent implements OnDestroy {
   }
 
   @HostListener('document:keydown.escape', ['$event'])
-  handleEscape(event: KeyboardEvent) {
+  handleEscape(_event: Event) {
     this.sidebarOpen = false;
     this.profileOpen = false;
   }

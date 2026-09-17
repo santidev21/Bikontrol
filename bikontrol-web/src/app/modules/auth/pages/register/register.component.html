@@ -13,82 +13,98 @@
           formControlName="fullName"
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
           placeholder="Ej: Juan Pérez"
-        />
-        <small *ngIf="isInvalid('fullName')" class="text-red-500 text-xs font-bold">
-          El nombre es obligatorio.
-        </small>
-      </div>
+          />
+          @if (isInvalid('fullName')) {
+            <small class="text-red-500 text-xs font-bold">
+              El nombre es obligatorio.
+            </small>
+          }
+        </div>
 
-      <div class="mb-4">
-        <label for="register-email" class="block text-sm font-medium text-textdark mb-1">Correo</label>
-        <input
-          id="register-email"
-          type="email"
-          formControlName="email"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="correo@example.com"
-        />
-        <small *ngIf="isInvalid('email') && f['email'].errors?.['required']" class="text-red-500 text-xs font-bold">
-          El correo es obligatorio.
-        </small>
-        <small *ngIf="isInvalid('email') && f['email'].errors?.['email']" class="text-red-500 text-xs font-bold">
-          Formato de correo inválido.
-        </small>
-      </div>
+        <div class="mb-4">
+          <label for="register-email" class="block text-sm font-medium text-textdark mb-1">Correo</label>
+          <input
+            id="register-email"
+            type="email"
+            formControlName="email"
+            class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+            placeholder="correo@example.com"
+            />
+            @if (isInvalid('email') && f['email'].errors?.['required']) {
+              <small class="text-red-500 text-xs font-bold">
+                El correo es obligatorio.
+              </small>
+            }
+            @if (isInvalid('email') && f['email'].errors?.['email']) {
+              <small class="text-red-500 text-xs font-bold">
+                Formato de correo inválido.
+              </small>
+            }
+          </div>
 
-      <div class="mb-4">
-        <label for="register-password" class="block text-sm font-medium text-textdark mb-1">Contraseña</label>
-        <input
-          id="register-password"
-          type="password"
-          formControlName="password"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="••••••••"
-        />
-        <small *ngIf="isInvalid('password') && f['password'].errors?.['required']" class="text-red-500 text-xs font-bold">
-          La contraseña es obligatoria.
-        </small>
-        <small *ngIf="isInvalid('password') && f['password'].errors?.['minlength']" class="text-red-500 text-xs font-bold">
-          Debe tener al menos 6 caracteres.
-        </small>
-      </div>
+          <div class="mb-4">
+            <label for="register-password" class="block text-sm font-medium text-textdark mb-1">Contraseña</label>
+            <input
+              id="register-password"
+              type="password"
+              formControlName="password"
+              class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+              placeholder="••••••••"
+              />
+              @if (isInvalid('password') && f['password'].errors?.['required']) {
+                <small class="text-red-500 text-xs font-bold">
+                  La contraseña es obligatoria.
+                </small>
+              }
+              @if (isInvalid('password') && f['password'].errors?.['minlength']) {
+                <small class="text-red-500 text-xs font-bold">
+                  Debe tener al menos 6 caracteres.
+                </small>
+              }
+            </div>
 
-      <div class="mb-6">
-        <label for="register-confirm" class="block text-sm font-medium text-textdark mb-1">Confirmar contraseña</label>
-        <input
-          id="register-confirm"
-          type="password"
-          formControlName="confirmPassword"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="••••••••"
-        />
-        <small *ngIf="isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']" class="text-red-500 text-xs font-bold">
-          Debes confirmar la contraseña.
-        </small>
-        <small *ngIf="registerForm.errors?.['passwordMismatch'] && (f['confirmPassword'].dirty || f['confirmPassword'].touched)" class="text-red-500 text-xs font-bold">
-          Las contraseñas no coinciden.
-        </small>
-      </div>
+            <div class="mb-6">
+              <label for="register-confirm" class="block text-sm font-medium text-textdark mb-1">Confirmar contraseña</label>
+              <input
+                id="register-confirm"
+                type="password"
+                formControlName="confirmPassword"
+                class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+                placeholder="••••••••"
+                />
+                @if (isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']) {
+                  <small class="text-red-500 text-xs font-bold">
+                    Debes confirmar la contraseña.
+                  </small>
+                }
+                @if (registerForm.errors?.['passwordMismatch'] && (f['confirmPassword'].dirty || f['confirmPassword'].touched)) {
+                  <small class="text-red-500 text-xs font-bold">
+                    Las contraseñas no coinciden.
+                  </small>
+                }
+              </div>
 
-      <button
-        type="submit"
-        [disabled]="registerForm.invalid"
-        class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
-      >
-        Registrarse
-      </button>
+              <button
+                type="submit"
+                [disabled]="registerForm.invalid"
+                class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
+                >
+                Registrarse
+              </button>
 
-      <small *ngIf="errorMessage" class="text-red-500 text-xs block text-center mt-3 font-bold">
-        {{ errorMessage }}
-      </small>
+              @if (errorMessage) {
+                <small class="text-red-500 text-xs block text-center mt-3 font-bold">
+                  {{ errorMessage }}
+                </small>
+              }
 
-      <button
-        type="button"
-        routerLink="/login"
-        class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
-      >
-        Volver al inicio de sesión
-      </button>
-    </form>
-  </div>
-</div>
+              <button
+                type="button"
+                routerLink="/login"
+                class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
+                >
+                Volver al inicio de sesión
+              </button>
+            </form>
+          </div>
+        </div>

@@ -3,7 +3,7 @@ name: frontend-test
 description: Build and run the Bikontrol Angular unit tests. Use when running frontend tests, npm test, jest, Angular build, or checking frontend coverage.
 ---
 
-# Frontend tests (Angular 20 + Jest)
+# Frontend tests (Angular 21 + Jest)
 
 Prefer the root scripts, from the repo root:
 

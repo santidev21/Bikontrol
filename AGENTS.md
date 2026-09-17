@@ -4,7 +4,7 @@ This file is the working context for Bikontrol. Keep it updated when architectur
 
 ## Project Snapshot
 Motorcycle tracking and maintenance app:
-- Angular 20 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests) — views: home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
+- Angular 21 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests) — views: home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
 - .NET 8 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
 - PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
 - JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, per-user salt password hashing, password recovery via SMTP email, soft deletes
@@ -15,7 +15,7 @@ Motorcycle tracking and maintenance app:
 ```text
 Bikontrol/
 ├─ Bikontrol/       # .NET solution (Bikontrol.sln: API, Application, Domain, Infrastructure, Persistence, Shared, Tests)
-├─ bikontrol-web/   # Angular 20 application (src/app)
+├─ bikontrol-web/   # Angular 21 application (src/app)
 ├─ scripts/         # Orchestration scripts (run-bikontrol.mjs)
 ├─ deploy/          # Deployment configs
 ├─ docker/          # Dockerfiles (api, web)
@@ -33,7 +33,7 @@ Bikontrol/
 Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. In Development the API takes DB/JWT values from `.env` via the root scripts (fallback: `Bikontrol.API/appsettings.Development.json`, gitignored, created from the committed `.example` template).
 
 ## Frontend Architecture
-Angular 20 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Jest (`npm test` → `jest --passWithNoTests --runInBand`).
+Angular 21 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Jest (`npm test` → `jest --passWithNoTests --runInBand`).
 
 ## Commands (run from repo root via root scripts unless noted)
 - Both: `npm run dev` (DB in Docker + frontend + backend, hot reload) · `npm run build` · `npm run test` (see `/test`)
