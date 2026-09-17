@@ -15,7 +15,7 @@ namespace Bikontrol.Application.DTOs.Motorcycle
         [Required(ErrorMessage = "La marca es obligatoria.")]
         public string Brand { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El modelo es obligatorio.")]
+        [Range(1950, 2100, ErrorMessage = "El año debe estar entre 1950 y 2100.")]
         public int Year { get; set; }
 
         [Required(ErrorMessage = "El apodo es obligatorio.")]

@@ -176,6 +176,28 @@ public class KmHistoryServiceTests
             _items.Remove(entity);
         }
 
+        public Task<Dictionary<Guid, int>> GetLatestKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var ids = motorcycleIds.Distinct().ToList();
+            var result = _items
+                .Where(x => ids.Contains(x.MotorcycleId))
+                .GroupBy(x => x.MotorcycleId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.RecordedAt).ThenByDescending(x => x.Id).First().Km);
+            return Task.FromResult(result);
+        }
+
+        public Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var ids = motorcycleIds.Distinct().ToList();
+            var result = _items
+                .Where(x => ids.Contains(x.MotorcycleId))
+                .GroupBy(x => x.MotorcycleId)
+                .ToDictionary(g => g.Key, g => (DateTime?)g.Min(x => x.RecordedAt));
+            return Task.FromResult(result);
+        }
+
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

@@ -103,6 +103,8 @@ public class MotorcycleServiceDemoTests
         public Task<List<MotorcycleKmHistory>> GetByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult(new List<MotorcycleKmHistory> { new() { MotorcycleId = motorcycleId, Km = 100, RecordedAt = DateTime.UtcNow } });
         public Task<MotorcycleKmHistory?> GetFirstByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult<MotorcycleKmHistory?>(null);
         public Task<MotorcycleKmHistory?> GetLastByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult<MotorcycleKmHistory?>(new MotorcycleKmHistory { MotorcycleId = motorcycleId, Km = 100, RecordedAt = DateTime.UtcNow });
+        public Task<Dictionary<Guid, int>> GetLatestKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(motorcycleIds.Distinct().ToDictionary(id => id, _ => 100));
+        public Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(new Dictionary<Guid, DateTime?>());
         public void Remove(MotorcycleKmHistory entity) { }
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
@@ -112,6 +114,8 @@ public class MotorcycleServiceDemoTests
         public Task AddKmAsync(Guid motorcycleId, int km) => Task.CompletedTask;
         public Task<int> GetCurrentKmAsync(Guid motorcycleId) => Task.FromResult(100);
         public Task<DateTime?> GetInitialRecordedAtAsync(Guid motorcycleId) => Task.FromResult<DateTime?>(DateTime.UtcNow.AddDays(-5));
+        public Task<IReadOnlyDictionary<Guid, int>> GetCurrentKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult<IReadOnlyDictionary<Guid, int>>(motorcycleIds.Distinct().ToDictionary(id => id, _ => 100));
+        public Task<IReadOnlyDictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult<IReadOnlyDictionary<Guid, DateTime?>>(new Dictionary<Guid, DateTime?>());
         public Task RollbackLastKmAsync(Guid motorcycleId, int newKm) => Task.CompletedTask;
     }
 }

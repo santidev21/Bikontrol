@@ -17,6 +17,10 @@ namespace Bikontrol.Application.Interfaces.Repositories
 
         Task<List<MotorcycleKmHistory>> GetByMotorcycleIdAsync(Guid motorcycleId);
 
+        Task<Dictionary<Guid, int>> GetLatestKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds);
+
+        Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds);
+
         Task SaveChangesAsync();
     }
 }

@@ -51,6 +51,40 @@ namespace Bikontrol.Persistence.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Dictionary<Guid, int>> GetLatestKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var ids = motorcycleIds?.Distinct().ToList() ?? new List<Guid>();
+            if (ids.Count == 0)
+                return new Dictionary<Guid, int>();
+
+            var rows = await _context.MotorcycleKmHistories
+                .Where(x => ids.Contains(x.MotorcycleId))
+                .Select(x => new { x.MotorcycleId, x.Km, x.RecordedAt, x.Id })
+                .ToListAsync();
+
+            return rows
+                .GroupBy(x => x.MotorcycleId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.RecordedAt).ThenByDescending(x => x.Id).First().Km);
+        }
+
+        public async Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var ids = motorcycleIds?.Distinct().ToList() ?? new List<Guid>();
+            if (ids.Count == 0)
+                return new Dictionary<Guid, DateTime?>();
+
+            var rows = await _context.MotorcycleKmHistories
+                .Where(x => ids.Contains(x.MotorcycleId))
+                .Select(x => new { x.MotorcycleId, x.RecordedAt })
+                .ToListAsync();
+
+            return rows
+                .GroupBy(x => x.MotorcycleId)
+                .ToDictionary(g => g.Key, g => (DateTime?)g.Min(x => x.RecordedAt));
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

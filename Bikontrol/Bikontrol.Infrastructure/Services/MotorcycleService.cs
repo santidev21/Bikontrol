@@ -58,7 +58,9 @@ namespace Bikontrol.Infrastructure.Services
                 };
                 await _kmHistoryRepository.AddAsync(kmHistory);
                 await _kmHistoryRepository.SaveChangesAsync();
-                return _mapper.Map<MotorcycleDTO>(created);
+                var createdDto = _mapper.Map<MotorcycleDTO>(created);
+                createdDto.Km = kmHistory.Km;
+                return createdDto;
             });
         }
 
@@ -66,16 +68,37 @@ namespace Bikontrol.Infrastructure.Services
         {
             var entity = await _motorcycleRepository.GetByIdAsync(id);
 
-            if (entity == null || entity.UserId != _currentUser.UserId)
+            if (entity is null)
+                throw new NotFoundException("Motocicleta no encontrada.");
+
+            if (entity.UserId != _currentUser.UserId)
                 throw new ForbiddenAccessException("No tienes acceso a esta motocicleta.");
 
-            return _mapper.Map<MotorcycleDTO>(entity);
+            var dto = _mapper.Map<MotorcycleDTO>(entity);
+            dto.Km = await GetCurrentKmOrDefaultAsync(entity.Id);
+            return dto;
         }
 
         public async Task<IList<MotorcycleDTO>> GetByCurrentUserAsync()
         {
-            var motorcycles = await _motorcycleRepository.GetByUserIdAsync(_currentUser.UserId);
-            return _mapper.Map<IList<MotorcycleDTO>>(motorcycles);
+            var motorcycles = (await _motorcycleRepository.GetByUserIdAsync(_currentUser.UserId)).ToList();
+            var dtos = _mapper.Map<IList<MotorcycleDTO>>(motorcycles);
+
+            var kmByMotorcycle = await _kmHistoryRepository.GetLatestKmByMotorcycleIdsAsync(
+                motorcycles.Select(m => m.Id));
+
+            foreach (var dto in dtos)
+            {
+                dto.Km = kmByMotorcycle.TryGetValue(dto.Id, out var km) ? km : 0;
+            }
+
+            return dtos;
+        }
+
+        private async Task<int> GetCurrentKmOrDefaultAsync(Guid motorcycleId)
+        {
+            var last = await _kmHistoryRepository.GetLastByMotorcycleIdAsync(motorcycleId);
+            return last?.Km ?? 0;
         }
 
         public async Task<int> GetCurrentKmAsync(Guid id)
@@ -120,6 +143,7 @@ namespace Bikontrol.Infrastructure.Services
                 throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
 
             _mapper.Map(dto, entity);
+            entity.Validate();
             await _motorcycleRepository.UpdateAsync(entity);
         }
 
