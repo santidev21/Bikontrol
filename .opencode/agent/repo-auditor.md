@@ -41,7 +41,7 @@ You audit the **entire Bikontrol repository** and report on code quality, archit
 **API contract & frontend sync**
 - Every backend DTO/route/response shape has a matching Angular type + service, and both test suites cover it. Flag drift (this repo has no codegen).
 
-**Frontend quality (Angular 18)**
+**Frontend quality (Angular 19)**
 - Standalone components, typed inputs (flag `any` on domain data), lazy routes + guards preserved, `loadComponent` everywhere.
 - HTTP only through typed services; errors via `SwalService` + `HttpErrorService`; subscriptions unsubscribed; no nested subscribes.
 - Template logic, PWA/caching correctness, accessibility (labels, keyboard, aria, contrast).

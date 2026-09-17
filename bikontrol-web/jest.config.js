@@ -1,4 +1,4 @@
-/** Jest configuration for Bikontrol (Angular 18) */
+/** Jest configuration for Bikontrol (Angular 19) */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',

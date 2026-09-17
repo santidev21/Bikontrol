@@ -9,11 +9,10 @@ import { AuthService } from '../../../auth/services/auth.service';
 
 
 @Component({
-  selector: 'app-motorcycle-card',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './motorcycle-card.component.html',
-  styleUrl: './motorcycle-card.component.scss'
+    selector: 'app-motorcycle-card',
+    imports: [CommonModule],
+    templateUrl: './motorcycle-card.component.html',
+    styleUrl: './motorcycle-card.component.scss'
 })
 export class MotorcycleCardComponent implements OnInit {
   @Input() motorcycle!: Motorcycle;

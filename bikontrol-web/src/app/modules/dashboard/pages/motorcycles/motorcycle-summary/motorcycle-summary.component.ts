@@ -11,11 +11,10 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
-  selector: 'app-motorcycle-summary',
-  standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './motorcycle-summary.component.html',
-  styleUrl: './motorcycle-summary.component.scss'
+    selector: 'app-motorcycle-summary',
+    imports: [CommonModule, RouterModule, FormsModule],
+    templateUrl: './motorcycle-summary.component.html',
+    styleUrl: './motorcycle-summary.component.scss'
 })
 export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   motorcycle?: Motorcycle;

@@ -6,11 +6,10 @@ import { RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
-  selector: 'app-dashboard-layout',
-  standalone: true,
-  imports: [CommonModule, TopNavComponent, BottomNavComponent, RouterOutlet],
-  templateUrl: './dashboard-layout.component.html',
-  styleUrl: './dashboard-layout.component.scss'
+    selector: 'app-dashboard-layout',
+    imports: [CommonModule, TopNavComponent, BottomNavComponent, RouterOutlet],
+    templateUrl: './dashboard-layout.component.html',
+    styleUrl: './dashboard-layout.component.scss'
 })
 export class DashboardLayoutComponent {
   constructor(private authService: AuthService) {}

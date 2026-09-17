@@ -9,11 +9,10 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
-  selector: 'app-maintenance-page',
-  standalone: true,
-  imports: [CommonModule, RouterModule, MaintenanceInfoCardComponent],
-  templateUrl: './maintenance-page.component.html',
-  styleUrl: './maintenance-page.component.scss'
+    selector: 'app-maintenance-page',
+    imports: [CommonModule, RouterModule, MaintenanceInfoCardComponent],
+    templateUrl: './maintenance-page.component.html',
+    styleUrl: './maintenance-page.component.scss'
 })
 export class MaintenancePageComponent {
   userMaintenance: Maintenance[] = [];

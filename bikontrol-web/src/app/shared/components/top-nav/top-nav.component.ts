@@ -6,11 +6,10 @@ import { AuthService } from '../../../modules/auth/services/auth.service';
 import { Subscription, filter } from 'rxjs';
 
 @Component({
-  selector: 'app-top-nav',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './top-nav.component.html',
-  styleUrl: './top-nav.component.scss'
+    selector: 'app-top-nav',
+    imports: [CommonModule, RouterModule],
+    templateUrl: './top-nav.component.html',
+    styleUrl: './top-nav.component.scss'
 })
 export class TopNavComponent implements OnDestroy {
   sidebarOpen = false;

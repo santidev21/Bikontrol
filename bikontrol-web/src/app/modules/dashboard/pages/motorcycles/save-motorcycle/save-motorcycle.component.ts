@@ -11,11 +11,10 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 
 
 @Component({
-  selector: 'app-save-motorcycle',
-  standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
-  templateUrl: './save-motorcycle.component.html',
-  styleUrl: './save-motorcycle.component.scss'
+    selector: 'app-save-motorcycle',
+    imports: [ReactiveFormsModule, CommonModule],
+    templateUrl: './save-motorcycle.component.html',
+    styleUrl: './save-motorcycle.component.scss'
 })
 export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   motorcycleForm: FormGroup;

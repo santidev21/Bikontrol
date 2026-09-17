@@ -80,9 +80,9 @@ jobs:
   dependency-audit:
     name: Dependency vulnerability report (non-blocking)
     runs-on: ubuntu-latest
-    # Report only: the Angular 18 advisories require a major upgrade (tracked
-    # separately) and the AutoMapper 12 advisory is consciously suppressed, so
-    # this must not block the pipeline.
+    # Report only: the remaining framework advisories require a major upgrade
+    # (tracked separately) and the AutoMapper 12 advisory is consciously
+    # suppressed, so this must not block the pipeline.
     steps:
       - name: Checkout
         uses: actions/checkout@v4

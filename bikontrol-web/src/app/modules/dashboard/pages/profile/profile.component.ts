@@ -10,11 +10,10 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { UpdateService } from '../../../../shared/services/update.service';
 
 @Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './profile.component.html',
-  styleUrl: './profile.component.scss'
+    selector: 'app-profile',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './profile.component.html',
+    styleUrl: './profile.component.scss'
 })
 export class ProfileComponent implements OnInit {
   profile?: Profile;

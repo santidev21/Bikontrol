@@ -17,11 +17,10 @@ const HEALTH_COLORS: Record<string, string> = {
 const MONTH_LABELS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 @Component({
-  selector: 'app-statistics',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './statistics.component.html',
-  styleUrl: './statistics.component.scss'
+    selector: 'app-statistics',
+    imports: [CommonModule, RouterModule],
+    templateUrl: './statistics.component.html',
+    styleUrl: './statistics.component.scss'
 })
 export class StatisticsComponent implements OnInit {
   summary?: StatisticsSummary;

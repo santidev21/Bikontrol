@@ -13,11 +13,10 @@ declare global {
 }
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [AUTH_IMPORTS],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+    selector: 'app-login',
+    imports: [AUTH_IMPORTS],
+    templateUrl: './login.component.html',
+    styleUrl: './login.component.scss'
 })
 export class LoginComponent implements AfterViewInit {
   loginForm: FormGroup;

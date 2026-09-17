@@ -10,11 +10,10 @@ import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
 
 @Component({
-  selector: 'app-save-maintenance',
-  standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, MonitoringTypeSelectorComponent],
-  templateUrl: './save-maintenance.component.html',
-  styleUrl: './save-maintenance.component.scss'
+    selector: 'app-save-maintenance',
+    imports: [ReactiveFormsModule, CommonModule, MonitoringTypeSelectorComponent],
+    templateUrl: './save-maintenance.component.html',
+    styleUrl: './save-maintenance.component.scss'
 })
 export class SaveMaintenanceComponent implements OnDestroy {
   maintenanceForm: FormGroup;

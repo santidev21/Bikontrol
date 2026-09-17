@@ -10,11 +10,10 @@ import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
 @Component({
-  selector: 'app-register-maintenance-record',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './register-maintenance-record.component.html',
-  styleUrl: './register-maintenance-record.component.scss'
+    selector: 'app-register-maintenance-record',
+    imports: [CommonModule, ReactiveFormsModule],
+    templateUrl: './register-maintenance-record.component.html',
+    styleUrl: './register-maintenance-record.component.scss'
 })
 export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
   motorcycleId = '';

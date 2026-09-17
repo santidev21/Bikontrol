@@ -6,11 +6,10 @@ import { AUTH_IMPORTS } from '../../auth-imports';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
-  selector: 'app-register',
-  standalone: true,
-  imports: [AUTH_IMPORTS],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss'
+    selector: 'app-register',
+    imports: [AUTH_IMPORTS],
+    templateUrl: './register.component.html',
+    styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
   registerForm: FormGroup;

@@ -12,11 +12,10 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
-  selector: 'app-maintenance-info-card',
-  standalone: true,
-  imports: [CommonModule, IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
-  templateUrl: './maintenance-info-card.component.html',
-  styleUrl: './maintenance-info-card.component.scss'
+    selector: 'app-maintenance-info-card',
+    imports: [CommonModule, IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
+    templateUrl: './maintenance-info-card.component.html',
+    styleUrl: './maintenance-info-card.component.scss'
 })
 export class MaintenanceInfoCardComponent {
   @Input() maintenance!: Maintenance;

@@ -25,7 +25,7 @@ Bikontrol is a full-stack web app for motorcycle owners to track motorcycles, km
 ---
 
 ## Tech stack
-- Frontend: Angular 18, SCSS, Tailwind CSS, Jest
+- Frontend: Angular 19, SCSS, Tailwind CSS, Jest
 - Backend: .NET 8, Clean Architecture, EF Core, xUnit
 - Database: PostgreSQL
 - Authentication: JWT

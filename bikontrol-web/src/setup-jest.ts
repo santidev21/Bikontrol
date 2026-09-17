@@ -1,6 +1,6 @@
 // Minimal Jest setup for Angular services tests.
 // We intentionally do not use `jest-preset-angular` because it
-// currently requires versions incompatible with Angular 18.
+// currently requires versions incompatible with Angular 19.
 
 import 'zone.js';
 import 'zone.js/testing';
