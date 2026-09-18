@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy } from '@angular/core';
+﻿import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,6 +13,7 @@ import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-s
     selector: 'app-save-maintenance',
     imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
     templateUrl: './save-maintenance.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './save-maintenance.component.scss'
 })
 export class SaveMaintenanceComponent implements OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Maintenance } from '../../interfaces/maintenance.interface';
 import { Router } from '@angular/router';
 
@@ -15,6 +15,7 @@ import { AuthService } from '../../../auth/services/auth.service';
     selector: 'app-maintenance-info-card',
     imports: [IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
     templateUrl: './maintenance-info-card.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './maintenance-info-card.component.scss'
 })
 export class MaintenanceInfoCardComponent {

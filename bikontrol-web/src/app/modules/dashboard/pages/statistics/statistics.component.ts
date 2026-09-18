@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { StatisticsSummary } from '../../interfaces/statistics.interface';
 import { StatisticsService } from '../../service/statistics.service';
@@ -20,6 +20,7 @@ const MONTH_LABELS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
     selector: 'app-statistics',
     imports: [CommonModule, RouterModule],
     templateUrl: './statistics.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './statistics.component.scss'
 })
 export class StatisticsComponent implements OnInit {

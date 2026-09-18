@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Profile } from '../../interfaces/profile.interface';
@@ -13,6 +13,7 @@ import { UpdateService } from '../../../../shared/services/update.service';
     selector: 'app-profile',
     imports: [CommonModule, FormsModule],
     templateUrl: './profile.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './profile.component.scss'
 })
 export class ProfileComponent implements OnInit {

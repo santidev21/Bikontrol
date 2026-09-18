@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -14,6 +14,7 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
     selector: 'app-save-motorcycle',
     imports: [ReactiveFormsModule],
     templateUrl: './save-motorcycle.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './save-motorcycle.component.scss'
 })
 export class SaveMotorcycleComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-# Bikontrol frontend (Angular 21) — build stage
+# Bikontrol frontend (Angular 22) — build stage
 FROM node:20-alpine AS build
 ARG API_URL=https://bikontrol.santidev21.tech/api
 WORKDIR /src

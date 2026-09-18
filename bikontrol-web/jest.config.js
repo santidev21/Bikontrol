@@ -1,4 +1,4 @@
-/** Jest configuration for Bikontrol (Angular 20, via jest-preset-angular) */
+/** Jest configuration for Bikontrol (Angular 22, via jest-preset-angular) */
 module.exports = {
   preset: 'jest-preset-angular',
   setupFilesAfterEnv: ['<rootDir>/src/setup-jest.ts'],

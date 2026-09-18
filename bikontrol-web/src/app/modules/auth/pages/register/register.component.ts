@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -9,6 +9,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-register',
     imports: [AUTH_IMPORTS],
     templateUrl: './register.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './register.component.scss'
 })
 export class RegisterComponent {

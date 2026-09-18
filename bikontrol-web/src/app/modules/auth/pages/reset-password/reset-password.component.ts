@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -9,6 +9,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-reset-password',
     imports: [FormsModule, ReactiveFormsModule, RouterModule],
     templateUrl: './reset-password.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './reset-password.component.scss'
 })
 export class ResetPasswordComponent implements OnInit, OnDestroy {

@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -13,6 +13,7 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
     selector: 'app-register-maintenance-record',
     imports: [ReactiveFormsModule],
     templateUrl: './register-maintenance-record.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './register-maintenance-record.component.scss'
 })
 export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {

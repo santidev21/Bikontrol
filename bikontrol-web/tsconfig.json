@@ -16,9 +16,8 @@
     "declaration": false,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
-    "baseUrl": "./src",
     "paths": {
-      "@env/*": ["environments/*"]
+      "@env/*": ["./src/environments/*"]
     },
     "importHelpers": true,
     "target": "ES2022",

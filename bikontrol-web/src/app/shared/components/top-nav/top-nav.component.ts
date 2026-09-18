@@ -1,5 +1,5 @@
 
-import { Component, HostListener, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../modules/auth/services/auth.service';
@@ -9,6 +9,7 @@ import { Subscription, filter } from 'rxjs';
     selector: 'app-top-nav',
     imports: [RouterModule],
     templateUrl: './top-nav.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './top-nav.component.scss'
 })
 export class TopNavComponent implements OnDestroy {

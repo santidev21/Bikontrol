@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Motorcycle } from '../../../interfaces/motorcycle.interface';
@@ -14,6 +14,7 @@ import { AuthService } from '../../../../auth/services/auth.service';
     selector: 'app-motorcycle-summary',
     imports: [CommonModule, RouterModule, FormsModule],
     templateUrl: './motorcycle-summary.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './motorcycle-summary.component.scss'
 })
 export class MotorcycleSummaryComponent implements OnInit, OnDestroy {

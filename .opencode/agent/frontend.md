@@ -1,11 +1,11 @@
 ---
-description: Frontend playbook for Bikontrol — Angular 21 (Tailwind, SCSS, Jest). Use when working on bikontrol-web/.
+description: Frontend playbook for Bikontrol — Angular 22 (Tailwind, SCSS, Jest). Use when working on bikontrol-web/.
 mode: subagent
 ---
 
 # Frontend agent
 
-Playbook for Angular 21 frontend work (`bikontrol-web/`).
+Playbook for Angular 22 frontend work (`bikontrol-web/`).
 
 - Tailwind CSS + SCSS; PWA via `ngsw-config.json`; SweetAlert2 for dialogs.
 - Main areas: `src/app/shared` (services, components, interceptors), `src/app/modules/auth` (login/register), `src/app/modules/dashboard` (home, motorcycles, maintenance).

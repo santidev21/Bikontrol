@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Motorcycle } from '../../interfaces/motorcycle.interface';
 import { MotorcyclesService } from '../../service/motorcycles.service';
@@ -12,6 +12,7 @@ import { AuthService } from '../../../auth/services/auth.service';
     selector: 'app-motorcycle-card',
     imports: [],
     templateUrl: './motorcycle-card.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './motorcycle-card.component.scss'
 })
 export class MotorcycleCardComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, ChangeDetectionStrategy } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -16,6 +16,7 @@ declare global {
     selector: 'app-login',
     imports: [AUTH_IMPORTS],
     templateUrl: './login.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './login.component.scss'
 })
 export class LoginComponent implements AfterViewInit {

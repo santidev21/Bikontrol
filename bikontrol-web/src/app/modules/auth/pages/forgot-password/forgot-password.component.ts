@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -9,6 +9,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-forgot-password',
     imports: [FormsModule, ReactiveFormsModule, RouterModule],
     templateUrl: './forgot-password.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './forgot-password.component.scss'
 })
 export class ForgotPasswordComponent {

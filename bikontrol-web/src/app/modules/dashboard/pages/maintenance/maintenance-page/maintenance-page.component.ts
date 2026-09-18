@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Maintenance } from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
@@ -12,6 +12,7 @@ import { AuthService } from '../../../../auth/services/auth.service';
     selector: 'app-maintenance-page',
     imports: [RouterModule, MaintenanceInfoCardComponent],
     templateUrl: './maintenance-page.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './maintenance-page.component.scss'
 })
 export class MaintenancePageComponent {

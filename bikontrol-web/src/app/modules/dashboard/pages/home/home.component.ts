@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MotorcycleCardComponent } from '../../components/motorcycle-card/motorcycle-card.component';
 import { AuthService } from '../../../auth/services/auth.service';
 
@@ -12,6 +12,7 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-home',
     imports: [MotorcycleCardComponent, RouterModule],
     templateUrl: './home.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {

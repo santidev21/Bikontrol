@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 
@@ -6,6 +6,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
     selector: 'app-monitoring-type-selector',
     imports: [ReactiveFormsModule],
     templateUrl: './monitoring-type-selector.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './monitoring-type-selector.component.scss'
 })
 export class MonitoringTypeSelectorComponent {
