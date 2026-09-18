@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { StatisticsSummary } from '../../interfaces/statistics.interface';
 import { StatisticsService } from '../../service/statistics.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -20,56 +19,44 @@ const MONTH_LABELS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
     selector: 'app-statistics',
     imports: [CommonModule, RouterModule],
     templateUrl: './statistics.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './statistics.component.scss'
 })
-export class StatisticsComponent implements OnInit {
-  summary?: StatisticsSummary;
-  isLoading = true;
+export class StatisticsComponent {
+  private readonly statisticsService = inject(StatisticsService);
+  private readonly swal = inject(SwalService);
+  private readonly httpError = inject(HttpErrorService);
+  private readonly authService = inject(AuthService);
 
-  constructor(
-    private statisticsService: StatisticsService,
-    private swal: SwalService,
-    private httpError: HttpErrorService,
-    private authService: AuthService
-  ) {}
+  readonly summary = this.statisticsService.getSummaryResource();
 
-  get isDemo(): boolean {
-    return this.authService.isDemo();
-  }
+  /** Safe view of the value: `value()` throws while the resource is in an error state. */
+  readonly summaryData = computed(() =>
+    this.summary.hasValue() ? this.summary.value() : undefined);
 
-  ngOnInit(): void {
-    this.loadSummary();
-  }
+  readonly maxKm = computed(() =>
+    Math.max(0, ...(this.summaryData()?.kmByMotorcycle.map((m) => m.km) ?? [])));
 
-  loadSummary(): void {
-    this.isLoading = true;
-    this.statisticsService.getSummary().subscribe({
-      next: (data) => {
-        this.summary = data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar las estadísticas.'));
+  readonly maxTypeCount = computed(() =>
+    Math.max(0, ...(this.summaryData()?.recordsByType.map((t) => t.count) ?? [])));
+
+  readonly maxMonthCount = computed(() =>
+    Math.max(0, ...(this.summaryData()?.last6Months.map((m) => m.count) ?? [])));
+
+  readonly maxHealthCount = computed(() =>
+    Math.max(0, ...(this.summaryData()?.health.map((h) => h.count) ?? [])));
+
+  constructor() {
+    effect(() => {
+      const error = this.summary.error();
+      if (error) {
+        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar las estadísticas.'));
       }
     });
   }
 
-  maxKm(): number {
-    return Math.max(0, ...(this.summary?.kmByMotorcycle.map((m) => m.km) ?? []));
-  }
-
-  maxTypeCount(): number {
-    return Math.max(0, ...(this.summary?.recordsByType.map((t) => t.count) ?? []));
-  }
-
-  maxMonthCount(): number {
-    return Math.max(0, ...(this.summary?.last6Months.map((m) => m.count) ?? []));
-  }
-
-  maxHealthCount(): number {
-    return Math.max(0, ...(this.summary?.health.map((h) => h.count) ?? []));
+  get isDemo(): boolean {
+    return this.authService.isDemo();
   }
 
   barWidth(value: number, max: number): number {

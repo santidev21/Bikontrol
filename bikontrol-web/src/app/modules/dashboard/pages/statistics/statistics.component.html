@@ -1,11 +1,11 @@
 <div class="p-4">
   <h1 class="stats-title">Estadísticas</h1>
 
-  @if (isLoading) {
+  @if (summary.isLoading()) {
     <p class="text-gray-400 text-center my-4">Cargando estadísticas…</p>
   }
 
-  @if (!isLoading && summary; as s) {
+  @if (summaryData(); as s) {
     <div>
       @if (s.totalMotorcycles === 0) {
         <div class="text-center my-6">
