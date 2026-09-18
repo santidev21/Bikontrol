@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '@env/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Motorcycle, SaveMotorcycleDTO, CurrentKmResponse } from '../interfaces/motorcycle.interface';
 
@@ -14,6 +14,14 @@ export class MotorcyclesService {
 
   getMyMotorcycles(): Observable<Motorcycle[]> {
     return this.http.get<Motorcycle[]>(`${this.apiUrl}/mine`,);
+  }
+
+  /**
+   * Reactive (signal-based) read of the current user's motorcycles.
+   * Must be called in an injection context (e.g. a component field initializer).
+   */
+  getMyMotorcyclesResource(): HttpResourceRef<Motorcycle[]> {
+    return httpResource<Motorcycle[]>(() => `${this.apiUrl}/mine`, { defaultValue: [] });
   }
 
   getById(id: string): Observable<Motorcycle> {

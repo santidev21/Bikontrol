@@ -2,18 +2,18 @@
   <h1 class="text-2xl font-bold mb-2 text-center">Bienvenido de nuevo</h1>
   <p class="text-gray-400 mb-4 text-center">Tus motocicletas</p>
 
-  @if (motorcycles.length === 0) {
+  @if (motorcycles.value().length === 0) {
     <div class="text-center text-gray-500 mt-8">
       No tienes motos agregadas, por favor agrega una usando el botón de abajo.
     </div>
   }
 
-  @if (motorcycles.length > 0) {
+  @if (motorcycles.value().length > 0) {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      @for (moto of motorcycles; track moto) {
+      @for (moto of motorcycles.value(); track moto.id) {
         <app-motorcycle-card
           [motorcycle]="moto"
-          (deleted)="loadMotorcycles()">
+          (deleted)="motorcycles.reload()">
         </app-motorcycle-card>
       }
     </div>
