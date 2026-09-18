@@ -1,5 +1,6 @@
 # Bikontrol frontend (Angular 22) — build stage
-FROM node:20-alpine AS build
+# Node 24: Angular 22 CLI requires Node >=22.22.3 / >=24.15.0.
+FROM node:24-alpine AS build
 ARG API_URL=https://bikontrol.santidev21.tech/api
 WORKDIR /src
 
