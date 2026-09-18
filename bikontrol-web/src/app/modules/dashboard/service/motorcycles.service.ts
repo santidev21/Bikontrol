@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Signal } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -42,6 +42,17 @@ export class MotorcyclesService {
 
   getCurrentKm(id: string): Observable<CurrentKmResponse> {
     return this.http.get<CurrentKmResponse>(`${this.apiUrl}/${id}/km/current`);
+  }
+
+  /**
+   * Reactive read of a motorcycle's current km. Loads automatically when the
+   * id signal has a value (and reloads when it changes).
+   */
+  getCurrentKmResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<CurrentKmResponse | undefined> {
+    return httpResource<CurrentKmResponse>(() => {
+      const id = motorcycleId();
+      return id ? `${this.apiUrl}/${id}/km/current` : undefined;
+    });
   }
 
   addKmHistory(id: string, km: number): Observable<void> {

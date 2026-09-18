@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Motorcycle } from '../../../interfaces/motorcycle.interface';
@@ -14,61 +14,92 @@ import { AuthService } from '../../../../auth/services/auth.service';
     selector: 'app-motorcycle-summary',
     imports: [CommonModule, RouterModule, FormsModule],
     templateUrl: './motorcycle-summary.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './motorcycle-summary.component.scss'
 })
 export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
-  motorcycle?: Motorcycle;
-  upcomingMaintenances: UpcomingMaintenance[] = [];
-  maintenanceRecords: MaintenanceRecord[] = [];
-  currentKm = 0;
-  editableKm = 0;
-  isEditKmModalOpen = false;
-  isSubmittingKm = false;
-  isRollingBackKm = false;
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly maintenanceService = inject(MaintenanceService);
+  private readonly motorcyclesService = inject(MotorcyclesService);
+  private readonly swal = inject(SwalService);
+  private readonly httpError = inject(HttpErrorService);
+  private readonly authService = inject(AuthService);
+
+  readonly motorcycle = signal<Motorcycle | undefined>(undefined);
+  readonly currentKm = signal(0);
+  readonly upcomingMaintenances = signal<UpcomingMaintenance[]>([]);
+  readonly maintenanceRecords = signal<MaintenanceRecord[]>([]);
+  readonly isEditKmModalOpen = signal(false);
+  readonly editableKm = signal(0);
+  readonly isSubmittingKm = signal(false);
+  readonly isRollingBackKm = signal(false);
+
+  readonly isDemo = computed(() => this.authService.isDemo());
+  readonly motorcycleId = computed(() => this.motorcycle()?.id);
+  readonly canRegisterMaintenance = computed(() => this.upcomingMaintenances().length > 0);
+
+  private readonly currentKmRes = this.motorcyclesService.getCurrentKmResource(this.motorcycleId);
+  private readonly upcomingRes = this.maintenanceService.getUpcomingResource(this.motorcycleId);
+  private readonly recordsRes = this.maintenanceService.getRecordsResource(this.motorcycleId);
 
   private redirectTimer?: ReturnType<typeof setTimeout>;
 
-  get canRegisterMaintenance(): boolean {
-    return this.upcomingMaintenances.length > 0;
-  }
+  constructor() {
+    effect(() => {
+      if (this.currentKmRes.hasValue()) {
+        const km = this.currentKmRes.value()!.km;
+        this.currentKm.set(km);
+        if (!this.isEditKmModalOpen()) {
+          this.editableKm.set(km);
+        }
+      }
+    });
 
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-    private maintenanceService: MaintenanceService,
-    private motorcyclesService: MotorcyclesService,
-    private swal: SwalService,
-    private httpError: HttpErrorService,
-    private authService: AuthService
-  ) {}
+    effect(() => {
+      if (this.upcomingRes.hasValue()) {
+        this.upcomingMaintenances.set(this.upcomingRes.value()!);
+      }
+    });
 
-  get isDemo(): boolean {
-    return this.authService.isDemo();
+    effect(() => {
+      const error = this.upcomingRes.error();
+      if (error) {
+        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar los mantenimientos próximos.'));
+      }
+    });
+
+    effect(() => {
+      if (this.recordsRes.hasValue()) {
+        this.maintenanceRecords.set(this.recordsRes.value()!);
+      }
+    });
+
+    effect(() => {
+      const error = this.recordsRes.error();
+      if (error) {
+        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar los registros de mantenimiento.'));
+      }
+    });
   }
 
   ngOnInit(): void {
     const navState = this.router.getCurrentNavigation()?.extras?.state as { motorcycle?: Motorcycle };
-    this.motorcycle = navState?.motorcycle ?? (history.state as { motorcycle?: Motorcycle })?.motorcycle;
+    this.motorcycle.set(navState?.motorcycle ?? (history.state as { motorcycle?: Motorcycle })?.motorcycle);
 
     const motorcycleIdFromQuery = this.route.snapshot.queryParamMap.get('motorcycleId');
-    if (motorcycleIdFromQuery && !this.motorcycle?.id) {
+    if (motorcycleIdFromQuery && !this.motorcycle()?.id) {
       this.motorcyclesService.getById(motorcycleIdFromQuery).subscribe({
-        next: (motorcycle) => {
-          this.motorcycle = motorcycle;
-          this.loadSummaryData();
-        },
+        next: (motorcycle) => this.motorcycle.set(motorcycle),
         error: () => this.router.navigate(['/dashboard/home'])
       });
       return;
     }
 
-    if (!this.motorcycle) {
+    if (!this.motorcycle()) {
       this.redirectTimer = setTimeout(() => {
         this.router.navigate(['/dashboard/home']);
       }, 1500);
-    } else {
-      this.loadSummaryData();
     }
   }
 
@@ -78,35 +109,10 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadSummaryData(): void {
-    if (!this.motorcycle?.id) return;
-
-    this.motorcyclesService.getCurrentKm(this.motorcycle.id).subscribe({
-      next: (res) => {
-        this.currentKm = res.km;
-        if (!this.isEditKmModalOpen) {
-          this.editableKm = res.km;
-        }
-      }
-    });
-
-    this.maintenanceService.getUpcomingByMotorcycle(this.motorcycle.id).subscribe({
-      next: (res) => {
-        this.upcomingMaintenances = res;
-      },
-      error: (err) => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar los mantenimientos próximos.'));
-      }
-    });
-
-    this.maintenanceService.getMaintenanceRecordsByMotorcycle(this.motorcycle.id).subscribe({
-      next: (res) => {
-        this.maintenanceRecords = res;
-      },
-      error: (err) => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar los registros de mantenimiento.'));
-      }
-    });
+  private reloadData(): void {
+    this.currentKmRes.reload();
+    this.upcomingRes.reload();
+    this.recordsRes.reload();
   }
 
   getStrokeDashoffset(percent: number): number {
@@ -116,52 +122,56 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   }
 
   goToRegisterMaintenanceRecord(): void {
-    if (!this.motorcycle?.id || !this.canRegisterMaintenance) return;
+    const id = this.motorcycleId();
+    if (!id || !this.canRegisterMaintenance()) return;
 
-    this.router.navigate(['/dashboard/motorcycles', this.motorcycle.id, 'register-maintenance']);
+    this.router.navigate(['/dashboard/motorcycles', id, 'register-maintenance']);
   }
 
   goToMaintenanceCatalog(): void {
-    if (!this.motorcycle?.id) return;
+    const id = this.motorcycleId();
+    if (!id) return;
 
-    this.router.navigate(['/dashboard/motorcycles', this.motorcycle.id, 'maintenance']);
+    this.router.navigate(['/dashboard/motorcycles', id, 'maintenance']);
   }
 
   openEditKmModal(): void {
-    this.editableKm = this.currentKm;
-    this.isEditKmModalOpen = true;
+    this.editableKm.set(this.currentKm());
+    this.isEditKmModalOpen.set(true);
   }
 
   closeEditKmModal(): void {
-    this.isEditKmModalOpen = false;
-    this.isSubmittingKm = false;
+    this.isEditKmModalOpen.set(false);
+    this.isSubmittingKm.set(false);
   }
 
   saveKm(): void {
-    if (!this.motorcycle?.id || this.isSubmittingKm) return;
+    const id = this.motorcycleId();
+    if (!id || this.isSubmittingKm()) return;
 
-    if (this.editableKm < this.currentKm) {
+    if (this.editableKm() < this.currentKm()) {
       this.swal.error('¡Error!', 'No puede agregar un Kilometraje inferior al actual.');
       return;
     }
 
-    this.isSubmittingKm = true;
-    this.motorcyclesService.addKmHistory(this.motorcycle.id, this.editableKm).subscribe({
+    this.isSubmittingKm.set(true);
+    this.motorcyclesService.addKmHistory(id, this.editableKm()).subscribe({
       next: () => {
         this.closeEditKmModal();
         this.swal.success('¡Exito!.', 'Se ha actualizado el Km de su motocicleta.').then(() => {
-          this.loadSummaryData();
+          this.reloadData();
         });
       },
       error: (err) => {
-        this.isSubmittingKm = false;
+        this.isSubmittingKm.set(false);
         this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar el kilometraje.'));
       }
     });
   }
 
   rollbackLastKm(): void {
-    if (!this.motorcycle?.id || this.isRollingBackKm) return;
+    const id = this.motorcycleId();
+    if (!id || this.isRollingBackKm()) return;
 
     this.swal.confirm(
       'Confirmar reversión',
@@ -171,18 +181,18 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     ).then((result) => {
       if (!result.isConfirmed) return;
 
-      this.isRollingBackKm = true;
-      this.motorcyclesService.rollbackLastKm(this.motorcycle!.id!, this.currentKm).subscribe({
+      this.isRollingBackKm.set(true);
+      this.motorcyclesService.rollbackLastKm(id, this.currentKm()).subscribe({
         next: () => {
           this.swal.success('¡Éxito!', 'Se revirtió el último cambio de kilometraje.').then(() => {
-            this.loadSummaryData();
+            this.reloadData();
           });
         },
         error: (err) => {
           this.swal.error('Error', this.httpError.message(err, 'No se pudo revertir el kilometraje.'));
         },
         complete: () => {
-          this.isRollingBackKm = false;
+          this.isRollingBackKm.set(false);
         }
       });
     });

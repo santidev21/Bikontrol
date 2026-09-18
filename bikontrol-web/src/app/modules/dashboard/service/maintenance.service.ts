@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Signal } from '@angular/core';
 import { environment } from '@env/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   Maintenance,
@@ -61,6 +61,28 @@ export class MaintenanceService {
 
   getUpcomingByMotorcycle(motorcycleId: string): Observable<UpcomingMaintenance[]> {
     return this.http.get<UpcomingMaintenance[]>(`${this.apiUrl}/motorcycle/${motorcycleId}/upcoming`);
+  }
+
+  /**
+   * Reactive read of the upcoming maintenances. Loads automatically when the
+   * motorcycle id signal has a value.
+   */
+  getUpcomingResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<UpcomingMaintenance[] | undefined> {
+    return httpResource<UpcomingMaintenance[]>(() => {
+      const id = motorcycleId();
+      return id ? `${this.apiUrl}/motorcycle/${id}/upcoming` : undefined;
+    });
+  }
+
+  /**
+   * Reactive read of the maintenance records. Loads automatically when the
+   * motorcycle id signal has a value.
+   */
+  getRecordsResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<MaintenanceRecord[] | undefined> {
+    return httpResource<MaintenanceRecord[]>(() => {
+      const id = motorcycleId();
+      return id ? `${this.apiUrl}/motorcycle/${id}/records` : undefined;
+    });
   }
 
 }
