@@ -1,19 +1,19 @@
 <div class="p-4">
   <h1 class="profile-title">Perfil</h1>
 
-  @if (isLoading) {
+  @if (isLoading()) {
     <p class="text-gray-400 text-center my-4">Cargando perfil…</p>
   }
 
-  @if (!isLoading && profile; as p) {
+  @if (!isLoading() && profile(); as p) {
     <div>
       <div class="profile-header bg-gray-800 rounded-xl shadow-md p-4">
-        <div class="avatar">{{ initials }}</div>
+        <div class="avatar">{{ initials() }}</div>
         <div class="profile-identity">
-          @if (!isEditingName) {
+          @if (!isEditingName()) {
             <div>
               <h2 class="profile-name">{{ p.fullName }}</h2>
-              @if (!isDemo) {
+              @if (!isDemo()) {
                 <button class="edit-name-btn" (click)="startEditName()" aria-label="Editar nombre">
                   <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor">
                     <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
@@ -23,8 +23,8 @@
             </div>
           } @else {
             <div class="edit-name-row">
-              <input type="text" [(ngModel)]="editableName" maxlength="200" class="name-input" placeholder="Tu nombre" aria-label="Nombre" />
-              <button class="accept-btn" [disabled]="isSavingName" (click)="saveName()">Guardar</button>
+              <input type="text" [ngModel]="editableName()" (ngModelChange)="editableName.set($event)" maxlength="200" class="name-input" placeholder="Tu nombre" aria-label="Nombre" />
+              <button class="accept-btn" [disabled]="isSavingName()" (click)="saveName()">Guardar</button>
               <button class="cancel-btn" (click)="cancelEditName()">Cancelar</button>
             </div>
           }
@@ -47,18 +47,18 @@
         </div>
         <div class="profile-row">
           <span class="row-label">Versión</span>
-          <span class="row-value">v{{ appVersion }}@if (swVersion) {
-            <span> · {{ swVersion }}</span>
+          <span class="row-value">v{{ appVersion }}@if (swVersion()) {
+            <span> · {{ swVersion() }}</span>
           }</span>
         </div>
       </div>
       <div class="profile-actions">
-        @if (canChangePassword) {
+        @if (canChangePassword()) {
           <button (click)="openPasswordModal()" class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold">
             Cambiar contraseña
           </button>
         }
-        @if (!p.hasPassword && !isDemo) {
+        @if (!p.hasPassword && !isDemo()) {
           <p class="google-note">Iniciaste sesión con Google, por eso no tienes contraseña que cambiar.</p>
         }
         <button (click)="logout()" class="w-full py-2 bg-gray-700 text-textlight rounded-lg hover:bg-gray-600 transition-colors font-semibold">
@@ -69,22 +69,22 @@
   }
 </div>
 
-@if (isPasswordModalOpen) {
+@if (isPasswordModalOpen()) {
   <div class="modal-backdrop">
     <div class="password-modal">
       <h3>Cambiar contraseña</h3>
       <label class="modal-label">Contraseña actual
-        <input type="password" [(ngModel)]="currentPassword" class="modal-input" autocomplete="current-password" />
+        <input type="password" [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)" class="modal-input" autocomplete="current-password" />
       </label>
       <label class="modal-label">Nueva contraseña
-        <input type="password" [(ngModel)]="newPassword" class="modal-input" autocomplete="new-password" />
+        <input type="password" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" class="modal-input" autocomplete="new-password" />
       </label>
       <label class="modal-label">Confirmar nueva contraseña
-        <input type="password" [(ngModel)]="confirmPassword" class="modal-input" autocomplete="new-password" />
+        <input type="password" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" class="modal-input" autocomplete="new-password" />
       </label>
       <div class="modal-actions">
         <button class="cancel-btn" (click)="closePasswordModal()">Cancelar</button>
-        <button class="accept-btn" [disabled]="isChangingPassword" (click)="changePassword()">Guardar</button>
+        <button class="accept-btn" [disabled]="isChangingPassword()" (click)="changePassword()">Guardar</button>
       </div>
     </div>
   </div>

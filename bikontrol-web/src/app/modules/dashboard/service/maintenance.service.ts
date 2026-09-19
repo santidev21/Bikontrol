@@ -63,6 +63,19 @@ export class MaintenanceService {
     return this.http.get<UpcomingMaintenance[]>(`${this.apiUrl}/motorcycle/${motorcycleId}/upcoming`);
   }
 
+  /** Reactive read of the predefined maintenance catalog. */
+  getDefaultsResource(): HttpResourceRef<Maintenance[] | undefined> {
+    return httpResource<Maintenance[]>(() => `${this.apiUrl}/defaults`);
+  }
+
+  /** Reactive read of the user's maintenance for one motorcycle. */
+  getUserMaintenanceByMotorcycleResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<Maintenance[] | undefined> {
+    return httpResource<Maintenance[]>(() => {
+      const id = motorcycleId();
+      return id ? `${this.apiUrl}/mine/motorcycle/${id}` : undefined;
+    });
+  }
+
   /**
    * Reactive read of the upcoming maintenances. Loads automatically when the
    * motorcycle id signal has a value.

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import { Profile } from '../interfaces/profile.interface';
@@ -14,6 +14,11 @@ export class UserService {
 
   getMe(): Observable<Profile> {
     return this.http.get<Profile>(`${this.apiUrl}/me`);
+  }
+
+  /** Reactive read of the current user's profile. */
+  getMeResource(): HttpResourceRef<Profile | undefined> {
+    return httpResource<Profile>(() => `${this.apiUrl}/me`);
   }
 
   updateProfile(fullName: string): Observable<Profile> {

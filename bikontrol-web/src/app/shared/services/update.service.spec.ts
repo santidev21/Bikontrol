@@ -45,7 +45,7 @@ describe("UpdateService (class)", () => {
     service.init();
     await flush();
 
-    expect(service.swVersion).toBe("abcdef1");
+    expect(service.swVersion()).toBe("abcdef1");
     service.ngOnDestroy();
   });
 
@@ -60,7 +60,7 @@ describe("UpdateService (class)", () => {
 
     expect((global as any).fetch).not.toHaveBeenCalled();
     expect(swUpdateMock.checkForUpdate).not.toHaveBeenCalled();
-    expect(service.swVersion).toBeNull();
+    expect(service.swVersion()).toBeNull();
   });
 
   it("should prompt and reload when a new version is ready and confirmed", async () => {
@@ -76,7 +76,7 @@ describe("UpdateService (class)", () => {
     });
     await flush();
 
-    expect(service.swVersion).toBe("newhash");
+    expect(service.swVersion()).toBe("newhash");
     expect(swalMock.confirm).toHaveBeenCalledWith(
       "Nueva versión disponible",
       expect.any(String),

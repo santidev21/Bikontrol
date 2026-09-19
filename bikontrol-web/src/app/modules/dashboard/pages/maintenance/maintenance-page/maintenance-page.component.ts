@@ -1,7 +1,5 @@
-
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Maintenance } from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MaintenanceInfoCardComponent } from "../../../components/maintenance-info-card/maintenance-info-card.component";
 import { SwalService } from '../../../../../shared/services/swal.service';
@@ -12,25 +10,42 @@ import { AuthService } from '../../../../auth/services/auth.service';
     selector: 'app-maintenance-page',
     imports: [RouterModule, MaintenanceInfoCardComponent],
     templateUrl: './maintenance-page.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './maintenance-page.component.scss'
 })
-export class MaintenancePageComponent {
-  userMaintenance: Maintenance[] = [];
-  defaultMaintenance: Maintenance[] = [];
-  motorcycleId = '';
+export class MaintenancePageComponent implements OnInit {
+  private readonly maintenanceService = inject(MaintenanceService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly swal = inject(SwalService);
+  private readonly httpError = inject(HttpErrorService);
+  private readonly authService = inject(AuthService);
 
-  constructor(
-    private maintenanceService: MaintenanceService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private swal: SwalService,
-    private httpError: HttpErrorService,
-    private authService: AuthService
-  ) {}
+  readonly motorcycleId = signal('');
+  readonly isDemo = computed(() => this.authService.isDemo());
 
-  get isDemo(): boolean {
-    return this.authService.isDemo();
+  private readonly userMaintenanceId = computed(() => this.motorcycleId() || undefined);
+
+  private readonly userRes = this.maintenanceService.getUserMaintenanceByMotorcycleResource(this.userMaintenanceId);
+  private readonly defaultsRes = this.maintenanceService.getDefaultsResource();
+
+  readonly userMaintenance = computed(() => (this.userRes.hasValue() ? this.userRes.value()! : []));
+  readonly defaultMaintenance = computed(() => (this.defaultsRes.hasValue() ? this.defaultsRes.value()! : []));
+
+  constructor() {
+    effect(() => {
+      const error = this.userRes.error();
+      if (error) {
+        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar tus mantenimientos.'));
+      }
+    });
+
+    effect(() => {
+      const error = this.defaultsRes.error();
+      if (error) {
+        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar los mantenimientos predeterminados.'));
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -41,34 +56,15 @@ export class MaintenancePageComponent {
       return;
     }
 
-    this.motorcycleId = motorcycleId;
-    this.loadMaintenance();
+    this.motorcycleId.set(motorcycleId);
   }
 
-  loadUserMaintenance() {
-    this.maintenanceService.getUserMaintenanceByMotorcycle(this.motorcycleId).subscribe({
-      next: res => this.userMaintenance = res,
-      error: err => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar tus mantenimientos.'));
-      }
-    });
-  }
-
-  loadDefaultMaintenance() {
-    this.maintenanceService.getDefaultMaintenance().subscribe({
-      next: res => this.defaultMaintenance = res,
-      error: err => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudieron cargar los mantenimientos predeterminados.'));
-      }
-    });
-  }
-
-  loadMaintenance(): void {
-    this.loadUserMaintenance();
-    this.loadDefaultMaintenance();
+  reload(): void {
+    this.userRes.reload();
+    this.defaultsRes.reload();
   }
 
   goToAddMaintenance(): void {
-    this.router.navigate(['/dashboard/motorcycles', this.motorcycleId, 'maintenance/add']);
+    this.router.navigate(['/dashboard/motorcycles', this.motorcycleId(), 'maintenance/add']);
   }
 }

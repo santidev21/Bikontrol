@@ -1,6 +1,6 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, signal } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { BehaviorSubject, Subscription, filter } from 'rxjs';
+import { Subscription, filter } from 'rxjs';
 import { environment } from '@env/environment';
 import { SwalService } from './swal.service';
 
@@ -11,8 +11,8 @@ export class UpdateService implements OnDestroy {
   /** Etiqueta legible de la versión (se sube solo en releases con cambios visibles). */
   readonly appVersion: string = environment.appVersion;
 
-  private swVersionSubject = new BehaviorSubject<string | null>(null);
-  readonly swVersion$ = this.swVersionSubject.asObservable();
+  /** Hash corto de la versión servida por el service worker (null si se desconoce). */
+  readonly swVersion = signal<string | null>(null);
 
   private versionSub?: Subscription;
   private promptShown = false;
@@ -21,11 +21,6 @@ export class UpdateService implements OnDestroy {
     private swUpdate: SwUpdate,
     private swal: SwalService
   ) {}
-
-  /** Hash corto de la versión servida por el service worker (null si se desconoce). */
-  get swVersion(): string | null {
-    return this.swVersionSubject.getValue();
-  }
 
   init(): void {
     if (!this.swUpdate.isEnabled) return;
@@ -53,7 +48,7 @@ export class UpdateService implements OnDestroy {
       if (!response.ok) return;
       const data = await response.json();
       if (typeof data?.hash === 'string') {
-        this.swVersionSubject.next(data.hash.slice(0, 7));
+        this.swVersion.set(data.hash.slice(0, 7));
       }
     } catch {
       // Sin red o SW aún no instalado: se ignora, el hash llegará con los eventos.
@@ -63,7 +58,7 @@ export class UpdateService implements OnDestroy {
   private async onVersionReady(event: VersionReadyEvent): Promise<void> {
     const hash = event.latestVersion?.hash;
     if (typeof hash === 'string' && hash.length > 0) {
-      this.swVersionSubject.next(hash.slice(0, 7));
+      this.swVersion.set(hash.slice(0, 7));
     }
     if (this.promptShown) return;
     this.promptShown = true;

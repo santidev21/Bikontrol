@@ -3,7 +3,7 @@
     Mantenimientos
   </h1>
 
-  @if (!isDemo) {
+  @if (!isDemo()) {
     <div class="text-center">
       <button
         (click)="goToAddMaintenance()"
@@ -16,11 +16,11 @@
   <div class="mt-6">
     <p class="text-gray-400 mb-4 text-center">Tus mantenimientos</p>
 
-    @for (item of userMaintenance; track item) {
+    @for (item of userMaintenance(); track item) {
       <app-maintenance-info-card
         [maintenance]="item"
-        [motorcycleIdContext]="motorcycleId"
-        (refresh)="loadMaintenance()"
+        [motorcycleIdContext]="motorcycleId()"
+        (refresh)="reload()"
         [isDefault]="false">
       </app-maintenance-info-card>
     }
@@ -32,11 +32,11 @@
   <div>
     <p class="text-gray-400 mb-4 text-center">Mantenimientos predefinidos</p>
 
-    @for (item of defaultMaintenance; track item) {
+    @for (item of defaultMaintenance(); track item) {
       <app-maintenance-info-card
         [maintenance]="item"
-        [motorcycleIdContext]="motorcycleId"
-        (refresh)="loadMaintenance()"
+        [motorcycleIdContext]="motorcycleId()"
+        (refresh)="reload()"
         [isDefault]="true">
       </app-maintenance-info-card>
     }
