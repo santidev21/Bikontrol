@@ -37,6 +37,7 @@ describe('HomeComponent (httpResource)', () => {
     const request = httpMock.expectOne(r => r.url.endsWith('/motorcycles/mine'));
     request.flush([moto]);
     await fixture.whenStable();
+    httpMock.match(r => r.url.endsWith('/km/current')).forEach((req) => req.flush({ km: 100 }));
 
     expect(fixture.componentInstance.motorcycles.value().length).toBe(1);
     expect(fixture.componentInstance.motorcycles.value()[0].name).toBe('XTZ');
