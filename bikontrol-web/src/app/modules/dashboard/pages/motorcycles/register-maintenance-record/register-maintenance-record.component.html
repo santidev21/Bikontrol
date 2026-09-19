@@ -6,7 +6,7 @@
       <label for="record-maintenance" class="block text-sm text-gray-300 mb-1">Mantenimiento</label>
       <select id="record-maintenance" formControlName="userMaintenanceId" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700">
         <option value="">Selecciona un mantenimiento</option>
-        @for (maintenance of maintenances; track maintenance) {
+        @for (maintenance of maintenances(); track maintenance) {
           <option [value]="maintenance.id">
             {{ maintenance.name }} ({{ maintenance.trackingType }})
           </option>
@@ -19,19 +19,19 @@
       <input id="record-date" type="date" formControlName="performedAt" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700" />
     </div>
 
-    @if (selectedMaintenance?.trackingType === 'Km') {
+    @if (selectedMaintenance()?.trackingType === 'Km') {
       <div>
         <label for="record-km" class="block text-sm text-gray-300 mb-1">Kilometraje</label>
         <input id="record-km" type="number" formControlName="performedKm" class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700" />
-        <p class="text-xs text-gray-400 mt-1">Km actual: {{ currentKm }} | Último de este mantenimiento: {{ lastMaintenanceKm ?? 'Sin registro' }}</p>
+        <p class="text-xs text-gray-400 mt-1">Km actual: {{ currentKm() }} | Último de este mantenimiento: {{ lastMaintenanceKm() ?? 'Sin registro' }}</p>
       </div>
     }
 
     <button
       type="submit"
-      [disabled]="isSubmitting"
+      [disabled]="isSubmitting()"
       class="w-full mt-2 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold disabled:opacity-60">
-      {{ isSubmitting ? 'Guardando...' : 'Registrar mantenimiento' }}
+      {{ isSubmitting() ? 'Guardando...' : 'Registrar mantenimiento' }}
     </button>
   </form>
 </div>

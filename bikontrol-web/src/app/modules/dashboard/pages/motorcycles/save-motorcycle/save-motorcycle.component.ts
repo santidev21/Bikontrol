@@ -1,27 +1,28 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import Swal from 'sweetalert2';
 import { SaveMotorcycleDTO , Motorcycle } from '../../../interfaces/motorcycle.interface';
 
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
+const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
 
 @Component({
     selector: 'app-save-motorcycle',
     imports: [ReactiveFormsModule],
     templateUrl: './save-motorcycle.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './save-motorcycle.component.scss'
 })
 export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   motorcycleForm: FormGroup;
-  isSubmitting = false;
-  isEditMode = false;
-  motorcycleId?: string;
+  readonly isSubmitting = signal(false);
+  readonly isEditMode = signal(false);
+  readonly motorcycleId = signal<string | undefined>(undefined);
+  readonly previewSrc = signal(PLACEHOLDER_IMAGE);
   currentYear = new Date().getFullYear();
 
   private readonly subscriptions = new Subscription();
@@ -65,9 +66,9 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       this.route.paramMap.subscribe((params) => {
         const id = params.get('id');
         if (id) {
-          this.isEditMode = true;
-          this.motorcycleId = id;
-          this.loadMotorcycle(this.motorcycleId);
+          this.isEditMode.set(true);
+          this.motorcycleId.set(id);
+          this.loadMotorcycle(id);
         }
       })
     );
@@ -81,7 +82,8 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
     this.motorcyclesService.getById(id).subscribe({
       next: (motorcycle) => {
         this.motorcycleForm.patchValue(motorcycle);
-        if (this.isEditMode) {
+        this.previewSrc.set(this.resolvePreview(motorcycle.image));
+        if (this.isEditMode()) {
           this.loadCurrentKm();
         }
       },
@@ -92,10 +94,11 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   }
 
   loadCurrentKm(): void {
-    if (!this.motorcycleId) {
+    const id = this.motorcycleId();
+    if (!id) {
       return;
     }
-    this.motorcyclesService.getCurrentKm(this.motorcycleId).subscribe({
+    this.motorcyclesService.getCurrentKm(id).subscribe({
       next: (res) => {
         this.motorcycleForm.patchValue({ km: res.km });
         this.motorcycleForm.get('km')?.disable();
@@ -106,11 +109,8 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
     });
   }
 
-  get previewSrc(): string {
-    const image = this.motorcycleForm.get('image')?.value;
-    return image && image !== 'default.png'
-      ? image
-      : '/assets/images/defaults/motorcycle-placeholder.webp';
+  private resolvePreview(image?: string): string {
+    return image && image !== 'default.png' ? image : PLACEHOLDER_IMAGE;
   }
 
   onImageSelected(event: Event): void {
@@ -138,6 +138,7 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
 
   removeImage(): void {
     this.motorcycleForm.patchValue({ image: 'default.png' });
+    this.previewSrc.set(PLACEHOLDER_IMAGE);
   }
 
   private resizeImage(dataUrl: string, input: HTMLInputElement): void {
@@ -149,7 +150,9 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
       canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      this.motorcycleForm.patchValue({ image: canvas.toDataURL('image/jpeg', 0.8) });
+      const resized = canvas.toDataURL('image/jpeg', 0.8);
+      this.motorcycleForm.patchValue({ image: resized });
+      this.previewSrc.set(resized);
     };
     img.onerror = () => {
       this.swal.warning('Archivo inválido', 'No se pudo leer la imagen seleccionada.');
@@ -168,23 +171,24 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     const motorcycle: SaveMotorcycleDTO = this.motorcycleForm.value;
 
-    if (this.isEditMode && this.motorcycleId) this.updateMotorcycle(motorcycle);
+    const id = this.motorcycleId();
+    if (this.isEditMode() && id) this.updateMotorcycle(id, motorcycle);
     else this.addMotorcycle(motorcycle);
   }
 
   addMotorcycle(motorcycle: SaveMotorcycleDTO): void {
     this.motorcyclesService.addMotorcycle(motorcycle).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal
           .success('¡Éxito!', 'Motocicleta agregada correctamente.')
           .then(() => this.router.navigate(['/dashboard']));
       },
       error: (err) => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.error(
           'Error',
           this.httpError.message(err, 'No se pudo agregar la motocicleta.')
@@ -193,16 +197,16 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
     });
   }
 
-  updateMotorcycle(motorcycle: SaveMotorcycleDTO): void {
-    this.motorcyclesService.updateMotorcycle(this.motorcycleId ?? '', motorcycle).subscribe({
+  updateMotorcycle(id: string, motorcycle: SaveMotorcycleDTO): void {
+    this.motorcyclesService.updateMotorcycle(id, motorcycle).subscribe({
         next: () => {
-          this.isSubmitting = false;
+          this.isSubmitting.set(false);
           this.swal
             .success('¡Éxito!', 'Motocicleta actualizada correctamente.')
             .then(() => this.router.navigate(['/dashboard']));
         },
         error: (err) => {
-          this.isSubmitting = false;
+          this.isSubmitting.set(false);
           this.swal.error(
             'Error',
             this.httpError.message(err, 'No se pudo actualizar la motocicleta.')

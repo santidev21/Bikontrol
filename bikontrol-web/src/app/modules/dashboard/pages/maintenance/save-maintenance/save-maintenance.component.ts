@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+﻿import { Component, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,15 +13,15 @@ import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-s
     selector: 'app-save-maintenance',
     imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
     templateUrl: './save-maintenance.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './save-maintenance.component.scss'
 })
 export class SaveMaintenanceComponent implements OnDestroy {
   maintenanceForm: FormGroup;
-  isSubmitting = false;
-  isEditMode = false;
-  maintenanceId?: string;
-  motorcycleId = '';
+  readonly isSubmitting = signal(false);
+  readonly isEditMode = signal(false);
+  readonly maintenanceId = signal<string | undefined>(undefined);
+  readonly motorcycleId = signal('');
 
   private readonly subscriptions = new Subscription();
 
@@ -46,16 +46,16 @@ export class SaveMaintenanceComponent implements OnDestroy {
   ngOnInit(): void {
     const motorcycleId = this.route.snapshot.paramMap.get('motorcycleId');
     if (motorcycleId) {
-      this.motorcycleId = motorcycleId;
+      this.motorcycleId.set(motorcycleId);
     }
 
     this.subscriptions.add(
       this.route.paramMap.subscribe((params) => {
         const id = params.get('id');
         if (id) {
-          this.isEditMode = true;
-          this.maintenanceId = id;
-          this.loadMaintenanceId(this.maintenanceId);
+          this.isEditMode.set(true);
+          this.maintenanceId.set(id);
+          this.loadMaintenanceId(id);
         }
       })
     );
@@ -73,8 +73,8 @@ export class SaveMaintenanceComponent implements OnDestroy {
           monitoringType: maintenance.trackingType === 'Km' ? 'km' : 'time'
         };
 
-        if (!this.motorcycleId && maintenance.motorcycleId) {
-          this.motorcycleId = maintenance.motorcycleId;
+        if (!this.motorcycleId() && maintenance.motorcycleId) {
+          this.motorcycleId.set(maintenance.motorcycleId);
         }
 
         this.maintenanceForm.patchValue(mappedMaintenance);
@@ -93,11 +93,11 @@ export class SaveMaintenanceComponent implements OnDestroy {
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     const maintenance: SaveMaintenanceDTO = this.maintenanceForm.value;
     const monitoringType = this.maintenanceForm.get('monitoringType')?.value;
 
-    maintenance.motorcycleId = this.motorcycleId;
+    maintenance.motorcycleId = this.motorcycleId();
     maintenance.kmInterval = 0;
     maintenance.timeIntervalWeeks = 0;
     maintenance.trackingType = monitoringType === 'km' ? 'Km' : 'Time';
@@ -112,8 +112,9 @@ export class SaveMaintenanceComponent implements OnDestroy {
       }
     }
 
-    if (this.isEditMode && this.maintenanceId) {
-      this.updateMaintenance(maintenance);
+    const id = this.maintenanceId();
+    if (this.isEditMode() && id) {
+      this.updateMaintenance(id, maintenance);
     } else {
       this.addMaintenance(maintenance);
     }
@@ -135,34 +136,34 @@ export class SaveMaintenanceComponent implements OnDestroy {
   addMaintenance(maintenance: SaveMaintenanceDTO): void {
     if (!maintenance.motorcycleId) {
       this.swal.error('Error', 'Debes seleccionar una motocicleta para crear el mantenimiento.');
-      this.isSubmitting = false;
+      this.isSubmitting.set(false);
       return;
     }
 
     this.maintenanceService.createUserMaintenance(maintenance).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.success('Éxito', 'Mantenimiento agregado correctamente.').then(() => {
-          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId, 'maintenance']);
+          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId(), 'maintenance']);
         });
       },
       error: (err) => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.error('Error', this.httpError.message(err, 'No se pudo agregar el mantenimiento.'));
       },
     });
   }
 
-  updateMaintenance(maintenance: SaveMaintenanceDTO): void {
-    this.maintenanceService.updateMaintenance(this.maintenanceId ?? '', maintenance).subscribe({
+  updateMaintenance(id: string, maintenance: SaveMaintenanceDTO): void {
+    this.maintenanceService.updateMaintenance(id, maintenance).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.success('Éxito', 'Mantenimiento actualizado correctamente.').then(() => {
-          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId || maintenance.motorcycleId, 'maintenance']);
+          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId() || maintenance.motorcycleId, 'maintenance']);
         });
       },
       error: (err) => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar el mantenimiento.'));
       },
     });

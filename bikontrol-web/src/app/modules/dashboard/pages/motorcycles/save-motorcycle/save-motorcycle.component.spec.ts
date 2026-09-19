@@ -142,8 +142,8 @@ describe("SaveMotorcycleComponent", () => {
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
 
-    expect(component.isEditMode).toBe(true);
-    expect(component.motorcycleId).toBe("moto-2");
+    expect(component.isEditMode()).toBe(true);
+    expect(component.motorcycleId()).toBe("moto-2");
     expect(motorcyclesServiceMock.getById).toHaveBeenCalledWith("moto-2");
     expect(component.motorcycleForm.get("name")?.value).toBe("XTZ");
   });
@@ -174,8 +174,8 @@ describe("SaveMotorcycleComponent", () => {
   });
 
   it("should update a motorcycle and navigate on success", async () => {
-    component.isEditMode = true;
-    component.motorcycleId = "moto-2";
+    component.isEditMode.set(true);
+    component.motorcycleId.set("moto-2");
     motorcyclesServiceMock.updateMotorcycle.mockReturnValue(of(undefined));
     component.motorcycleForm.setValue({
       name: "XTZ",
@@ -215,24 +215,42 @@ describe("SaveMotorcycleComponent", () => {
     expect(component.hasError("name", "required")).toBe(true);
   });
 
-  it("should show the placeholder preview when the image is the default", () => {
+  it("should show the placeholder preview by default", () => {
     component.motorcycleForm.patchValue({ image: "default.png" });
 
-    expect(component.previewSrc).toBe("/assets/images/defaults/motorcycle-placeholder.webp");
+    expect(component.previewSrc()).toBe("/assets/images/defaults/motorcycle-placeholder.webp");
   });
 
-  it("should show the custom image preview when one is set", () => {
-    component.motorcycleForm.patchValue({ image: "data:image/jpeg;base64,abc" });
+  it("should set the preview from the loaded motorcycle image", () => {
+    motorcyclesServiceMock.getById.mockReturnValue(
+      of({
+        id: "moto-2",
+        name: "XTZ",
+        brand: "Yamaha",
+        year: 2023,
+        nickname: "La negra",
+        km: 0,
+        displacement: 150,
+        plate: "XYZ789",
+        image: "data:image/jpeg;base64,abc",
+        isEnabled: true
+      })
+    );
+    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2000 }));
 
-    expect(component.previewSrc).toBe("data:image/jpeg;base64,abc");
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
+
+    expect(component.previewSrc()).toBe("data:image/jpeg;base64,abc");
   });
 
   it("should reset the image to the default when removing it", () => {
-    component.motorcycleForm.patchValue({ image: "data:image/jpeg;base64,abc" });
+    component.previewSrc.set("data:image/jpeg;base64,abc");
 
     component.removeImage();
 
     expect(component.motorcycleForm.get("image")?.value).toBe("default.png");
+    expect(component.previewSrc()).toBe("/assets/images/defaults/motorcycle-placeholder.webp");
   });
 
   it("should reject non-image files", () => {

@@ -64,10 +64,10 @@ describe("RegisterMaintenanceRecordComponent", () => {
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: "moto-1" }));
 
-    expect(component.motorcycleId).toBe("moto-1");
+    expect(component.motorcycleId()).toBe("moto-1");
     expect(motorcyclesServiceMock.getCurrentKm).toHaveBeenCalledWith("moto-1");
     expect(maintenanceServiceMock.getUserMaintenanceByMotorcycle).toHaveBeenCalledWith("moto-1");
-    expect(component.currentKm).toBe(2300);
+    expect(component.currentKm()).toBe(2300);
   });
 
   it("should update the performed km control when a Km-based maintenance is selected", () => {
@@ -90,7 +90,7 @@ describe("RegisterMaintenanceRecordComponent", () => {
     routeParamMap$.next(convertToParamMap({ motorcycleId: "moto-1" }));
     component.form.get("userMaintenanceId")?.setValue("maint-1");
 
-    expect(component.selectedMaintenance?.id).toBe("maint-1");
+    expect(component.selectedMaintenance()?.id).toBe("maint-1");
     expect(component.form.get("performedKm")?.value).toBe(2300);
   });
 
@@ -118,15 +118,15 @@ describe("RegisterMaintenanceRecordComponent", () => {
   });
 
   it("should warn when the performed date is in the future", () => {
-    component.motorcycleId = "moto-1";
-    component.selectedMaintenance = {
+    component.motorcycleId.set("moto-1");
+    component.selectedMaintenance.set({
       id: "maint-1",
       motorcycleId: "moto-1",
       name: "Aceite",
       trackingType: "Km",
       isEnabled: true,
       isSystem: false
-    };
+    });
     component.form.patchValue({
       userMaintenanceId: "maint-1",
       performedAt: "2999-01-01",

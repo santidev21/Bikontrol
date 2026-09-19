@@ -1,5 +1,4 @@
-
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -13,16 +12,16 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
     selector: 'app-register-maintenance-record',
     imports: [ReactiveFormsModule],
     templateUrl: './register-maintenance-record.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './register-maintenance-record.component.scss'
 })
 export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
-  motorcycleId = '';
-  maintenances: Maintenance[] = [];
-  selectedMaintenance?: Maintenance;
-  currentKm = 0;
-  lastMaintenanceKm?: number | null;
-  isSubmitting = false;
+  readonly motorcycleId = signal('');
+  readonly maintenances = signal<Maintenance[]>([]);
+  readonly selectedMaintenance = signal<Maintenance | undefined>(undefined);
+  readonly currentKm = signal(0);
+  readonly lastMaintenanceKm = signal<number | null>(null);
+  readonly isSubmitting = signal(false);
 
   form: FormGroup;
 
@@ -53,14 +52,14 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
           return;
         }
 
-        this.motorcycleId = motorcycleId;
+        this.motorcycleId.set(motorcycleId);
         this.loadData();
       })
     );
 
     this.subscriptions.add(
       this.form.get('userMaintenanceId')?.valueChanges.subscribe((maintenanceId: string) => {
-        this.selectedMaintenance = this.maintenances.find((m) => m.id === maintenanceId);
+        this.selectedMaintenance.set(this.maintenances().find((m) => m.id === maintenanceId));
         this.updateKmControlByTrackingType();
         this.loadLastMaintenanceKm();
       })
@@ -72,15 +71,17 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
   }
 
   private loadData(): void {
-    this.motorcyclesService.getCurrentKm(this.motorcycleId).subscribe({
+    const id = this.motorcycleId();
+
+    this.motorcyclesService.getCurrentKm(id).subscribe({
       next: (res) => {
-        this.currentKm = res.km;
+        this.currentKm.set(res.km);
       }
     });
 
-    this.maintenanceService.getUserMaintenanceByMotorcycle(this.motorcycleId).subscribe({
+    this.maintenanceService.getUserMaintenanceByMotorcycle(id).subscribe({
       next: (list) => {
-        this.maintenances = list;
+        this.maintenances.set(list);
       },
       error: () => {
         this.swal.error('Error', 'No se pudo cargar los mantenimientos de la moto.');
@@ -92,9 +93,9 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
     const control = this.form.get('performedKm');
     if (!control) return;
 
-    if (this.selectedMaintenance?.trackingType === 'Km') {
+    if (this.selectedMaintenance()?.trackingType === 'Km') {
       control.setValidators([Validators.required, Validators.min(1)]);
-      control.setValue(this.currentKm);
+      control.setValue(this.currentKm());
     } else {
       control.clearValidators();
       control.setValue(null);
@@ -104,20 +105,21 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
   }
 
   private loadLastMaintenanceKm(): void {
-    this.lastMaintenanceKm = null;
+    this.lastMaintenanceKm.set(null);
     const maintenanceId = this.form.get('userMaintenanceId')?.value;
     if (!maintenanceId) return;
 
-    this.maintenanceService.getMaintenanceRecordsByMotorcycle(this.motorcycleId).subscribe({
+    this.maintenanceService.getMaintenanceRecordsByMotorcycle(this.motorcycleId()).subscribe({
       next: (records) => {
         const last = records.find((x) => x.userMaintenanceId === maintenanceId);
-        this.lastMaintenanceKm = last?.performedKm ?? null;
+        this.lastMaintenanceKm.set(last?.performedKm ?? null);
       }
     });
   }
 
   onSubmit(): void {
-    if (this.form.invalid || !this.selectedMaintenance) {
+    const selected = this.selectedMaintenance();
+    if (this.form.invalid || !selected) {
       this.form.markAllAsTouched();
       return;
     }
@@ -131,35 +133,36 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
     }
 
     const performedKm = this.form.get('performedKm')?.value as number | null;
+    const lastKm = this.lastMaintenanceKm();
     if (
-      this.selectedMaintenance.trackingType === 'Km' &&
-      this.lastMaintenanceKm != null &&
+      selected.trackingType === 'Km' &&
+      lastKm != null &&
       performedKm != null &&
-      performedKm < this.lastMaintenanceKm
+      performedKm < lastKm
     ) {
       this.swal.warning('Error', 'No puedes agregar mantenimiento anterior al ultimo');
       return;
     }
 
     const payload: CreateMaintenanceRecordRequest = {
-      motorcycleId: this.motorcycleId,
+      motorcycleId: this.motorcycleId(),
       userMaintenanceId: this.form.get('userMaintenanceId')?.value,
       performedAt: performedAt.toISOString(),
-      performedKm: this.selectedMaintenance.trackingType === 'Km' ? performedKm : null
+      performedKm: selected.trackingType === 'Km' ? performedKm : null
     };
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     this.maintenanceService.registerMaintenanceRecord(payload).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.success('¡Éxito!', 'Se registró el mantenimiento correctamente.').then(() => {
           this.router.navigate(['/dashboard/motorcycles/summary'], {
-            queryParams: { motorcycleId: this.motorcycleId }
+            queryParams: { motorcycleId: this.motorcycleId() }
           });
         });
       },
       error: (err) => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.swal.error('Error', this.httpError.message(err, 'No se pudo registrar el mantenimiento.'));
       }
     });

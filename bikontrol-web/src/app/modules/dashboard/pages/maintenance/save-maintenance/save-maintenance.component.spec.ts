@@ -123,7 +123,7 @@ describe("SaveMaintenanceComponent", () => {
   });
 
   it("should show an error if there is no motorcycle id when creating", () => {
-    component.motorcycleId = "";
+    component.motorcycleId.set("");
     component.maintenanceForm.setValue({
       name: "Aceite",
       description: "Cambio de aceite",
@@ -164,18 +164,18 @@ describe("SaveMaintenanceComponent", () => {
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ id: "maint-1" }));
 
-    expect(component.isEditMode).toBe(true);
-    expect(component.maintenanceId).toBe("maint-1");
-    expect(component.motorcycleId).toBe("moto-1");
+    expect(component.isEditMode()).toBe(true);
+    expect(component.maintenanceId()).toBe("maint-1");
+    expect(component.motorcycleId()).toBe("moto-1");
     expect(component.maintenanceForm.get("monitoringType")?.value).toBe("km");
     expect(component.maintenanceForm.get("monitoringType")?.disabled).toBe(true);
   });
 
   it("should update a maintenance and navigate on success", () => {
     component.ngOnInit();
-    component.isEditMode = true;
-    component.maintenanceId = "maint-1";
-    component.motorcycleId = "moto-1";
+    component.isEditMode.set(true);
+    component.maintenanceId.set("maint-1");
+    component.motorcycleId.set("moto-1");
     maintenanceServiceMock.updateMaintenance.mockReturnValue(of(undefined));
     component.maintenanceForm.setValue({
       name: "Aceite",
