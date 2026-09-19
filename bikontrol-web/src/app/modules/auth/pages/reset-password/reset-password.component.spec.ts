@@ -36,7 +36,7 @@ describe("ResetPasswordComponent", () => {
   it("should read token and email from the route query params", () => {
     expect(component["token"]).toBe("token-abc");
     expect(component["email"]).toBe("user@example.com");
-    expect(component.linkInvalid).toBe(false);
+    expect(component.linkInvalid()).toBe(false);
   });
 
   it("should mark link invalid when token is missing", () => {
@@ -44,7 +44,7 @@ describe("ResetPasswordComponent", () => {
     const c = new ResetPasswordComponent(new FormBuilder(), routeMock, authServiceMock, routerMock, httpErrorMock);
     c.ngOnInit();
 
-    expect(c.linkInvalid).toBe(true);
+    expect(c.linkInvalid()).toBe(true);
   });
 
   it("should not submit when passwords do not match", () => {
@@ -62,7 +62,7 @@ describe("ResetPasswordComponent", () => {
     component.onSubmit();
 
     expect(authServiceMock.resetPassword).toHaveBeenCalledWith("user@example.com", "token-abc", "123456");
-    expect(component.successMessage).toBe("Contraseña actualizada.");
+    expect(component.successMessage()).toBe("Contraseña actualizada.");
     jest.runAllTimers();
     expect(routerMock.navigate).toHaveBeenCalledWith(["/login"]);
     jest.useRealTimers();
@@ -74,6 +74,6 @@ describe("ResetPasswordComponent", () => {
 
     component.onSubmit();
 
-    expect(component.errorMessage).toBe("Enlace expirado.");
+    expect(component.errorMessage()).toBe("Enlace expirado.");
   });
 });

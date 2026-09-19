@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -9,13 +9,13 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-register',
     imports: [AUTH_IMPORTS],
     templateUrl: './register.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
   registerForm: FormGroup;
-  submitted = false;
-  errorMessage: string | null = null;
+  readonly submitted = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   constructor(
     private fb: FormBuilder,
@@ -40,7 +40,7 @@ export class RegisterComponent {
 
   isInvalid(controlName: string): boolean {
     const control = this.registerForm.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted));
+    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -50,8 +50,8 @@ export class RegisterComponent {
   }
 
   onSubmit() {
-    this.submitted = true;
-    this.errorMessage = null;
+    this.submitted.set(true);
+    this.errorMessage.set(null);
 
     if (this.registerForm.invalid) return;
 
@@ -66,7 +66,7 @@ export class RegisterComponent {
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        this.errorMessage = this.httpError.message(error);
+        this.errorMessage.set(this.httpError.message(error));
       }
     });
   }

@@ -37,8 +37,8 @@ describe("ForgotPasswordComponent", () => {
     component.onSubmit();
 
     expect(authServiceMock.forgotPassword).toHaveBeenCalledWith("user@example.com");
-    expect(component.successMessage).toBe("Revisa tu correo.");
-    expect(component.errorMessage).toBeNull();
+    expect(component.successMessage()).toBe("Revisa tu correo.");
+    expect(component.errorMessage()).toBeNull();
   });
 
   it("should show the backend error on failure", () => {
@@ -47,6 +47,6 @@ describe("ForgotPasswordComponent", () => {
 
     component.onSubmit();
 
-    expect(component.errorMessage).toBe("Error");
+    expect(component.errorMessage()).toBe("Error");
   });
 });

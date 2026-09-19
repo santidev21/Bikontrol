@@ -92,9 +92,9 @@
                 Registrarse
               </button>
 
-              @if (errorMessage) {
+              @if (errorMessage()) {
                 <small class="text-red-500 text-xs block text-center mt-3 font-bold">
-                  {{ errorMessage }}
+                  {{ errorMessage() }}
                 </small>
               }
 

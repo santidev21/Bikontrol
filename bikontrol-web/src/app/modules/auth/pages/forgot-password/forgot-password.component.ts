@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -9,14 +9,14 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-forgot-password',
     imports: [FormsModule, ReactiveFormsModule, RouterModule],
     templateUrl: './forgot-password.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './forgot-password.component.scss'
 })
 export class ForgotPasswordComponent {
   form: FormGroup;
-  submitted = false;
-  errorMessage: string | null = null;
-  successMessage: string | null = null;
+  readonly submitted = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
 
   constructor(
     private fb: FormBuilder,
@@ -34,22 +34,22 @@ export class ForgotPasswordComponent {
 
   isInvalid(controlName: string): boolean {
     const control = this.form.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted));
+    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
   }
 
   onSubmit() {
-    this.submitted = true;
-    this.errorMessage = null;
-    this.successMessage = null;
+    this.submitted.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
 
     if (this.form.invalid) return;
 
     this.authService.forgotPassword(this.form.value.email).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage.set(response.message);
       },
       error: (error) => {
-        this.errorMessage = this.httpError.message(error);
+        this.errorMessage.set(this.httpError.message(error));
       }
     });
   }

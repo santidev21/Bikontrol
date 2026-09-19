@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -9,15 +9,15 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
     selector: 'app-reset-password',
     imports: [FormsModule, ReactiveFormsModule, RouterModule],
     templateUrl: './reset-password.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './reset-password.component.scss'
 })
 export class ResetPasswordComponent implements OnInit, OnDestroy {
   form: FormGroup;
-  submitted = false;
-  errorMessage: string | null = null;
-  successMessage: string | null = null;
-  linkInvalid = false;
+  readonly submitted = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
+  readonly linkInvalid = signal(false);
 
   private token: string | null = null;
   private email: string | null = null;
@@ -42,7 +42,7 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token');
     this.email = this.route.snapshot.queryParamMap.get('email');
-    this.linkInvalid = !this.token || !this.email;
+    this.linkInvalid.set(!this.token || !this.email);
   }
 
   get f() {
@@ -51,7 +51,7 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
 
   isInvalid(controlName: string): boolean {
     const control = this.form.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted));
+    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -61,19 +61,19 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   }
 
   onSubmit() {
-    this.submitted = true;
-    this.errorMessage = null;
-    this.successMessage = null;
+    this.submitted.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
 
-    if (this.form.invalid || this.linkInvalid) return;
+    if (this.form.invalid || this.linkInvalid()) return;
 
     this.authService.resetPassword(this.email!, this.token!, this.form.value.newPassword).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage.set(response.message);
         this.redirectTimer = setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error: (error) => {
-        this.errorMessage = this.httpError.message(error);
+        this.errorMessage.set(this.httpError.message(error));
       }
     });
   }

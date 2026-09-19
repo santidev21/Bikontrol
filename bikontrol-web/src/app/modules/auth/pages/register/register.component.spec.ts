@@ -45,7 +45,7 @@ describe("RegisterComponent", () => {
   it("should not submit invalid forms", () => {
     component.onSubmit();
 
-    expect(component.submitted).toBe(true);
+    expect(component.submitted()).toBe(true);
     expect(authServiceMock.register).not.toHaveBeenCalled();
   });
 
@@ -66,7 +66,7 @@ describe("RegisterComponent", () => {
       password: "secret1"
     });
     expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
-    expect(component.errorMessage).toBeNull();
+    expect(component.errorMessage()).toBeNull();
   });
 
   it("should surface server errors on registration failure", () => {
@@ -83,7 +83,7 @@ describe("RegisterComponent", () => {
     component.onSubmit();
 
     expect(httpErrorMock.message).toHaveBeenCalled();
-    expect(component.errorMessage).toBe("Email ya registrado");
+    expect(component.errorMessage()).toBe("Email ya registrado");
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
@@ -98,6 +98,6 @@ describe("RegisterComponent", () => {
 
     component.onSubmit();
 
-    expect(component.errorMessage).toBe("Error inesperado en el servidor.");
+    expect(component.errorMessage()).toBe("Error inesperado en el servidor.");
   });
 });
