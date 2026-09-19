@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -16,14 +16,14 @@ declare global {
     selector: 'app-login',
     imports: [AUTH_IMPORTS],
     templateUrl: './login.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './login.component.scss'
 })
 export class LoginComponent implements AfterViewInit {
   loginForm: FormGroup;
-  submitted = false;
-  errorMessage: string | null = null;
-  demoLoading = false;
+  readonly submitted = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly demoLoading = signal(false);
 
   constructor(
     private fb: FormBuilder,
@@ -56,12 +56,12 @@ export class LoginComponent implements AfterViewInit {
 
   isInvalid(controlName: string): boolean {
     const control = this.loginForm.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted));
+    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
   }
 
   onSubmit() {
-    this.submitted = true;
-    this.errorMessage = null;
+    this.submitted.set(true);
+    this.errorMessage.set(null);
 
     if (this.loginForm.invalid) return;
 
@@ -73,19 +73,19 @@ export class LoginComponent implements AfterViewInit {
     this.authService.login(payload.email, payload.password).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
-        this.errorMessage = this.httpError.message(error);
+        this.errorMessage.set(this.httpError.message(error));
       }
     });
   }
 
   onDemoLogin(): void {
-    this.demoLoading = true;
-    this.errorMessage = null;
+    this.demoLoading.set(true);
+    this.errorMessage.set(null);
     this.authService.demoLogin().subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
-        this.demoLoading = false;
-        this.errorMessage = this.httpError.message(error, 'No se pudo iniciar la demo.');
+        this.demoLoading.set(false);
+        this.errorMessage.set(this.httpError.message(error, 'No se pudo iniciar la demo.'));
       }
     });
   }
@@ -111,14 +111,14 @@ export class LoginComponent implements AfterViewInit {
 
   onGoogleCredential(response: { credential?: string }): void {
     if (!response?.credential) {
-      this.errorMessage = 'No se pudo obtener la credencial de Google.';
+      this.errorMessage.set('No se pudo obtener la credencial de Google.');
       return;
     }
 
     this.authService.googleLogin(response.credential).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
-        this.errorMessage = this.httpError.message(error);
+        this.errorMessage.set(this.httpError.message(error));
       }
     });
   }

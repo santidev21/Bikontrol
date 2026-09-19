@@ -39,7 +39,7 @@ describe("LoginComponent", () => {
   it("should not submit if the form is invalid", () => {
     component.onSubmit();
 
-    expect(component.submitted).toBe(true);
+    expect(component.submitted()).toBe(true);
     expect(authServiceMock.login).not.toHaveBeenCalled();
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
@@ -55,7 +55,7 @@ describe("LoginComponent", () => {
 
     expect(authServiceMock.login).toHaveBeenCalledWith("user@example.com", "secret1");
     expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
-    expect(component.errorMessage).toBeNull();
+    expect(component.errorMessage()).toBeNull();
   });
 
   it("should expose the backend error message on login failure", () => {
@@ -70,7 +70,7 @@ describe("LoginComponent", () => {
     component.onSubmit();
 
     expect(httpErrorMock.message).toHaveBeenCalled();
-    expect(component.errorMessage).toBe("Credenciales invalidas");
+    expect(component.errorMessage()).toBe("Credenciales invalidas");
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe("LoginComponent", () => {
 
     component.onSubmit();
 
-    expect(component.errorMessage).toBe("Error inesperado en el servidor.");
+    expect(component.errorMessage()).toBe("Error inesperado en el servidor.");
   });
 
   it("should navigate to dashboard after a successful google login", () => {
@@ -99,7 +99,7 @@ describe("LoginComponent", () => {
     component.onGoogleCredential({});
 
     expect(authServiceMock.googleLogin).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain("Google");
+    expect(component.errorMessage()).toContain("Google");
   });
 
   it("should expose the backend error message on google login failure", () => {
@@ -109,7 +109,7 @@ describe("LoginComponent", () => {
 
     component.onGoogleCredential({ credential: "id-token-abc" });
 
-    expect(component.errorMessage).toBe("Token invalido");
+    expect(component.errorMessage()).toBe("Token invalido");
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 });

@@ -60,9 +60,9 @@
         Ingresar
       </button>
 
-      @if (errorMessage) {
+      @if (errorMessage()) {
         <small class="text-red-500 text-xs block text-center mt-3 font-bold">
-          {{ errorMessage }}
+          {{ errorMessage() }}
         </small>
       }
     </form>
@@ -86,10 +86,10 @@
     <button
       type="button"
       (click)="onDemoLogin()"
-      [disabled]="demoLoading"
+      [disabled]="demoLoading()"
       class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
       >
-      {{ demoLoading ? 'Cargando demo...' : '¿Querés probar la demo?' }}
+      {{ demoLoading() ? 'Cargando demo...' : '¿Querés probar la demo?' }}
     </button>
   </div>
 </div>
