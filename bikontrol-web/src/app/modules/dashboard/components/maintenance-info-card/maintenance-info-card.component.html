@@ -2,7 +2,7 @@
   class="bg-white rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition-shadow relative mt-2"
   >
   <!-- Left Section -->
-  <div class="flex-1 cursor-pointer" (click)="goToDetails()">
+  <div class="flex-1">
     <h2 class="font-bold text-lg text-gray-900">{{ maintenance.name }}</h2>
 
     @if (maintenance.description) {
@@ -84,29 +84,9 @@
               }
               @if (!isDefault) {
                 <button
-                  class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-yellow-600 hover:bg-gray-100 rounded-lg"
-                  (click)="onFavorite($event)"
+                  class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 rounded-lg"
+                  (click)="onEdit($event)"
                   >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    height="18px"
-                    viewBox="0 -960 960 960"
-                    width="18px"
-                    fill="currentColor"
-                    class="text-yellow-600"
-                    >
-          <path d="m354-287 126-76 126 77-33-144 111-96-146-13-58-136-58 135-146 
-          13 111 97-33 143ZM233-120l65-281L80-590l288-25 112-265 112 265 288 25-218 
-          189 65 281-247-149-247 149Zm247-350Z"/>
-                    </svg>
-                    <span>Favorito</span>
-                  </button>
-                }
-                @if (!isDefault) {
-                  <button
-                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 rounded-lg"
-                    (click)="onEdit($event)"
-                    >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       height="18px"
@@ -155,40 +135,11 @@
 
           <!-- Follow Modal -->
           @if (followModalOpen()) {
-            <div
-              class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-              (click)="closeFollowModal()"
-              >
-              <div
-                class="bg-white rounded-xl shadow-lg p-6 w-96 max-h-screen overflow-y-auto"
-                (click)="$event.stopPropagation()"
-                >
-                <h2 class="text-2xl font-bold mb-2 text-gray-800">Seguir Mantenimiento</h2>
-                <p class="text-gray-700 font-medium mb-4">{{ maintenance.name }}</p>
-                <form [formGroup]="followForm" (ngSubmit)="onFollowConfirm()" class="space-y-4">
-                  <!-- Monitoring Type Selector Component -->
-                  <app-monitoring-type-selector
-                    [form]="followForm"
-                    [isEditMode]="false"
-                  ></app-monitoring-type-selector>
-                  <!-- Buttons -->
-                  <div class="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      (click)="closeFollowModal()"
-                      class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      [disabled]="isFollowing()"
-                      class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
-                      >
-                      {{ isFollowing() ? 'Guardando...' : 'Agregar Mantenimiento' }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            <app-follow-maintenance-modal
+              [maintenance]="maintenance"
+              [isDefault]="isDefault"
+              [motorcycleIdContext]="motorcycleIdContext"
+              (saved)="onFollowSaved()"
+              (closed)="closeFollowModal()"
+            ></app-follow-maintenance-modal>
           }

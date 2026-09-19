@@ -12,15 +12,6 @@ describe('MaintenanceInfoCardComponent (class)', () => {
     warning: jest.fn(),
     confirm: jest.fn()
   } as any;
-  const formBuilderMock = {
-    group: jest.fn().mockReturnValue({
-      value: {},
-      invalid: false,
-      patchValue: jest.fn(),
-      markAllAsTouched: jest.fn(),
-      get: jest.fn().mockReturnValue({ value: 'km' })
-    })
-  } as any;
   const httpErrorMock = {
     message: jest.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
       return error?.error?.error || error?.error?.message || error?.message || fallback;
@@ -28,7 +19,7 @@ describe('MaintenanceInfoCardComponent (class)', () => {
   } as any;
 
   it('should create', () => {
-    const component = new MaintenanceInfoCardComponent(routerMock, maintenanceServiceMock, swalServiceMock, formBuilderMock, httpErrorMock);
+    const component = new MaintenanceInfoCardComponent(routerMock, maintenanceServiceMock, swalServiceMock, httpErrorMock, { isDemo: () => false } as any);
     expect(component).toBeTruthy();
   });
 });

@@ -4,16 +4,14 @@ import { Router } from '@angular/router';
 
 import { IntervalFormatPipe } from '../../pipes/interval-format.pipe';
 import { MaintenanceService } from '../../service/maintenance.service';
-import { FollowMaintenancePayload } from '../../interfaces/maintenance.interface';
 import { SwalService } from '../../../../shared/services/swal.service';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MonitoringTypeSelectorComponent } from '../../../dashboard/pages/maintenance/components/monitoring-type-selector/monitoring-type-selector.component';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { AuthService } from '../../../auth/services/auth.service';
+import { FollowMaintenanceModalComponent } from '../follow-maintenance-modal/follow-maintenance-modal.component';
 
 @Component({
     selector: 'app-maintenance-info-card',
-    imports: [IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
+    imports: [IntervalFormatPipe, FollowMaintenanceModalComponent],
     templateUrl: './maintenance-info-card.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './maintenance-info-card.component.scss'
@@ -26,36 +24,16 @@ export class MaintenanceInfoCardComponent {
 
   readonly menuOpen = signal(false);
   readonly followModalOpen = signal(false);
-  followForm!: FormGroup;
-  readonly isFollowing = signal(false);
 
   constructor(private router: Router,
     private maintenanceService: MaintenanceService,
     private swal : SwalService,
-    private fb: FormBuilder,
     private httpError: HttpErrorService,
     private authService: AuthService
-  ) {
-    this.initFollowForm();
-  }
+  ) {}
 
   get isDemo(): boolean {
     return this.authService.isDemo();
-  }
-
-  private initFollowForm(): void {
-    this.followForm = this.fb.group({
-      name: [{ value: '', disabled: true }, [Validators.required, Validators.minLength(2)]],
-      description: [{ value: '', disabled: true }, [Validators.required]],
-      monitoringType: ['km', [Validators.required]],
-      kmInterval: [1, [Validators.required, Validators.min(1), Validators.max(1000000)]],
-      timeIntervalWeeks: [1, [Validators.required, Validators.min(1), Validators.max(520)]],
-      timeIntervalUnit: ['weeks'],
-    });
-  }
-
-  goToDetails() {
-    return;
   }
 
   toggleMenu(event: MouseEvent) {
@@ -71,88 +49,16 @@ export class MaintenanceInfoCardComponent {
   onFollow(event: MouseEvent) {
     event.stopPropagation();
     this.menuOpen.set(false);
-    
-    this.followForm.patchValue({
-      name: this.maintenance?.name,
-      description: this.maintenance?.description,
-      monitoringType: (this.maintenance?.kmInterval ?? 0) > 0 ? 'km' : 'time',
-      kmInterval: this.maintenance?.kmInterval || 1,
-      timeIntervalWeeks: this.maintenance?.timeIntervalWeeks || 1
-    });
     this.followModalOpen.set(true);
   }
 
   closeFollowModal(): void {
     this.followModalOpen.set(false);
-    this.initFollowForm();
   }
 
-  onFollowConfirm(): void {
-    if (this.followForm.invalid) {
-      this.followForm.markAllAsTouched();
-      this.swal.warning(
-        'Formulario incompleto',
-        'Por favor completa todos los campos requeridos.'
-      );
-      return;
-    }
-
-    this.isFollowing.set(true);
-    
-    const followData = this.followForm.value;
-    const monitoringType = this.followForm.get('monitoringType')?.value;
-    const trackingType: 'Km' | 'Time' = monitoringType === 'km' ? 'Km' : 'Time';
-
-
-    const payload: FollowMaintenancePayload = {
-      motorcycleId: this.isDefault ? this.motorcycleIdContext : this.maintenance.motorcycleId,
-      defaultId: this.maintenance.id,
-      trackingType: trackingType,
-      kmInterval: monitoringType === 'km' ? followData.kmInterval : 0,
-      timeIntervalWeeks: monitoringType === 'time'
-        ? this.convertToWeeks(followData.timeIntervalWeeks, followData.timeIntervalUnit)
-        : 0
-    };
-
-    if (!payload.motorcycleId) {
-      this.isFollowing.set(false);
-      this.swal.error('Error', 'Debes seleccionar una motocicleta para asociar el mantenimiento.');
-      return;
-    }
-
-    this.maintenanceService.followDefaultMaintenance(payload).subscribe({
-      next: () => {
-        this.isFollowing.set(false);
-        this.followModalOpen.set(false);
-        this.swal
-          .success('Agregado!', 'El mantenimiento fue agregado a tus mantenimientos.')
-          .then(() => this.refresh.emit());
-      },
-      error: (err) => {
-        this.isFollowing.set(false);
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo agregar el mantenimiento.')
-        );
-      },
-    });
-  }
-
-  private convertToWeeks(value: number, unit: 'weeks' | 'months' | 'years'): number {
-    switch (unit) {
-      case 'weeks':
-        return value;
-      case 'months':
-        return value * 4;
-      case 'years':
-        return value * 52;
-      default:
-        return value;
-    }
-  }
-
-  onFavorite(event: MouseEvent) {
-    event.stopPropagation();
+  onFollowSaved(): void {
+    this.followModalOpen.set(false);
+    this.refresh.emit();
   }
 
   onEdit(event: MouseEvent) {

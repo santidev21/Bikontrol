@@ -2,6 +2,11 @@ import { FormBuilder } from "@angular/forms";
 import { convertToParamMap } from "@angular/router";
 import { Subject, of, throwError } from "rxjs";
 import { SaveMotorcycleComponent } from "./save-motorcycle.component";
+import { resizeImageFile } from "../../../../../shared/utils/image.utils";
+
+jest.mock("../../../../../shared/utils/image.utils", () => ({
+  resizeImageFile: jest.fn()
+}));
 
 describe("SaveMotorcycleComponent", () => {
   let component: SaveMotorcycleComponent;
@@ -271,19 +276,29 @@ describe("SaveMotorcycleComponent", () => {
     expect(input.value).toBe("");
   });
 
-  it("should resize a valid image and store it in the form", () => {
-    const resizeSpy = jest.spyOn(component as any, "resizeImage").mockImplementation(() => {});
-    const holder: { fn?: () => void } = {};
-    (window as any).FileReader = jest.fn().mockImplementation(() => ({
-      result: "data-url",
-      set onload(fn: () => void) { holder.fn = fn; },
-      readAsDataURL: jest.fn()
-    }));
+  it("should resize a valid image and store it in the form", async () => {
+    const resizeMock = resizeImageFile as jest.Mock;
+    resizeMock.mockResolvedValue("data:image/jpeg;base64,resized");
     const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
 
     component.onImageSelected({ target: input } as any);
-    holder.fn?.();
+    await Promise.resolve();
 
-    expect(resizeSpy).toHaveBeenCalledWith("data-url", input);
+    expect(resizeMock).toHaveBeenCalledWith(input.files[0]);
+    expect(component.motorcycleForm.get("image")?.value).toBe("data:image/jpeg;base64,resized");
+    expect(component.previewSrc()).toBe("data:image/jpeg;base64,resized");
+  });
+
+  it("should warn and reset the input when the image cannot be read", async () => {
+    const resizeMock = resizeImageFile as jest.Mock;
+    resizeMock.mockRejectedValue(new Error("decode-failed"));
+    const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
+
+    component.onImageSelected({ target: input } as any);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(swalMock.warning).toHaveBeenCalledWith("Archivo inválido", "No se pudo leer la imagen seleccionada.");
+    expect(input.value).toBe("");
   });
 });

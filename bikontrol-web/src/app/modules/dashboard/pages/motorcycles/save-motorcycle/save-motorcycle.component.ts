@@ -7,6 +7,7 @@ import { SaveMotorcycleDTO , Motorcycle } from '../../../interfaces/motorcycle.i
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { resizeImageFile } from '../../../../../shared/utils/image.utils';
 
 const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
 
@@ -129,36 +130,21 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       input.value = '';
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.resizeImage(reader.result as string, input);
-    };
-    reader.readAsDataURL(file);
+
+    resizeImageFile(file)
+      .then((resized) => {
+        this.motorcycleForm.patchValue({ image: resized });
+        this.previewSrc.set(resized);
+      })
+      .catch(() => {
+        this.swal.warning('Archivo inválido', 'No se pudo leer la imagen seleccionada.');
+        input.value = '';
+      });
   }
 
   removeImage(): void {
     this.motorcycleForm.patchValue({ image: 'default.png' });
     this.previewSrc.set(PLACEHOLDER_IMAGE);
-  }
-
-  private resizeImage(dataUrl: string, input: HTMLInputElement): void {
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 400;
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const resized = canvas.toDataURL('image/jpeg', 0.8);
-      this.motorcycleForm.patchValue({ image: resized });
-      this.previewSrc.set(resized);
-    };
-    img.onerror = () => {
-      this.swal.warning('Archivo inválido', 'No se pudo leer la imagen seleccionada.');
-      input.value = '';
-    };
-    img.src = dataUrl;
   }
 
   onSubmit(): void {
