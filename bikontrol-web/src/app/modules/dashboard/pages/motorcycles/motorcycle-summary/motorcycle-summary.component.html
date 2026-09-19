@@ -97,6 +97,7 @@
       }
     </div>
     <hr class="section-divider" />
+    @defer (on viewport) {
     <div class="maintenance-section mt-6">
       <h2 class="text-center">Registro de mantenimientos</h2>
       @if (maintenanceRecords().length > 0) {
@@ -117,6 +118,9 @@
         <p class="text-gray-400 text-center my-4">Aún no hay registros de mantenimientos para esta moto.</p>
       }
     </div>
+    } @placeholder {
+      <p class="text-gray-400 text-center my-4">Cargando registros…</p>
+    }
   </div>
 } @else {
   <div class="p-4 text-center">

@@ -35,6 +35,7 @@
             <span class="kpi-label">Vencen pronto</span>
           </div>
         </div>
+        @defer (on viewport) {
         <div class="stats-section">
           <h2 class="text-center">Salud de mantenimientos</h2>
           <div class="stat-card">
@@ -98,6 +99,9 @@
             }
           </div>
         </div>
+        } @placeholder {
+          <p class="text-gray-400 text-center my-4">Cargando gráficos…</p>
+        }
       }
     </div>
   }
