@@ -20,25 +20,24 @@ describe('TopNavComponent (class)', () => {
   });
 
   it('should show back button on maintenance route', () => {
-    component.currentUrl = '/dashboard/motorcycles/abc/maintenance';
+    component.currentUrl.set('/dashboard/motorcycles/abc/maintenance');
     expect(component.showBackButton).toBe(true);
   });
 
   it('should navigate to summary when goBack from maintenance route', () => {
-    component.currentUrl = '/dashboard/motorcycles/abc/maintenance';
+    component.currentUrl.set('/dashboard/motorcycles/abc/maintenance');
     component.goBack();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/motorcycles/summary'], { queryParams: { motorcycleId: 'abc' } });
   });
 
   it('should show back button on summary route', () => {
-    component.currentUrl = '/dashboard/motorcycles/summary?motorcycleId=abc';
+    component.currentUrl.set('/dashboard/motorcycles/summary?motorcycleId=abc');
     expect(component.showBackButton).toBe(true);
   });
 
   it('should navigate to home when goBack from summary route', () => {
-    component.currentUrl = '/dashboard/motorcycles/summary?motorcycleId=abc';
+    component.currentUrl.set('/dashboard/motorcycles/summary?motorcycleId=abc');
     component.goBack();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/home']);
   });
 });
-

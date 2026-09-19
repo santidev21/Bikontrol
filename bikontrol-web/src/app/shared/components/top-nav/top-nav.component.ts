@@ -1,5 +1,4 @@
-
-import { Component, HostListener, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, HostListener, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { NavigationEnd } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../modules/auth/services/auth.service';
@@ -9,13 +8,13 @@ import { Subscription, filter } from 'rxjs';
     selector: 'app-top-nav',
     imports: [RouterModule],
     templateUrl: './top-nav.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './top-nav.component.scss'
 })
 export class TopNavComponent implements OnDestroy {
-  sidebarOpen = false;
-  profileOpen = false;
-  currentUrl = '';
+  readonly sidebarOpen = signal(false);
+  readonly profileOpen = signal(false);
+  readonly currentUrl = signal('');
 
   private readonly subscriptions = new Subscription();
 
@@ -25,12 +24,12 @@ export class TopNavComponent implements OnDestroy {
   ) {}
   
   ngOnInit(): void {
-    this.currentUrl = this.router.url;
+    this.currentUrl.set(this.router.url);
     this.subscriptions.add(
       this.router.events
         .pipe(filter((event) => event instanceof NavigationEnd))
         .subscribe((event) => {
-          this.currentUrl = (event as NavigationEnd).urlAfterRedirects;
+          this.currentUrl.set((event as NavigationEnd).urlAfterRedirects);
         })
     );
   }
@@ -40,14 +39,15 @@ export class TopNavComponent implements OnDestroy {
   }
 
   get showBackButton(): boolean {
-    return this.currentUrl.includes('/dashboard/motorcycles/add')
-      || this.currentUrl.includes('/dashboard/motorcycles/summary')
-      || /\/dashboard\/motorcycles\/[^/]+\/maintenance/.test(this.currentUrl)
-      || /\/dashboard\/motorcycles\/[^/]+\/register-maintenance/.test(this.currentUrl);
+    const url = this.currentUrl();
+    return url.includes('/dashboard/motorcycles/add')
+      || url.includes('/dashboard/motorcycles/summary')
+      || /\/dashboard\/motorcycles\/[^/]+\/maintenance/.test(url)
+      || /\/dashboard\/motorcycles\/[^/]+\/register-maintenance/.test(url);
   }
 
   goBack(): void {
-    const registerOrMaintenance = this.currentUrl.match(/\/dashboard\/motorcycles\/([^/]+)\/(maintenance|register-maintenance)/);
+    const registerOrMaintenance = this.currentUrl().match(/\/dashboard\/motorcycles\/([^/]+)\/(maintenance|register-maintenance)/);
     if (registerOrMaintenance?.[1]) {
       this.router.navigate(['/dashboard/motorcycles/summary'], {
         queryParams: { motorcycleId: registerOrMaintenance[1] }
@@ -55,12 +55,12 @@ export class TopNavComponent implements OnDestroy {
       return;
     }
 
-    if (this.currentUrl.includes('/dashboard/motorcycles/add')) {
+    if (this.currentUrl().includes('/dashboard/motorcycles/add')) {
       this.router.navigate(['/dashboard/home']);
       return;
     }
 
-    if (this.currentUrl.includes('/dashboard/motorcycles/summary')) {
+    if (this.currentUrl().includes('/dashboard/motorcycles/summary')) {
       this.router.navigate(['/dashboard/home']);
       return;
     }
@@ -69,17 +69,17 @@ export class TopNavComponent implements OnDestroy {
   }
 
   toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-    if (this.profileOpen) this.profileOpen = false;
+    this.sidebarOpen.update((open) => !open);
+    if (this.profileOpen()) this.profileOpen.set(false);
   }
 
   closeSidebar() {
-    this.sidebarOpen = false;
+    this.sidebarOpen.set(false);
   }
 
   toggleProfile() {
-    this.profileOpen = !this.profileOpen;
-    if (this.sidebarOpen) this.sidebarOpen = false;
+    this.profileOpen.update((open) => !open);
+    if (this.sidebarOpen()) this.sidebarOpen.set(false);
   }
 
   logout() {
@@ -89,7 +89,7 @@ export class TopNavComponent implements OnDestroy {
 
   @HostListener('document:keydown.escape', ['$event'])
   handleEscape(_event: Event) {
-    this.sidebarOpen = false;
-    this.profileOpen = false;
+    this.sidebarOpen.set(false);
+    this.profileOpen.set(false);
   }
 }
