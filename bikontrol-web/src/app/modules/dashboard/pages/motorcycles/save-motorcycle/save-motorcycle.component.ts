@@ -8,6 +8,7 @@ import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { resizeImageFile } from '../../../../../shared/utils/image.utils';
+import { hasError as formHasError } from '../../../../../shared/utils/form.utils';
 
 const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
 
@@ -202,7 +203,6 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   }
 
   hasError(field: string, type: string): boolean {
-    const control = this.motorcycleForm.get(field);
-    return !!control && control.hasError(type) && control.touched;
+    return formHasError(this.motorcycleForm, field, type);
   }
 }

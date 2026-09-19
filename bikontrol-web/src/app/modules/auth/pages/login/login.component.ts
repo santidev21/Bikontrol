@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AUTH_IMPORTS } from '../../auth-imports';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
+import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
 import { environment } from '@env/environment';
 
 declare global {
@@ -55,8 +56,7 @@ export class LoginComponent implements AfterViewInit {
   }
 
   isInvalid(controlName: string): boolean {
-    const control = this.loginForm.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
+    return formIsInvalid(this.loginForm, controlName, this.submitted());
   }
 
   onSubmit() {

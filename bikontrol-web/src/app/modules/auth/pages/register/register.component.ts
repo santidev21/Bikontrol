@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { AUTH_IMPORTS } from '../../auth-imports';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
+import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
 
 @Component({
     selector: 'app-register',
@@ -39,8 +40,7 @@ export class RegisterComponent {
   }
 
   isInvalid(controlName: string): boolean {
-    const control = this.registerForm.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
+    return formIsInvalid(this.registerForm, controlName, this.submitted());
   }
 
   passwordMatchValidator(form: FormGroup) {

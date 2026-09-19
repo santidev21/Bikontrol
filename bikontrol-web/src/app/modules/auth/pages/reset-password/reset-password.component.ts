@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
+import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
 
 @Component({
     selector: 'app-reset-password',
@@ -50,8 +51,7 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   }
 
   isInvalid(controlName: string): boolean {
-    const control = this.form.get(controlName);
-    return !!(control && control.invalid && (control.touched || control.dirty || this.submitted()));
+    return formIsInvalid(this.form, controlName, this.submitted());
   }
 
   passwordMatchValidator(form: FormGroup) {

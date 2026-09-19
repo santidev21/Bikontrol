@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { hasError as formHasError } from '../../../../../shared/utils/form.utils';
 
 import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
@@ -170,7 +171,6 @@ export class SaveMaintenanceComponent implements OnDestroy {
   }
 
   hasError(field: string, type: string): boolean {
-    const control = this.maintenanceForm.get(field);
-    return !!control && control.hasError(type) && control.touched;
+    return formHasError(this.maintenanceForm, field, type);
   }
 }
