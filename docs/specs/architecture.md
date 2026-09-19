@@ -2,7 +2,7 @@
 
 ## Traffic Flow
 ```
-Internet → gateway (nginx) → bikontrol (Angular, :80)
+Internet → gateway (nginx) → bikontrol (Angular, :8080)
                           → bikontrol-api (.NET, :8080) → bikontrol-db (PostgreSQL)
 ```
 
@@ -14,7 +14,7 @@ Internet → gateway (nginx) → bikontrol (Angular, :80)
 |---|---|
 | `db` | PostgreSQL 16 (internal network only, loopback `:5434` locally) |
 | `api` | .NET 8 API (`:8080`, health at `/health`, waits for healthy DB) |
-| `web` | Angular 22 via nginx (`:80`, loopback `:4200` locally) |
+| `web` | Angular 22 via nginx (`:8080`, loopback `:4200` locally) |
 
 ## Backend Layers (Clean Architecture)
 - `Bikontrol.API`: controllers, middleware, HTTP surface

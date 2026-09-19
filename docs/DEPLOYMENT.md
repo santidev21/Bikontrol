@@ -5,7 +5,7 @@ Bikontrol is served at `https://bikontrol.santidev21.tech/` behind the `vps-gate
 ## Architecture
 
 ```
-Internet → gateway (nginx) → bikontrol (Angular, :80)
+Internet → gateway (nginx) → bikontrol (Angular, :8080)
                           → bikontrol-api (.NET, :8080) → bikontrol-db (PostgreSQL)
 ```
 

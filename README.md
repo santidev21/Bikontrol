@@ -37,7 +37,7 @@ Bikontrol is a full-stack web app for motorcycle owners to track motorcycles, km
 Bikontrol is served at `https://bikontrol.santidev21.tech/` behind the `vps-gateway` reverse proxy:
 
 ```
-Internet → gateway (nginx) → bikontrol (Angular, :80)
+Internet → gateway (nginx) → bikontrol (Angular, :8080)
                           → bikontrol-api (.NET, :8080) → bikontrol-db (PostgreSQL)
 ```
 

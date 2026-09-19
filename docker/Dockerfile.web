@@ -15,9 +15,9 @@ COPY bikontrol-web/ ./
 RUN sed -i "s|apiUrl: '[^']*'|apiUrl: '${API_URL}'|" src/environments/environment.prod.ts
 RUN npm run build
 
-# Serve stage
-FROM nginx:1.27-alpine
+# Serve stage — unprivileged nginx (runs as non-root nginx user, listens on 8080)
+FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist/bikontrol-web/browser /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 8080
