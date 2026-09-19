@@ -1,19 +1,19 @@
 import { MaintenanceInfoCardComponent } from './maintenance-info-card.component';
 
 describe('MaintenanceInfoCardComponent (class)', () => {
-  const routerMock = { navigate: jest.fn() } as any;
+  const routerMock = { navigate: vi.fn() } as any;
   const maintenanceServiceMock = {
-    followDefaultMaintenance: jest.fn(),
-    deleteMaintenance: jest.fn()
+    followDefaultMaintenance: vi.fn(),
+    deleteMaintenance: vi.fn()
   } as any;
   const swalServiceMock = {
-    success: jest.fn(),
-    error: jest.fn(),
-    warning: jest.fn(),
-    confirm: jest.fn()
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    confirm: vi.fn()
   } as any;
   const httpErrorMock = {
-    message: jest.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
+    message: vi.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
       return error?.error?.error || error?.error?.message || error?.message || fallback;
     })
   } as any;

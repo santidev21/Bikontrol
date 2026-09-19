@@ -2,11 +2,6 @@ import { FormBuilder } from "@angular/forms";
 import { convertToParamMap } from "@angular/router";
 import { Subject, of, throwError } from "rxjs";
 import { SaveMotorcycleComponent } from "./save-motorcycle.component";
-import { resizeImageFile } from "../../../../../shared/utils/image.utils";
-
-jest.mock("../../../../../shared/utils/image.utils", () => ({
-  resizeImageFile: jest.fn()
-}));
 
 describe("SaveMotorcycleComponent", () => {
   let component: SaveMotorcycleComponent;
@@ -15,29 +10,31 @@ describe("SaveMotorcycleComponent", () => {
   let routeParamMap$: Subject<any>;
   let swalMock: any;
   let httpErrorMock: any;
+  let imageServiceMock: any;
 
   beforeEach(() => {
     routeParamMap$ = new Subject<any>();
     motorcyclesServiceMock = {
-      getById: jest.fn(),
-      getCurrentKm: jest.fn(),
-      addMotorcycle: jest.fn(),
-      updateMotorcycle: jest.fn()
+      getById: vi.fn(),
+      getCurrentKm: vi.fn(),
+      addMotorcycle: vi.fn(),
+      updateMotorcycle: vi.fn()
     };
     routerMock = {
-      navigate: jest.fn()
+      navigate: vi.fn()
     };
     swalMock = {
-      error: jest.fn(),
-      warning: jest.fn(),
-      success: jest.fn().mockResolvedValue(true)
+      error: vi.fn(),
+      warning: vi.fn(),
+      success: vi.fn().mockResolvedValue(true)
     };
     httpErrorMock = {
-      message: jest.fn(
+      message: vi.fn(
         (error: any, fallback = "Error inesperado en el servidor.") =>
           error?.error?.error || error?.error?.message || error?.message || fallback
       )
     };
+    imageServiceMock = { resize: vi.fn() };
 
     component = new SaveMotorcycleComponent(
       new FormBuilder(),
@@ -47,7 +44,8 @@ describe("SaveMotorcycleComponent", () => {
         paramMap: routeParamMap$.asObservable()
       } as any,
       swalMock,
-      httpErrorMock
+      httpErrorMock,
+      imageServiceMock
     );
   });
 
@@ -277,21 +275,19 @@ describe("SaveMotorcycleComponent", () => {
   });
 
   it("should resize a valid image and store it in the form", async () => {
-    const resizeMock = resizeImageFile as jest.Mock;
-    resizeMock.mockResolvedValue("data:image/jpeg;base64,resized");
+    imageServiceMock.resize.mockResolvedValue("data:image/jpeg;base64,resized");
     const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
 
     component.onImageSelected({ target: input } as any);
     await Promise.resolve();
 
-    expect(resizeMock).toHaveBeenCalledWith(input.files[0]);
+    expect(imageServiceMock.resize).toHaveBeenCalledWith(input.files[0]);
     expect(component.motorcycleForm.get("image")?.value).toBe("data:image/jpeg;base64,resized");
     expect(component.previewSrc()).toBe("data:image/jpeg;base64,resized");
   });
 
   it("should warn and reset the input when the image cannot be read", async () => {
-    const resizeMock = resizeImageFile as jest.Mock;
-    resizeMock.mockRejectedValue(new Error("decode-failed"));
+    imageServiceMock.resize.mockRejectedValue(new Error("decode-failed"));
     const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
 
     component.onImageSelected({ target: input } as any);

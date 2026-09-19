@@ -9,10 +9,10 @@ describe("ForgotPasswordComponent", () => {
 
   beforeEach(() => {
     authServiceMock = {
-      forgotPassword: jest.fn()
+      forgotPassword: vi.fn()
     };
     httpErrorMock = {
-      message: jest.fn((error: any, fallback = "Error inesperado en el servidor.") => {
+      message: vi.fn((error: any, fallback = "Error inesperado en el servidor.") => {
         return error?.error?.error || error?.error?.message || error?.message || fallback;
       })
     };

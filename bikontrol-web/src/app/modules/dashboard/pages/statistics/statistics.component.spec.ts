@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import type { Mock } from 'vitest';
 import { AuthService } from '../../../auth/services/auth.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { SwalService } from '../../../../shared/services/swal.service';
@@ -30,10 +31,10 @@ const summaryMock: any = {
 
 describe('StatisticsComponent', () => {
   let httpMock: HttpTestingController;
-  let swalMock: { error: jest.Mock; success: jest.Mock };
+  let swalMock: { error: Mock; success: Mock };
 
   beforeEach(() => {
-    swalMock = { error: jest.fn(), success: jest.fn() };
+    swalMock = { error: vi.fn(), success: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [StatisticsComponent],

@@ -10,13 +10,13 @@ describe("RegisterComponent", () => {
 
   beforeEach(() => {
     authServiceMock = {
-      register: jest.fn()
+      register: vi.fn()
     };
     routerMock = {
-      navigate: jest.fn()
+      navigate: vi.fn()
     };
     httpErrorMock = {
-      message: jest.fn((error: any, fallback = "Error inesperado en el servidor.") => {
+      message: vi.fn((error: any, fallback = "Error inesperado en el servidor.") => {
         return error?.error?.error || error?.error?.message || error?.message || fallback;
       })
     };

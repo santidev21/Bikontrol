@@ -7,7 +7,7 @@ import { SaveMotorcycleDTO , Motorcycle } from '../../../interfaces/motorcycle.i
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
-import { resizeImageFile } from '../../../../../shared/utils/image.utils';
+import { ImageService } from '../../../../../shared/services/image.service';
 import { hasError as formHasError } from '../../../../../shared/utils/form.utils';
 
 const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
@@ -35,7 +35,8 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private swal: SwalService,
-    private httpError: HttpErrorService
+    private httpError: HttpErrorService,
+    private imageService: ImageService
   ) {
     this.motorcycleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -132,7 +133,7 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    resizeImageFile(file)
+    this.imageService.resize(file)
       .then((resized) => {
         this.motorcycleForm.patchValue({ image: resized });
         this.previewSrc.set(resized);

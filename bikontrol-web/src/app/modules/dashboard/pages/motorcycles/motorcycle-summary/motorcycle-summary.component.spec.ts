@@ -18,7 +18,7 @@ function fakeResource<T>(initial?: T) {
     error: signal<Error | undefined>(undefined),
     isLoading: signal(false),
     status: signal('idle'),
-    reload: jest.fn()
+    reload: vi.fn()
   } as any;
 }
 
@@ -29,19 +29,19 @@ describe('MotorcycleSummaryComponent', () => {
 
   beforeEach(() => {
     motorcyclesServiceMock = {
-      getCurrentKmResource: jest.fn(() => fakeResource()),
-      getById: jest.fn(),
-      addKmHistory: jest.fn(() => of(undefined)),
-      rollbackLastKm: jest.fn(() => of(undefined))
+      getCurrentKmResource: vi.fn(() => fakeResource()),
+      getById: vi.fn(),
+      addKmHistory: vi.fn(() => of(undefined)),
+      rollbackLastKm: vi.fn(() => of(undefined))
     };
     maintenanceServiceMock = {
-      getUpcomingResource: jest.fn(() => fakeResource()),
-      getRecordsResource: jest.fn(() => fakeResource())
+      getUpcomingResource: vi.fn(() => fakeResource()),
+      getRecordsResource: vi.fn(() => fakeResource())
     };
     swalMock = {
-      error: jest.fn(),
-      success: jest.fn().mockReturnValue(Promise.resolve({})),
-      confirm: jest.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
+      error: vi.fn(),
+      success: vi.fn().mockReturnValue(Promise.resolve({})),
+      confirm: vi.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
     };
 
     TestBed.configureTestingModule({
@@ -55,7 +55,7 @@ describe('MotorcycleSummaryComponent', () => {
           useValue: { message: (err: any, fallback: string) => err?.message ?? fallback }
         },
         { provide: AuthService, useValue: { isDemo: () => false } },
-        { provide: Router, useValue: { getCurrentNavigation: () => null, navigate: jest.fn() } },
+        { provide: Router, useValue: { getCurrentNavigation: () => null, navigate: vi.fn() } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } }
       ]
     });

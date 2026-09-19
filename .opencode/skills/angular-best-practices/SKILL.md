@@ -5,7 +5,7 @@ description: Angular 22 conventions and quality rules for Bikontrol. Use when wr
 
 # Angular 22 best practices (Bikontrol)
 
-Applies to `bikontrol-web/`. Angular 22, standalone components, Tailwind + SCSS, PWA, Jest.
+Applies to `bikontrol-web/`. Angular 22, standalone components, Tailwind + SCSS, PWA, Vitest.
 
 ## Components
 - Standalone only (`standalone: true`), no `NgModule`. Import what the template uses.
@@ -52,8 +52,8 @@ Applies to `bikontrol-web/`. Angular 22, standalone components, Tailwind + SCSS,
 - Bumping the app version invalidates caches — rely on `UpdateService`, don't hardcode cache busting.
 
 ## Tests
-- Jest, colocated `.spec.ts` next to the unit. Run `npm run test:ui` from the repo root.
-- Existing specs often instantiate the class directly with mocks (`new Component(...)`) and `jest.mock('sweetalert2')`. Reuse that style.
+- Vitest, colocated `.spec.ts` next to the unit. Run `npm run test:ui` from the repo root.
+- Existing specs often instantiate the class directly with mocks (`new Component(...)`) and `vi.fn()`; mock dependencies via constructor injection, not `vi.mock` (relative module mocks are unsupported by the Angular test runner).
 - Test success **and** error paths for anything hitting a service.
 
 ## Don't
@@ -67,4 +67,4 @@ Applies to `bikontrol-web/`. Angular 22, standalone components, Tailwind + SCSS,
 - [ ] Subscriptions unsubscribed; no nested subscribes.
 - [ ] Lazy routes + guards preserved; new protected routes guarded.
 - [ ] Inline validation errors; Spanish copy.
-- [ ] Colocated jest spec covering the new/changed behavior; `npm run test:ui` green.
+- [ ] Colocated Vitest spec covering the new/changed behavior; `npm run test:ui` green.

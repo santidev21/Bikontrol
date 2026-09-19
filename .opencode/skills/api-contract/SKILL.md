@@ -9,7 +9,7 @@ Bikontrol has no codegen — contracts are synced by hand. When a backend DTO, c
 
 1. Backend: DTO in `Application` (AutoMapper stays pinned to `12.0.1`), controller in `API`, server-side validation on the endpoint.
 2. Frontend: matching TypeScript type/interface and the Angular service that calls the API.
-3. Tests: backend test in `Bikontrol.Tests/` and frontend Jest `.spec.ts` covering the new shape.
+3. Tests: backend test in `Bikontrol.Tests/` and frontend Vitest `.spec.ts` covering the new shape.
 4. Docs: update `docs/specs/` and `AGENTS.md` if behavior changed.
 
 Checklist before finishing:

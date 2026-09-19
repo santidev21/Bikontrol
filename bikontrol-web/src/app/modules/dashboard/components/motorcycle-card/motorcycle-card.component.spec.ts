@@ -1,31 +1,31 @@
-jest.mock('sweetalert2', () => ({
+vi.mock('sweetalert2', () => ({
   __esModule: true,
-  default: { fire: jest.fn() }
+  default: { fire: vi.fn() }
 }));
 
 import { of } from 'rxjs';
 import { MotorcycleCardComponent } from './motorcycle-card.component';
 
 describe('MotorcycleCardComponent (class)', () => {
-  const routerMock = { navigate: jest.fn() } as any;
+  const routerMock = { navigate: vi.fn() } as any;
   const motorcyclesServiceMock = {
-    getCurrentKm: jest.fn().mockReturnValue(of({ km: 4567 })),
-    deleteMotorcycle: jest.fn().mockReturnValue(of(undefined))
+    getCurrentKm: vi.fn().mockReturnValue(of({ km: 4567 })),
+    deleteMotorcycle: vi.fn().mockReturnValue(of(undefined))
   } as any;
   const swalServiceMock = {
-    success: jest.fn().mockReturnValue(Promise.resolve({})),
-    error: jest.fn().mockReturnValue(Promise.resolve({})),
-    confirm: jest.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
+    success: vi.fn().mockReturnValue(Promise.resolve({})),
+    error: vi.fn().mockReturnValue(Promise.resolve({})),
+    confirm: vi.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
   } as any;
   const httpErrorMock = {
-    message: jest.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
+    message: vi.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
       return error?.error?.error || error?.error?.message || error?.message || fallback;
     })
   } as any;
 
   it('should load current km from service and expose displayedKm', () => {
-    const component = new MotorcycleCardComponent(routerMock, motorcyclesServiceMock, swalServiceMock, httpErrorMock);
-    component.motorcycle = { id: 'm1', km: 1000, name: 'Moto' };
+    const component = new MotorcycleCardComponent(routerMock, motorcyclesServiceMock, swalServiceMock, httpErrorMock, { isDemo: () => false } as any);
+    component.motorcycle = { id: 'm1', km: 1000, name: 'Moto' } as any;
 
     component.ngOnInit();
 

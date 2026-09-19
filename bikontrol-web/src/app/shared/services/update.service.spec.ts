@@ -5,7 +5,7 @@ describe("UpdateService (class)", () => {
   let versionUpdates$: Subject<any>;
   let swUpdateMock: any;
   let swalMock: any;
-  const originalFetch = (global as any).fetch;
+  const originalFetch = (globalThis as any).fetch;
 
   function createService() {
     return new UpdateService(swUpdateMock, swalMock);
@@ -16,27 +16,27 @@ describe("UpdateService (class)", () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     versionUpdates$ = new Subject<any>();
     swUpdateMock = {
       isEnabled: true,
       versionUpdates: versionUpdates$.asObservable(),
-      checkForUpdate: jest.fn().mockResolvedValue(true),
-      activateUpdate: jest.fn().mockResolvedValue(undefined)
+      checkForUpdate: vi.fn().mockResolvedValue(true),
+      activateUpdate: vi.fn().mockResolvedValue(undefined)
     };
     swalMock = {
-      confirm: jest.fn().mockResolvedValue({ isConfirmed: false })
+      confirm: vi.fn().mockResolvedValue({ isConfirmed: false })
     };
-    delete (global as any).fetch;
+    delete (globalThis as any).fetch;
   });
 
   afterEach(() => {
-    (global as any).fetch = originalFetch;
-    jest.resetAllMocks();
+    (globalThis as any).fetch = originalFetch;
+    vi.resetAllMocks();
   });
 
   it("should read the served SW hash from ngsw.json on init", async () => {
-    (global as any).fetch = jest.fn().mockResolvedValue({
+    (globalThis as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ hash: "abcdef1234567890" })
     });
@@ -51,21 +51,21 @@ describe("UpdateService (class)", () => {
 
   it("should do nothing when the service worker is disabled", async () => {
     swUpdateMock.isEnabled = false;
-    (global as any).fetch = jest.fn();
+    (globalThis as any).fetch = vi.fn();
     const service = createService();
 
     service.init();
     service.checkForUpdate();
     await flush();
 
-    expect((global as any).fetch).not.toHaveBeenCalled();
+    expect((globalThis as any).fetch).not.toHaveBeenCalled();
     expect(swUpdateMock.checkForUpdate).not.toHaveBeenCalled();
     expect(service.swVersion()).toBeNull();
   });
 
   it("should prompt and reload when a new version is ready and confirmed", async () => {
     const service = createService();
-    const reloadSpy = jest.spyOn(service as any, "reloadApp").mockImplementation(() => undefined);
+    const reloadSpy = vi.spyOn(service as any, "reloadApp").mockImplementation(() => undefined);
     swalMock.confirm.mockResolvedValue({ isConfirmed: true });
     service.init();
 
@@ -90,7 +90,7 @@ describe("UpdateService (class)", () => {
 
   it("should not reload when the user postpones the update", async () => {
     const service = createService();
-    const reloadSpy = jest.spyOn(service as any, "reloadApp").mockImplementation(() => undefined);
+    const reloadSpy = vi.spyOn(service as any, "reloadApp").mockImplementation(() => undefined);
     swalMock.confirm.mockResolvedValue({ isConfirmed: false });
     service.init();
 

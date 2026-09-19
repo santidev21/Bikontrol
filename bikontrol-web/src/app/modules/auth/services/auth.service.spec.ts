@@ -1,4 +1,4 @@
-import { of, throwError } from "rxjs";
+import { firstValueFrom, of } from "rxjs";
 import { AuthService } from "./auth.service";
 
 describe("AuthService (unit, mocked HttpClient)", () => {
@@ -7,87 +7,81 @@ describe("AuthService (unit, mocked HttpClient)", () => {
 
   beforeEach(() => {
     mockHttp = {
-      post: jest.fn()
+      post: vi.fn()
     };
     localStorage.clear();
     service = new AuthService(mockHttp as any);
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     localStorage.clear();
   });
 
-  it("login should call POST and store token + refresh token", done => {
+  it("login should call POST and store token + refresh token", async () => {
     const mock: any = { token: "abc123", refreshToken: "refresh-abc" };
     mockHttp.post.mockReturnValue(of(mock));
 
-    service.login("a@b.com", "pwd").subscribe(res => {
-      expect(res).toEqual(mock);
-      expect(localStorage.getItem("token")).toBe("abc123");
-      expect(localStorage.getItem("refreshToken")).toBe("refresh-abc");
-      expect(service.isAuthenticated()).toBeTruthy();
-      done();
-    });
+    const res = await firstValueFrom(service.login("a@b.com", "pwd"));
+
+    expect(res).toEqual(mock);
+    expect(localStorage.getItem("token")).toBe("abc123");
+    expect(localStorage.getItem("refreshToken")).toBe("refresh-abc");
+    expect(service.isAuthenticated()).toBeTruthy();
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/login`, { email: "a@b.com", password: "pwd" });
   });
 
-  it("login should overwrite an existing session", done => {
+  it("login should overwrite an existing session", async () => {
     localStorage.setItem("token", "old-token");
     localStorage.setItem("refreshToken", "old-refresh");
     const mock: any = { token: "new-token", refreshToken: "new-refresh" };
     mockHttp.post.mockReturnValue(of(mock));
 
-    service.login("a@b.com", "pwd").subscribe(() => {
-      expect(localStorage.getItem("token")).toBe("new-token");
-      expect(localStorage.getItem("refreshToken")).toBe("new-refresh");
-      done();
-    });
+    await firstValueFrom(service.login("a@b.com", "pwd"));
+
+    expect(localStorage.getItem("token")).toBe("new-token");
+    expect(localStorage.getItem("refreshToken")).toBe("new-refresh");
   });
 
-  it("register should call POST and store token + refresh token", done => {
+  it("register should call POST and store token + refresh token", async () => {
     const mock: any = { token: "reg-token", refreshToken: "refresh-reg" };
     mockHttp.post.mockReturnValue(of(mock));
 
     const data = { fullName: "Test User", email: "x@y.com", password: "pw" };
-    service.register(data).subscribe(res => {
-      expect(res).toEqual(mock);
-      expect(localStorage.getItem("token")).toBe("reg-token");
-      expect(localStorage.getItem("refreshToken")).toBe("refresh-reg");
-      done();
-    });
+    const res = await firstValueFrom(service.register(data));
+
+    expect(res).toEqual(mock);
+    expect(localStorage.getItem("token")).toBe("reg-token");
+    expect(localStorage.getItem("refreshToken")).toBe("refresh-reg");
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/register`, data);
   });
 
-  it("googleLogin should call POST /google and store session", done => {
+  it("googleLogin should call POST /google and store session", async () => {
     const mock: any = { token: "google-token", refreshToken: "google-refresh" };
     mockHttp.post.mockReturnValue(of(mock));
 
-    service.googleLogin("id-token-123").subscribe(res => {
-      expect(localStorage.getItem("token")).toBe("google-token");
-      expect(localStorage.getItem("refreshToken")).toBe("google-refresh");
-      done();
-    });
+    await firstValueFrom(service.googleLogin("id-token-123"));
+
+    expect(localStorage.getItem("token")).toBe("google-token");
+    expect(localStorage.getItem("refreshToken")).toBe("google-refresh");
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/google`, { idToken: "id-token-123" });
   });
 
-  it("forgotPassword should call POST /forgot-password", done => {
+  it("forgotPassword should call POST /forgot-password", async () => {
     mockHttp.post.mockReturnValue(of({ message: "ok" }));
 
-    service.forgotPassword("a@b.com").subscribe(res => {
-      expect(res.message).toBe("ok");
-      done();
-    });
+    const res = await firstValueFrom(service.forgotPassword("a@b.com"));
+
+    expect(res.message).toBe("ok");
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/forgot-password`, { email: "a@b.com" });
   });
 
-  it("resetPassword should call POST /reset-password", done => {
+  it("resetPassword should call POST /reset-password", async () => {
     mockHttp.post.mockReturnValue(of({ message: "ok" }));
 
-    service.resetPassword("a@b.com", "tok", "new-pass").subscribe(res => {
-      expect(res.message).toBe("ok");
-      done();
-    });
+    const res = await firstValueFrom(service.resetPassword("a@b.com", "tok", "new-pass"));
+
+    expect(res.message).toBe("ok");
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/reset-password`, {
       email: "a@b.com",
       token: "tok",
@@ -95,29 +89,22 @@ describe("AuthService (unit, mocked HttpClient)", () => {
     });
   });
 
-  it("refreshSession should call POST /refresh, store new tokens and emit true", done => {
+  it("refreshSession should call POST /refresh, store new tokens and emit true", async () => {
     localStorage.setItem("refreshToken", "old-refresh");
     const mock: any = { token: "new-token", refreshToken: "new-refresh" };
     mockHttp.post.mockReturnValue(of(mock));
 
-    service.refreshSession().subscribe(ok => {
-      expect(ok).toBe(true);
-      expect(localStorage.getItem("token")).toBe("new-token");
-      expect(localStorage.getItem("refreshToken")).toBe("new-refresh");
-      done();
-    });
+    const ok = await firstValueFrom(service.refreshSession());
+
+    expect(ok).toBe(true);
+    expect(localStorage.getItem("token")).toBe("new-token");
+    expect(localStorage.getItem("refreshToken")).toBe("new-refresh");
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/refresh`, { refreshToken: "old-refresh" });
   });
 
-  it("refreshSession should error when no refresh token is stored", done => {
-    service.refreshSession().subscribe({
-      next: () => fail("should not emit"),
-      error: err => {
-        expect(err.message).toBe("No refresh token available");
-        expect(mockHttp.post).not.toHaveBeenCalled();
-        done();
-      }
-    });
+  it("refreshSession should error when no refresh token is stored", async () => {
+    await expect(firstValueFrom(service.refreshSession())).rejects.toThrow("No refresh token available");
+    expect(mockHttp.post).not.toHaveBeenCalled();
   });
 
   it("logout should remove token and refresh token", () => {
@@ -140,16 +127,16 @@ describe("AuthService (unit, mocked HttpClient)", () => {
     expect(service.isAuthenticated()).toBeFalsy();
   });
 
-  it("demoLogin should call POST /demo and store session with Demo role", done => {
+  it("demoLogin should call POST /demo and store session with Demo role", async () => {
     const mock: any = { token: btoa('h') + '.' + btoa(JSON.stringify({ role: 'Demo' })) + '.' + btoa('s'), refreshToken: "demo-refresh", role: "Demo" };
     mockHttp.post.mockReturnValue(of(mock));
-    service.demoLogin().subscribe(res => {
-      expect(localStorage.getItem("token")).toBe(mock.token);
-      expect(localStorage.getItem("role")).toBe("Demo");
-      expect(service.isDemo()).toBeTruthy();
-      expect(service.getRole()).toBe("Demo");
-      done();
-    });
+
+    await firstValueFrom(service.demoLogin());
+
+    expect(localStorage.getItem("token")).toBe(mock.token);
+    expect(localStorage.getItem("role")).toBe("Demo");
+    expect(service.isDemo()).toBeTruthy();
+    expect(service.getRole()).toBe("Demo");
     expect(mockHttp.post).toHaveBeenCalledWith(`${service["apiUrl"]}/demo`, {});
   });
 

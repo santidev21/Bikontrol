@@ -17,7 +17,7 @@ function fakeResource<T>(initial?: T, initialError?: string) {
     hasValue: () => value() !== undefined,
     isLoading: signal(false),
     status: signal('idle'),
-    reload: jest.fn(),
+    reload: vi.fn(),
     set: (v: T) => value.set(v)
   } as any;
 }
@@ -39,16 +39,16 @@ describe('ProfileComponent', () => {
 
   beforeEach(() => {
     userServiceMock = {
-      getMeResource: jest.fn(() => fakeResource()),
-      updateProfile: jest.fn(),
-      changePassword: jest.fn()
+      getMeResource: vi.fn(() => fakeResource()),
+      updateProfile: vi.fn(),
+      changePassword: vi.fn()
     };
-    authServiceMock = { isDemo: jest.fn().mockReturnValue(false), logout: jest.fn() };
-    routerMock = { navigate: jest.fn() };
+    authServiceMock = { isDemo: vi.fn().mockReturnValue(false), logout: vi.fn() };
+    routerMock = { navigate: vi.fn() };
     swalMock = {
-      error: jest.fn(),
-      success: jest.fn().mockReturnValue(Promise.resolve({})),
-      confirm: jest.fn()
+      error: vi.fn(),
+      success: vi.fn().mockReturnValue(Promise.resolve({})),
+      confirm: vi.fn()
     };
 
     TestBed.configureTestingModule({

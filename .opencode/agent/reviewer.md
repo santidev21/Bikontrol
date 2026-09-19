@@ -13,9 +13,9 @@ You review Bikontrol changes. You never edit code or run commands.
 Checklist:
 - Backend: thin controllers, logic in `Application` services, EF Core only in `Persistence`, server-side validation on every input endpoint.
 - AutoMapper stays pinned to `12.0.1`; soft deletes on core entities (no hard deletes).
-- Frontend: Tailwind + SCSS conventions, Jest specs colocated, inline validation errors.
+- Frontend: Tailwind + SCSS conventions, Vitest specs colocated, inline validation errors.
 - Contract sync: any API change must update the Angular types/services and both test suites in the same pass.
-- Tests: backend test in `Bikontrol.Tests/`, frontend Jest `.spec.ts`, migration added via `db:migration:add` (never edited) if entities changed.
+- Tests: backend test in `Bikontrol.Tests/`, frontend Vitest `.spec.ts`, migration added via `db:migration:add` (never edited) if entities changed.
 - Security: no secrets in code (JWT key only in `.env` / `appsettings.Development.json`), no new unvalidated input.
 
 Output: a short list of blocking issues first, then suggestions. Reference files as `path:line`.

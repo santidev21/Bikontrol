@@ -9,10 +9,10 @@ describe("authGuard", () => {
 
   beforeEach(() => {
     authService = {
-      isAuthenticated: jest.fn()
+      isAuthenticated: vi.fn()
     };
     router = {
-      parseUrl: jest.fn((url: string) => ({ redirectedTo: url }))
+      parseUrl: vi.fn((url: string) => ({ redirectedTo: url }))
     };
 
     TestBed.configureTestingModule({

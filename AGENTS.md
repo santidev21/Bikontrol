@@ -4,7 +4,7 @@ This file is the working context for Bikontrol. Keep it updated when architectur
 
 ## Project Snapshot
 Motorcycle tracking and maintenance app:
-- Angular 22 frontend (SCSS, Tailwind CSS, PWA service worker; Jest tests) — views: home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
+- Angular 22 frontend (SCSS, Tailwind CSS, PWA service worker; Vitest tests) — views: home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
 - .NET 8 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
 - PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
 - JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, per-user salt password hashing, password recovery via SMTP email, soft deletes
@@ -33,13 +33,13 @@ Bikontrol/
 Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. In Development the API takes DB/JWT values from `.env` via the root scripts (fallback: `Bikontrol.API/appsettings.Development.json`, gitignored, created from the committed `.example` template). Repositories never persist on their own — services (or `ITransactionManager`) call `SaveChangesAsync`; integration tests (`Bikontrol.Tests.Integration`, Testcontainers + Postgres) pin the write paths because the unit fakes do not persist.
 
 ## Frontend Architecture
-Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Jest (`npm test` → `jest --passWithNoTests --runInBand`).
+Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Vitest via Angular's `@angular/build:unit-test` builder (`npm test` → `ng test --watch=false`), zoneless.
 
 ## Commands (run from repo root via root scripts unless noted)
 - Both: `npm run dev` (DB in Docker + frontend + backend, hot reload) · `npm run build` · `npm run test` (see `/test`)
 - Single side: `npm run dev:ui` · `npm run dev:api`
 - Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`, runs unit + integration; integration needs Docker and auto-skips without it) · `npm run build:api` (see `backend-test` skill)
-- Frontend: `npm run test:ui` · `npm run build:ui` (see `frontend-test`)
+- Frontend: `npm run test:ui` (= `ng test --watch=false`, Vitest) · `npm run build:ui` (see `frontend-test`)
 - Migrations: `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`) · `npm run db:migrate` (= `dotnet ef database update …`)
 - DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down` · `npm run db:backup` / `db:restore` (compressed, 7-copy retention)
 - Pre-deploy with real users: `npm run db:backup` first, then run `scripts/db-integrity-audit.sql` (read-only; every block must return 0 rows), then deploy (prod auto-applies migrations at startup)

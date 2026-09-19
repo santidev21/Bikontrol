@@ -50,7 +50,7 @@ You audit the **entire Bikontrol repository** and report on code quality, archit
 - Run the `security-review` checklist in full: secrets, auth/sessions, authorization/ownership (IDOR), input validation, parameterized queries, CORS/headers, XSS, dependencies.
 
 **Tests**
-- Coverage of logic and both success/error paths; backend xUnit in `Bikontrol.Tests/`, frontend Jest `.spec.ts` colocated. Flag untested critical paths and brittle mocks.
+- Coverage of logic and both success/error paths; backend xUnit in `Bikontrol.Tests/`, frontend Vitest `.spec.ts` colocated. Flag untested critical paths and brittle mocks.
 
 **Operations**
 - Dockerfiles, `docker-compose*.yml`, CI (`.github/workflows/ci.yml`), migration discipline, `AGENTS.md`/`README` accuracy.

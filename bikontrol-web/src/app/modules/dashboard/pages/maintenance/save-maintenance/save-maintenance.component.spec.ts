@@ -14,20 +14,20 @@ describe("SaveMaintenanceComponent", () => {
   beforeEach(() => {
     routeParamMap$ = new Subject<any>();
     maintenanceServiceMock = {
-      getById: jest.fn(),
-      createUserMaintenance: jest.fn(),
-      updateMaintenance: jest.fn()
+      getById: vi.fn(),
+      createUserMaintenance: vi.fn(),
+      updateMaintenance: vi.fn()
     };
     routerMock = {
-      navigate: jest.fn()
+      navigate: vi.fn()
     };
     swalMock = {
-      error: jest.fn(),
-      warning: jest.fn(),
-      success: jest.fn().mockResolvedValue(true)
+      error: vi.fn(),
+      warning: vi.fn(),
+      success: vi.fn().mockResolvedValue(true)
     };
     httpErrorMock = {
-      message: jest.fn(
+      message: vi.fn(
         (error: any, fallback = "Error inesperado en el servidor.") =>
           error?.error?.error || error?.error?.message || error?.message || fallback
       )
@@ -40,7 +40,7 @@ describe("SaveMaintenanceComponent", () => {
       {
         snapshot: {
           paramMap: {
-            get: jest.fn().mockReturnValue("moto-1")
+            get: vi.fn().mockReturnValue("moto-1")
           }
         },
         paramMap: routeParamMap$.asObservable()

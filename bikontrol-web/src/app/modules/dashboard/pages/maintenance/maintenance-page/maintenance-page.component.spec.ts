@@ -15,7 +15,7 @@ function fakeResource<T>(initial?: T) {
     error: signal<Error | undefined>(undefined),
     isLoading: signal(false),
     status: signal('idle'),
-    reload: jest.fn()
+    reload: vi.fn()
   } as any;
 }
 
@@ -27,12 +27,12 @@ describe('MaintenancePageComponent', () => {
 
   beforeEach(() => {
     maintenanceServiceMock = {
-      getUserMaintenanceByMotorcycleResource: jest.fn(() => fakeResource()),
-      getDefaultsResource: jest.fn(() => fakeResource())
+      getUserMaintenanceByMotorcycleResource: vi.fn(() => fakeResource()),
+      getDefaultsResource: vi.fn(() => fakeResource())
     };
-    routeMock = { snapshot: { paramMap: { get: jest.fn() } } };
-    routerMock = { navigate: jest.fn() };
-    swalMock = { warning: jest.fn(), error: jest.fn(), success: jest.fn() };
+    routeMock = { snapshot: { paramMap: { get: vi.fn() } } };
+    routerMock = { navigate: vi.fn() };
+    swalMock = { warning: vi.fn(), error: vi.fn(), success: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [MaintenancePageComponent],

@@ -1,4 +1,4 @@
-import { of } from "rxjs";
+import { firstValueFrom, of } from "rxjs";
 import { StatisticsService } from "./statistics.service";
 
 describe("StatisticsService (unit, mocked HttpClient)", () => {
@@ -7,18 +7,18 @@ describe("StatisticsService (unit, mocked HttpClient)", () => {
 
   beforeEach(() => {
     mockHttp = {
-      get: jest.fn(),
-      post: jest.fn(),
-      put: jest.fn(),
-      delete: jest.fn(),
-      request: jest.fn()
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      request: vi.fn()
     };
     service = new StatisticsService(mockHttp as any);
   });
 
-  afterEach(() => jest.resetAllMocks());
+  afterEach(() => vi.resetAllMocks());
 
-  it("should fetch the statistics summary", done => {
+  it("should fetch the statistics summary", async () => {
     const mock: any = {
       totalMotorcycles: 2,
       totalKm: 20000,
@@ -33,10 +33,9 @@ describe("StatisticsService (unit, mocked HttpClient)", () => {
     };
     mockHttp.get.mockReturnValue(of(mock));
 
-    service.getSummary().subscribe(res => {
-      expect(res).toEqual(mock);
-      done();
-    });
+    const res = await firstValueFrom(service.getSummary());
+
+    expect(res).toEqual(mock);
     expect(mockHttp.get).toHaveBeenCalledWith(`${service["apiUrl"]}/summary`);
   });
 });

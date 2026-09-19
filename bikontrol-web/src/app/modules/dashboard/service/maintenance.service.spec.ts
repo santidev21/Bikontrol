@@ -1,4 +1,4 @@
-import { of } from "rxjs";
+import { firstValueFrom, of } from "rxjs";
 import { MaintenanceService } from "./maintenance.service";
 
 describe("MaintenanceService (unit, mocked HttpClient)", () => {
@@ -7,59 +7,51 @@ describe("MaintenanceService (unit, mocked HttpClient)", () => {
 
   beforeEach(() => {
     httpClientMock = {
-      get: jest.fn(),
-      post: jest.fn(),
-      put: jest.fn(),
-      delete: jest.fn()
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn()
     };
     service = new MaintenanceService(httpClientMock);
   });
 
-  it("should fetch default maintenance from the correct endpoint", done => {
+  it("should fetch default maintenance from the correct endpoint", async () => {
     httpClientMock.get.mockReturnValue(of([]));
 
-    service.getDefaultMaintenance().subscribe(res => {
-      expect(res).toEqual([]);
-      done();
-    });
+    const res = await firstValueFrom(service.getDefaultMaintenance());
 
+    expect(res).toEqual([]);
     expect(httpClientMock.get).toHaveBeenCalledWith(`${service["apiUrl"]}/defaults`);
   });
 
-  it("should fetch user maintenance from the correct endpoint", done => {
+  it("should fetch user maintenance from the correct endpoint", async () => {
     httpClientMock.get.mockReturnValue(of([{ id: "1" }]));
 
-    service.getUserMaintenance().subscribe(res => {
-      expect(res).toEqual([{ id: "1" }]);
-      done();
-    });
+    const res = await firstValueFrom(service.getUserMaintenance());
 
+    expect(res).toEqual([{ id: "1" }]);
     expect(httpClientMock.get).toHaveBeenCalledWith(`${service["apiUrl"]}/mine`);
   });
 
-  it("should fetch maintenance by motorcycle id", done => {
+  it("should fetch maintenance by motorcycle id", async () => {
     httpClientMock.get.mockReturnValue(of([{ id: "2" }]));
 
-    service.getUserMaintenanceByMotorcycle("moto-1").subscribe(res => {
-      expect(res).toEqual([{ id: "2" }]);
-      done();
-    });
+    const res = await firstValueFrom(service.getUserMaintenanceByMotorcycle("moto-1"));
 
+    expect(res).toEqual([{ id: "2" }]);
     expect(httpClientMock.get).toHaveBeenCalledWith(`${service["apiUrl"]}/mine/motorcycle/moto-1`);
   });
 
-  it("should get maintenance by id", done => {
+  it("should get maintenance by id", async () => {
     httpClientMock.get.mockReturnValue(of({ id: "maint-1" }));
 
-    service.getById("maint-1").subscribe(res => {
-      expect(res).toEqual({ id: "maint-1" });
-      done();
-    });
+    const res = await firstValueFrom(service.getById("maint-1"));
 
+    expect(res).toEqual({ id: "maint-1" });
     expect(httpClientMock.get).toHaveBeenCalledWith(`${service["apiUrl"]}/maint-1`);
   });
 
-  it("should create a user maintenance with the correct payload", done => {
+  it("should create a user maintenance with the correct payload", async () => {
     const payload = {
       motorcycleId: "moto-1",
       name: "Aceite",
@@ -69,26 +61,22 @@ describe("MaintenanceService (unit, mocked HttpClient)", () => {
     };
     httpClientMock.post.mockReturnValue(of({ id: "new-maint" }));
 
-    service.createUserMaintenance(payload as any).subscribe(res => {
-      expect(res).toEqual({ id: "new-maint" });
-      done();
-    });
+    const res = await firstValueFrom(service.createUserMaintenance(payload as any));
 
+    expect(res).toEqual({ id: "new-maint" });
     expect(httpClientMock.post).toHaveBeenCalledWith(`${service["apiUrl"]}/mine`, payload);
   });
 
-  it("should delete a maintenance from the mine endpoint", done => {
+  it("should delete a maintenance from the mine endpoint", async () => {
     httpClientMock.delete.mockReturnValue(of(undefined));
 
-    service.deleteMaintenance("maint-1").subscribe(res => {
-      expect(res).toBeUndefined();
-      done();
-    });
+    const res = await firstValueFrom(service.deleteMaintenance("maint-1"));
 
+    expect(res).toBeUndefined();
     expect(httpClientMock.delete).toHaveBeenCalledWith(`${service["apiUrl"]}/mine/maint-1`);
   });
 
-  it("should follow default maintenance with the expected payload", done => {
+  it("should follow default maintenance with the expected payload", async () => {
     const payload = {
       motorcycleId: "moto-1",
       defaultId: "default-1",
@@ -98,15 +86,13 @@ describe("MaintenanceService (unit, mocked HttpClient)", () => {
     };
     httpClientMock.post.mockReturnValue(of({ id: "followed" }));
 
-    service.followDefaultMaintenance(payload as any).subscribe(res => {
-      expect(res).toEqual({ id: "followed" });
-      done();
-    });
+    const res = await firstValueFrom(service.followDefaultMaintenance(payload as any));
 
+    expect(res).toEqual({ id: "followed" });
     expect(httpClientMock.post).toHaveBeenCalledWith(`${service["apiUrl"]}/follow`, payload);
   });
 
-  it("should update an existing maintenance", done => {
+  it("should update an existing maintenance", async () => {
     const payload = {
       name: "Revision",
       description: "Revision general",
@@ -114,15 +100,13 @@ describe("MaintenanceService (unit, mocked HttpClient)", () => {
     };
     httpClientMock.put.mockReturnValue(of(undefined));
 
-    service.updateMaintenance("maint-2", payload as any).subscribe(res => {
-      expect(res).toBeUndefined();
-      done();
-    });
+    const res = await firstValueFrom(service.updateMaintenance("maint-2", payload as any));
 
+    expect(res).toBeUndefined();
     expect(httpClientMock.put).toHaveBeenCalledWith(`${service["apiUrl"]}/maint-2`, payload);
   });
 
-  it("should register a maintenance record", done => {
+  it("should register a maintenance record", async () => {
     const payload = {
       motorcycleId: "moto-1",
       userMaintenanceId: "maint-1",
@@ -131,33 +115,27 @@ describe("MaintenanceService (unit, mocked HttpClient)", () => {
     };
     httpClientMock.post.mockReturnValue(of({ id: "record-1" }));
 
-    service.registerMaintenanceRecord(payload as any).subscribe(res => {
-      expect(res).toEqual({ id: "record-1" });
-      done();
-    });
+    const res = await firstValueFrom(service.registerMaintenanceRecord(payload as any));
 
+    expect(res).toEqual({ id: "record-1" });
     expect(httpClientMock.post).toHaveBeenCalledWith(`${service["apiUrl"]}/records`, payload);
   });
 
-  it("should fetch maintenance records by motorcycle", done => {
+  it("should fetch maintenance records by motorcycle", async () => {
     httpClientMock.get.mockReturnValue(of([{ id: "record-1" }]));
 
-    service.getMaintenanceRecordsByMotorcycle("moto-1").subscribe(res => {
-      expect(res).toEqual([{ id: "record-1" }]);
-      done();
-    });
+    const res = await firstValueFrom(service.getMaintenanceRecordsByMotorcycle("moto-1"));
 
+    expect(res).toEqual([{ id: "record-1" }]);
     expect(httpClientMock.get).toHaveBeenCalledWith(`${service["apiUrl"]}/motorcycle/moto-1/records`);
   });
 
-  it("should fetch upcoming maintenance by motorcycle", done => {
+  it("should fetch upcoming maintenance by motorcycle", async () => {
     httpClientMock.get.mockReturnValue(of([{ userMaintenanceId: "maint-1" }]));
 
-    service.getUpcomingByMotorcycle("moto-1").subscribe(res => {
-      expect(res).toEqual([{ userMaintenanceId: "maint-1" }]);
-      done();
-    });
+    const res = await firstValueFrom(service.getUpcomingByMotorcycle("moto-1"));
 
+    expect(res).toEqual([{ userMaintenanceId: "maint-1" }]);
     expect(httpClientMock.get).toHaveBeenCalledWith(`${service["apiUrl"]}/motorcycle/moto-1/upcoming`);
   });
 });

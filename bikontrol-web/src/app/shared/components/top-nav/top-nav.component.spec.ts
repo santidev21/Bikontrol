@@ -6,11 +6,11 @@ describe('TopNavComponent (class)', () => {
   const routerMock = {
     url: '/dashboard/home',
     events: events$.asObservable(),
-    navigate: jest.fn()
+    navigate: vi.fn()
   } as any;
 
   const authServiceMock = {
-    logout: jest.fn()
+    logout: vi.fn()
   } as any;
 
   let component: TopNavComponent;

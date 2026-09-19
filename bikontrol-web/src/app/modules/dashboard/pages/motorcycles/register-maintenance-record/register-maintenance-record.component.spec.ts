@@ -15,23 +15,23 @@ describe("RegisterMaintenanceRecordComponent", () => {
   beforeEach(() => {
     routeParamMap$ = new Subject<any>();
     maintenanceServiceMock = {
-      getUserMaintenanceByMotorcycle: jest.fn(),
-      getMaintenanceRecordsByMotorcycle: jest.fn(),
-      registerMaintenanceRecord: jest.fn()
+      getUserMaintenanceByMotorcycle: vi.fn(),
+      getMaintenanceRecordsByMotorcycle: vi.fn(),
+      registerMaintenanceRecord: vi.fn()
     };
     motorcyclesServiceMock = {
-      getCurrentKm: jest.fn()
+      getCurrentKm: vi.fn()
     };
     routerMock = {
-      navigate: jest.fn()
+      navigate: vi.fn()
     };
     swalMock = {
-      error: jest.fn(),
-      warning: jest.fn(),
-      success: jest.fn().mockResolvedValue(true)
+      error: vi.fn(),
+      warning: vi.fn(),
+      success: vi.fn().mockResolvedValue(true)
     };
     httpErrorMock = {
-      message: jest.fn(
+      message: vi.fn(
         (error: any, fallback = "Error inesperado en el servidor.") =>
           error?.error?.error || error?.error?.message || error?.message || fallback
       )

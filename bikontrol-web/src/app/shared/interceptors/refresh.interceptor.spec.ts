@@ -18,17 +18,17 @@ describe("refreshInterceptor", () => {
     localStorage.setItem("refreshToken", "refresh-token");
 
     authService = {
-      getToken: jest.fn(() => localStorage.getItem("token")),
-      isAuthenticated: jest.fn().mockReturnValue(true),
-      refreshSession: jest.fn().mockImplementation(() => {
+      getToken: vi.fn(() => localStorage.getItem("token")),
+      isAuthenticated: vi.fn().mockReturnValue(true),
+      refreshSession: vi.fn().mockImplementation(() => {
         localStorage.setItem("token", "new-access-token");
         localStorage.setItem("refreshToken", "new-refresh-token");
         return of(true);
       }),
-      logout: jest.fn()
+      logout: vi.fn()
     };
     router = {
-      navigate: jest.fn()
+      navigate: vi.fn()
     };
 
     TestBed.configureTestingModule({

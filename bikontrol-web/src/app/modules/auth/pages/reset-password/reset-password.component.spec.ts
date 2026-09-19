@@ -11,20 +11,20 @@ describe("ResetPasswordComponent", () => {
 
   beforeEach(() => {
     authServiceMock = {
-      resetPassword: jest.fn()
+      resetPassword: vi.fn()
     };
     routeMock = {
       snapshot: {
         queryParamMap: {
-          get: jest.fn((key: string) => (key === "token" ? "token-abc" : key === "email" ? "user@example.com" : null))
+          get: vi.fn((key: string) => (key === "token" ? "token-abc" : key === "email" ? "user@example.com" : null))
         }
       }
     };
     routerMock = {
-      navigate: jest.fn()
+      navigate: vi.fn()
     };
     httpErrorMock = {
-      message: jest.fn((error: any, fallback = "Error inesperado en el servidor.") => {
+      message: vi.fn((error: any, fallback = "Error inesperado en el servidor.") => {
         return error?.error?.error || error?.error?.message || error?.message || fallback;
       })
     };
@@ -55,7 +55,7 @@ describe("ResetPasswordComponent", () => {
   });
 
   it("should call resetPassword and redirect to login on success", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     authServiceMock.resetPassword.mockReturnValue(of({ message: "Contraseña actualizada." }));
     component.form.setValue({ newPassword: "123456", confirmPassword: "123456" });
 
@@ -63,9 +63,9 @@ describe("ResetPasswordComponent", () => {
 
     expect(authServiceMock.resetPassword).toHaveBeenCalledWith("user@example.com", "token-abc", "123456");
     expect(component.successMessage()).toBe("Contraseña actualizada.");
-    jest.runAllTimers();
+    vi.runAllTimers();
     expect(routerMock.navigate).toHaveBeenCalledWith(["/login"]);
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("should show the backend error on failure", () => {

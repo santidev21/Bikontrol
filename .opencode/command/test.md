@@ -11,7 +11,7 @@ npm run test
 Or per side:
 ```bash
 npm run test:api   # = dotnet test Bikontrol/Bikontrol.sln (xUnit)
-npm run test:ui    # = jest --passWithNoTests --runInBand (from bikontrol-web/)
+npm run test:ui    # = ng test --watch=false (Vitest, from bikontrol-web/)
 ```
 
 Extra input: $ARGUMENTS (e.g. a test name filter or a single suite: `backend` / `frontend`).
