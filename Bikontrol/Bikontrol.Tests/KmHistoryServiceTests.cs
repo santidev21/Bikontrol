@@ -149,6 +149,7 @@ public class KmHistoryServiceTests
             var item = _items
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.RecordedAt)
+                .ThenByDescending(x => x.Id)
                 .FirstOrDefault();
             return Task.FromResult(item);
         }
@@ -158,6 +159,7 @@ public class KmHistoryServiceTests
             var item = _items
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderBy(x => x.RecordedAt)
+                .ThenBy(x => x.Id)
                 .FirstOrDefault();
             return Task.FromResult(item);
         }
@@ -167,6 +169,7 @@ public class KmHistoryServiceTests
             var list = _items
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.RecordedAt)
+                .ThenByDescending(x => x.Id)
                 .ToList();
             return Task.FromResult(list);
         }
