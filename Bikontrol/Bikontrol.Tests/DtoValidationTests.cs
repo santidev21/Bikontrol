@@ -69,16 +69,31 @@ public class DtoValidationTests
     }
 
     [Fact]
-    public void SaveMaintenanceDTO_NonPositiveKmInterval_Fails()
+    public void SaveMaintenanceDTO_NegativeKmInterval_Fails()
     {
         var errors = Validate(new SaveMaintenanceDTO
         {
             Name = "X",
             TrackingType = "Km",
-            KmInterval = 0
+            KmInterval = -1
         });
 
         Assert.Contains(errors, e => e.MemberNames.Contains(nameof(SaveMaintenanceDTO.KmInterval)));
+    }
+
+    [Fact]
+    public void SaveMaintenanceDTO_ZeroUnusedInterval_Passes()
+    {
+        // The client sends 0 for the interval that is not used (e.g. time for a Km maintenance).
+        var errors = Validate(new SaveMaintenanceDTO
+        {
+            Name = "X",
+            TrackingType = "Km",
+            KmInterval = 1500,
+            TimeIntervalWeeks = 0
+        });
+
+        Assert.Empty(errors);
     }
 
     [Fact]

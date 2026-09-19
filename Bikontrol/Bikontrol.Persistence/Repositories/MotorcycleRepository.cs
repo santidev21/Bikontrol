@@ -32,15 +32,14 @@ namespace Bikontrol.Persistence.Repositories
 
         public async Task<Motorcycle> AddAsync(Motorcycle motorcycle)
         {
-            _context.Motorcycles.Add(motorcycle);
-            await _context.SaveChangesAsync();
+            await _context.Motorcycles.AddAsync(motorcycle);
             return motorcycle;
         }
 
-        public async Task UpdateAsync(Motorcycle motorcycle)
+        public Task UpdateAsync(Motorcycle motorcycle)
         {
             _context.Motorcycles.Update(motorcycle);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
         public async Task SoftDeleteAsync(Guid id)
@@ -49,8 +48,12 @@ namespace Bikontrol.Persistence.Repositories
             if (entity is not null)
             {
                 entity.IsEnabled = false;
-                await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

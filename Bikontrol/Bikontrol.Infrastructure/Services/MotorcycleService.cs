@@ -145,6 +145,7 @@ namespace Bikontrol.Infrastructure.Services
             _mapper.Map(dto, entity);
             entity.Validate();
             await _motorcycleRepository.UpdateAsync(entity);
+            await _motorcycleRepository.SaveChangesAsync();
         }
 
         public async Task SoftDeleteAsync(Guid id)
@@ -157,6 +158,7 @@ namespace Bikontrol.Infrastructure.Services
                 throw new ForbiddenAccessException("No tienes permisos para borrar esta motocicleta.");
 
             await _motorcycleRepository.SoftDeleteAsync(id);
+            await _motorcycleRepository.SaveChangesAsync();
         }
     }
 }

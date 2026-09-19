@@ -18,5 +18,10 @@ Raw form (from the repo root):
 dotnet test Bikontrol/Bikontrol.sln --collect:"XPlat Code Coverage"
 ```
 
+Two projects run:
+- `Bikontrol.Tests` — unit tests (in-memory fakes).
+- `Bikontrol.Tests.Integration` — end-to-end over the real API + PostgreSQL (Testcontainers). **Requires Docker**; tests auto-skip when Docker is unavailable. They pin the write paths, which the non-persisting fakes cannot.
+
 Rules:
 - When you change an API contract, update the Angular types/services and tests in the same pass (see `api-contract`).
+- Repositories never persist on their own; services/`ITransactionManager` call `SaveChangesAsync`. A new write path needs an integration test to prove it persists.

@@ -35,15 +35,14 @@ namespace Bikontrol.Persistence.Repositories
 
         public async Task<UserMaintenance> AddAsync(UserMaintenance entity)
         {
-            _context.UserMaintenances.Add(entity);
-            await _context.SaveChangesAsync();
+            await _context.UserMaintenances.AddAsync(entity);
             return entity;
         }
 
-        public async Task UpdateAsync(UserMaintenance entity)
+        public Task UpdateAsync(UserMaintenance entity)
         {
             _context.UserMaintenances.Update(entity);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
         public async Task SoftDeleteAsync(Guid id)
@@ -54,7 +53,6 @@ namespace Bikontrol.Persistence.Repositories
             if (entity is not null)
             {
                 entity.IsEnabled = false;
-                await _context.SaveChangesAsync();
             }
         }
 
@@ -63,6 +61,11 @@ namespace Bikontrol.Persistence.Repositories
             return await _context.UserMaintenances
                 .Where(x => x.UserId == userId && x.MotorcycleId == motorcycleId && x.BaseTypeId == baseId)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
     }

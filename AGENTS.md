@@ -30,7 +30,7 @@ Bikontrol/
 ```
 
 ## Backend Architecture
-Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. In Development the API takes DB/JWT values from `.env` via the root scripts (fallback: `Bikontrol.API/appsettings.Development.json`, gitignored, created from the committed `.example` template).
+Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. In Development the API takes DB/JWT values from `.env` via the root scripts (fallback: `Bikontrol.API/appsettings.Development.json`, gitignored, created from the committed `.example` template). Repositories never persist on their own — services (or `ITransactionManager`) call `SaveChangesAsync`; integration tests (`Bikontrol.Tests.Integration`, Testcontainers + Postgres) pin the write paths because the unit fakes do not persist.
 
 ## Frontend Architecture
 Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Jest (`npm test` → `jest --passWithNoTests --runInBand`).
@@ -38,7 +38,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 ## Commands (run from repo root via root scripts unless noted)
 - Both: `npm run dev` (DB in Docker + frontend + backend, hot reload) · `npm run build` · `npm run test` (see `/test`)
 - Single side: `npm run dev:ui` · `npm run dev:api`
-- Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`) · `npm run build:api` (see `backend-test` skill)
+- Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`, runs unit + integration; integration needs Docker and auto-skips without it) · `npm run build:api` (see `backend-test` skill)
 - Frontend: `npm run test:ui` · `npm run build:ui` (see `frontend-test`)
 - Migrations: `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`) · `npm run db:migrate` (= `dotnet ef database update …`)
 - DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down` · `npm run db:backup` / `db:restore` (compressed, 7-copy retention)

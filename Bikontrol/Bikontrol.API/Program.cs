@@ -221,3 +221,6 @@ catch (Exception ex)
 }
 
 app.Run();
+
+// Exposed so the integration test project can boot the app with WebApplicationFactory<Program>.
+public partial class Program { }

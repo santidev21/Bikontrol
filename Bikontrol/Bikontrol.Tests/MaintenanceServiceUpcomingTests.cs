@@ -204,6 +204,7 @@ public class MaintenanceServiceUpcomingTests
             Task.FromResult(_items.Where(x => x.UserId == userId && x.MotorcycleId == motorcycleId && x.IsEnabled).AsEnumerable());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(UserMaintenance entity) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeMotorcycleRepository : IMotorcycleRepository
@@ -215,6 +216,7 @@ public class MaintenanceServiceUpcomingTests
         public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => Task.FromResult(_motorcycles.Where(m => m.UserId == userId).AsEnumerable());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeKmHistoryService : IKmHistoryService
@@ -247,6 +249,7 @@ public class MaintenanceServiceUpcomingTests
             Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds) =>
             Task.FromResult(new Dictionary<Guid, MotorcycleMaintenanceRecord>());
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeTransactionManager : ITransactionManager

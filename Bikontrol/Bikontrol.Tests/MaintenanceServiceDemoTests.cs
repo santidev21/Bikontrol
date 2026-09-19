@@ -92,6 +92,7 @@ public class MaintenanceServiceDemoTests
         public Task<IEnumerable<UserMaintenance>> GetByUserIdAndMotorcycleIdAsync(Guid userId, Guid motorcycleId) => Task.FromResult(Enumerable.Empty<UserMaintenance>());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(UserMaintenance entity) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeMotorcycleRepository : IMotorcycleRepository
@@ -103,6 +104,7 @@ public class MaintenanceServiceDemoTests
         public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => Task.FromResult(Enumerable.Empty<Motorcycle>());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeKmHistoryService : IKmHistoryService
@@ -122,5 +124,6 @@ public class MaintenanceServiceDemoTests
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds) => Task.FromResult(new Dictionary<Guid, MotorcycleMaintenanceRecord>());
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 }

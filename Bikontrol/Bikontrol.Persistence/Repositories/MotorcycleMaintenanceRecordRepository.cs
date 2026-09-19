@@ -15,8 +15,7 @@ namespace Bikontrol.Persistence.Repositories
 
         public async Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity)
         {
-            _context.MotorcycleMaintenanceRecords.Add(entity);
-            await _context.SaveChangesAsync();
+            await _context.MotorcycleMaintenanceRecords.AddAsync(entity);
             return entity;
         }
 
@@ -68,6 +67,11 @@ namespace Bikontrol.Persistence.Repositories
                 .ToDictionary(
                     g => g.Key,
                     g => g.OrderByDescending(x => x.PerformedAt).ThenByDescending(x => x.CreatedAt).First());
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

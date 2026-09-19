@@ -13,5 +13,8 @@ namespace Bikontrol.Application.Interfaces.Repositories
 
         Task SoftDeleteAsync(Guid id);
         Task<UserMaintenance?> GetByBaseIdAsync(Guid userId, Guid motorcycleId, Guid baseId);
+
+        /// <summary>Persists pending changes. Repositories never save on their own.</summary>
+        Task SaveChangesAsync();
     }
 }

@@ -523,6 +523,7 @@ public class MaintenanceServiceIntervalTests
             Task.FromResult(_items.Where(x => x.UserId == userId && x.MotorcycleId == motorcycleId && x.IsEnabled).AsEnumerable());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(UserMaintenance entity) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeMotorcycleRepository : IMotorcycleRepository
@@ -534,6 +535,7 @@ public class MaintenanceServiceIntervalTests
         public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => Task.FromResult(Enumerable.Empty<Motorcycle>());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeKmHistoryService : IKmHistoryService
@@ -582,6 +584,8 @@ public class MaintenanceServiceIntervalTests
             }
             return Task.FromResult(result);
         }
+
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeTransactionManager : ITransactionManager

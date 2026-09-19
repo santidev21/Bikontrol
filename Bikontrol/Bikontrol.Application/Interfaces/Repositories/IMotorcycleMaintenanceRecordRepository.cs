@@ -16,5 +16,8 @@ namespace Bikontrol.Application.Interfaces.Repositories
         /// Último registro por mantenimiento en una sola consulta (evita N+1).
         /// </summary>
         Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds);
+
+        /// <summary>Persists pending changes. Repositories never save on their own.</summary>
+        Task SaveChangesAsync();
     }
 }

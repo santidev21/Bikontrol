@@ -14,5 +14,8 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task<Motorcycle> AddAsync(Motorcycle motorcycle);
         Task UpdateAsync(Motorcycle motorcycle);
         Task SoftDeleteAsync(Guid id);
+
+        /// <summary>Persists pending changes. Repositories never save on their own.</summary>
+        Task SaveChangesAsync();
     }
 }

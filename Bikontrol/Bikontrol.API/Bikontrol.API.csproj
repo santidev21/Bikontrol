@@ -22,4 +22,9 @@
     <ProjectReference Include="..\Bikontrol.Shared\Bikontrol.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Lets the integration test project use the (internal) generated Program class. -->
+    <InternalsVisibleTo Include="Bikontrol.Tests.Integration" />
+  </ItemGroup>
+
 </Project>

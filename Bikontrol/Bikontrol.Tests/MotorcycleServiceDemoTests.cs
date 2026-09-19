@@ -95,6 +95,7 @@ public class MotorcycleServiceDemoTests
         public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => Task.FromResult(Enumerable.Empty<Motorcycle>().AsEnumerable());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeKmHistoryRepository : IKmHistoryRepository

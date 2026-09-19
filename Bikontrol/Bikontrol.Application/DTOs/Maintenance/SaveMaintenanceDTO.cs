@@ -14,10 +14,10 @@ namespace Bikontrol.Application.DTOs.Maintenance
         [StringLength(2000, ErrorMessage = "La descripción no puede superar los 2000 caracteres.")]
         public string? Description { get; set; }
 
-        [Range(1, 1_000_000, ErrorMessage = "El intervalo de kilometraje debe estar entre 1 y 1,000,000 km.")]
+        [Range(0, 1_000_000, ErrorMessage = "El intervalo de kilometraje no puede ser negativo.")]
         public int? KmInterval { get; set; }
 
-        [Range(1, 5_200, ErrorMessage = "El intervalo de tiempo debe estar entre 1 y 5,200 semanas.")]
+        [Range(0, 5_200, ErrorMessage = "El intervalo de tiempo no puede ser negativo.")]
         public int? TimeIntervalWeeks { get; set; }
 
         [Required(ErrorMessage = "El tipo de seguimiento es obligatorio.")]

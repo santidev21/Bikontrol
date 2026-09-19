@@ -197,6 +197,7 @@ public class MotorcycleServiceTests
         }
 
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeKmHistoryRepository : IKmHistoryRepository

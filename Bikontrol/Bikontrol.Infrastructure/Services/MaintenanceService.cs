@@ -96,6 +96,7 @@ namespace Bikontrol.Infrastructure.Services
             entity.MotorcycleId = dto.MotorcycleId;
 
             var created = await _userRepo.AddAsync(entity);
+            await _userRepo.SaveChangesAsync();
             return _mapper.Map<MaintenanceDTO>(created);
         }
 
@@ -108,6 +109,7 @@ namespace Bikontrol.Infrastructure.Services
                 throw new ForbiddenAccessException("No tienes permisos para borrar este mantenimiento.");
 
             await _userRepo.SoftDeleteAsync(id);
+            await _userRepo.SaveChangesAsync();
         }
 
         public async Task<MaintenanceDTO> FollowDefaultAsync(Guid motorcycleId, Guid defaultId, int? kmInterval, int? timeIntervalWeeks, string trackingType)
@@ -129,6 +131,7 @@ namespace Bikontrol.Infrastructure.Services
                 existing.TimeIntervalWeeks = timeIntervalWeeks;
                 existing.TrackingType = trackingType;
                 await _userRepo.UpdateAsync(existing);
+                await _userRepo.SaveChangesAsync();
                 return _mapper.Map<MaintenanceDTO>(existing);
             }
 
@@ -146,6 +149,7 @@ namespace Bikontrol.Infrastructure.Services
             };
 
             var created = await _userRepo.AddAsync(entity);
+            await _userRepo.SaveChangesAsync();
             return _mapper.Map<MaintenanceDTO>(created);
         }
 
@@ -163,6 +167,7 @@ namespace Bikontrol.Infrastructure.Services
             _mapper.Map(dto, entity);
             entity.MotorcycleId = dto.MotorcycleId;
             await _userRepo.UpdateAsync(entity);
+            await _userRepo.SaveChangesAsync();
         }
 
         public async Task<MaintenanceRecordDTO> RegisterMaintenanceRecordAsync(CreateMaintenanceRecordRequest request)
