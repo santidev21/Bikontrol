@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, HostListener, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Motorcycle } from '../../interfaces/motorcycle.interface';
 import { MotorcyclesService } from '../../service/motorcycles.service';
@@ -12,14 +12,14 @@ import { AuthService } from '../../../auth/services/auth.service';
     selector: 'app-motorcycle-card',
     imports: [],
     templateUrl: './motorcycle-card.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './motorcycle-card.component.scss'
 })
 export class MotorcycleCardComponent implements OnInit {
   @Input() motorcycle!: Motorcycle;
   @Output() deleted = new EventEmitter<void>();
-  menuOpen = false;
-  currentKm: number | null = null;
+  readonly menuOpen = signal(false);
+  readonly currentKm = signal<number | null>(null);
 
   constructor(
     private router: Router,
@@ -39,10 +39,10 @@ export class MotorcycleCardComponent implements OnInit {
 
     this.motorcyclesService.getCurrentKm(motorcycleId).subscribe({
       next: (res) => {
-        this.currentKm = res.km;
+        this.currentKm.set(res.km);
       },
       error: () => {
-        this.currentKm = this.motorcycle?.km ?? 0;
+        this.currentKm.set(this.motorcycle?.km ?? 0);
       }
     });
   }
@@ -94,14 +94,14 @@ export class MotorcycleCardComponent implements OnInit {
 
   toggleMenu(event: MouseEvent) {
     event.stopPropagation();
-    this.menuOpen = !this.menuOpen;
+    this.menuOpen.update((open) => !open);
   }
   @HostListener('document:click')
   closeMenu() {
-    if (this.menuOpen) this.menuOpen = false;
+    if (this.menuOpen()) this.menuOpen.set(false);
   }
 
   get displayedKm(): number {
-    return this.currentKm ?? this.motorcycle?.km ?? 0;
+    return this.currentKm() ?? this.motorcycle?.km ?? 0;
   }
 }

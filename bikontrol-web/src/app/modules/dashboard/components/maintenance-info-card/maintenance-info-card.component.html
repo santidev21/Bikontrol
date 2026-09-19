@@ -63,7 +63,7 @@
             ⋮
           </button>
           <!-- Floating menu -->
-          @if (menuOpen) {
+          @if (menuOpen()) {
             <div
               class="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-20"
               >
@@ -154,7 +154,7 @@
           </div>
 
           <!-- Follow Modal -->
-          @if (followModalOpen) {
+          @if (followModalOpen()) {
             <div
               class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
               (click)="closeFollowModal()"
@@ -182,10 +182,10 @@
                     </button>
                     <button
                       type="submit"
-                      [disabled]="isFollowing"
+                      [disabled]="isFollowing()"
                       class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
                       >
-                      {{ isFollowing ? 'Guardando...' : 'Agregar Mantenimiento' }}
+                      {{ isFollowing() ? 'Guardando...' : 'Agregar Mantenimiento' }}
                     </button>
                   </div>
                 </form>

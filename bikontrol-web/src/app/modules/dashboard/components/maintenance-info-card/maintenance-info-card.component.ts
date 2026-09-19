@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Maintenance } from '../../interfaces/maintenance.interface';
 import { Router } from '@angular/router';
 
@@ -15,7 +15,7 @@ import { AuthService } from '../../../auth/services/auth.service';
     selector: 'app-maintenance-info-card',
     imports: [IntervalFormatPipe, ReactiveFormsModule, MonitoringTypeSelectorComponent],
     templateUrl: './maintenance-info-card.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './maintenance-info-card.component.scss'
 })
 export class MaintenanceInfoCardComponent {
@@ -24,10 +24,10 @@ export class MaintenanceInfoCardComponent {
   @Input() motorcycleIdContext?: string;
   @Output() refresh = new EventEmitter<void>();
 
-  menuOpen = false;
-  followModalOpen = false;
+  readonly menuOpen = signal(false);
+  readonly followModalOpen = signal(false);
   followForm!: FormGroup;
-  isFollowing = false;
+  readonly isFollowing = signal(false);
 
   constructor(private router: Router,
     private maintenanceService: MaintenanceService,
@@ -60,17 +60,17 @@ export class MaintenanceInfoCardComponent {
 
   toggleMenu(event: MouseEvent) {
     event.stopPropagation();
-    this.menuOpen = !this.menuOpen;
+    this.menuOpen.update((open) => !open);
   }
 
   @HostListener('document:click')
   closeMenu() {
-    if (this.menuOpen) this.menuOpen = false;
+    if (this.menuOpen()) this.menuOpen.set(false);
   }
 
   onFollow(event: MouseEvent) {
     event.stopPropagation();
-    this.menuOpen = false;
+    this.menuOpen.set(false);
     
     this.followForm.patchValue({
       name: this.maintenance?.name,
@@ -79,11 +79,11 @@ export class MaintenanceInfoCardComponent {
       kmInterval: this.maintenance?.kmInterval || 1,
       timeIntervalWeeks: this.maintenance?.timeIntervalWeeks || 1
     });
-    this.followModalOpen = true;
+    this.followModalOpen.set(true);
   }
 
   closeFollowModal(): void {
-    this.followModalOpen = false;
+    this.followModalOpen.set(false);
     this.initFollowForm();
   }
 
@@ -97,7 +97,7 @@ export class MaintenanceInfoCardComponent {
       return;
     }
 
-    this.isFollowing = true;
+    this.isFollowing.set(true);
     
     const followData = this.followForm.value;
     const monitoringType = this.followForm.get('monitoringType')?.value;
@@ -115,21 +115,21 @@ export class MaintenanceInfoCardComponent {
     };
 
     if (!payload.motorcycleId) {
-      this.isFollowing = false;
+      this.isFollowing.set(false);
       this.swal.error('Error', 'Debes seleccionar una motocicleta para asociar el mantenimiento.');
       return;
     }
 
     this.maintenanceService.followDefaultMaintenance(payload).subscribe({
       next: () => {
-        this.isFollowing = false;
-        this.followModalOpen = false;
+        this.isFollowing.set(false);
+        this.followModalOpen.set(false);
         this.swal
           .success('Agregado!', 'El mantenimiento fue agregado a tus mantenimientos.')
           .then(() => this.refresh.emit());
       },
       error: (err) => {
-        this.isFollowing = false;
+        this.isFollowing.set(false);
         this.swal.error(
           'Error',
           this.httpError.message(err, 'No se pudo agregar el mantenimiento.')
