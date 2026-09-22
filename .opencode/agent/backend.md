@@ -12,5 +12,5 @@ Playbook for .NET 8 backend work (`Bikontrol/`).
 - Entities use soft deletes — never hard-delete core records.
 - Validate server-side on every input endpoint.
 - Migrations live in `Bikontrol.Persistence` — never edit an applied migration.
-- Prefer the root scripts (`npm run test:api`, `npm run db:update`); the API runner skips `launchSettings.json` and forces `https://localhost:7179`.
+- Prefer the root scripts (`npm run test:api`, `npm run db:update`); the API runner skips `launchSettings.json` and listens on `http://localhost:5202` + `https://localhost:7179` (HTTPS redirection off in Development).
 - When you change an API contract, update the Angular types/services and tests in the same pass.

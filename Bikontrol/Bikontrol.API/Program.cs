@@ -189,7 +189,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseHttpsRedirection();
+// In Development the frontend uses plain HTTP (:5202) to avoid the
+// self-signed dev-cert trust issue on Linux (ERR_CERT_AUTHORITY_INVALID).
+// HTTPS redirection stays enforced in every other environment.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
 

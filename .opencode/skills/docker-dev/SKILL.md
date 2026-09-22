@@ -26,5 +26,5 @@ Local ports (loopback only):
 Services (`docker-compose.yml`): `db` (PostgreSQL 16) → `api` (.NET 8, waits for healthy DB) → `web` (Angular via nginx). DB lives on `bikontrol-internal-net` only — never on the shared network.
 
 Rules:
-- Manual (no-Docker) dev uses `npm run dev` (DB `:5434` + UI `:4201` + API `:7179`) or single-side runners (`dev:ui`, `dev:api`).
+- Manual (no-Docker) dev uses `npm run dev` (DB `:5434` + UI `:4201` + API `:5202` HTTP / `:7179` HTTPS) or single-side runners (`dev:ui`, `dev:api`).
 - Never bake secrets into images — `.env` is excluded via `.dockerignore`.

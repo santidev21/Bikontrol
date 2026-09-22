@@ -33,7 +33,7 @@ function parseDotEnv(filePath) {
 function backendEnvironment() {
   const env = {
     ASPNETCORE_ENVIRONMENT: 'Development',
-    ASPNETCORE_URLS: 'https://localhost:7179'
+    ASPNETCORE_URLS: 'https://localhost:7179;http://localhost:5202'
   };
 
   if (!existsSync(envFilePath)) {

@@ -99,13 +99,13 @@ npm run docker:dev
 npm run dev
 ```
 
-Starts Postgres in Docker, then runs the frontend (`http://localhost:4201`) and the API (`https://localhost:7179`) together. On first run it creates `Bikontrol/Bikontrol.API/appsettings.Development.json` from the committed `.example` template — review `ConnectionStrings:DefaultConnection` (`127.0.0.1:5434`) and `Jwt:Key`.
+Starts Postgres in Docker, then runs the frontend (`http://localhost:4201`) and the API (`http://localhost:5202`, plus `https://localhost:7179`) together. The dev frontend uses plain HTTP so the browser never trips on the self-signed dev certificate (`ERR_CERT_AUTHORITY_INVALID`). On first run it creates `Bikontrol/Bikontrol.API/appsettings.Development.json` from the committed `.example` template — review `ConnectionStrings:DefaultConnection` (`127.0.0.1:5434`) and `Jwt:Key`.
 
 Single side:
 
 ```bash
 npm run dev:ui    # Angular app only (:4201)
-npm run dev:api   # API only (:7179)
+npm run dev:api   # API only (:5202 HTTP + :7179 HTTPS)
 ```
 
 > If you run Angular directly from `bikontrol-web/` with `npm start`, it uses the default `:4200` unless you pass `--port 4201`.
@@ -143,7 +143,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 ### Notes
 
 - The root `package.json` is the orchestration layer; the frontend keeps its own Angular scripts inside `bikontrol-web/package.json`.
-- The API runner skips `launchSettings.json` and forces `https://localhost:7179` so it does not collide with the default HTTP port.
+- The API runner skips `launchSettings.json` and listens on `http://localhost:5202` + `https://localhost:7179` (same as the `https` launch profile). HTTPS redirection is disabled in Development so the dev frontend can use plain HTTP and avoid untrusted-cert errors on Linux.
 - The root frontend runner forces `http://localhost:4201` so it does not collide with the default Angular port.
 
 ### Gotchas

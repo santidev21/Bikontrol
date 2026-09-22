@@ -45,6 +45,8 @@ function writeEnv(file, apiUrl, production) {
 }
 
 const envDir = path.resolve(__dirname, '..', 'src', 'environments');
-writeEnv(path.join(envDir, 'environment.ts'), 'https://localhost:7179/api', false);
+// Dev usa HTTP plano (:5202) para no pelear con el cert autofirmado de Kestrel
+// en el navegador (ERR_CERT_AUTHORITY_INVALID). Prod mantiene su HTTPS real.
+writeEnv(path.join(envDir, 'environment.ts'), 'http://localhost:5202/api', false);
 writeEnv(path.join(envDir, 'environment.prod.ts'), 'https://bikontrol.santidev21.tech/api', true);
 console.log('environment.ts and environment.prod.ts generated');
