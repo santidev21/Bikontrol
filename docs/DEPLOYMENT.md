@@ -77,7 +77,7 @@ Recovery: `gunzip -c backups/backup-xxx/db.sql.gz | docker compose exec -T db ps
 
 ## Database TLS
 
-Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontrol-db`, certs in the data volume, `ssl=Require` on the server). All connection strings carry `SslMode=Require;Trust Server Certificate=true` (self-signed). The DB remains on `bikontrol-internal-net` only; no host port is published in production (`docker-compose.local.yml` publishes `127.0.0.1:5434` only for local dev).
+Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontrol-db`, certs in `/etc/postgresql/ssl` inside the container — never in the data volume, which must stay empty for `initdb`; `ssl=Require` on the server). All connection strings carry `SslMode=Require;Trust Server Certificate=true` (self-signed). The DB remains on `bikontrol-internal-net` only; no host port is published in production (`docker-compose.local.yml` publishes `127.0.0.1:5434` only for local dev).
 
 ## Required secrets (`.env`, never committed)
 

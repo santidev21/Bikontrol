@@ -2,13 +2,18 @@
 set -eu
 
 DATA_DIR="/var/lib/postgresql/data"
-SSL_CERT="$DATA_DIR/server.crt"
-SSL_KEY="$DATA_DIR/server.key"
+# Certs must live OUTSIDE PGDATA: initdb refuses to run in a non-empty
+# directory, so writing them into the data dir breaks fresh volumes.
+CERT_DIR="/etc/postgresql/ssl"
+SSL_CERT="$CERT_DIR/server.crt"
+SSL_KEY="$CERT_DIR/server.key"
 
 if ! command -v openssl >/dev/null 2>&1; then
   echo "[db-ssl] Installing openssl ..."
   apk add --no-cache openssl >/dev/null 2>&1 || true
 fi
+
+mkdir -p "$CERT_DIR"
 
 if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
   echo "[db-ssl] Generating self-signed certificate (CN=bikontrol-db) ..."
