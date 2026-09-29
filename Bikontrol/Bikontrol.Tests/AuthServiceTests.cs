@@ -298,6 +298,18 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task DemoLoginAsync_WhenEmailBelongsToRealUser_ShouldThrow403()
+    {
+        var realUser = new User("demo@bikontrol.com", "Real User", "hashed:random", "User");
+        var repository = new FakeUserRepository(existingUsers: [realUser]);
+        var service = CreateService(repository);
+
+        var exception = await Assert.ThrowsAsync<AuthException>(() => service.DemoLoginAsync());
+
+        Assert.Equal(403, exception.StatusCode);
+    }
+
+    [Fact]
     public async Task RegisterAsync_ShouldSetRoleToUserByDefault()
     {
         var repository = new FakeUserRepository();

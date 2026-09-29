@@ -51,4 +51,23 @@ public class CurrentUserServiceTests
         Assert.Equal(Guid.Empty, service.UserId);
         Assert.Equal("User", service.Role);
     }
+
+    [Fact]
+    public void CurrentUserService_ShouldRecognizeMappedRoleClaim()
+    {
+        // With default JWT inbound mapping, "role" arrives as ClaimTypes.Role.
+        var userId = Guid.NewGuid();
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Role, "Demo")
+        }));
+
+        var accessor = new HttpContextAccessor { HttpContext = httpContext };
+        var service = new CurrentUserService(accessor);
+
+        Assert.Equal("Demo", service.Role);
+        Assert.True(service.IsDemo);
+    }
 }

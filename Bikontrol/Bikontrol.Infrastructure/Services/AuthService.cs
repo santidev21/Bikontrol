@@ -137,7 +137,17 @@ namespace Bikontrol.Infrastructure.Services
 
             stored.Revoke();
             var newRefreshToken = await IssueRefreshTokenAsync(stored.UserId);
-            await _refreshTokenRepository.SaveChangesAsync();
+            try
+            {
+                await _refreshTokenRepository.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another concurrent refresh already rotated this token.
+                // Report it as an expired session so the client logs out cleanly
+                // instead of surfacing a 409 conflict.
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+            }
 
             return BuildLoginResponse(stored.User, newRefreshToken);
         }
@@ -198,6 +208,12 @@ namespace Bikontrol.Infrastructure.Services
                 user = new User(demoEmail, demoName, _passwordHasher.HashPassword(null!, randomPassword), UserRole.Demo);
                 await _userRepository.AddAsync(user);
                 await _userRepository.SaveChangesAsync();
+            }
+            else if (user.Role != UserRole.Demo)
+            {
+                // The configured demo email collides with a real account.
+                // Never hand out that account through the anonymous demo endpoint.
+                throw new AuthException("El usuario demo no está disponible.", 403);
             }
 
             var refreshToken = await IssueRefreshTokenAsync(user.Id);

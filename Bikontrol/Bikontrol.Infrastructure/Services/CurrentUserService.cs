@@ -23,7 +23,13 @@ namespace Bikontrol.Infrastructure.Services
             if (Guid.TryParse(userIdClaim, out var userId))
                 UserId = userId;
 
-            Role = user?.FindFirst("role")?.Value ?? Persistence.Entities.UserRole.User;
+            // JWT inbound mapping may expose the role as "role" (MapInboundClaims = false)
+            // or as ClaimTypes.Role (default mapping on older tokens). Accept both so a
+            // Demo token is never mistaken for a regular user.
+            Role = user?.FindFirst("role")?.Value
+                ?? user?.FindFirst(ClaimTypes.Role)?.Value
+                ?? user?.FindFirst("roles")?.Value
+                ?? Persistence.Entities.UserRole.User;
         }
     }
 }

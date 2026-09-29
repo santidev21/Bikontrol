@@ -144,6 +144,45 @@ public class MotorcycleServiceTests
         Assert.Null(await repo.GetByIdAsync(moto.Id));
     }
 
+    [Fact]
+    public async Task CreateAsync_WithNonImageDataUrl_ShouldThrowValidation()
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+
+        await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(new SaveMotorcycleDTO
+        {
+            Name = "YBR 125",
+            Brand = "Yamaha",
+            Year = 2024,
+            Nickname = "Negra",
+            Km = 100,
+            Displacement = 125,
+            Plate = "ABC12D",
+            Image = "data:text/html;base64,PGI+"
+        }));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithValidJpegDataUrl_ShouldSucceed()
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+        var payload = Convert.ToBase64String(new byte[16]);
+
+        var result = await service.CreateAsync(new SaveMotorcycleDTO
+        {
+            Name = "YBR 125",
+            Brand = "Yamaha",
+            Year = 2024,
+            Nickname = "Negra",
+            Km = 100,
+            Displacement = 125,
+            Plate = "ABC12D",
+            Image = "data:image/jpeg;base64," + payload
+        });
+
+        Assert.NotEqual(Guid.Empty, result.Id);
+    }
+
     private static MotorcycleService CreateService(Guid userId, FakeMotorcycleRepository motos, FakeKmHistoryRepository history)
         => new(
             motos,

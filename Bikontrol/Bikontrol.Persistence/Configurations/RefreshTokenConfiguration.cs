@@ -19,6 +19,9 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(t => t.TokenHash).IsRequired().HasMaxLength(128);
             builder.Property(t => t.CreatedAt).IsRequired();
             builder.Property(t => t.ExpiresAt).IsRequired();
+            // Optimistic concurrency on rotation: two simultaneous refreshes with
+            // the same token conflict instead of both minting a replacement.
+            builder.Property(t => t.RevokedAt).IsConcurrencyToken();
 
             builder.HasOne(t => t.User)
                 .WithMany()

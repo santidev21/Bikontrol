@@ -2,7 +2,8 @@ import { HttpClient, provideHttpClient, withInterceptors } from "@angular/common
 import { HttpTestingController, provideHttpClientTesting } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
 import { Router } from "@angular/router";
-import { of, throwError } from "rxjs";
+import { Subject, of, throwError } from "rxjs";
+import { tap } from "rxjs/operators";
 import { AuthService } from "../../modules/auth/services/auth.service";
 import { authInterceptor } from "./auth.interceptor";
 import { refreshInterceptor } from "./refresh.interceptor";
@@ -83,5 +84,50 @@ describe("refreshInterceptor", () => {
     // No retry happens because refresh failed.
     expect(authService.logout).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(["/login"]);
+  });
+
+  it("should share a single refresh across concurrent 401s", () => {
+    // Deferred refresh: both 401s must attach before the refresh completes.
+    const refreshSubject = new Subject<boolean>();
+    authService.refreshSession.mockReturnValue(
+      refreshSubject.asObservable().pipe(
+        tap(ok => {
+          if (ok) {
+            localStorage.setItem("token", "new-access-token");
+            localStorage.setItem("refreshToken", "new-refresh-token");
+          }
+        })
+      )
+    );
+
+    let firstResponse: any;
+    let secondResponse: any;
+
+    http.get("/api/motorcycles/mine").subscribe(res => {
+      firstResponse = res;
+    });
+    http.get("/api/maintenances/mine").subscribe(res => {
+      secondResponse = res;
+    });
+
+    const first = httpMock.expectOne("/api/motorcycles/mine");
+    const second = httpMock.expectOne("/api/maintenances/mine");
+    first.flush({ error: "unauthorized" }, { status: 401, statusText: "Unauthorized" });
+    second.flush({ error: "unauthorized" }, { status: 401, statusText: "Unauthorized" });
+
+    // A single shared refresh must serve both retries.
+    expect(authService.refreshSession).toHaveBeenCalledTimes(1);
+
+    refreshSubject.next(true);
+    refreshSubject.complete();
+
+    const retryFirst = httpMock.expectOne("/api/motorcycles/mine");
+    retryFirst.flush([{ id: 1 }]);
+    const retrySecond = httpMock.expectOne("/api/maintenances/mine");
+    retrySecond.flush([{ id: 2 }]);
+
+    expect(firstResponse).toEqual([{ id: 1 }]);
+    expect(secondResponse).toEqual([{ id: 2 }]);
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 });

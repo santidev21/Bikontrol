@@ -1,14 +1,18 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, shareReplay, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../../modules/auth/services/auth.service';
 
 let sharedRefresh$: Observable<boolean> | null = null;
 
 function getSharedRefresh(authService: AuthService): Observable<boolean> {
   if (!sharedRefresh$) {
+    // shareReplay keeps concurrent 401s on a single POST /auth/refresh.
+    // Without it every subscriber re-executes refreshSession() and mints
+    // competing refresh tokens.
     sharedRefresh$ = authService.refreshSession().pipe(
+      shareReplay({ bufferSize: 1, refCount: true }),
       finalize(() => {
         sharedRefresh$ = null;
       })
@@ -18,7 +22,7 @@ function getSharedRefresh(authService: AuthService): Observable<boolean> {
 }
 
 function isAuthUrl(url: string): boolean {
-  return url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/google');
+  return url.includes('/auth/');
 }
 
 export const refreshInterceptor: HttpInterceptorFn = (req, next) => {

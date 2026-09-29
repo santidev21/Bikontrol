@@ -167,6 +167,13 @@ namespace Bikontrol.Infrastructure.Seed
                     await context.SaveChangesAsync();
                     logger.LogInformation("Demo user seeded: {Email}", demoEmail);
                 }
+                else if (demoUser.Role != UserRole.Demo)
+                {
+                    // The configured demo email belongs to a real account.
+                    // Never seed demo content into it and never convert it.
+                    logger.LogWarning("Demo seeding skipped: {Email} already exists with role {Role}", demoEmail, demoUser.Role);
+                    return;
+                }
                 else
                 {
                     logger.LogInformation("Demo user already exists: {Email}", demoEmail);

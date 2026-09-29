@@ -3,7 +3,8 @@
 - Authentication uses JWT and password hashing.
 - Login, register and Google login store the JWT in `localStorage` along with a `refreshToken`.
 - `auth.interceptor.ts` adds `Authorization: Bearer <token>` automatically.
-- `refresh.interceptor.ts` transparently renews the session: on a `401` it calls `POST /api/auth/refresh` once and retries the original request. If the refresh fails it clears the session and redirects to `/login`.
+- `refresh.interceptor.ts` transparently renews the session: on a `401` it calls `POST /api/auth/refresh` once and retries the original request. Concurrent `401`s share a single in-flight refresh (`shareReplay`); auth URLs (`/auth/`) never trigger a refresh. If the refresh fails it clears the session and redirects to `/login`.
+- Role claim: JWTs carry `role` (`User`/`Demo`). The API sets `MapInboundClaims = false` with `RoleClaimType = "role"` so the claim is not remapped, and `CurrentUserService` accepts both `role` and `ClaimTypes.Role` (older mapped tokens). Demo write guards depend on this — do not change claim handling without updating the service and its tests.
 - Route guards: `authGuard` protects the whole `/dashboard` branch (redirects to `/login` when unauthenticated), `guestGuard` keeps authenticated users out of `/login` and `/register`.
 - UI errors should be surfaced to the user, not logged with `console.error`.
 - Per-clone signing secret: generate with `openssl rand -base64 48` and put it in `Jwt:Key` inside `Bikontrol/Bikontrol.API/appsettings.Development.json` (never committed); production uses `Jwt__Key` env.
@@ -16,15 +17,16 @@
 | `POST` | `/register` | Creates a user, returns access + refresh token. |
 | `POST` | `/login` | Email + password, returns access + refresh token. |
 | `POST` | `/google` | Body `{ idToken }`. Validates a Google ID token (`Google__ClientId`), creates the user if missing, returns Bikontrol tokens. |
-| `POST` | `/refresh` | Body `{ refreshToken }`. Rotates the refresh token and returns a new pair. |
+| `POST` | `/refresh` | Body `{ refreshToken }`. Single-use rotation: concurrent replays conflict and return `401` (expired session). |
 | `POST` | `/forgot-password` | Body `{ email }`. Emails a reset link (always `200` to avoid leaking account existence). |
 | `POST` | `/reset-password` | Body `{ email, token, newPassword }`. Validates the hashed, time-limited token and updates the password. |
+| `POST` | `/demo` | Anonymous demo login. Returns `403` when the configured demo email belongs to a non-demo account (never hands out real accounts). |
 
 ## Sessions (refresh tokens)
 
 - Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days).
-- Refresh tokens are stored in the `refresh_tokens` table (SHA-256 hash only) and are revoked/rotated on every use.
-- Changing the password (`PUT /api/users/me/password`) or resetting it (`POST /api/auth/reset-password`) revokes **all** active refresh tokens for the user, so any stolen session dies with the password change.
+- Refresh tokens are stored in the `refresh_tokens` table (SHA-256 hash only) and are revoked/rotated on every use. `RevokedAt` is a concurrency token, so two simultaneous refreshes with the same token cannot both mint replacements.
+- Changing the password (`POST /api/users/me/password`) or resetting it (`POST /api/auth/reset-password`) revokes **all** active refresh tokens for the user, so any stolen session dies with the password change.
 - Google-only accounts get a random password hash; they can adopt a password through the recovery flow.
 
 ## Password recovery

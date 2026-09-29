@@ -42,6 +42,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto)
         {
             EnsureCanWrite();
+            EnsureValidImage(dto.Image);
             var entity = _mapper.Map<Motorcycle>(dto);
             entity.UserId = _currentUser.UserId;
             entity.Validate();
@@ -136,6 +137,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task UpdateAsync(Guid id, SaveMotorcycleDTO dto)
         {
             EnsureCanWrite();
+            EnsureValidImage(dto.Image);
             var entity = await _motorcycleRepository.GetByIdAsync(id);
             if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
 
@@ -159,6 +161,40 @@ namespace Bikontrol.Infrastructure.Services
 
             await _motorcycleRepository.SoftDeleteAsync(id);
             await _motorcycleRepository.SaveChangesAsync();
+        }
+
+        private static void EnsureValidImage(string? image)
+        {
+            if (string.IsNullOrWhiteSpace(image) || image == "default.png")
+                return;
+
+            const string jpegPrefix = "data:image/jpeg;base64,";
+            const string pngPrefix = "data:image/png;base64,";
+            const string webpPrefix = "data:image/webp;base64,";
+
+            var prefix = image.StartsWith(jpegPrefix, StringComparison.Ordinal) ? jpegPrefix
+                : image.StartsWith(pngPrefix, StringComparison.Ordinal) ? pngPrefix
+                : image.StartsWith(webpPrefix, StringComparison.Ordinal) ? webpPrefix
+                : null;
+            if (prefix is null)
+                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.");
+
+            var payload = image[prefix.Length..];
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(payload);
+            }
+            catch (FormatException)
+            {
+                throw new ValidationException("La imagen no es válida.");
+            }
+
+            // ~1 MB decoded; the DTO length cap (1.4M chars) alone still allows
+            // oversized payloads past client-side resizing.
+            const int maxDecodedBytes = 1_048_576;
+            if (bytes.Length == 0 || bytes.Length > maxDecodedBytes)
+                throw new ValidationException("La imagen es demasiado grande.");
         }
     }
 }
