@@ -82,3 +82,6 @@ backups/
 *.sql.gz
 # Nota: no ignorar *.sql en general; los scripts .sql del repo
 # (p. ej. scripts/db-integrity-audit.sql) sí se versionan.
+
+# CodeGraph local index (per-machine, not source)
+.codegraph/
