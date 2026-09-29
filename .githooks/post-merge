@@ -1,0 +1,8 @@
+#!/bin/sh
+# Keep the CodeGraph index fresh after commits / checkouts / merges.
+# See .opencode/plan/portfolio-senior-plan.md. No-op when codegraph or the
+# local index (.codegraph/) is absent, so it never blocks a git operation.
+if command -v codegraph >/dev/null 2>&1 && [ -d .codegraph ]; then
+  codegraph sync -q
+fi
+exit 0
