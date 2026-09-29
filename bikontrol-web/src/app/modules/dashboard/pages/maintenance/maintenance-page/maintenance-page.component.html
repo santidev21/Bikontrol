@@ -1,13 +1,12 @@
 <div class="p-4">
-  <h1 class="text-2xl font-bold mb-2 text-center">
-    Mantenimientos
-  </h1>
+  <h1 class="text-2xl font-bold mb-2 text-center">Mantenimientos</h1>
 
   @if (!isDemo()) {
     <div class="text-center">
       <button
         (click)="goToAddMaintenance()"
-        class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
+        class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
+      >
         + Agregar mantenimiento personalizado
       </button>
     </div>
@@ -21,7 +20,8 @@
         [maintenance]="item"
         [motorcycleIdContext]="motorcycleId()"
         (refresh)="reload()"
-        [isDefault]="false">
+        [isDefault]="false"
+      >
       </app-maintenance-info-card>
     }
   </div>
@@ -37,7 +37,8 @@
         [maintenance]="item"
         [motorcycleIdContext]="motorcycleId()"
         (refresh)="reload()"
-        [isDefault]="true">
+        [isDefault]="true"
+      >
       </app-maintenance-info-card>
     }
   </div>

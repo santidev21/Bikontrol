@@ -19,14 +19,14 @@ const summaryMock: any = {
     { bucket: 'Vencido', count: 1 },
     { bucket: 'Crítico', count: 1 },
     { bucket: 'Próximo', count: 1 },
-    { bucket: 'OK', count: 1 }
+    { bucket: 'OK', count: 1 },
   ],
   kmByMotorcycle: [
     { motorcycleId: 'm1', name: 'Negra', km: 8000 },
-    { motorcycleId: 'm2', name: 'Roja', km: 12000 }
+    { motorcycleId: 'm2', name: 'Roja', km: 12000 },
   ],
   recordsByType: [{ name: 'Aceite', count: 3 }],
-  last6Months: [{ yearMonth: '2026-09', count: 2 }]
+  last6Months: [{ yearMonth: '2026-09', count: 2 }],
 };
 
 describe('StatisticsComponent', () => {
@@ -44,8 +44,8 @@ describe('StatisticsComponent', () => {
         provideRouter([]),
         HttpErrorService,
         { provide: SwalService, useValue: swalMock },
-        { provide: AuthService, useValue: { isDemo: () => false } }
-      ]
+        { provide: AuthService, useValue: { isDemo: () => false } },
+      ],
     });
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -61,7 +61,7 @@ describe('StatisticsComponent', () => {
     const fixture = create();
     fixture.detectChanges();
 
-    httpMock.expectOne(r => r.url.endsWith('/statistics/summary')).flush(summaryMock);
+    httpMock.expectOne((r) => r.url.endsWith('/statistics/summary')).flush(summaryMock);
     await fixture.whenStable();
 
     expect(fixture.componentInstance.summary.value()).toEqual(summaryMock);
@@ -71,7 +71,7 @@ describe('StatisticsComponent', () => {
     const fixture = create();
     fixture.detectChanges();
 
-    httpMock.expectOne(r => r.url.endsWith('/statistics/summary')).flush(summaryMock);
+    httpMock.expectOne((r) => r.url.endsWith('/statistics/summary')).flush(summaryMock);
     await fixture.whenStable();
 
     const component = fixture.componentInstance;
@@ -85,7 +85,8 @@ describe('StatisticsComponent', () => {
     const fixture = create();
     fixture.detectChanges();
 
-    httpMock.expectOne(r => r.url.endsWith('/statistics/summary'))
+    httpMock
+      .expectOne((r) => r.url.endsWith('/statistics/summary'))
       .flush('boom', { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();
     fixture.detectChanges();

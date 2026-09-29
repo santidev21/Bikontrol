@@ -1,0 +1,6 @@
+dist
+coverage
+node_modules
+.angular
+test-results
+package-lock.json

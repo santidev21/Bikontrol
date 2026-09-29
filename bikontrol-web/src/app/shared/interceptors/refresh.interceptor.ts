@@ -15,7 +15,7 @@ function getSharedRefresh(authService: AuthService): Observable<boolean> {
       shareReplay({ bufferSize: 1, refCount: true }),
       finalize(() => {
         sharedRefresh$ = null;
-      })
+      }),
     );
   }
   return sharedRefresh$;
@@ -40,13 +40,13 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       return getSharedRefresh(authService).pipe(
-        switchMap(ok => (ok ? next(req) : throwError(() => error))),
+        switchMap((ok) => (ok ? next(req) : throwError(() => error))),
         catchError(() => {
           authService.logout();
           router.navigate(['/login']);
           return throwError(() => error);
-        })
+        }),
       );
-    })
+    }),
   );
 };

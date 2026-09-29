@@ -1,4 +1,11 @@
-﻿import { Component, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+﻿import {
+  Component,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,13 +18,20 @@ import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
 
 @Component({
-    selector: 'app-save-maintenance',
-    imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
-    templateUrl: './save-maintenance.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './save-maintenance.component.scss'
+  selector: 'app-save-maintenance',
+  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
+  templateUrl: './save-maintenance.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './save-maintenance.component.scss',
 })
-export class SaveMaintenanceComponent implements OnDestroy {
+export class SaveMaintenanceComponent implements OnDestroy, OnInit {
+  private fb = inject(FormBuilder);
+  private maintenanceService = inject(MaintenanceService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private swal = inject(SwalService);
+  private httpError = inject(HttpErrorService);
+
   maintenanceForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isEditMode = signal(false);
@@ -26,14 +40,7 @@ export class SaveMaintenanceComponent implements OnDestroy {
 
   private readonly subscriptions = new Subscription();
 
-  constructor(
-    private fb: FormBuilder,
-    private maintenanceService: MaintenanceService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private swal: SwalService,
-    private httpError: HttpErrorService
-  ) {
+  constructor() {
     this.maintenanceForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: ['', [Validators.required]],
@@ -58,7 +65,7 @@ export class SaveMaintenanceComponent implements OnDestroy {
           this.maintenanceId.set(id);
           this.loadMaintenanceId(id);
         }
-      })
+      }),
     );
   }
 
@@ -71,7 +78,7 @@ export class SaveMaintenanceComponent implements OnDestroy {
       next: (maintenance) => {
         const mappedMaintenance = {
           ...maintenance,
-          monitoringType: maintenance.trackingType === 'Km' ? 'km' : 'time'
+          monitoringType: maintenance.trackingType === 'Km' ? 'km' : 'time',
         };
 
         if (!this.motorcycleId() && maintenance.motorcycleId) {
@@ -82,7 +89,10 @@ export class SaveMaintenanceComponent implements OnDestroy {
         this.maintenanceForm.get('monitoringType')?.disable();
       },
       error: (err) => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo cargar el mantenimiento.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo cargar el mantenimiento.'),
+        );
       },
     });
   }
@@ -150,7 +160,10 @@ export class SaveMaintenanceComponent implements OnDestroy {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo agregar el mantenimiento.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo agregar el mantenimiento.'),
+        );
       },
     });
   }
@@ -160,12 +173,19 @@ export class SaveMaintenanceComponent implements OnDestroy {
       next: () => {
         this.isSubmitting.set(false);
         this.swal.success('Éxito', 'Mantenimiento actualizado correctamente.').then(() => {
-          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId() || maintenance.motorcycleId, 'maintenance']);
+          this.router.navigate([
+            '/dashboard/motorcycles',
+            this.motorcycleId() || maintenance.motorcycleId,
+            'maintenance',
+          ]);
         });
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar el mantenimiento.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo actualizar el mantenimiento.'),
+        );
       },
     });
   }

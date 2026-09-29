@@ -1,9 +1,14 @@
-import { FormBuilder } from "@angular/forms";
-import { convertToParamMap } from "@angular/router";
-import { Subject, of, throwError } from "rxjs";
-import { SaveMotorcycleComponent } from "./save-motorcycle.component";
+import { TestBed } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { Subject, of, throwError } from 'rxjs';
+import { SaveMotorcycleComponent } from './save-motorcycle.component';
+import { MotorcyclesService } from '../../../service/motorcycles.service';
+import { SwalService } from '../../../../../shared/services/swal.service';
+import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { ImageService } from '../../../../../shared/services/image.service';
 
-describe("SaveMotorcycleComponent", () => {
+describe('SaveMotorcycleComponent', () => {
   let component: SaveMotorcycleComponent;
   let motorcyclesServiceMock: any;
   let routerMock: any;
@@ -18,70 +23,73 @@ describe("SaveMotorcycleComponent", () => {
       getById: vi.fn(),
       getCurrentKm: vi.fn(),
       addMotorcycle: vi.fn(),
-      updateMotorcycle: vi.fn()
+      updateMotorcycle: vi.fn(),
     };
     routerMock = {
-      navigate: vi.fn()
+      navigate: vi.fn(),
     };
     swalMock = {
       error: vi.fn(),
       warning: vi.fn(),
-      success: vi.fn().mockResolvedValue(true)
+      success: vi.fn().mockResolvedValue(true),
     };
     httpErrorMock = {
       message: vi.fn(
-        (error: any, fallback = "Error inesperado en el servidor.") =>
-          error?.error?.error || error?.error?.message || error?.message || fallback
-      )
+        (error: any, fallback = 'Error inesperado en el servidor.') =>
+          error?.error?.error || error?.error?.message || error?.message || fallback,
+      ),
     };
     imageServiceMock = { resize: vi.fn() };
 
-    component = new SaveMotorcycleComponent(
-      new FormBuilder(),
-      motorcyclesServiceMock,
-      routerMock,
-      {
-        paramMap: routeParamMap$.asObservable()
-      } as any,
-      swalMock,
-      httpErrorMock,
-      imageServiceMock
-    );
+    // The component uses inject(), so it must be created inside an injection context.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: FormBuilder, useValue: new FormBuilder() },
+        { provide: MotorcyclesService, useValue: motorcyclesServiceMock },
+        { provide: Router, useValue: routerMock },
+        { provide: ActivatedRoute, useValue: { paramMap: routeParamMap$.asObservable() } },
+        { provide: SwalService, useValue: swalMock },
+        { provide: HttpErrorService, useValue: httpErrorMock },
+        { provide: ImageService, useValue: imageServiceMock },
+      ],
+    });
+    component = TestBed.runInInjectionContext(() => new SaveMotorcycleComponent());
   });
 
-  it("should create the expected form controls", () => {
-    expect(component.motorcycleForm.contains("name")).toBe(true);
-    expect(component.motorcycleForm.contains("brand")).toBe(true);
-    expect(component.motorcycleForm.contains("year")).toBe(true);
-    expect(component.motorcycleForm.contains("nickname")).toBe(true);
-    expect(component.motorcycleForm.contains("km")).toBe(true);
-    expect(component.motorcycleForm.contains("displacement")).toBe(true);
-    expect(component.motorcycleForm.contains("plate")).toBe(true);
+  it('should create the expected form controls', () => {
+    expect(component.motorcycleForm.contains('name')).toBe(true);
+    expect(component.motorcycleForm.contains('brand')).toBe(true);
+    expect(component.motorcycleForm.contains('year')).toBe(true);
+    expect(component.motorcycleForm.contains('nickname')).toBe(true);
+    expect(component.motorcycleForm.contains('km')).toBe(true);
+    expect(component.motorcycleForm.contains('displacement')).toBe(true);
+    expect(component.motorcycleForm.contains('plate')).toBe(true);
   });
 
-  it("should show a warning when submitting an invalid form", () => {
+  it('should show a warning when submitting an invalid form', () => {
     component.onSubmit();
 
     expect(swalMock.warning).toHaveBeenCalledWith(
-      "Formulario incompleto",
-      "Por favor completa todos los campos requeridos."
+      'Formulario incompleto',
+      'Por favor completa todos los campos requeridos.',
     );
     expect(motorcyclesServiceMock.addMotorcycle).not.toHaveBeenCalled();
     expect(motorcyclesServiceMock.updateMotorcycle).not.toHaveBeenCalled();
   });
 
-  it("should add a motorcycle and navigate on success", async () => {
-    motorcyclesServiceMock.addMotorcycle.mockReturnValue(of({ id: "moto-1" }));
+  it('should add a motorcycle and navigate on success', async () => {
+    motorcyclesServiceMock.addMotorcycle.mockReturnValue(of({ id: 'moto-1' }));
     component.motorcycleForm.setValue({
-      name: "XTZ",
-      brand: "Yamaha",
+      name: 'XTZ',
+      brand: 'Yamaha',
       year: 2024,
-      nickname: "La azul",
+      nickname: 'La azul',
       km: 1000,
       displacement: 150,
-      plate: "ABC123",
-      image: "default.png",
-      isEnabled: true
+      plate: 'ABC123',
+      image: 'default.png',
+      isEnabled: true,
     });
 
     component.onSubmit();
@@ -89,212 +97,236 @@ describe("SaveMotorcycleComponent", () => {
     await Promise.resolve();
 
     expect(motorcyclesServiceMock.addMotorcycle).toHaveBeenCalledWith({
-      name: "XTZ",
-      brand: "Yamaha",
+      name: 'XTZ',
+      brand: 'Yamaha',
       year: 2024,
-      nickname: "La azul",
+      nickname: 'La azul',
       km: 1000,
       displacement: 150,
-      plate: "ABC123",
-      image: "default.png",
-      isEnabled: true
+      plate: 'ABC123',
+      image: 'default.png',
+      isEnabled: true,
     });
-    expect(swalMock.success).toHaveBeenCalledWith("¡Éxito!", "Motocicleta agregada correctamente.");
-    expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
+    expect(swalMock.success).toHaveBeenCalledWith('¡Éxito!', 'Motocicleta agregada correctamente.');
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
   });
 
-  it("should surface backend errors when adding a motorcycle", () => {
+  it('should surface backend errors when adding a motorcycle', () => {
     motorcyclesServiceMock.addMotorcycle.mockReturnValue(
-      throwError(() => ({ error: { message: "No se pudo agregar la motocicleta." } }))
+      throwError(() => ({ error: { message: 'No se pudo agregar la motocicleta.' } })),
     );
     component.motorcycleForm.setValue({
-      name: "XTZ",
-      brand: "Yamaha",
+      name: 'XTZ',
+      brand: 'Yamaha',
       year: 2024,
-      nickname: "La azul",
+      nickname: 'La azul',
       km: 1000,
       displacement: 150,
-      plate: "ABC123",
-      image: "default.png",
-      isEnabled: true
+      plate: 'ABC123',
+      image: 'default.png',
+      isEnabled: true,
     });
 
     component.onSubmit();
 
-    expect(swalMock.error).toHaveBeenCalledWith("Error", "No se pudo agregar la motocicleta.");
+    expect(swalMock.error).toHaveBeenCalledWith('Error', 'No se pudo agregar la motocicleta.');
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
-  it("should load a motorcycle when the route contains an id", () => {
+  it('should load a motorcycle when the route contains an id', () => {
     motorcyclesServiceMock.getById.mockReturnValue(
       of({
-        id: "moto-2",
-        name: "XTZ",
-        brand: "Yamaha",
+        id: 'moto-2',
+        name: 'XTZ',
+        brand: 'Yamaha',
         year: 2023,
-        nickname: "La negra",
+        nickname: 'La negra',
         km: 0,
         displacement: 150,
-        plate: "XYZ789",
-        image: "default.png",
-        isEnabled: true
-      })
+        plate: 'XYZ789',
+        image: 'default.png',
+        isEnabled: true,
+      }),
     );
     motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2000 }));
 
     component.ngOnInit();
-    routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
+    routeParamMap$.next(convertToParamMap({ id: 'moto-2' }));
 
     expect(component.isEditMode()).toBe(true);
-    expect(component.motorcycleId()).toBe("moto-2");
-    expect(motorcyclesServiceMock.getById).toHaveBeenCalledWith("moto-2");
-    expect(component.motorcycleForm.get("name")?.value).toBe("XTZ");
+    expect(component.motorcycleId()).toBe('moto-2');
+    expect(motorcyclesServiceMock.getById).toHaveBeenCalledWith('moto-2');
+    expect(component.motorcycleForm.get('name')?.value).toBe('XTZ');
   });
 
-  it("should show the current km and disable it in edit mode", () => {
+  it('should show the current km and disable it in edit mode', () => {
     motorcyclesServiceMock.getById.mockReturnValue(
       of({
-        id: "moto-2",
-        name: "XTZ",
-        brand: "Yamaha",
+        id: 'moto-2',
+        name: 'XTZ',
+        brand: 'Yamaha',
         year: 2023,
-        nickname: "La negra",
+        nickname: 'La negra',
         km: 0,
         displacement: 150,
-        plate: "XYZ789",
-        image: "default.png",
-        isEnabled: true
-      })
+        plate: 'XYZ789',
+        image: 'default.png',
+        isEnabled: true,
+      }),
     );
     motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 4500 }));
 
     component.ngOnInit();
-    routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
+    routeParamMap$.next(convertToParamMap({ id: 'moto-2' }));
 
-    expect(motorcyclesServiceMock.getCurrentKm).toHaveBeenCalledWith("moto-2");
-    expect(component.motorcycleForm.get("km")?.value).toBe(4500);
-    expect(component.motorcycleForm.get("km")?.disabled).toBe(true);
+    expect(motorcyclesServiceMock.getCurrentKm).toHaveBeenCalledWith('moto-2');
+    expect(component.motorcycleForm.get('km')?.value).toBe(4500);
+    expect(component.motorcycleForm.get('km')?.disabled).toBe(true);
   });
 
-  it("should update a motorcycle and navigate on success", async () => {
+  it('should update a motorcycle and navigate on success', async () => {
     component.isEditMode.set(true);
-    component.motorcycleId.set("moto-2");
+    component.motorcycleId.set('moto-2');
     motorcyclesServiceMock.updateMotorcycle.mockReturnValue(of(undefined));
     component.motorcycleForm.setValue({
-      name: "XTZ",
-      brand: "Yamaha",
+      name: 'XTZ',
+      brand: 'Yamaha',
       year: 2024,
-      nickname: "La azul",
+      nickname: 'La azul',
       km: 1200,
       displacement: 150,
-      plate: "ABC123",
-      image: "default.png",
-      isEnabled: true
+      plate: 'ABC123',
+      image: 'default.png',
+      isEnabled: true,
     });
 
     component.onSubmit();
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(motorcyclesServiceMock.updateMotorcycle).toHaveBeenCalledWith("moto-2", {
-      name: "XTZ",
-      brand: "Yamaha",
+    expect(motorcyclesServiceMock.updateMotorcycle).toHaveBeenCalledWith('moto-2', {
+      name: 'XTZ',
+      brand: 'Yamaha',
       year: 2024,
-      nickname: "La azul",
+      nickname: 'La azul',
       km: 1200,
       displacement: 150,
-      plate: "ABC123",
-      image: "default.png",
-      isEnabled: true
+      plate: 'ABC123',
+      image: 'default.png',
+      isEnabled: true,
     });
-    expect(swalMock.success).toHaveBeenCalledWith("¡Éxito!", "Motocicleta actualizada correctamente.");
-    expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
+    expect(swalMock.success).toHaveBeenCalledWith(
+      '¡Éxito!',
+      'Motocicleta actualizada correctamente.',
+    );
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
   });
 
-  it("should expose the error helper when a field is touched and invalid", () => {
-    const control = component.motorcycleForm.get("name");
+  it('should expose the error helper when a field is touched and invalid', () => {
+    const control = component.motorcycleForm.get('name');
     control?.markAsTouched();
 
-    expect(component.hasError("name", "required")).toBe(true);
+    expect(component.hasError('name', 'required')).toBe(true);
   });
 
-  it("should show the placeholder preview by default", () => {
-    component.motorcycleForm.patchValue({ image: "default.png" });
+  it('should show the placeholder preview by default', () => {
+    component.motorcycleForm.patchValue({ image: 'default.png' });
 
-    expect(component.previewSrc()).toBe("/assets/images/defaults/motorcycle-placeholder.webp");
+    expect(component.previewSrc()).toBe('/assets/images/defaults/motorcycle-placeholder.webp');
   });
 
-  it("should set the preview from the loaded motorcycle image", () => {
+  it('should set the preview from the loaded motorcycle image', () => {
     motorcyclesServiceMock.getById.mockReturnValue(
       of({
-        id: "moto-2",
-        name: "XTZ",
-        brand: "Yamaha",
+        id: 'moto-2',
+        name: 'XTZ',
+        brand: 'Yamaha',
         year: 2023,
-        nickname: "La negra",
+        nickname: 'La negra',
         km: 0,
         displacement: 150,
-        plate: "XYZ789",
-        image: "data:image/jpeg;base64,abc",
-        isEnabled: true
-      })
+        plate: 'XYZ789',
+        image: 'data:image/jpeg;base64,abc',
+        isEnabled: true,
+      }),
     );
     motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2000 }));
 
     component.ngOnInit();
-    routeParamMap$.next(convertToParamMap({ id: "moto-2" }));
+    routeParamMap$.next(convertToParamMap({ id: 'moto-2' }));
 
-    expect(component.previewSrc()).toBe("data:image/jpeg;base64,abc");
+    expect(component.previewSrc()).toBe('data:image/jpeg;base64,abc');
   });
 
-  it("should reset the image to the default when removing it", () => {
-    component.previewSrc.set("data:image/jpeg;base64,abc");
+  it('should reset the image to the default when removing it', () => {
+    component.previewSrc.set('data:image/jpeg;base64,abc');
 
     component.removeImage();
 
-    expect(component.motorcycleForm.get("image")?.value).toBe("default.png");
-    expect(component.previewSrc()).toBe("/assets/images/defaults/motorcycle-placeholder.webp");
+    expect(component.motorcycleForm.get('image')?.value).toBe('default.png');
+    expect(component.previewSrc()).toBe('/assets/images/defaults/motorcycle-placeholder.webp');
   });
 
-  it("should reject non-image files", () => {
-    const input = { value: "x", files: [{ name: "doc.pdf", type: "application/pdf", size: 100 }] } as any;
+  it('should reject non-image files', () => {
+    const input = {
+      value: 'x',
+      files: [{ name: 'doc.pdf', type: 'application/pdf', size: 100 }],
+    } as any;
 
     component.onImageSelected({ target: input } as any);
 
-    expect(swalMock.warning).toHaveBeenCalledWith("Archivo inválido", "Selecciona un archivo de imagen válido.");
-    expect(input.value).toBe("");
+    expect(swalMock.warning).toHaveBeenCalledWith(
+      'Archivo inválido',
+      'Selecciona un archivo de imagen válido.',
+    );
+    expect(input.value).toBe('');
   });
 
-  it("should reject images larger than 2 MB", () => {
-    const input = { value: "x", files: [{ name: "big.png", type: "image/png", size: 3 * 1024 * 1024 }] } as any;
+  it('should reject images larger than 2 MB', () => {
+    const input = {
+      value: 'x',
+      files: [{ name: 'big.png', type: 'image/png', size: 3 * 1024 * 1024 }],
+    } as any;
 
     component.onImageSelected({ target: input } as any);
 
-    expect(swalMock.warning).toHaveBeenCalledWith("Archivo muy grande", "La imagen no puede superar 2 MB.");
-    expect(input.value).toBe("");
+    expect(swalMock.warning).toHaveBeenCalledWith(
+      'Archivo muy grande',
+      'La imagen no puede superar 2 MB.',
+    );
+    expect(input.value).toBe('');
   });
 
-  it("should resize a valid image and store it in the form", async () => {
-    imageServiceMock.resize.mockResolvedValue("data:image/jpeg;base64,resized");
-    const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
+  it('should resize a valid image and store it in the form', async () => {
+    imageServiceMock.resize.mockResolvedValue('data:image/jpeg;base64,resized');
+    const input = {
+      value: 'x',
+      files: [{ name: 'moto.png', type: 'image/png', size: 500 }],
+    } as any;
 
     component.onImageSelected({ target: input } as any);
     await Promise.resolve();
 
     expect(imageServiceMock.resize).toHaveBeenCalledWith(input.files[0]);
-    expect(component.motorcycleForm.get("image")?.value).toBe("data:image/jpeg;base64,resized");
-    expect(component.previewSrc()).toBe("data:image/jpeg;base64,resized");
+    expect(component.motorcycleForm.get('image')?.value).toBe('data:image/jpeg;base64,resized');
+    expect(component.previewSrc()).toBe('data:image/jpeg;base64,resized');
   });
 
-  it("should warn and reset the input when the image cannot be read", async () => {
-    imageServiceMock.resize.mockRejectedValue(new Error("decode-failed"));
-    const input = { value: "x", files: [{ name: "moto.png", type: "image/png", size: 500 }] } as any;
+  it('should warn and reset the input when the image cannot be read', async () => {
+    imageServiceMock.resize.mockRejectedValue(new Error('decode-failed'));
+    const input = {
+      value: 'x',
+      files: [{ name: 'moto.png', type: 'image/png', size: 500 }],
+    } as any;
 
     component.onImageSelected({ target: input } as any);
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(swalMock.warning).toHaveBeenCalledWith("Archivo inválido", "No se pudo leer la imagen seleccionada.");
-    expect(input.value).toBe("");
+    expect(swalMock.warning).toHaveBeenCalledWith(
+      'Archivo inválido',
+      'No se pudo leer la imagen seleccionada.',
+    );
+    expect(input.value).toBe('');
   });
 });

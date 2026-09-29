@@ -7,11 +7,11 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
-    selector: 'app-home',
-    imports: [MotorcycleCardComponent, RouterModule],
-    templateUrl: './home.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './home.component.scss'
+  selector: 'app-home',
+  imports: [MotorcycleCardComponent, RouterModule],
+  templateUrl: './home.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './home.component.scss',
 })
 export class HomeComponent {
   private readonly motorcycleService = inject(MotorcyclesService);
@@ -27,7 +27,7 @@ export class HomeComponent {
       if (error) {
         this.swal.error(
           'Error',
-          this.httpError.message(error, 'No se pudieron cargar tus motocicletas.')
+          this.httpError.message(error, 'No se pudieron cargar tus motocicletas.'),
         );
       }
     });

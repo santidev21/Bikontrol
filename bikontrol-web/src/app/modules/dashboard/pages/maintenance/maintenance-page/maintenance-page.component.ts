@@ -1,17 +1,25 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MaintenanceService } from '../../../service/maintenance.service';
-import { MaintenanceInfoCardComponent } from "../../../components/maintenance-info-card/maintenance-info-card.component";
+import { MaintenanceInfoCardComponent } from '../../../components/maintenance-info-card/maintenance-info-card.component';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
-    selector: 'app-maintenance-page',
-    imports: [RouterModule, MaintenanceInfoCardComponent],
-    templateUrl: './maintenance-page.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './maintenance-page.component.scss'
+  selector: 'app-maintenance-page',
+  imports: [RouterModule, MaintenanceInfoCardComponent],
+  templateUrl: './maintenance-page.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './maintenance-page.component.scss',
 })
 export class MaintenancePageComponent implements OnInit {
   private readonly maintenanceService = inject(MaintenanceService);
@@ -26,24 +34,37 @@ export class MaintenancePageComponent implements OnInit {
 
   private readonly userMaintenanceId = computed(() => this.motorcycleId() || undefined);
 
-  private readonly userRes = this.maintenanceService.getUserMaintenanceByMotorcycleResource(this.userMaintenanceId);
+  private readonly userRes = this.maintenanceService.getUserMaintenanceByMotorcycleResource(
+    this.userMaintenanceId,
+  );
   private readonly defaultsRes = this.maintenanceService.getDefaultsResource();
 
   readonly userMaintenance = computed(() => (this.userRes.hasValue() ? this.userRes.value()! : []));
-  readonly defaultMaintenance = computed(() => (this.defaultsRes.hasValue() ? this.defaultsRes.value()! : []));
+  readonly defaultMaintenance = computed(() =>
+    this.defaultsRes.hasValue() ? this.defaultsRes.value()! : [],
+  );
 
   constructor() {
     effect(() => {
       const error = this.userRes.error();
       if (error) {
-        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar tus mantenimientos.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(error, 'No se pudieron cargar tus mantenimientos.'),
+        );
       }
     });
 
     effect(() => {
       const error = this.defaultsRes.error();
       if (error) {
-        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar los mantenimientos predeterminados.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(
+            error,
+            'No se pudieron cargar los mantenimientos predeterminados.',
+          ),
+        );
       }
     });
   }
@@ -51,7 +72,10 @@ export class MaintenancePageComponent implements OnInit {
   ngOnInit(): void {
     const motorcycleId = this.route.snapshot.paramMap.get('motorcycleId');
     if (!motorcycleId) {
-      this.swal.warning('Contexto requerido', 'Primero selecciona una motocicleta para gestionar mantenimientos.');
+      this.swal.warning(
+        'Contexto requerido',
+        'Primero selecciona una motocicleta para gestionar mantenimientos.',
+      );
       this.router.navigate(['/dashboard/home']);
       return;
     }

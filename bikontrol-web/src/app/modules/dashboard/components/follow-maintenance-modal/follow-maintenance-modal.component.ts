@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FollowMaintenancePayload, Maintenance } from '../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../service/maintenance.service';
@@ -7,10 +15,10 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
 @Component({
-    selector: 'app-follow-maintenance-modal',
-    imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
-    templateUrl: './follow-maintenance-modal.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-follow-maintenance-modal',
+  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
+  templateUrl: './follow-maintenance-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FollowMaintenanceModalComponent implements OnInit {
   readonly maintenance = input.required<Maintenance>();
@@ -46,7 +54,7 @@ export class FollowMaintenanceModalComponent implements OnInit {
       description: maintenance.description,
       monitoringType: (maintenance.kmInterval ?? 0) > 0 ? 'km' : 'time',
       kmInterval: maintenance.kmInterval || 1,
-      timeIntervalWeeks: maintenance.timeIntervalWeeks || 1
+      timeIntervalWeeks: maintenance.timeIntervalWeeks || 1,
     });
   }
 
@@ -67,9 +75,10 @@ export class FollowMaintenanceModalComponent implements OnInit {
       defaultId: this.maintenance().id,
       trackingType: monitoringType === 'km' ? 'Km' : 'Time',
       kmInterval: monitoringType === 'km' ? followData.kmInterval : 0,
-      timeIntervalWeeks: monitoringType === 'time'
-        ? this.convertToWeeks(followData.timeIntervalWeeks, followData.timeIntervalUnit)
-        : 0
+      timeIntervalWeeks:
+        monitoringType === 'time'
+          ? this.convertToWeeks(followData.timeIntervalWeeks, followData.timeIntervalUnit)
+          : 0,
     };
 
     if (!payload.motorcycleId) {
@@ -87,7 +96,10 @@ export class FollowMaintenanceModalComponent implements OnInit {
       },
       error: (err) => {
         this.isFollowing.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo agregar el mantenimiento.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo agregar el mantenimiento.'),
+        );
       },
     });
   }

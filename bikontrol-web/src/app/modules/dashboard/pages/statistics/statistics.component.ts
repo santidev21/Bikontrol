@@ -7,20 +7,33 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 import { AuthService } from '../../../auth/services/auth.service';
 
 const HEALTH_COLORS: Record<string, string> = {
-  'Vencido': '#ef4444',
-  'Crítico': '#f97316',
-  'Próximo': '#eab308',
-  'OK': '#10b981'
+  Vencido: '#ef4444',
+  Crítico: '#f97316',
+  Próximo: '#eab308',
+  OK: '#10b981',
 };
 
-const MONTH_LABELS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MONTH_LABELS = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+];
 
 @Component({
-    selector: 'app-statistics',
-    imports: [CommonModule, RouterModule],
-    templateUrl: './statistics.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './statistics.component.scss'
+  selector: 'app-statistics',
+  imports: [CommonModule, RouterModule],
+  templateUrl: './statistics.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './statistics.component.scss',
 })
 export class StatisticsComponent {
   private readonly statisticsService = inject(StatisticsService);
@@ -32,25 +45,33 @@ export class StatisticsComponent {
 
   /** Safe view of the value: `value()` throws while the resource is in an error state. */
   readonly summaryData = computed(() =>
-    this.summary.hasValue() ? this.summary.value() : undefined);
+    this.summary.hasValue() ? this.summary.value() : undefined,
+  );
 
   readonly maxKm = computed(() =>
-    Math.max(0, ...(this.summaryData()?.kmByMotorcycle.map((m) => m.km) ?? [])));
+    Math.max(0, ...(this.summaryData()?.kmByMotorcycle.map((m) => m.km) ?? [])),
+  );
 
   readonly maxTypeCount = computed(() =>
-    Math.max(0, ...(this.summaryData()?.recordsByType.map((t) => t.count) ?? [])));
+    Math.max(0, ...(this.summaryData()?.recordsByType.map((t) => t.count) ?? [])),
+  );
 
   readonly maxMonthCount = computed(() =>
-    Math.max(0, ...(this.summaryData()?.last6Months.map((m) => m.count) ?? [])));
+    Math.max(0, ...(this.summaryData()?.last6Months.map((m) => m.count) ?? [])),
+  );
 
   readonly maxHealthCount = computed(() =>
-    Math.max(0, ...(this.summaryData()?.health.map((h) => h.count) ?? [])));
+    Math.max(0, ...(this.summaryData()?.health.map((h) => h.count) ?? [])),
+  );
 
   constructor() {
     effect(() => {
       const error = this.summary.error();
       if (error) {
-        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar las estadísticas.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(error, 'No se pudieron cargar las estadísticas.'),
+        );
       }
     });
   }

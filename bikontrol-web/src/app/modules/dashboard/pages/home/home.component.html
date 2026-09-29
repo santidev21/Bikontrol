@@ -11,9 +11,7 @@
   @if (motorcycles.value().length > 0) {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       @for (moto of motorcycles.value(); track moto.id) {
-        <app-motorcycle-card
-          [motorcycle]="moto"
-          (deleted)="motorcycles.reload()">
+        <app-motorcycle-card [motorcycle]="moto" (deleted)="motorcycles.reload()">
         </app-motorcycle-card>
       }
     </div>
@@ -21,7 +19,10 @@
 
   @if (!isDemo) {
     <div class="mt-6 text-center">
-      <button routerLink="/dashboard/motorcycles/add" class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors">
+      <button
+        routerLink="/dashboard/motorcycles/add"
+        class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
+      >
         + Agregar motocicleta
       </button>
     </div>

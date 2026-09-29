@@ -1,21 +1,39 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Maintenance, CreateMaintenanceRecordRequest } from '../../../interfaces/maintenance.interface';
+import {
+  Maintenance,
+  CreateMaintenanceRecordRequest,
+} from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
 @Component({
-    selector: 'app-register-maintenance-record',
-    imports: [ReactiveFormsModule],
-    templateUrl: './register-maintenance-record.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './register-maintenance-record.component.scss'
+  selector: 'app-register-maintenance-record',
+  imports: [ReactiveFormsModule],
+  templateUrl: './register-maintenance-record.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './register-maintenance-record.component.scss',
 })
 export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
+  private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private maintenanceService = inject(MaintenanceService);
+  private motorcyclesService = inject(MotorcyclesService);
+  private swal = inject(SwalService);
+  private httpError = inject(HttpErrorService);
+
   readonly motorcycleId = signal('');
   readonly maintenances = signal<Maintenance[]>([]);
   readonly selectedMaintenance = signal<Maintenance | undefined>(undefined);
@@ -27,19 +45,11 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
 
   private readonly subscriptions = new Subscription();
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private maintenanceService: MaintenanceService,
-    private motorcyclesService: MotorcyclesService,
-    private swal: SwalService,
-    private httpError: HttpErrorService
-  ) {
+  constructor() {
     this.form = this.fb.group({
       userMaintenanceId: ['', Validators.required],
       performedAt: [this.getTodayDate(), Validators.required],
-      performedKm: [null]
+      performedKm: [null],
     });
   }
 
@@ -54,7 +64,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
 
         this.motorcycleId.set(motorcycleId);
         this.loadData();
-      })
+      }),
     );
 
     this.subscriptions.add(
@@ -62,7 +72,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
         this.selectedMaintenance.set(this.maintenances().find((m) => m.id === maintenanceId));
         this.updateKmControlByTrackingType();
         this.loadLastMaintenanceKm();
-      })
+      }),
     );
   }
 
@@ -76,7 +86,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
     this.motorcyclesService.getCurrentKm(id).subscribe({
       next: (res) => {
         this.currentKm.set(res.km);
-      }
+      },
     });
 
     this.maintenanceService.getUserMaintenanceByMotorcycle(id).subscribe({
@@ -85,7 +95,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.swal.error('Error', 'No se pudo cargar los mantenimientos de la moto.');
-      }
+      },
     });
   }
 
@@ -113,7 +123,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       next: (records) => {
         const last = records.find((x) => x.userMaintenanceId === maintenanceId);
         this.lastMaintenanceKm.set(last?.performedKm ?? null);
-      }
+      },
     });
   }
 
@@ -148,7 +158,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       motorcycleId: this.motorcycleId(),
       userMaintenanceId: this.form.get('userMaintenanceId')?.value,
       performedAt: performedAt.toISOString(),
-      performedKm: selected.trackingType === 'Km' ? performedKm : null
+      performedKm: selected.trackingType === 'Km' ? performedKm : null,
     };
 
     this.isSubmitting.set(true);
@@ -157,14 +167,17 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
         this.isSubmitting.set(false);
         this.swal.success('¡Éxito!', 'Se registró el mantenimiento correctamente.').then(() => {
           this.router.navigate(['/dashboard/motorcycles/summary'], {
-            queryParams: { motorcycleId: this.motorcycleId() }
+            queryParams: { motorcycleId: this.motorcycleId() },
           });
         });
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo registrar el mantenimiento.'));
-      }
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo registrar el mantenimiento.'),
+        );
+      },
     });
   }
 

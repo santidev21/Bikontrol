@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { AfterViewInit, Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -14,27 +14,27 @@ declare global {
 }
 
 @Component({
-    selector: 'app-login',
-    imports: [AUTH_IMPORTS],
-    templateUrl: './login.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './login.component.scss'
+  selector: 'app-login',
+  imports: [AUTH_IMPORTS],
+  templateUrl: './login.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent implements AfterViewInit {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private httpError = inject(HttpErrorService);
+
   loginForm: FormGroup;
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly demoLoading = signal(false);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private httpError: HttpErrorService
-  ) {
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
@@ -67,14 +67,14 @@ export class LoginComponent implements AfterViewInit {
 
     const payload = {
       email: this.loginForm.value.email,
-      password: this.loginForm.value.password
+      password: this.loginForm.value.password,
     };
 
     this.authService.login(payload.email, payload.password).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
         this.errorMessage.set(this.httpError.message(error));
-      }
+      },
     });
   }
 
@@ -86,7 +86,7 @@ export class LoginComponent implements AfterViewInit {
       error: (error) => {
         this.demoLoading.set(false);
         this.errorMessage.set(this.httpError.message(error, 'No se pudo iniciar la demo.'));
-      }
+      },
     });
   }
 
@@ -95,7 +95,7 @@ export class LoginComponent implements AfterViewInit {
 
     window.google.accounts.id.initialize({
       client_id: environment.googleClientId,
-      callback: (response: { credential?: string }) => this.onGoogleCredential(response)
+      callback: (response: { credential?: string }) => this.onGoogleCredential(response),
     });
 
     const element = document.getElementById('google-button');
@@ -104,7 +104,7 @@ export class LoginComponent implements AfterViewInit {
         theme: 'outline',
         size: 'large',
         width: 280,
-        shape: 'rectangular'
+        shape: 'rectangular',
       });
     }
   }
@@ -119,7 +119,7 @@ export class LoginComponent implements AfterViewInit {
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
         this.errorMessage.set(this.httpError.message(error));
-      }
+      },
     });
   }
 }

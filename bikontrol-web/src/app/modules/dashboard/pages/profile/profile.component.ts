@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../../service/user.service';
@@ -9,11 +16,11 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { UpdateService } from '../../../../shared/services/update.service';
 
 @Component({
-    selector: 'app-profile',
-    imports: [CommonModule, FormsModule],
-    templateUrl: './profile.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './profile.component.scss'
+  selector: 'app-profile',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './profile.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './profile.component.scss',
 })
 export class ProfileComponent {
   private readonly userService = inject(UserService);
@@ -24,7 +31,9 @@ export class ProfileComponent {
   private readonly updateService = inject(UpdateService);
 
   private readonly profileRes = this.userService.getMeResource();
-  readonly profile = computed(() => (this.profileRes.hasValue() ? this.profileRes.value() : undefined));
+  readonly profile = computed(() =>
+    this.profileRes.hasValue() ? this.profileRes.value() : undefined,
+  );
   readonly isLoading = computed(() => this.profileRes.isLoading());
 
   readonly isEditingName = signal(false);
@@ -86,7 +95,7 @@ export class ProfileComponent {
       error: (err) => {
         this.isSavingName.set(false);
         this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar tu nombre.'));
-      }
+      },
     });
   }
 
@@ -126,8 +135,11 @@ export class ProfileComponent {
       },
       error: (err) => {
         this.isChangingPassword.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar tu contraseña.'));
-      }
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo actualizar tu contraseña.'),
+        );
+      },
     });
   }
 

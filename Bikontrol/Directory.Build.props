@@ -12,4 +12,26 @@
     -->
     <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
   </ItemGroup>
+
+  <!--
+    Shared Roslyn analyzer settings.
+
+    Ratchet strategy: analyzers run as WARNINGS for now, so the build stays green
+    on the existing codebase while still surfacing issues. Promote individual rules
+    to `error` in .editorconfig as the code gets cleaned up. Do NOT add
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors> here until the backlog is ~0.
+  -->
+  <PropertyGroup>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.35.0.4138" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Test projects: xUnit naming conventions intentionally use underscores. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.Contains('.Tests'))">
+    <NoWarn>$(NoWarn);CA1707;CA1861;CA1822;CA2007</NoWarn>
+  </PropertyGroup>
 </Project>

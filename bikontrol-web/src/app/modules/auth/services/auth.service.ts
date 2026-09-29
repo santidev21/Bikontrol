@@ -1,51 +1,65 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, map, tap, throwError } from 'rxjs';
 import { environment } from '@env/environment';
-import { ForgotPasswordResponse, LoginResponse, RegisterRequest, RegisterResponse, ResetPasswordResponse } from '../interfaces/auth.model';
+import {
+  ForgotPasswordResponse,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  ResetPasswordResponse,
+} from '../interfaces/auth.model';
 
 const TOKEN_KEY = 'token';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const ROLE_KEY = 'role';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
+  private http = inject(HttpClient);
+
   private apiUrl = `${environment.apiUrl}/auth`;
 
-  constructor(private http: HttpClient) {}
-
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
-      tap(response => this.storeSession(response))
-    );
+    return this.http
+      .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .pipe(tap((response) => this.storeSession(response)));
   }
 
   register(data: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data).pipe(
-      tap(response => this.storeSession(response))
-    );
+    return this.http
+      .post<RegisterResponse>(`${this.apiUrl}/register`, data)
+      .pipe(tap((response) => this.storeSession(response)));
   }
 
   googleLogin(idToken: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/google`, { idToken }).pipe(
-      tap(response => this.storeSession(response))
-    );
+    return this.http
+      .post<LoginResponse>(`${this.apiUrl}/google`, { idToken })
+      .pipe(tap((response) => this.storeSession(response)));
   }
 
   demoLogin(): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/demo`, {}).pipe(
-      tap(response => this.storeSession(response))
-    );
+    return this.http
+      .post<LoginResponse>(`${this.apiUrl}/demo`, {})
+      .pipe(tap((response) => this.storeSession(response)));
   }
 
   forgotPassword(email: string): Observable<ForgotPasswordResponse> {
     return this.http.post<ForgotPasswordResponse>(`${this.apiUrl}/forgot-password`, { email });
   }
 
-  resetPassword(email: string, token: string, newPassword: string): Observable<ResetPasswordResponse> {
-    return this.http.post<ResetPasswordResponse>(`${this.apiUrl}/reset-password`, { email, token, newPassword });
+  resetPassword(
+    email: string,
+    token: string,
+    newPassword: string,
+  ): Observable<ResetPasswordResponse> {
+    return this.http.post<ResetPasswordResponse>(`${this.apiUrl}/reset-password`, {
+      email,
+      token,
+      newPassword,
+    });
   }
 
   refreshSession(): Observable<boolean> {
@@ -54,8 +68,8 @@ export class AuthService {
       return throwError(() => new Error('No refresh token available'));
     }
     return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
-      tap(response => this.storeSession(response)),
-      map(() => true)
+      tap((response) => this.storeSession(response)),
+      map(() => true),
     );
   }
 

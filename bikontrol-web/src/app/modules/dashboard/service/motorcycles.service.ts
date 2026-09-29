@@ -1,19 +1,23 @@
-import { Injectable, Signal } from '@angular/core';
+import { Injectable, Signal, inject } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Motorcycle, SaveMotorcycleDTO, CurrentKmResponse } from '../interfaces/motorcycle.interface';
+import {
+  Motorcycle,
+  SaveMotorcycleDTO,
+  CurrentKmResponse,
+} from '../interfaces/motorcycle.interface';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MotorcyclesService {
+  private http = inject(HttpClient);
+
   private apiUrl = `${environment.apiUrl}/motorcycles`;
-  
-  constructor(private http: HttpClient) {}
 
   getMyMotorcycles(): Observable<Motorcycle[]> {
-    return this.http.get<Motorcycle[]>(`${this.apiUrl}/mine`,);
+    return this.http.get<Motorcycle[]>(`${this.apiUrl}/mine`);
   }
 
   /**
@@ -48,7 +52,9 @@ export class MotorcyclesService {
    * Reactive read of a motorcycle's current km. Loads automatically when the
    * id signal has a value (and reloads when it changes).
    */
-  getCurrentKmResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<CurrentKmResponse | undefined> {
+  getCurrentKmResource(
+    motorcycleId: Signal<string | undefined>,
+  ): HttpResourceRef<CurrentKmResponse | undefined> {
     return httpResource<CurrentKmResponse>(() => {
       const id = motorcycleId();
       return id ? `${this.apiUrl}/${id}/km/current` : undefined;
@@ -61,7 +67,7 @@ export class MotorcyclesService {
 
   rollbackLastKm(id: string, newKm: number): Observable<void> {
     return this.http.request<void>('delete', `${this.apiUrl}/${id}/km-history/last`, {
-      body: { newKm }
+      body: { newKm },
     });
   }
 }
