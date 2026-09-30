@@ -1,6 +1,6 @@
 # Bikontrol Project Context
 
-This file is the working context for Bikontrol. Keep it updated when architecture, routing, scripts, or conventions change. See [docs/specs/](docs/specs/) for detail docs.
+This file is the working context for Bikontrol. Keep it updated when architecture, routing, scripts, or conventions change. See [docs/specs/](docs/specs/) for detail docs and [docs/adr/](docs/adr/) for decisions.
 
 ## Project Snapshot
 Motorcycle tracking and maintenance app:
@@ -19,7 +19,7 @@ Bikontrol/
 ├─ scripts/         # Orchestration scripts (run-bikontrol.mjs)
 ├─ deploy/          # Deployment configs
 ├─ docker/          # Dockerfiles (api, web)
-├─ docs/            # Guides, specs (docs/specs/)
+├─ docs/            # Guides, specs, ADRs (docs/specs/, docs/adr/)
 ├─ .opencode/       # AI home: agent/, command/, skills/ (tracked; local plugin scaffold ignored)
 ├─ .github/         # CI/CD workflows
 ├─ docker-compose.yml
@@ -56,6 +56,17 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - Code review: use the `reviewer` agent for a diff/PR and the `repo-auditor` agent for a whole-repo, graded quality + security report. `/review [repo|all]` orchestrates either; both are read-only and confirm findings against `npm run test`.
 - `opencode.json` holds instructions, MCP servers and permissions. Skills, agents and commands need no config — opencode auto-discovers `.opencode/`.
 - `AGENTS.md` is the single source of truth; `docs/specs/` holds details.
+
+## Documentation Policy
+
+Docs capture decisions and current state, never session narration.
+
+- **Allowed:** `README` (how to run), `docs/adr/NNN-*.md` (one decision: context, options, decision,
+  consequences), `docs/specs/*.md` (current design and business rules), runbooks (`DEPLOYMENT`, …)
+  and any current audit/security doc.
+- **Forbidden:** phase reports, progress logs, "what I did" narration and per-session summaries.
+  When a change needs a durable record, update the relevant spec or add an ADR — do not create a
+  report file. This applies to AI output too.
 
 ## Working Rules For This Repo
 - Language: all code, comments, XML docs, tests, commit messages, PR titles/descriptions, docs (`README`, `docs/`, `AGENTS.md`), and AI output must be in English. Only user-facing UI strings may be in Spanish (via i18n files), never hardcoded Spanish in code/comments.

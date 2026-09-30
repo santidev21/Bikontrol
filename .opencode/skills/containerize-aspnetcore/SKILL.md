@@ -110,8 +110,7 @@ Any settings that are not specified will be set to default values. The default v
 ## Execution Process
 
 1. Review the containerization settings above to understand the containerization requirements
-2. Create a `progress.md` file to track changes with check marks
-3. Determine the .NET version from the project's .csproj file by checking the `TargetFramework` element
+2. Determine the .NET version from the project's .csproj file by checking the `TargetFramework` element
 4. Select the appropriate Linux container image based on:
    - The .NET version detected from the project
    - The Linux distribution specified in containerization settings (Alpine, Ubuntu, Chiseled, or Azure Linux (Mariner))
@@ -175,36 +174,11 @@ docker build -t aspnetcore-app:latest .
 
 If the build fails, review the error messages and make necessary adjustments to the Dockerfile or project configuration. Report success/failure.
 
-## Progress Tracking
+## Reporting
 
-Maintain a `progress.md` file with the following structure:
-```markdown
-# Containerization Progress
-
-## Environment Detection
-- [ ] .NET version detection (version: ___)
-- [ ] Linux distribution selection (distribution: ___)
-
-## Configuration Changes
-- [ ] Application configuration verification for environment variable support
-- [ ] NuGet package source configuration (if applicable)
-
-## Containerization
-- [ ] Dockerfile creation
-- [ ] .dockerignore file creation
-- [ ] Build stage created with SDK image
-- [ ] csproj file(s) copied for package restore
-- [ ] NuGet.config copied if applicable
-- [ ] Runtime stage created with runtime image
-- [ ] Non-root user configuration
-- [ ] Dependency handling (system packages, native libraries, tools, etc.)
-- [ ] Health check configuration (if applicable)
-- [ ] Special requirements implementation
-
-## Verification
-- [ ] Review containerization settings and make sure that all requirements are met
-- [ ] Docker build success
-```
+Do not create progress or report files. When the work is done, reply with a short summary:
+environment detected, files created, and the actual `docker build` result. Durable decisions belong
+in the project's docs (`AGENTS.md`, `docs/specs/`, ADRs) — never in a per-task `progress.md`.
 
 Do not pause for confirmation between steps. Continue methodically until the application has been containerized and Docker build succeeds.
 
