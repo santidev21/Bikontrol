@@ -1,5 +1,14 @@
-
-import { Component, EventEmitter, HostListener, Input, OnInit, Output, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Motorcycle } from '../../interfaces/motorcycle.interface';
 import { MotorcyclesService } from '../../service/motorcycles.service';
@@ -7,27 +16,24 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { AuthService } from '../../../auth/services/auth.service';
 
-
 @Component({
-    selector: 'app-motorcycle-card',
-    imports: [],
-    templateUrl: './motorcycle-card.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './motorcycle-card.component.scss'
+  selector: 'app-motorcycle-card',
+  imports: [],
+  templateUrl: './motorcycle-card.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './motorcycle-card.component.scss',
 })
 export class MotorcycleCardComponent implements OnInit {
+  private router = inject(Router);
+  private motorcyclesService = inject(MotorcyclesService);
+  private swal = inject(SwalService);
+  private httpError = inject(HttpErrorService);
+  private authService = inject(AuthService);
+
   @Input() motorcycle!: Motorcycle;
   @Output() deleted = new EventEmitter<void>();
   readonly menuOpen = signal(false);
   readonly currentKm = signal<number | null>(null);
-
-  constructor(
-    private router: Router,
-    private motorcyclesService: MotorcyclesService,
-    private swal : SwalService,
-    private httpError: HttpErrorService,
-    private authService: AuthService
-  ) {}
 
   get isDemo(): boolean {
     return this.authService.isDemo();
@@ -43,36 +49,35 @@ export class MotorcycleCardComponent implements OnInit {
       },
       error: () => {
         this.currentKm.set(this.motorcycle?.km ?? 0);
-      }
+      },
     });
   }
 
   goToDetails() {
     this.router.navigate(['/dashboard/motorcycles/summary'], {
-      state: { motorcycle: this.motorcycle }
+      state: { motorcycle: this.motorcycle },
     });
   }
-  
+
   onEdit(_e: Event) {
     this.router.navigate(['/dashboard/motorcycles/edit', this.motorcycle.id]);
   }
 
   deleteMotorcycle() {
     this.motorcyclesService.deleteMotorcycle(this.motorcycle.id!).subscribe({
-        next: () => {
-          this.swal
-            .success('¡Eliminada!', 'La motocicleta fue eliminada correctamente.')
-            .then(() => this.deleted.emit());
-        },
-        error: (err) => {
-          this.swal.error(
-            'Error',
-            this.httpError.message(err, 'No se pudo eliminar la motocicleta.')
-          );
-        },
-      });
+      next: () => {
+        this.swal
+          .success('¡Eliminada!', 'La motocicleta fue eliminada correctamente.')
+          .then(() => this.deleted.emit());
+      },
+      error: (err) => {
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo eliminar la motocicleta.'),
+        );
+      },
+    });
   }
-
 
   confirmDelete(event: Event) {
     event.stopPropagation();
@@ -83,7 +88,7 @@ export class MotorcycleCardComponent implements OnInit {
         `Esto eliminará permanentemente "${this.motorcycle.name}".`,
         'Sí, eliminar',
         'Cancelar',
-        'warning'
+        'warning',
       )
       .then((result) => {
         if (result.isConfirmed) {

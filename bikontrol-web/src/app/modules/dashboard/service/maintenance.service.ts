@@ -1,4 +1,4 @@
-import { Injectable, Signal } from '@angular/core';
+import { Injectable, Signal, inject } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -8,16 +8,16 @@ import {
   FollowMaintenancePayload,
   CreateMaintenanceRecordRequest,
   MaintenanceRecord,
-  UpcomingMaintenance
+  UpcomingMaintenance,
 } from '../interfaces/maintenance.interface';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MaintenanceService {
- private apiUrl = `${environment.apiUrl}/maintenances`;
-  
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+
+  private apiUrl = `${environment.apiUrl}/maintenances`;
 
   getDefaultMaintenance(): Observable<Maintenance[]> {
     return this.http.get<Maintenance[]>(`${this.apiUrl}/defaults`);
@@ -42,7 +42,7 @@ export class MaintenanceService {
   deleteMaintenance(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/mine/${id}`);
   }
-  
+
   followDefaultMaintenance(payload: FollowMaintenancePayload): Observable<Maintenance> {
     return this.http.post<Maintenance>(`${this.apiUrl}/follow`, payload);
   }
@@ -51,7 +51,9 @@ export class MaintenanceService {
     return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
   }
 
-  registerMaintenanceRecord(payload: CreateMaintenanceRecordRequest): Observable<MaintenanceRecord> {
+  registerMaintenanceRecord(
+    payload: CreateMaintenanceRecordRequest,
+  ): Observable<MaintenanceRecord> {
     return this.http.post<MaintenanceRecord>(`${this.apiUrl}/records`, payload);
   }
 
@@ -60,7 +62,9 @@ export class MaintenanceService {
   }
 
   getUpcomingByMotorcycle(motorcycleId: string): Observable<UpcomingMaintenance[]> {
-    return this.http.get<UpcomingMaintenance[]>(`${this.apiUrl}/motorcycle/${motorcycleId}/upcoming`);
+    return this.http.get<UpcomingMaintenance[]>(
+      `${this.apiUrl}/motorcycle/${motorcycleId}/upcoming`,
+    );
   }
 
   /** Reactive read of the predefined maintenance catalog. */
@@ -69,7 +73,9 @@ export class MaintenanceService {
   }
 
   /** Reactive read of the user's maintenance for one motorcycle. */
-  getUserMaintenanceByMotorcycleResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<Maintenance[] | undefined> {
+  getUserMaintenanceByMotorcycleResource(
+    motorcycleId: Signal<string | undefined>,
+  ): HttpResourceRef<Maintenance[] | undefined> {
     return httpResource<Maintenance[]>(() => {
       const id = motorcycleId();
       return id ? `${this.apiUrl}/mine/motorcycle/${id}` : undefined;
@@ -80,7 +86,9 @@ export class MaintenanceService {
    * Reactive read of the upcoming maintenances. Loads automatically when the
    * motorcycle id signal has a value.
    */
-  getUpcomingResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<UpcomingMaintenance[] | undefined> {
+  getUpcomingResource(
+    motorcycleId: Signal<string | undefined>,
+  ): HttpResourceRef<UpcomingMaintenance[] | undefined> {
     return httpResource<UpcomingMaintenance[]>(() => {
       const id = motorcycleId();
       return id ? `${this.apiUrl}/motorcycle/${id}/upcoming` : undefined;
@@ -91,11 +99,12 @@ export class MaintenanceService {
    * Reactive read of the maintenance records. Loads automatically when the
    * motorcycle id signal has a value.
    */
-  getRecordsResource(motorcycleId: Signal<string | undefined>): HttpResourceRef<MaintenanceRecord[] | undefined> {
+  getRecordsResource(
+    motorcycleId: Signal<string | undefined>,
+  ): HttpResourceRef<MaintenanceRecord[] | undefined> {
     return httpResource<MaintenanceRecord[]>(() => {
       const id = motorcycleId();
       return id ? `${this.apiUrl}/motorcycle/${id}/records` : undefined;
     });
   }
-
 }

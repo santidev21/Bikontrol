@@ -2,10 +2,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
   name: 'intervalFormat',
-  standalone: true
+  standalone: true,
 })
 export class IntervalFormatPipe implements PipeTransform {
-
   /**
    * Transforms a number of weeks into a readable interval string.
    * Rules:
@@ -16,7 +15,7 @@ export class IntervalFormatPipe implements PipeTransform {
    */
   transform(weeks: number | null | undefined): string {
     weeks = parseInt(weeks as any, 10);
-    
+
     if (!weeks || weeks <= 0) return 'N/A';
 
     if (weeks === 1) return 'Semanal';

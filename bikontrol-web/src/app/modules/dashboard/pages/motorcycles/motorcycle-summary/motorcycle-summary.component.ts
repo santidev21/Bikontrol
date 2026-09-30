@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Motorcycle } from '../../../interfaces/motorcycle.interface';
@@ -11,11 +20,11 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
-    selector: 'app-motorcycle-summary',
-    imports: [CommonModule, RouterModule, FormsModule],
-    templateUrl: './motorcycle-summary.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './motorcycle-summary.component.scss'
+  selector: 'app-motorcycle-summary',
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './motorcycle-summary.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './motorcycle-summary.component.scss',
 })
 export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
@@ -65,7 +74,10 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     effect(() => {
       const error = this.upcomingRes.error();
       if (error) {
-        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar los mantenimientos próximos.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(error, 'No se pudieron cargar los mantenimientos próximos.'),
+        );
       }
     });
 
@@ -78,20 +90,27 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     effect(() => {
       const error = this.recordsRes.error();
       if (error) {
-        this.swal.error('Error', this.httpError.message(error, 'No se pudieron cargar los registros de mantenimiento.'));
+        this.swal.error(
+          'Error',
+          this.httpError.message(error, 'No se pudieron cargar los registros de mantenimiento.'),
+        );
       }
     });
   }
 
   ngOnInit(): void {
-    const navState = this.router.getCurrentNavigation()?.extras?.state as { motorcycle?: Motorcycle };
-    this.motorcycle.set(navState?.motorcycle ?? (history.state as { motorcycle?: Motorcycle })?.motorcycle);
+    const navState = this.router.getCurrentNavigation()?.extras?.state as {
+      motorcycle?: Motorcycle;
+    };
+    this.motorcycle.set(
+      navState?.motorcycle ?? (history.state as { motorcycle?: Motorcycle })?.motorcycle,
+    );
 
     const motorcycleIdFromQuery = this.route.snapshot.queryParamMap.get('motorcycleId');
     if (motorcycleIdFromQuery && !this.motorcycle()?.id) {
       this.motorcyclesService.getById(motorcycleIdFromQuery).subscribe({
         next: (motorcycle) => this.motorcycle.set(motorcycle),
-        error: () => this.router.navigate(['/dashboard/home'])
+        error: () => this.router.navigate(['/dashboard/home']),
       });
       return;
     }
@@ -164,8 +183,11 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isSubmittingKm.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar el kilometraje.'));
-      }
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo actualizar el kilometraje.'),
+        );
+      },
     });
   }
 
@@ -173,28 +195,35 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     const id = this.motorcycleId();
     if (!id || this.isRollingBackKm()) return;
 
-    this.swal.confirm(
-      'Confirmar reversión',
-      'Esto revertirá únicamente el último cambio de kilometraje.',
-      'Revertir',
-      'Cancelar'
-    ).then((result) => {
-      if (!result.isConfirmed) return;
+    this.swal
+      .confirm(
+        'Confirmar reversión',
+        'Esto revertirá únicamente el último cambio de kilometraje.',
+        'Revertir',
+        'Cancelar',
+      )
+      .then((result) => {
+        if (!result.isConfirmed) return;
 
-      this.isRollingBackKm.set(true);
-      this.motorcyclesService.rollbackLastKm(id, this.currentKm()).subscribe({
-        next: () => {
-          this.swal.success('¡Éxito!', 'Se revirtió el último cambio de kilometraje.').then(() => {
-            this.reloadData();
-          });
-        },
-        error: (err) => {
-          this.swal.error('Error', this.httpError.message(err, 'No se pudo revertir el kilometraje.'));
-        },
-        complete: () => {
-          this.isRollingBackKm.set(false);
-        }
+        this.isRollingBackKm.set(true);
+        this.motorcyclesService.rollbackLastKm(id, this.currentKm()).subscribe({
+          next: () => {
+            this.swal
+              .success('¡Éxito!', 'Se revirtió el último cambio de kilometraje.')
+              .then(() => {
+                this.reloadData();
+              });
+          },
+          error: (err) => {
+            this.swal.error(
+              'Error',
+              this.httpError.message(err, 'No se pudo revertir el kilometraje.'),
+            );
+          },
+          complete: () => {
+            this.isRollingBackKm.set(false);
+          },
+        });
       });
-    });
   }
 }

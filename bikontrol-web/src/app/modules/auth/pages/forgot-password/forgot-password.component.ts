@@ -1,31 +1,36 @@
-
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
 
 @Component({
-    selector: 'app-forgot-password',
-    imports: [FormsModule, ReactiveFormsModule, RouterModule],
-    templateUrl: './forgot-password.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './forgot-password.component.scss'
+  selector: 'app-forgot-password',
+  imports: [FormsModule, ReactiveFormsModule, RouterModule],
+  templateUrl: './forgot-password.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './forgot-password.component.scss',
 })
 export class ForgotPasswordComponent {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private httpError = inject(HttpErrorService);
+
   form: FormGroup;
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private httpError: HttpErrorService
-  ) {
+  constructor() {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]]
+      email: ['', [Validators.required, Validators.email]],
     });
   }
 
@@ -50,7 +55,7 @@ export class ForgotPasswordComponent {
       },
       error: (error) => {
         this.errorMessage.set(this.httpError.message(error));
-      }
+      },
     });
   }
 }

@@ -15,7 +15,10 @@ function parseEnvFile(file) {
     if (idx === -1) continue;
     const key = trimmed.substring(0, idx).trim();
     let value = trimmed.substring(idx + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
     env[key] = value;

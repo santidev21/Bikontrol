@@ -1,13 +1,16 @@
-import { Injectable, OnDestroy, signal } from '@angular/core';
+import { Injectable, OnDestroy, signal, inject } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { Subscription, filter } from 'rxjs';
 import { environment } from '@env/environment';
 import { SwalService } from './swal.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UpdateService implements OnDestroy {
+  private swUpdate = inject(SwUpdate);
+  private swal = inject(SwalService);
+
   /** Etiqueta legible de la versión (se sube solo en releases con cambios visibles). */
   readonly appVersion: string = environment.appVersion;
 
@@ -16,11 +19,6 @@ export class UpdateService implements OnDestroy {
 
   private versionSub?: Subscription;
   private promptShown = false;
-
-  constructor(
-    private swUpdate: SwUpdate,
-    private swal: SwalService
-  ) {}
 
   init(): void {
     if (!this.swUpdate.isEnabled) return;
@@ -67,7 +65,7 @@ export class UpdateService implements OnDestroy {
       'Nueva versión disponible',
       'Hay una actualización de Bikontrol. Recarga para aplicarla cuando quieras.',
       'Recargar ahora',
-      'Más tarde'
+      'Más tarde',
     );
 
     if (result.isConfirmed) {

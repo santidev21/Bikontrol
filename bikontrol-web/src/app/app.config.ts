@@ -11,13 +11,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([refreshInterceptor, authInterceptor])
-    ),
+    provideHttpClient(withFetch(), withInterceptors([refreshInterceptor, authInterceptor])),
     provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          })
-  ]
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
+  ],
 };

@@ -1,8 +1,12 @@
-import { FormBuilder } from "@angular/forms";
-import { of, throwError } from "rxjs";
-import { LoginComponent } from "./login.component";
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { FormBuilder } from '@angular/forms';
+import { of, throwError } from 'rxjs';
+import { LoginComponent } from './login.component';
+import { AuthService } from '../../services/auth.service';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
-describe("LoginComponent", () => {
+describe('LoginComponent', () => {
   let component: LoginComponent;
   let authServiceMock: any;
   let routerMock: any;
@@ -11,32 +15,42 @@ describe("LoginComponent", () => {
   beforeEach(() => {
     authServiceMock = {
       login: vi.fn(),
-      googleLogin: vi.fn()
+      googleLogin: vi.fn(),
     };
     routerMock = {
-      navigate: vi.fn()
+      navigate: vi.fn(),
     };
     httpErrorMock = {
-      message: vi.fn((error: any, fallback = "Error inesperado en el servidor.") => {
+      message: vi.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
         return error?.error?.error || error?.error?.message || error?.message || fallback;
-      })
+      }),
     };
 
-    component = new LoginComponent(new FormBuilder(), authServiceMock, routerMock, httpErrorMock);
+    // The component uses inject(), so it must be created inside an injection context.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: FormBuilder, useValue: new FormBuilder() },
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: Router, useValue: routerMock },
+        { provide: HttpErrorService, useValue: httpErrorMock },
+      ],
+    });
+    component = TestBed.runInInjectionContext(() => new LoginComponent());
   });
 
-  it("should build a form with required controls", () => {
-    expect(component.loginForm.contains("email")).toBe(true);
-    expect(component.loginForm.contains("password")).toBe(true);
+  it('should build a form with required controls', () => {
+    expect(component.loginForm.contains('email')).toBe(true);
+    expect(component.loginForm.contains('password')).toBe(true);
   });
 
-  it("should mark controls as invalid when touched and empty", () => {
-    const email = component.loginForm.get("email");
+  it('should mark controls as invalid when touched and empty', () => {
+    const email = component.loginForm.get('email');
     email?.markAsTouched();
-    expect(component.isInvalid("email")).toBe(true);
+    expect(component.isInvalid('email')).toBe(true);
   });
 
-  it("should not submit if the form is invalid", () => {
+  it('should not submit if the form is invalid', () => {
     component.onSubmit();
 
     expect(component.submitted()).toBe(true);
@@ -44,72 +58,74 @@ describe("LoginComponent", () => {
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
-  it("should log in and navigate to dashboard on success", () => {
-    authServiceMock.login.mockReturnValue(of({ token: "token-123" }));
+  it('should log in and navigate to dashboard on success', () => {
+    authServiceMock.login.mockReturnValue(of({ token: 'token-123' }));
     component.loginForm.setValue({
-      email: "user@example.com",
-      password: "secret1"
+      email: 'user@example.com',
+      password: 'secret1',
     });
 
     component.onSubmit();
 
-    expect(authServiceMock.login).toHaveBeenCalledWith("user@example.com", "secret1");
-    expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
+    expect(authServiceMock.login).toHaveBeenCalledWith('user@example.com', 'secret1');
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
     expect(component.errorMessage()).toBeNull();
   });
 
-  it("should expose the backend error message on login failure", () => {
+  it('should expose the backend error message on login failure', () => {
     authServiceMock.login.mockReturnValue(
-      throwError(() => ({ error: { error: "Credenciales invalidas" } }))
+      throwError(() => ({ error: { error: 'Credenciales invalidas' } })),
     );
     component.loginForm.setValue({
-      email: "user@example.com",
-      password: "secret1"
+      email: 'user@example.com',
+      password: 'secret1',
     });
 
     component.onSubmit();
 
     expect(httpErrorMock.message).toHaveBeenCalled();
-    expect(component.errorMessage()).toBe("Credenciales invalidas");
+    expect(component.errorMessage()).toBe('Credenciales invalidas');
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
-  it("should fallback to a generic error message when backend does not send one", () => {
+  it('should fallback to a generic error message when backend does not send one', () => {
     authServiceMock.login.mockReturnValue(throwError(() => ({ error: {} })));
     component.loginForm.setValue({
-      email: "user@example.com",
-      password: "secret1"
+      email: 'user@example.com',
+      password: 'secret1',
     });
 
     component.onSubmit();
 
-    expect(component.errorMessage()).toBe("Error inesperado en el servidor.");
+    expect(component.errorMessage()).toBe('Error inesperado en el servidor.');
   });
 
-  it("should navigate to dashboard after a successful google login", () => {
-    authServiceMock.googleLogin.mockReturnValue(of({ token: "google-token", refreshToken: "g-refresh" }));
+  it('should navigate to dashboard after a successful google login', () => {
+    authServiceMock.googleLogin.mockReturnValue(
+      of({ token: 'google-token', refreshToken: 'g-refresh' }),
+    );
 
-    component.onGoogleCredential({ credential: "id-token-abc" });
+    component.onGoogleCredential({ credential: 'id-token-abc' });
 
-    expect(authServiceMock.googleLogin).toHaveBeenCalledWith("id-token-abc");
-    expect(routerMock.navigate).toHaveBeenCalledWith(["/dashboard"]);
+    expect(authServiceMock.googleLogin).toHaveBeenCalledWith('id-token-abc');
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
   });
 
-  it("should set an error when google credential is missing", () => {
+  it('should set an error when google credential is missing', () => {
     component.onGoogleCredential({});
 
     expect(authServiceMock.googleLogin).not.toHaveBeenCalled();
-    expect(component.errorMessage()).toContain("Google");
+    expect(component.errorMessage()).toContain('Google');
   });
 
-  it("should expose the backend error message on google login failure", () => {
+  it('should expose the backend error message on google login failure', () => {
     authServiceMock.googleLogin.mockReturnValue(
-      throwError(() => ({ error: { error: "Token invalido" } }))
+      throwError(() => ({ error: { error: 'Token invalido' } })),
     );
 
-    component.onGoogleCredential({ credential: "id-token-abc" });
+    component.onGoogleCredential({ credential: 'id-token-abc' });
 
-    expect(component.errorMessage()).toBe("Token invalido");
+    expect(component.errorMessage()).toBe('Token invalido');
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 });

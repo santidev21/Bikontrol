@@ -15,7 +15,7 @@ function fakeResource<T>(initial?: T) {
     error: signal<Error | undefined>(undefined),
     isLoading: signal(false),
     status: signal('idle'),
-    reload: vi.fn()
+    reload: vi.fn(),
   } as any;
 }
 
@@ -28,7 +28,7 @@ describe('MaintenancePageComponent', () => {
   beforeEach(() => {
     maintenanceServiceMock = {
       getUserMaintenanceByMotorcycleResource: vi.fn(() => fakeResource()),
-      getDefaultsResource: vi.fn(() => fakeResource())
+      getDefaultsResource: vi.fn(() => fakeResource()),
     };
     routeMock = { snapshot: { paramMap: { get: vi.fn() } } };
     routerMock = { navigate: vi.fn() };
@@ -41,9 +41,12 @@ describe('MaintenancePageComponent', () => {
         { provide: ActivatedRoute, useValue: routeMock },
         { provide: Router, useValue: routerMock },
         { provide: SwalService, useValue: swalMock },
-        { provide: HttpErrorService, useValue: { message: (err: any, fallback: string) => err?.message ?? fallback } },
-        { provide: AuthService, useValue: { isDemo: () => false } }
-      ]
+        {
+          provide: HttpErrorService,
+          useValue: { message: (err: any, fallback: string) => err?.message ?? fallback },
+        },
+        { provide: AuthService, useValue: { isDemo: () => false } },
+      ],
     });
   });
 
@@ -59,14 +62,16 @@ describe('MaintenancePageComponent', () => {
 
     expect(swalMock.warning).toHaveBeenCalledWith(
       'Contexto requerido',
-      'Primero selecciona una motocicleta para gestionar mantenimientos.'
+      'Primero selecciona una motocicleta para gestionar mantenimientos.',
     );
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/home']);
   });
 
   it('exposes the user and default maintenance from the resources', () => {
     routeMock.snapshot.paramMap.get.mockReturnValue('moto-1');
-    maintenanceServiceMock.getUserMaintenanceByMotorcycleResource.mockReturnValue(fakeResource([{ id: '1' }]));
+    maintenanceServiceMock.getUserMaintenanceByMotorcycleResource.mockReturnValue(
+      fakeResource([{ id: '1' }]),
+    );
     maintenanceServiceMock.getDefaultsResource.mockReturnValue(fakeResource([{ id: '2' }]));
 
     const component = create();
@@ -83,6 +88,10 @@ describe('MaintenancePageComponent', () => {
 
     component.goToAddMaintenance();
 
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/motorcycles', 'moto-1', 'maintenance/add']);
+    expect(routerMock.navigate).toHaveBeenCalledWith([
+      '/dashboard/motorcycles',
+      'moto-1',
+      'maintenance/add',
+    ]);
   });
 });

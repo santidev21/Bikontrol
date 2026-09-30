@@ -2,16 +2,15 @@ import { Injectable } from '@angular/core';
 import Swal, { SweetAlertIcon } from 'sweetalert2';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SwalService {
-private baseConfig = {
+  private baseConfig = {
     background: '#fff',
     buttonsStyling: false,
     customClass: {
       popup: 'rounded-xl shadow-lg',
-      confirmButton:
-        'bg-blue-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-blue-700',
+      confirmButton: 'bg-blue-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-blue-700',
       cancelButton:
         'bg-gray-200 text-gray-800 rounded-lg px-4 py-2 font-semibold hover:bg-gray-300 mx-2',
     },
@@ -36,8 +35,7 @@ private baseConfig = {
       confirmButtonText: confirmText,
       customClass: {
         ...this.baseConfig.customClass,
-        confirmButton:
-          'bg-red-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-red-700',
+        confirmButton: 'bg-red-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-red-700',
       },
     });
   }
@@ -62,7 +60,7 @@ private baseConfig = {
     text: string,
     confirmText = 'Sí, continuar',
     cancelText = 'Cancelar',
-    icon: SweetAlertIcon = 'warning'
+    icon: SweetAlertIcon = 'warning',
   ) {
     return Swal.fire({
       ...this.baseConfig,
@@ -74,8 +72,7 @@ private baseConfig = {
       cancelButtonText: cancelText,
       customClass: {
         ...this.baseConfig.customClass,
-        confirmButton:
-          'bg-red-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-red-700',
+        confirmButton: 'bg-red-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-red-700',
       },
     });
   }

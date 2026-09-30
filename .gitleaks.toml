@@ -1,0 +1,18 @@
+# Gitleaks configuration for Bikontrol.
+#
+# Extends the default ruleset with an allowlist for files that only ever contain
+# intentionally-fake or test-only credentials (CI service passwords, example env
+# files, test fixtures). Everything else is scanned, including git history.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret and test-only files"
+paths = [
+  '''\.github/workflows/.*\.ya?ml$''',
+  '''\.env\.example$''',
+  '''.*\.Tests?\.cs$''',
+  '''.*\.spec\.ts$''',
+  '''.*/(e2e|test-results|coverage|dist)/.*''',
+]

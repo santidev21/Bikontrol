@@ -406,7 +406,7 @@ public class AuthServiceTests
         }
     }
 
-private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
+    private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly List<User> _users;
 

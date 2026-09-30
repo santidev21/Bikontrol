@@ -33,8 +33,29 @@ jobs:
       - name: Restore backend
         run: dotnet restore Bikontrol/Bikontrol.sln
 
-      - name: Run backend tests
-        run: dotnet test Bikontrol/Bikontrol.sln --no-restore
+      - name: Verify formatting (dotnet format)
+        run: dotnet format whitespace Bikontrol/Bikontrol.sln --verify-no-changes --no-restore
+
+      - name: Run backend tests with coverage
+        run: >
+          dotnet test Bikontrol/Bikontrol.sln
+          --no-restore
+          --collect:"XPlat Code Coverage"
+          --settings coverlet.runsettings
+          --logger "trx;LogFileName=results.trx"
+
+      - name: Check coverage threshold
+        run: node scripts/check-coverage.mjs 80
+
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: |
+            **/TestResults/*.trx
+            **/coverage.cobertura.xml
+          retention-days: 7
 
   frontend-tests:
     name: Frontend tests
@@ -55,9 +76,51 @@ jobs:
         working-directory: bikontrol-web
         run: npm ci --no-audit --no-fund
 
+      - name: Lint (ESLint)
+        working-directory: bikontrol-web
+        run: npm run lint
+
+      - name: Verify formatting (Prettier)
+        working-directory: bikontrol-web
+        run: npm run format:check
+
       - name: Run frontend tests
         working-directory: bikontrol-web
         run: npm test
+
+  secret-scan:
+    name: Secret scan (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  trivy:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy fs scan (deps, secrets, IaC)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          ignore-unfixed: true
 
   docker-compose-validate:
     name: Validate docker compose

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -7,23 +7,23 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
 
 @Component({
-    selector: 'app-register',
-    imports: [AUTH_IMPORTS],
-    templateUrl: './register.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './register.component.scss'
+  selector: 'app-register',
+  imports: [AUTH_IMPORTS],
+  templateUrl: './register.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './register.component.scss',
 })
 export class RegisterComponent {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private httpError = inject(HttpErrorService);
+
   registerForm: FormGroup;
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private httpError: HttpErrorService
-  ) {
+  constructor() {
     this.registerForm = this.fb.group(
       {
         fullName: ['', Validators.required],
@@ -31,7 +31,7 @@ export class RegisterComponent {
         password: ['', [Validators.required, Validators.minLength(6)]],
         confirmPassword: ['', Validators.required],
       },
-      { validators: this.passwordMatchValidator }
+      { validators: this.passwordMatchValidator },
     );
   }
 
@@ -58,7 +58,7 @@ export class RegisterComponent {
     const payload = {
       fullName: this.registerForm.value.fullName,
       email: this.registerForm.value.email,
-      password: this.registerForm.value.password
+      password: this.registerForm.value.password,
     };
 
     this.authService.register(payload).subscribe({
@@ -67,7 +67,7 @@ export class RegisterComponent {
       },
       error: (error) => {
         this.errorMessage.set(this.httpError.message(error));
-      }
+      },
     });
   }
 }

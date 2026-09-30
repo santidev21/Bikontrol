@@ -1,28 +1,34 @@
-import { Component, HostListener, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { NavigationEnd } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../modules/auth/services/auth.service';
 import { Subscription, filter } from 'rxjs';
 
 @Component({
-    selector: 'app-top-nav',
-    imports: [RouterModule],
-    templateUrl: './top-nav.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './top-nav.component.scss'
+  selector: 'app-top-nav',
+  imports: [RouterModule],
+  templateUrl: './top-nav.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './top-nav.component.scss',
 })
-export class TopNavComponent implements OnDestroy {
+export class TopNavComponent implements OnDestroy, OnInit {
+  private router = inject(Router);
+  private authService = inject(AuthService);
+
   readonly sidebarOpen = signal(false);
   readonly profileOpen = signal(false);
   readonly currentUrl = signal('');
 
   private readonly subscriptions = new Subscription();
 
-  constructor(
-    private router: Router,
-    private authService: AuthService
-  ) {}
-  
   ngOnInit(): void {
     this.currentUrl.set(this.router.url);
     this.subscriptions.add(
@@ -30,7 +36,7 @@ export class TopNavComponent implements OnDestroy {
         .pipe(filter((event) => event instanceof NavigationEnd))
         .subscribe((event) => {
           this.currentUrl.set((event as NavigationEnd).urlAfterRedirects);
-        })
+        }),
     );
   }
 
@@ -40,17 +46,21 @@ export class TopNavComponent implements OnDestroy {
 
   get showBackButton(): boolean {
     const url = this.currentUrl();
-    return url.includes('/dashboard/motorcycles/add')
-      || url.includes('/dashboard/motorcycles/summary')
-      || /\/dashboard\/motorcycles\/[^/]+\/maintenance/.test(url)
-      || /\/dashboard\/motorcycles\/[^/]+\/register-maintenance/.test(url);
+    return (
+      url.includes('/dashboard/motorcycles/add') ||
+      url.includes('/dashboard/motorcycles/summary') ||
+      /\/dashboard\/motorcycles\/[^/]+\/maintenance/.test(url) ||
+      /\/dashboard\/motorcycles\/[^/]+\/register-maintenance/.test(url)
+    );
   }
 
   goBack(): void {
-    const registerOrMaintenance = this.currentUrl().match(/\/dashboard\/motorcycles\/([^/]+)\/(maintenance|register-maintenance)/);
+    const registerOrMaintenance = this.currentUrl().match(
+      /\/dashboard\/motorcycles\/([^/]+)\/(maintenance|register-maintenance)/,
+    );
     if (registerOrMaintenance?.[1]) {
       this.router.navigate(['/dashboard/motorcycles/summary'], {
-        queryParams: { motorcycleId: registerOrMaintenance[1] }
+        queryParams: { motorcycleId: registerOrMaintenance[1] },
       });
       return;
     }

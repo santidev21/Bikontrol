@@ -1,16 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import { Profile } from '../interfaces/profile.interface';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService {
-  private apiUrl = `${environment.apiUrl}/users`;
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private apiUrl = `${environment.apiUrl}/users`;
 
   getMe(): Observable<Profile> {
     return this.http.get<Profile>(`${this.apiUrl}/me`);
@@ -26,6 +26,9 @@ export class UserService {
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/me/password`, { currentPassword, newPassword });
+    return this.http.post<{ message: string }>(`${this.apiUrl}/me/password`, {
+      currentPassword,
+      newPassword,
+    });
   }
 }

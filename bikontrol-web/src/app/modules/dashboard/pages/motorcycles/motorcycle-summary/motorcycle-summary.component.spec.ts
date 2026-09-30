@@ -18,7 +18,7 @@ function fakeResource<T>(initial?: T) {
     error: signal<Error | undefined>(undefined),
     isLoading: signal(false),
     status: signal('idle'),
-    reload: vi.fn()
+    reload: vi.fn(),
   } as any;
 }
 
@@ -32,16 +32,16 @@ describe('MotorcycleSummaryComponent', () => {
       getCurrentKmResource: vi.fn(() => fakeResource()),
       getById: vi.fn(),
       addKmHistory: vi.fn(() => of(undefined)),
-      rollbackLastKm: vi.fn(() => of(undefined))
+      rollbackLastKm: vi.fn(() => of(undefined)),
     };
     maintenanceServiceMock = {
       getUpcomingResource: vi.fn(() => fakeResource()),
-      getRecordsResource: vi.fn(() => fakeResource())
+      getRecordsResource: vi.fn(() => fakeResource()),
     };
     swalMock = {
       error: vi.fn(),
       success: vi.fn().mockReturnValue(Promise.resolve({})),
-      confirm: vi.fn().mockReturnValue(Promise.resolve({ isConfirmed: true }))
+      confirm: vi.fn().mockReturnValue(Promise.resolve({ isConfirmed: true })),
     };
 
     TestBed.configureTestingModule({
@@ -52,12 +52,12 @@ describe('MotorcycleSummaryComponent', () => {
         { provide: SwalService, useValue: swalMock },
         {
           provide: HttpErrorService,
-          useValue: { message: (err: any, fallback: string) => err?.message ?? fallback }
+          useValue: { message: (err: any, fallback: string) => err?.message ?? fallback },
         },
         { provide: AuthService, useValue: { isDemo: () => false } },
         { provide: Router, useValue: { getCurrentNavigation: () => null, navigate: vi.fn() } },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } }
-      ]
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
+      ],
     });
   });
 

@@ -1,8 +1,15 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { SaveMotorcycleDTO , Motorcycle } from '../../../interfaces/motorcycle.interface';
+import { SaveMotorcycleDTO } from '../../../interfaces/motorcycle.interface';
 
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
@@ -13,13 +20,21 @@ import { hasError as formHasError } from '../../../../../shared/utils/form.utils
 const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
 
 @Component({
-    selector: 'app-save-motorcycle',
-    imports: [ReactiveFormsModule],
-    templateUrl: './save-motorcycle.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrl: './save-motorcycle.component.scss'
+  selector: 'app-save-motorcycle',
+  imports: [ReactiveFormsModule],
+  templateUrl: './save-motorcycle.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './save-motorcycle.component.scss',
 })
 export class SaveMotorcycleComponent implements OnInit, OnDestroy {
+  private fb = inject(FormBuilder);
+  private motorcyclesService = inject(MotorcyclesService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private swal = inject(SwalService);
+  private httpError = inject(HttpErrorService);
+  private imageService = inject(ImageService);
+
   motorcycleForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isEditMode = signal(false);
@@ -29,35 +44,17 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
 
   private readonly subscriptions = new Subscription();
 
-  constructor(
-    private fb: FormBuilder,
-    private motorcyclesService: MotorcyclesService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private swal: SwalService,
-    private httpError: HttpErrorService,
-    private imageService: ImageService
-  ) {
+  constructor() {
     this.motorcycleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       brand: ['', [Validators.required]],
       year: [
         null,
-        [
-          Validators.required,
-          Validators.min(1950),
-          Validators.max(this.currentYear + 1),
-        ],
+        [Validators.required, Validators.min(1950), Validators.max(this.currentYear + 1)],
       ],
       nickname: ['', [Validators.required]],
-      km: [
-        0,
-        [Validators.required, Validators.min(0), Validators.max(1000000)],
-      ],
-      displacement: [
-        null,
-        [Validators.required, Validators.min(1), Validators.max(2300)],
-      ],
+      km: [0, [Validators.required, Validators.min(0), Validators.max(1000000)]],
+      displacement: [null, [Validators.required, Validators.min(1), Validators.max(2300)]],
       plate: ['', [Validators.required]],
       image: ['default.png'],
       isEnabled: [true],
@@ -73,7 +70,7 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
           this.motorcycleId.set(id);
           this.loadMotorcycle(id);
         }
-      })
+      }),
     );
   }
 
@@ -133,7 +130,8 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.imageService.resize(file)
+    this.imageService
+      .resize(file)
       .then((resized) => {
         this.motorcycleForm.patchValue({ image: resized });
         this.previewSrc.set(resized);
@@ -152,10 +150,7 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   onSubmit(): void {
     if (this.motorcycleForm.invalid) {
       this.motorcycleForm.markAllAsTouched();
-      this.swal.warning(
-        'Formulario incompleto',
-        'Por favor completa todos los campos requeridos.'
-      );
+      this.swal.warning('Formulario incompleto', 'Por favor completa todos los campos requeridos.');
       return;
     }
 
@@ -177,30 +172,27 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo agregar la motocicleta.')
-        );
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo agregar la motocicleta.'));
       },
     });
   }
 
   updateMotorcycle(id: string, motorcycle: SaveMotorcycleDTO): void {
     this.motorcyclesService.updateMotorcycle(id, motorcycle).subscribe({
-        next: () => {
-          this.isSubmitting.set(false);
-          this.swal
-            .success('¡Éxito!', 'Motocicleta actualizada correctamente.')
-            .then(() => this.router.navigate(['/dashboard']));
-        },
-        error: (err) => {
-          this.isSubmitting.set(false);
-          this.swal.error(
-            'Error',
-            this.httpError.message(err, 'No se pudo actualizar la motocicleta.')
-          );
-        },
-      });
+      next: () => {
+        this.isSubmitting.set(false);
+        this.swal
+          .success('¡Éxito!', 'Motocicleta actualizada correctamente.')
+          .then(() => this.router.navigate(['/dashboard']));
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo actualizar la motocicleta.'),
+        );
+      },
+    });
   }
 
   hasError(field: string, type: string): boolean {

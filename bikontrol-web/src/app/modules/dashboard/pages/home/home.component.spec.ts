@@ -14,7 +14,7 @@ const moto: Motorcycle = {
   km: 100,
   displacement: 150,
   plate: 'ABC123',
-  isEnabled: true
+  isEnabled: true,
 };
 
 describe('HomeComponent (httpResource)', () => {
@@ -23,7 +23,7 @@ describe('HomeComponent (httpResource)', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -34,10 +34,10 @@ describe('HomeComponent (httpResource)', () => {
     const fixture = TestBed.createComponent(HomeComponent);
     fixture.detectChanges();
 
-    const request = httpMock.expectOne(r => r.url.endsWith('/motorcycles/mine'));
+    const request = httpMock.expectOne((r) => r.url.endsWith('/motorcycles/mine'));
     request.flush([moto]);
     await fixture.whenStable();
-    httpMock.match(r => r.url.endsWith('/km/current')).forEach((req) => req.flush({ km: 100 }));
+    httpMock.match((r) => r.url.endsWith('/km/current')).forEach((req) => req.flush({ km: 100 }));
 
     expect(fixture.componentInstance.motorcycles.value().length).toBe(1);
     expect(fixture.componentInstance.motorcycles.value()[0].name).toBe('XTZ');

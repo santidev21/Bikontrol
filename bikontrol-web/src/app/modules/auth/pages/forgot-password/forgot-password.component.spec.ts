@@ -1,52 +1,66 @@
-import { FormBuilder } from "@angular/forms";
-import { of, throwError } from "rxjs";
-import { ForgotPasswordComponent } from "./forgot-password.component";
+import { TestBed } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
+import { of, throwError } from 'rxjs';
+import { ForgotPasswordComponent } from './forgot-password.component';
+import { AuthService } from '../../services/auth.service';
+import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
-describe("ForgotPasswordComponent", () => {
+describe('ForgotPasswordComponent', () => {
   let component: ForgotPasswordComponent;
   let authServiceMock: any;
   let httpErrorMock: any;
 
   beforeEach(() => {
     authServiceMock = {
-      forgotPassword: vi.fn()
+      forgotPassword: vi.fn(),
     };
     httpErrorMock = {
-      message: vi.fn((error: any, fallback = "Error inesperado en el servidor.") => {
+      message: vi.fn((error: any, fallback = 'Error inesperado en el servidor.') => {
         return error?.error?.error || error?.error?.message || error?.message || fallback;
-      })
+      }),
     };
 
-    component = new ForgotPasswordComponent(new FormBuilder(), authServiceMock, httpErrorMock);
+    // The component uses inject(), so it must be created inside an injection context.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: FormBuilder, useValue: new FormBuilder() },
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: HttpErrorService, useValue: httpErrorMock },
+      ],
+    });
+    component = TestBed.runInInjectionContext(() => new ForgotPasswordComponent());
   });
 
-  it("should build a form with an email control", () => {
-    expect(component.form.contains("email")).toBe(true);
+  it('should build a form with an email control', () => {
+    expect(component.form.contains('email')).toBe(true);
   });
 
-  it("should not submit if the form is invalid", () => {
+  it('should not submit if the form is invalid', () => {
     component.onSubmit();
 
     expect(authServiceMock.forgotPassword).not.toHaveBeenCalled();
   });
 
-  it("should call forgotPassword and show the success message", () => {
-    authServiceMock.forgotPassword.mockReturnValue(of({ message: "Revisa tu correo." }));
-    component.form.setValue({ email: "user@example.com" });
+  it('should call forgotPassword and show the success message', () => {
+    authServiceMock.forgotPassword.mockReturnValue(of({ message: 'Revisa tu correo.' }));
+    component.form.setValue({ email: 'user@example.com' });
 
     component.onSubmit();
 
-    expect(authServiceMock.forgotPassword).toHaveBeenCalledWith("user@example.com");
-    expect(component.successMessage()).toBe("Revisa tu correo.");
+    expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('user@example.com');
+    expect(component.successMessage()).toBe('Revisa tu correo.');
     expect(component.errorMessage()).toBeNull();
   });
 
-  it("should show the backend error on failure", () => {
-    authServiceMock.forgotPassword.mockReturnValue(throwError(() => ({ error: { error: "Error" } })));
-    component.form.setValue({ email: "user@example.com" });
+  it('should show the backend error on failure', () => {
+    authServiceMock.forgotPassword.mockReturnValue(
+      throwError(() => ({ error: { error: 'Error' } })),
+    );
+    component.form.setValue({ email: 'user@example.com' });
 
     component.onSubmit();
 
-    expect(component.errorMessage()).toBe("Error");
+    expect(component.errorMessage()).toBe('Error');
   });
 });

@@ -7,7 +7,7 @@ if (typeof (globalThis as any).IntersectionObserver === 'undefined') {
   class MockIntersectionObserver {
     readonly root = null;
     readonly rootMargin = '';
-    readonly thresholds: ReadonlyArray<number> = [];
+    readonly thresholds: readonly number[] = [];
     observe(): void {}
     unobserve(): void {}
     disconnect(): void {}
@@ -28,6 +28,6 @@ if (typeof (globalThis as any).matchMedia === 'undefined') {
     removeListener: () => {},
     addEventListener: () => {},
     removeEventListener: () => {},
-    dispatchEvent: () => false
+    dispatchEvent: () => false,
   });
 }

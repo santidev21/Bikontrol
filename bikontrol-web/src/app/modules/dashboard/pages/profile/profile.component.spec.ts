@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { UpdateService } from '../../../../shared/services/update.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -18,7 +18,7 @@ function fakeResource<T>(initial?: T, initialError?: string) {
     isLoading: signal(false),
     status: signal('idle'),
     reload: vi.fn(),
-    set: (v: T) => value.set(v)
+    set: (v: T) => value.set(v),
   } as any;
 }
 
@@ -28,7 +28,7 @@ const profileMock: any = {
   fullName: 'Santi Dev',
   role: 'User',
   createdAt: '2026-01-01T00:00:00Z',
-  hasPassword: true
+  hasPassword: true,
 };
 
 describe('ProfileComponent', () => {
@@ -41,14 +41,14 @@ describe('ProfileComponent', () => {
     userServiceMock = {
       getMeResource: vi.fn(() => fakeResource()),
       updateProfile: vi.fn(),
-      changePassword: vi.fn()
+      changePassword: vi.fn(),
     };
     authServiceMock = { isDemo: vi.fn().mockReturnValue(false), logout: vi.fn() };
     routerMock = { navigate: vi.fn() };
     swalMock = {
       error: vi.fn(),
       success: vi.fn().mockReturnValue(Promise.resolve({})),
-      confirm: vi.fn()
+      confirm: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -60,10 +60,13 @@ describe('ProfileComponent', () => {
         { provide: SwalService, useValue: swalMock },
         {
           provide: HttpErrorService,
-          useValue: { message: (err: any, fallback: string) => err?.error?.error || err?.error?.message || err?.message || fallback }
+          useValue: {
+            message: (err: any, fallback: string) =>
+              err?.error?.error || err?.error?.message || err?.message || fallback,
+          },
         },
-        { provide: UpdateService, useValue: { appVersion: '0.1.0', swVersion: signal('abc1234') } }
-      ]
+        { provide: UpdateService, useValue: { appVersion: '0.1.0', swVersion: signal('abc1234') } },
+      ],
     });
   });
 
@@ -169,7 +172,9 @@ describe('ProfileComponent', () => {
   });
 
   it('hides password change for google accounts', () => {
-    userServiceMock.getMeResource.mockReturnValue(fakeResource({ ...profileMock, hasPassword: false }));
+    userServiceMock.getMeResource.mockReturnValue(
+      fakeResource({ ...profileMock, hasPassword: false }),
+    );
 
     expect(create().componentInstance.canChangePassword()).toBe(false);
   });

@@ -1,14 +1,25 @@
-import { Subject } from "rxjs";
-import { UpdateService } from "./update.service";
+import { TestBed } from '@angular/core/testing';
+import { SwUpdate } from '@angular/service-worker';
+import { Subject } from 'rxjs';
+import { UpdateService } from './update.service';
+import { SwalService } from './swal.service';
 
-describe("UpdateService (class)", () => {
+describe('UpdateService (class)', () => {
   let versionUpdates$: Subject<any>;
   let swUpdateMock: any;
   let swalMock: any;
   const originalFetch = (globalThis as any).fetch;
 
   function createService() {
-    return new UpdateService(swUpdateMock, swalMock);
+    // The service uses inject(), so it must be created inside an injection context.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: SwUpdate, useValue: swUpdateMock },
+        { provide: SwalService, useValue: swalMock },
+      ],
+    });
+    return TestBed.runInInjectionContext(() => new UpdateService());
   }
 
   function flush(): Promise<void> {
@@ -22,10 +33,10 @@ describe("UpdateService (class)", () => {
       isEnabled: true,
       versionUpdates: versionUpdates$.asObservable(),
       checkForUpdate: vi.fn().mockResolvedValue(true),
-      activateUpdate: vi.fn().mockResolvedValue(undefined)
+      activateUpdate: vi.fn().mockResolvedValue(undefined),
     };
     swalMock = {
-      confirm: vi.fn().mockResolvedValue({ isConfirmed: false })
+      confirm: vi.fn().mockResolvedValue({ isConfirmed: false }),
     };
     delete (globalThis as any).fetch;
   });
@@ -35,21 +46,21 @@ describe("UpdateService (class)", () => {
     vi.resetAllMocks();
   });
 
-  it("should read the served SW hash from ngsw.json on init", async () => {
+  it('should read the served SW hash from ngsw.json on init', async () => {
     (globalThis as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ hash: "abcdef1234567890" })
+      json: async () => ({ hash: 'abcdef1234567890' }),
     });
     const service = createService();
 
     service.init();
     await flush();
 
-    expect(service.swVersion()).toBe("abcdef1");
+    expect(service.swVersion()).toBe('abcdef1');
     service.ngOnDestroy();
   });
 
-  it("should do nothing when the service worker is disabled", async () => {
+  it('should do nothing when the service worker is disabled', async () => {
     swUpdateMock.isEnabled = false;
     (globalThis as any).fetch = vi.fn();
     const service = createService();
@@ -63,41 +74,41 @@ describe("UpdateService (class)", () => {
     expect(service.swVersion()).toBeNull();
   });
 
-  it("should prompt and reload when a new version is ready and confirmed", async () => {
+  it('should prompt and reload when a new version is ready and confirmed', async () => {
     const service = createService();
-    const reloadSpy = vi.spyOn(service as any, "reloadApp").mockImplementation(() => undefined);
+    const reloadSpy = vi.spyOn(service as any, 'reloadApp').mockImplementation(() => undefined);
     swalMock.confirm.mockResolvedValue({ isConfirmed: true });
     service.init();
 
     versionUpdates$.next({
-      type: "VERSION_READY",
-      currentVersion: { hash: "old", appData: undefined },
-      latestVersion: { hash: "newhash123456", appData: undefined }
+      type: 'VERSION_READY',
+      currentVersion: { hash: 'old', appData: undefined },
+      latestVersion: { hash: 'newhash123456', appData: undefined },
     });
     await flush();
 
-    expect(service.swVersion()).toBe("newhash");
+    expect(service.swVersion()).toBe('newhash');
     expect(swalMock.confirm).toHaveBeenCalledWith(
-      "Nueva versión disponible",
+      'Nueva versión disponible',
       expect.any(String),
-      "Recargar ahora",
-      "Más tarde"
+      'Recargar ahora',
+      'Más tarde',
     );
     expect(swUpdateMock.activateUpdate).toHaveBeenCalled();
     expect(reloadSpy).toHaveBeenCalled();
     service.ngOnDestroy();
   });
 
-  it("should not reload when the user postpones the update", async () => {
+  it('should not reload when the user postpones the update', async () => {
     const service = createService();
-    const reloadSpy = vi.spyOn(service as any, "reloadApp").mockImplementation(() => undefined);
+    const reloadSpy = vi.spyOn(service as any, 'reloadApp').mockImplementation(() => undefined);
     swalMock.confirm.mockResolvedValue({ isConfirmed: false });
     service.init();
 
     versionUpdates$.next({
-      type: "VERSION_READY",
-      currentVersion: { hash: "old", appData: undefined },
-      latestVersion: { hash: "newhash123456", appData: undefined }
+      type: 'VERSION_READY',
+      currentVersion: { hash: 'old', appData: undefined },
+      latestVersion: { hash: 'newhash123456', appData: undefined },
     });
     await flush();
 
@@ -106,9 +117,9 @@ describe("UpdateService (class)", () => {
 
     // Vuelve a avisar en el siguiente evento.
     versionUpdates$.next({
-      type: "VERSION_READY",
-      currentVersion: { hash: "old", appData: undefined },
-      latestVersion: { hash: "newhash123456", appData: undefined }
+      type: 'VERSION_READY',
+      currentVersion: { hash: 'old', appData: undefined },
+      latestVersion: { hash: 'newhash123456', appData: undefined },
     });
     await flush();
 
@@ -116,12 +127,12 @@ describe("UpdateService (class)", () => {
     service.ngOnDestroy();
   });
 
-  it("should check for updates when the tab becomes visible", () => {
+  it('should check for updates when the tab becomes visible', () => {
     const service = createService();
     service.init();
 
-    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
-    document.dispatchEvent(new Event("visibilitychange"));
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
 
     expect(swUpdateMock.checkForUpdate).toHaveBeenCalled();
     service.ngOnDestroy();
