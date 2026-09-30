@@ -1,34 +1,60 @@
 # Dependabot configuration for Bikontrol.
 # Keeps NuGet, npm, GitHub Actions and Docker base images up to date and surfaces
 # known vulnerabilities as security alerts/PRs.
+#
+# Tuned to stay quiet and safe:
+#   - monthly schedule and rebase-strategy: disabled → no weekly PR/rebase churn.
+#   - explicit open-pull-requests-limit for every ecosystem.
+#   - major version updates are ignored on purpose: majors are planned manual
+#     upgrades (framework migrations, base image jumps), not bot PRs. Minor and
+#     patch updates keep flowing, grouped into one PR per ecosystem.
+#   - Dependabot security alerts are not affected by these settings.
 version: 2
 updates:
   - package-ecosystem: "nuget"
     directory: "/Bikontrol"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
     groups:
       nuget-minor-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/bikontrol-web"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
     groups:
       npm-minor-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "docker"
     directory: "/docker"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
