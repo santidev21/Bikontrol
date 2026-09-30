@@ -12,7 +12,8 @@ namespace Bikontrol.Tests.Integration.Infrastructure;
 /// </summary>
 public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private const string JwtKey = "integration-test-key-0123456789abcdef0123456789";
+    // Fixed dummy key for the disposable Testcontainers host; never used outside tests.
+    private const string JwtKey = "integration-test-key-0123456789abcdef0123456789"; // gitleaks:allow
 
     private readonly PostgreSqlContainer _database = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
