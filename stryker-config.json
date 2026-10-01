@@ -1,0 +1,15 @@
+{
+  "stryker-config": {
+    "project": "Bikontrol/Bikontrol.Infrastructure/Bikontrol.Infrastructure.csproj",
+    "test-projects": ["Bikontrol/Bikontrol.Tests/Bikontrol.Tests.csproj"],
+    "mutate": ["Services/MaintenanceService.cs"],
+    "test-case-filter": "FullyQualifiedName~MaintenanceService",
+    "thresholds": {
+      "high": 55,
+      "low": 45,
+      "break": 40
+    },
+    "reporters": ["progress", "html", "json"],
+    "concurrency": 4
+  }
+}
