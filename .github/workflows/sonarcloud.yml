@@ -63,6 +63,13 @@ jobs:
             "/d:sonar.token=$SONAR_TOKEN"
             "/d:sonar.cs.opencover.reportsPaths=**/coverage.opencover.xml"
             "/d:sonar.cs.vstest.reportsPaths=**/TestResults/*.trx"
+            # Coverage scope must match what this job can actually measure: only
+            # backend .NET tests run here, so no coverage is supplied for the
+            # Angular frontend or the repo scripts. Without this, Sonar counts
+            # every TS/JS line as 0%-covered and any frontend PR fails the
+            # new-code coverage gate. Generated EF migration scaffolding is
+            # excluded too (see coverlet.runsettings); migration Up/Down stays.
+            "/d:sonar.coverage.exclusions=**/*.ts,**/*.js,**/*.mjs,**/*.html,**/*.scss,**/*.css,**/Migrations/*.Designer.cs,**/Migrations/*ModelSnapshot.cs"
           )
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             args+=(
