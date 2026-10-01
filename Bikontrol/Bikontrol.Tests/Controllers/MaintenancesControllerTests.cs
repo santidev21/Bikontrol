@@ -1,5 +1,7 @@
+using Bikontrol.API.Controllers;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
+using Bikontrol.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bikontrol.Tests.Controllers;
@@ -11,7 +13,7 @@ public class MaintenancesControllerTests
     {
         var defaults = new List<MaintenanceDTO> { new() { Id = Guid.NewGuid(), Name = "Oil", TrackingType = "Km" } };
         var service = new FakeMaintenanceService { Defaults = defaults };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
 
         var result = await controller.GetDefaults();
 
@@ -24,7 +26,7 @@ public class MaintenancesControllerTests
     {
         var userMaintenances = new List<MaintenanceDTO> { new() { Id = Guid.NewGuid(), Name = "Chain", TrackingType = "Km" } };
         var service = new FakeMaintenanceService { UserMaintenances = userMaintenances };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
 
         var result = await controller.GetMys();
 
@@ -37,7 +39,7 @@ public class MaintenancesControllerTests
     {
         var list = new List<MaintenanceDTO> { new() { Id = Guid.NewGuid(), Name = "Chain", TrackingType = "Km" } };
         var service = new FakeMaintenanceService { UserMaintenancesByMotorcycle = list };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
         var motorcycleId = Guid.NewGuid();
 
         var result = await controller.GetMineByMotorcycle(motorcycleId);
@@ -52,7 +54,7 @@ public class MaintenancesControllerTests
     {
         var maintenance = new MaintenanceDTO { Id = Guid.NewGuid(), Name = "Oil", TrackingType = "Km" };
         var service = new FakeMaintenanceService { MaintenanceById = maintenance };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
 
         var result = await controller.GetById(maintenance.Id);
 
@@ -66,7 +68,7 @@ public class MaintenancesControllerTests
         var dto = new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Oil", TrackingType = "Km", KmInterval = 5000 };
         var created = new MaintenanceDTO { Id = Guid.NewGuid(), MotorcycleId = dto.MotorcycleId, Name = dto.Name, TrackingType = dto.TrackingType };
         var service = new FakeMaintenanceService { CreatedUserMaintenance = created };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
 
         var result = await controller.CreateUser(dto);
 
@@ -79,7 +81,7 @@ public class MaintenancesControllerTests
     public async Task DeleteUser_ShouldCallServiceAndReturnNoContent()
     {
         var service = new FakeMaintenanceService();
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
         var id = Guid.NewGuid();
 
         var result = await controller.DeleteUser(id);
@@ -101,7 +103,7 @@ public class MaintenancesControllerTests
         };
         var resultMaintenance = new MaintenanceDTO { Id = Guid.NewGuid(), Name = "Brake pads", TrackingType = "Km" };
         var service = new FakeMaintenanceService { FollowDefaultResult = resultMaintenance };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
 
         var result = await controller.FollowDefault(request);
 
@@ -135,7 +137,7 @@ public class MaintenancesControllerTests
             MaintenanceName = "Oil"
         };
         var service = new FakeMaintenanceService { CreatedRecord = record };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
 
         var result = await controller.RegisterRecord(request);
 
@@ -149,7 +151,7 @@ public class MaintenancesControllerTests
     {
         var records = new List<MaintenanceRecordDTO> { new() { Id = Guid.NewGuid(), MaintenanceName = "Oil" } };
         var service = new FakeMaintenanceService { Records = records };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
         var motorcycleId = Guid.NewGuid();
 
         var result = await controller.GetMotorcycleRecords(motorcycleId);
@@ -164,7 +166,7 @@ public class MaintenancesControllerTests
     {
         var upcoming = new List<UpcomingMaintenanceDTO> { new() { UserMaintenanceId = Guid.NewGuid(), Name = "Oil" } };
         var service = new FakeMaintenanceService { Upcoming = upcoming };
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
         var motorcycleId = Guid.NewGuid();
 
         var result = await controller.GetMotorcycleUpcoming(motorcycleId);
@@ -179,7 +181,7 @@ public class MaintenancesControllerTests
     {
         var dto = new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Oil", TrackingType = "Km", KmInterval = 5000 };
         var service = new FakeMaintenanceService();
-        var controller = new global::MaintenancesController(service);
+        var controller = new MaintenancesController(service);
         var id = Guid.NewGuid();
 
         var result = await controller.Update(id, dto);

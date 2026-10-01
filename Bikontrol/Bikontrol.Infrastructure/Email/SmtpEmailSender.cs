@@ -58,7 +58,7 @@ namespace Bikontrol.Infrastructure.Email
             var useSsl = !bool.TryParse(_configuration["Smtp:EnableSsl"], out var parsedSsl) || parsedSsl;
             var fromEmail = _configuration["Smtp:FromEmail"] ?? username;
             var fromName = _configuration["Smtp:FromName"] ?? "Bikontrol";
-            var smtpHost = host ?? string.Empty;
+            var smtpHost = host!;
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromName, fromEmail));
