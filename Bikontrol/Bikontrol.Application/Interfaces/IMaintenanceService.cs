@@ -2,6 +2,8 @@
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Domain.Entities;
 
+namespace Bikontrol.Application.Interfaces;
+
 public interface IMaintenanceService
 {
     Task<IEnumerable<MaintenanceDTO>> GetDefaultsAsync();
