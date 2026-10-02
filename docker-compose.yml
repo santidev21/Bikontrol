@@ -52,6 +52,9 @@ services:
       Smtp__FromName: ${Smtp__FromName:-Bikontrol}
       Smtp__EnableSsl: ${Smtp__EnableSsl:-true}
       Cors__AllowedOrigins: ${Cors__AllowedOrigins:-https://bikontrol.santidev21.tech,http://127.0.0.1:4200,http://127.0.0.1:4201}
+      # Public demo tenant: off by default. Turn it on deliberately (and only
+      # for a controlled demo) with Demo__Enabled=true.
+      Demo__Enabled: ${Demo__Enabled:-false}
     networks:
       - bikontrol-net
       - bikontrol-internal-net

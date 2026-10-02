@@ -16,6 +16,7 @@ describe('LoginComponent', () => {
     authServiceMock = {
       login: vi.fn(),
       googleLogin: vi.fn(),
+      demoLogin: vi.fn(),
     };
     routerMock = {
       navigate: vi.fn(),
@@ -109,6 +110,24 @@ describe('LoginComponent', () => {
 
     expect(authServiceMock.googleLogin).toHaveBeenCalledWith('id-token-abc');
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
+  });
+
+  it('should log in to the demo and navigate when demo is enabled', () => {
+    authServiceMock.demoLogin.mockReturnValue(of({ token: 'demo-token' }));
+
+    component.onDemoLogin();
+
+    expect(authServiceMock.demoLogin).toHaveBeenCalled();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
+  });
+
+  it('should not call demoLogin when demo is disabled', () => {
+    (component as unknown as { demoEnabled: boolean }).demoEnabled = false;
+
+    component.onDemoLogin();
+
+    expect(authServiceMock.demoLogin).not.toHaveBeenCalled();
+    expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
   it('should set an error when google credential is missing', () => {

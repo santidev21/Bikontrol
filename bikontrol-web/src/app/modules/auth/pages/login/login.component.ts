@@ -30,6 +30,7 @@ export class LoginComponent implements AfterViewInit {
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly demoLoading = signal(false);
+  readonly demoEnabled = environment.demoEnabled;
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -79,6 +80,8 @@ export class LoginComponent implements AfterViewInit {
   }
 
   onDemoLogin(): void {
+    if (!this.demoEnabled) return;
+
     this.demoLoading.set(true);
     this.errorMessage.set(null);
     this.authService.demoLogin().subscribe({

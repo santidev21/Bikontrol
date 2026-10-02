@@ -177,7 +177,7 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - JWT auth with a server-side signing key (stored in `.env` / `appsettings.Development.json`, never committed) — now includes `role` claim (`User`/`Demo`)
 - Sliding sessions: short-lived access token + long-lived refresh token (rotated on each use, stored hashed in the DB)
 - Google OAuth "Sign in with Google" (ID-token flow; the Google Client ID is public, no Client Secret required)
-- Demo user: read-only account (`demo@bikontrol.com`, `Role=Demo`) via `POST /api/auth/demo` + frontend one-click demo; write operations enforced server-side (403) and hidden in UI. Anonymous demo login refuses to issue tokens when the configured email belongs to a non-demo account (403); role is read from JWT `role` claim with `MapInboundClaims = false`.
+- Demo user: read-only account (`demo@bikontrol.com`, `Role=Demo`) via `POST /api/auth/demo` + frontend one-click demo; write operations enforced server-side (403) and hidden in UI. The demo tenant is **opt-in** (`Demo__Enabled`, default `false`): when off the endpoint returns `404` and nothing is seeded. Anonymous demo login refuses to issue tokens when the configured email belongs to a non-demo account (403); role is read from JWT `role` claim with `MapInboundClaims = false`.
 - Motorcycle images: client resizes to JPEG, server accepts only JPEG/PNG/WebP data URLs up to ~1 MB decoded (plus the 1.4M-char DTO cap).
 - Password recovery via email (SMTP configured in `.env`; reset tokens are hashed and time-limited)
 - Password hashing with a per-user salt
