@@ -309,6 +309,21 @@ public class AuthServiceTests
         Assert.Equal(403, exception.StatusCode);
     }
 
+    [Theory]
+    [InlineData("false")]
+    [InlineData(null)]
+    public async Task DemoLoginAsync_WhenDemoIsNotEnabled_ShouldThrow404AndSeedNothing(string? demoEnabled)
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(demoEnabled));
+
+        var exception = await Assert.ThrowsAsync<AuthException>(() => service.DemoLoginAsync());
+
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Empty(repository.Users);
+        Assert.Empty(_refreshRepository.Tokens);
+    }
+
     [Fact]
     public async Task RegisterAsync_ShouldSetRoleToUserByDefault()
     {
@@ -327,7 +342,7 @@ public class AuthServiceTests
         return Uri.UnescapeDataString(body.Substring(start, end - start));
     }
 
-    private AuthService CreateService(FakeUserRepository repository)
+    private AuthService CreateService(FakeUserRepository repository, IConfiguration? configuration = null)
     {
         _refreshRepository = new FakeRefreshTokenRepository(repository.Users);
         _emailSender = new FakeEmailSender();
@@ -338,21 +353,27 @@ public class AuthServiceTests
             _tokenGenerator,
             _emailSender,
             _mapper,
-            BuildConfiguration());
+            configuration ?? BuildConfiguration());
     }
 
-    private static IConfiguration BuildConfiguration()
+    // Demo is opt-in; tests default it to enabled (like Development) and can
+    // pass null to reproduce an environment where the flag is absent.
+    private static IConfiguration BuildConfiguration(string? demoEnabled = "true")
     {
+        var values = new Dictionary<string, string?>
+        {
+            ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
+            ["Jwt:Issuer"] = "Bikontrol",
+            ["Jwt:Audience"] = "Bikontrol.Tests",
+            ["Jwt:ExpireMinutes"] = "15",
+            ["Jwt:RefreshExpireDays"] = "30",
+            ["Frontend:BaseUrl"] = "http://localhost:4200"
+        };
+        if (demoEnabled is not null)
+            values["Demo:Enabled"] = demoEnabled;
+
         return new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
-                ["Jwt:Issuer"] = "Bikontrol",
-                ["Jwt:Audience"] = "Bikontrol.Tests",
-                ["Jwt:ExpireMinutes"] = "15",
-                ["Jwt:RefreshExpireDays"] = "30",
-                ["Frontend:BaseUrl"] = "http://localhost:4200"
-            })
+            .AddInMemoryCollection(values)
             .Build();
     }
 

@@ -198,6 +198,9 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<LoginResponse> DemoLoginAsync()
         {
+            if (!IsDemoEnabled())
+                throw new AuthException("El modo demo no está disponible.", 404);
+
             var demoEmail = _configuration["DemoUser:Email"] ?? "demo@bikontrol.com";
             var demoName = _configuration["DemoUser:FullName"] ?? "Usuario Demo";
 
@@ -220,6 +223,16 @@ namespace Bikontrol.Infrastructure.Services
             await _userRepository.SaveChangesAsync();
 
             return BuildLoginResponse(user, refreshToken);
+        }
+
+        /// <summary>
+        /// Demo mode is opt-in: it must be explicitly enabled through
+        /// <c>Demo:Enabled</c> (defaults to false, so production has no public
+        /// demo tenant unless the operator turns it on).
+        /// </summary>
+        private bool IsDemoEnabled()
+        {
+            return bool.TryParse(_configuration["Demo:Enabled"], out var enabled) && enabled;
         }
 
         private LoginResponse BuildLoginResponse(User user, string refreshToken)

@@ -7,7 +7,7 @@
 - `POST /api/auth/refresh`
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
-- `POST /api/auth/demo`
+- `POST /api/auth/demo` (opt-in; `404` unless `Demo__Enabled=true`)
 
 ## Motorcycles
 - `POST /api/motorcycles`

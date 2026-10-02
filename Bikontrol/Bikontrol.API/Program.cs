@@ -223,14 +223,20 @@ if (!app.Environment.IsDevelopment())
     }
 }
 
-try
+// Demo mode is opt-in: never seed the demo tenant unless explicitly enabled.
+// Production defaults to off (Demo:Enabled=false in appsettings.json).
+var demoEnabled = bool.TryParse(builder.Configuration["Demo:Enabled"], out var demoSetting) && demoSetting;
+if (demoEnabled)
 {
-    await DemoUserSeeder.SeedAsync(app.Services);
-}
-catch (Exception ex)
-{
-    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
-    logger.LogWarning(ex, "Demo seeding failed: {Message}", ex.Message);
+    try
+    {
+        await DemoUserSeeder.SeedAsync(app.Services);
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+        logger.LogWarning(ex, "Demo seeding failed: {Message}", ex.Message);
+    }
 }
 
 app.Run();
