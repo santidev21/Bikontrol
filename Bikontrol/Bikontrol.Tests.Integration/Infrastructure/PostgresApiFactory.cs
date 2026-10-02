@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 
 namespace Bikontrol.Tests.Integration.Infrastructure;
@@ -46,6 +47,9 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        // Let tests pick their own client IP so the per-IP rate limiter can be
+        // exercised without tests sharing one budget (TestServer has no IP).
+        builder.ConfigureServices(services => services.AddSingleton<IStartupFilter, ClientIpStartupFilter>());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
