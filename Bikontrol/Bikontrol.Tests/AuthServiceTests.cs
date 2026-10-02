@@ -334,6 +334,128 @@ public class AuthServiceTests
         Assert.Equal("User", repository.Users.Single().Role);
     }
 
+    [Fact]
+    public async Task RegisterAsync_WhenEmailConfirmationRequired_ShouldNotIssueSessionUntilConfirmed()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: true));
+
+        var response = await service.RegisterAsync(new RegisterRequest
+        {
+            Email = "confirm@bikontrol.com",
+            FullName = "Confirm User",
+            Password = "Secret123!"
+        });
+
+        // No session until the email is confirmed.
+        Assert.True(response.EmailConfirmationRequired);
+        Assert.Empty(response.Token);
+        Assert.Empty(response.RefreshToken);
+        Assert.Empty(_refreshRepository.Tokens);
+
+        var user = repository.Users.Single();
+        Assert.False(user.IsEmailConfirmed);
+        Assert.NotNull(user.EmailConfirmationTokenHash);
+
+        var email = Assert.Single(_emailSender.Sent);
+        Assert.Contains("/confirm-email?token=", email.Body);
+        var token = ExtractToken(email.Body);
+
+        var blocked = await Assert.ThrowsAsync<AuthException>(
+            () => service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" }));
+        Assert.Equal(403, blocked.StatusCode);
+
+        await service.ConfirmEmailAsync(new ConfirmEmailRequest { Email = user.Email, Token = token });
+        Assert.True(user.IsEmailConfirmed);
+        Assert.Null(user.EmailConfirmationTokenHash);
+
+        var login = await service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" });
+        Assert.False(string.IsNullOrWhiteSpace(login.Token));
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenEmailNotConfirmed_ShouldThrow403()
+    {
+        var user = new User("unconfirmed@bikontrol.com", "Unconfirmed", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: true));
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" }));
+
+        Assert.Equal(403, exception.StatusCode);
+    }
+
+    [Fact]
+    public async Task ConfirmEmailAsync_WithInvalidToken_ShouldThrowAndKeepAccountUnconfirmed()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: true));
+        await service.RegisterAsync(new RegisterRequest { Email = "user@bikontrol.com", FullName = "User", Password = "Secret123!" });
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.ConfirmEmailAsync(new ConfirmEmailRequest { Email = "user@bikontrol.com", Token = "wrong-token" }));
+
+        Assert.Equal(401, exception.StatusCode);
+        Assert.False(repository.Users.Single().IsEmailConfirmed);
+    }
+
+    [Fact]
+    public async Task ConfirmEmailAsync_WhenAlreadyConfirmed_ShouldBeIdempotent()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: true));
+        await service.RegisterAsync(new RegisterRequest { Email = "user@bikontrol.com", FullName = "User", Password = "Secret123!" });
+        var token = ExtractToken(_emailSender.Sent.Single().Body);
+
+        await service.ConfirmEmailAsync(new ConfirmEmailRequest { Email = "user@bikontrol.com", Token = token });
+        await service.ConfirmEmailAsync(new ConfirmEmailRequest { Email = "user@bikontrol.com", Token = token });
+
+        Assert.True(repository.Users.Single().IsEmailConfirmed);
+    }
+
+    [Fact]
+    public async Task ResendConfirmationAsync_WhenUserIsUnconfirmed_ShouldSendANewLink()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: true));
+        await service.RegisterAsync(new RegisterRequest { Email = "user@bikontrol.com", FullName = "User", Password = "Secret123!" });
+
+        await service.ResendConfirmationAsync(new ResendConfirmationRequest { Email = "user@bikontrol.com" });
+
+        Assert.Equal(2, _emailSender.Sent.Count);
+        Assert.Contains("/confirm-email?token=", _emailSender.Sent[1].Body);
+    }
+
+    [Fact]
+    public async Task ResendConfirmationAsync_WhenUserDoesNotExist_ShouldNotSendEmail()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: true));
+
+        await service.ResendConfirmationAsync(new ResendConfirmationRequest { Email = "missing@bikontrol.com" });
+
+        Assert.Empty(_emailSender.Sent);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WhenEmailConfirmationDisabled_ShouldConfirmImmediatelyAndIssueSession()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration(emailConfirmationRequired: false));
+
+        var response = await service.RegisterAsync(new RegisterRequest
+        {
+            Email = "open@bikontrol.com",
+            FullName = "Open User",
+            Password = "Secret123!"
+        });
+
+        Assert.False(response.EmailConfirmationRequired);
+        Assert.False(string.IsNullOrWhiteSpace(response.Token));
+        Assert.True(repository.Users.Single().IsEmailConfirmed);
+    }
+
     private static string ExtractToken(string body)
     {
         var marker = "token=";
@@ -357,8 +479,10 @@ public class AuthServiceTests
     }
 
     // Demo is opt-in; tests default it to enabled (like Development) and can
-    // pass null to reproduce an environment where the flag is absent.
-    private static IConfiguration BuildConfiguration(string? demoEnabled = "true")
+    // pass null to reproduce an environment where the flag is absent. Email
+    // confirmation defaults to off so the pre-existing tests keep issuing
+    // sessions; individual tests turn it on.
+    private static IConfiguration BuildConfiguration(string? demoEnabled = "true", bool emailConfirmationRequired = false)
     {
         var values = new Dictionary<string, string?>
         {
@@ -367,7 +491,8 @@ public class AuthServiceTests
             ["Jwt:Audience"] = "Bikontrol.Tests",
             ["Jwt:ExpireMinutes"] = "15",
             ["Jwt:RefreshExpireDays"] = "30",
-            ["Frontend:BaseUrl"] = "http://localhost:4200"
+            ["Frontend:BaseUrl"] = "http://localhost:4200",
+            ["EmailConfirmation:Required"] = emailConfirmationRequired ? "true" : "false"
         };
         if (demoEnabled is not null)
             values["Demo:Enabled"] = demoEnabled;

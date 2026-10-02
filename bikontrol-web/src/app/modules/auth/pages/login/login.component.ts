@@ -30,6 +30,9 @@ export class LoginComponent implements AfterViewInit {
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly demoLoading = signal(false);
+  readonly canResendConfirmation = signal(false);
+  readonly resendLoading = signal(false);
+  readonly resendMessage = signal<string | null>(null);
   readonly demoEnabled = environment.demoEnabled;
 
   constructor() {
@@ -63,6 +66,8 @@ export class LoginComponent implements AfterViewInit {
   onSubmit() {
     this.submitted.set(true);
     this.errorMessage.set(null);
+    this.resendMessage.set(null);
+    this.canResendConfirmation.set(false);
 
     if (this.loginForm.invalid) return;
 
@@ -74,6 +79,26 @@ export class LoginComponent implements AfterViewInit {
     this.authService.login(payload.email, payload.password).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
+        this.errorMessage.set(this.httpError.message(error));
+        // 403 on login means the email still needs to be confirmed.
+        this.canResendConfirmation.set(error?.status === 403);
+      },
+    });
+  }
+
+  onResendConfirmation(): void {
+    const email = this.loginForm.value.email;
+    if (!email) return;
+
+    this.resendLoading.set(true);
+    this.resendMessage.set(null);
+    this.authService.resendConfirmation(email).subscribe({
+      next: (response) => {
+        this.resendLoading.set(false);
+        this.resendMessage.set(response.message);
+      },
+      error: (error) => {
+        this.resendLoading.set(false);
         this.errorMessage.set(this.httpError.message(error));
       },
     });

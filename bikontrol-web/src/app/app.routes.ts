@@ -39,6 +39,13 @@ export const routes: Routes = [
         (c) => c.ResetPasswordComponent,
       ),
   },
+  {
+    path: 'confirm-email',
+    loadComponent: () =>
+      import('./modules/auth/pages/confirm-email/confirm-email.component').then(
+        (c) => c.ConfirmEmailComponent,
+      ),
+  },
 
   // Dashboard
   {

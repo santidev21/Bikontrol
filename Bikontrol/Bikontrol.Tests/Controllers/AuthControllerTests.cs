@@ -102,6 +102,24 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task ConfirmEmail_ShouldReturnOk()
+    {
+        var service = new FakeAuthService();
+        var controller = new AuthController(service);
+        var result = await controller.ConfirmEmail(new ConfirmEmailRequest { Email = "a@b.com", Token = "t" });
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ResendConfirmation_ShouldReturnOk()
+    {
+        var service = new FakeAuthService();
+        var controller = new AuthController(service);
+        var result = await controller.ResendConfirmation(new ResendConfirmationRequest { Email = "a@b.com" });
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
     public async Task ResetPassword_ShouldReturnOk()
     {
         var service = new FakeAuthService();
@@ -152,6 +170,16 @@ public class AuthControllerTests
         public Task<LoginResponse> DemoLoginAsync()
         {
             return Task.FromResult(LoginResult);
+        }
+
+        public Task ConfirmEmailAsync(ConfirmEmailRequest request)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task ResendConfirmationAsync(ResendConfirmationRequest request)
+        {
+            return Task.CompletedTask;
         }
     }
 }

@@ -60,6 +60,23 @@
           {{ errorMessage() }}
         </small>
       }
+
+      @if (canResendConfirmation()) {
+        <button
+          type="button"
+          (click)="onResendConfirmation()"
+          [disabled]="resendLoading()"
+          class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
+        >
+          {{ resendLoading() ? 'Enviando...' : 'Reenviar correo de confirmación' }}
+        </button>
+      }
+
+      @if (resendMessage()) {
+        <small class="text-green-600 text-xs block text-center mt-3 font-bold">
+          {{ resendMessage() }}
+        </small>
+      }
     </form>
 
     <div class="flex items-center gap-3 my-4">

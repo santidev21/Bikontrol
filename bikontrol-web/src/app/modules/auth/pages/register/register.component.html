@@ -4,91 +4,26 @@
 
     <h1 class="text-2xl font-bold text-center mb-6 text-primary">Crear cuenta</h1>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
-      <div class="mb-4">
-        <label for="register-fullname" class="block text-sm font-medium text-textdark mb-1"
-          >Nombre completo</label
-        >
-        <input
-          id="register-fullname"
-          type="text"
-          formControlName="fullName"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="Ej: Juan Pérez"
-        />
-        @if (isInvalid('fullName')) {
-          <small class="text-red-500 text-xs font-bold"> El nombre es obligatorio. </small>
-        }
-      </div>
-
-      <div class="mb-4">
-        <label for="register-email" class="block text-sm font-medium text-textdark mb-1"
-          >Correo</label
-        >
-        <input
-          id="register-email"
-          type="email"
-          formControlName="email"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="correo@example.com"
-        />
-        @if (isInvalid('email') && f['email'].errors?.['required']) {
-          <small class="text-red-500 text-xs font-bold"> El correo es obligatorio. </small>
-        }
-        @if (isInvalid('email') && f['email'].errors?.['email']) {
-          <small class="text-red-500 text-xs font-bold"> Formato de correo inválido. </small>
-        }
-      </div>
-
-      <div class="mb-4">
-        <label for="register-password" class="block text-sm font-medium text-textdark mb-1"
-          >Contraseña</label
-        >
-        <input
-          id="register-password"
-          type="password"
-          formControlName="password"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="••••••••"
-        />
-        @if (isInvalid('password') && f['password'].errors?.['required']) {
-          <small class="text-red-500 text-xs font-bold"> La contraseña es obligatoria. </small>
-        }
-        @if (isInvalid('password') && f['password'].errors?.['minlength']) {
-          <small class="text-red-500 text-xs font-bold"> Debe tener al menos 6 caracteres. </small>
-        }
-      </div>
-
-      <div class="mb-6">
-        <label for="register-confirm" class="block text-sm font-medium text-textdark mb-1"
-          >Confirmar contraseña</label
-        >
-        <input
-          id="register-confirm"
-          type="password"
-          formControlName="confirmPassword"
-          class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="••••••••"
-        />
-        @if (isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']) {
-          <small class="text-red-500 text-xs font-bold"> Debes confirmar la contraseña. </small>
-        }
-        @if (
-          registerForm.errors?.['passwordMismatch'] &&
-          (f['confirmPassword'].dirty || f['confirmPassword'].touched)
-        ) {
-          <small class="text-red-500 text-xs font-bold"> Las contraseñas no coinciden. </small>
-        }
-      </div>
+    @if (confirmationSent()) {
+      <p class="text-sm text-textdark text-center mb-6">
+        Te enviamos un correo de confirmación. Revisá tu bandeja (y la carpeta de spam) y hacé clic
+        en el enlace para activar tu cuenta.
+      </p>
 
       <button
-        type="submit"
-        [disabled]="registerForm.invalid"
-        class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
+        type="button"
+        (click)="onResendConfirmation()"
+        [disabled]="resendLoading()"
+        class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
       >
-        Registrarse
+        {{ resendLoading() ? 'Enviando...' : 'Reenviar correo de confirmación' }}
       </button>
 
+      @if (resendMessage()) {
+        <small class="text-green-600 text-xs block text-center mt-3 font-bold">
+          {{ resendMessage() }}
+        </small>
+      }
       @if (errorMessage()) {
         <small class="text-red-500 text-xs block text-center mt-3 font-bold">
           {{ errorMessage() }}
@@ -100,8 +35,110 @@
         routerLink="/login"
         class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
       >
-        Volver al inicio de sesión
+        Ir al inicio de sesión
       </button>
-    </form>
+    } @else {
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+        <div class="mb-4">
+          <label for="register-fullname" class="block text-sm font-medium text-textdark mb-1"
+            >Nombre completo</label
+          >
+          <input
+            id="register-fullname"
+            type="text"
+            formControlName="fullName"
+            class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+            placeholder="Ej: Juan Pérez"
+          />
+          @if (isInvalid('fullName')) {
+            <small class="text-red-500 text-xs font-bold"> El nombre es obligatorio. </small>
+          }
+        </div>
+
+        <div class="mb-4">
+          <label for="register-email" class="block text-sm font-medium text-textdark mb-1"
+            >Correo</label
+          >
+          <input
+            id="register-email"
+            type="email"
+            formControlName="email"
+            class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+            placeholder="correo@example.com"
+          />
+          @if (isInvalid('email') && f['email'].errors?.['required']) {
+            <small class="text-red-500 text-xs font-bold"> El correo es obligatorio. </small>
+          }
+          @if (isInvalid('email') && f['email'].errors?.['email']) {
+            <small class="text-red-500 text-xs font-bold"> Formato de correo inválido. </small>
+          }
+        </div>
+
+        <div class="mb-4">
+          <label for="register-password" class="block text-sm font-medium text-textdark mb-1"
+            >Contraseña</label
+          >
+          <input
+            id="register-password"
+            type="password"
+            formControlName="password"
+            class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+            placeholder="••••••••"
+          />
+          @if (isInvalid('password') && f['password'].errors?.['required']) {
+            <small class="text-red-500 text-xs font-bold"> La contraseña es obligatoria. </small>
+          }
+          @if (isInvalid('password') && f['password'].errors?.['minlength']) {
+            <small class="text-red-500 text-xs font-bold">
+              Debe tener al menos 6 caracteres.
+            </small>
+          }
+        </div>
+
+        <div class="mb-6">
+          <label for="register-confirm" class="block text-sm font-medium text-textdark mb-1"
+            >Confirmar contraseña</label
+          >
+          <input
+            id="register-confirm"
+            type="password"
+            formControlName="confirmPassword"
+            class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+            placeholder="••••••••"
+          />
+          @if (isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']) {
+            <small class="text-red-500 text-xs font-bold"> Debes confirmar la contraseña. </small>
+          }
+          @if (
+            registerForm.errors?.['passwordMismatch'] &&
+            (f['confirmPassword'].dirty || f['confirmPassword'].touched)
+          ) {
+            <small class="text-red-500 text-xs font-bold"> Las contraseñas no coinciden. </small>
+          }
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="registerForm.invalid"
+          class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
+        >
+          Registrarse
+        </button>
+
+        @if (errorMessage()) {
+          <small class="text-red-500 text-xs block text-center mt-3 font-bold">
+            {{ errorMessage() }}
+          </small>
+        }
+
+        <button
+          type="button"
+          routerLink="/login"
+          class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
+        >
+          Volver al inicio de sesión
+        </button>
+      </form>
+    }
   </div>
 </div>

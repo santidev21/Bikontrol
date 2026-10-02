@@ -42,6 +42,9 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         Environment.SetEnvironmentVariable("Google__ClientId", "test.apps.googleusercontent.com");
         // The demo tenant is opt-in; the integration tests exercise it explicitly.
         Environment.SetEnvironmentVariable("Demo__Enabled", "true");
+        // Integration tests register users directly and use their tokens, so they
+        // opt out of email confirmation (which is covered by unit tests).
+        Environment.SetEnvironmentVariable("EmailConfirmation__Required", "false");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

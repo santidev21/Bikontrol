@@ -5,6 +5,7 @@ import { environment } from '@env/environment';
 import {
   ForgotPasswordResponse,
   LoginResponse,
+  MessageResponse,
   RegisterRequest,
   RegisterResponse,
   ResetPasswordResponse,
@@ -29,9 +30,22 @@ export class AuthService {
   }
 
   register(data: RegisterRequest): Observable<RegisterResponse> {
-    return this.http
-      .post<RegisterResponse>(`${this.apiUrl}/register`, data)
-      .pipe(tap((response) => this.storeSession(response)));
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data).pipe(
+      tap((response) => {
+        // When email confirmation is required there is no session yet.
+        if (response.token) {
+          this.storeSession(response);
+        }
+      }),
+    );
+  }
+
+  confirmEmail(email: string, token: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/confirm-email`, { email, token });
+  }
+
+  resendConfirmation(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/resend-confirmation`, { email });
   }
 
   googleLogin(idToken: string): Observable<LoginResponse> {

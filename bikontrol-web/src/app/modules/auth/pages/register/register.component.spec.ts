@@ -15,6 +15,7 @@ describe('RegisterComponent', () => {
   beforeEach(() => {
     authServiceMock = {
       register: vi.fn(),
+      resendConfirmation: vi.fn(),
     };
     routerMock = {
       navigate: vi.fn(),
@@ -99,6 +100,42 @@ describe('RegisterComponent', () => {
     expect(httpErrorMock.message).toHaveBeenCalled();
     expect(component.errorMessage()).toBe('Email ya registrado');
     expect(routerMock.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should show the confirmation screen instead of navigating when confirmation is required', () => {
+    authServiceMock.register.mockReturnValue(
+      of({ email: 'user@example.com', emailConfirmationRequired: true }),
+    );
+    component.registerForm.setValue({
+      fullName: 'Juan Perez',
+      email: 'user@example.com',
+      password: 'secret1',
+      confirmPassword: 'secret1',
+    });
+
+    component.onSubmit();
+
+    expect(component.confirmationSent()).toBe(true);
+    expect(routerMock.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should resend the confirmation email', () => {
+    authServiceMock.register.mockReturnValue(
+      of({ email: 'user@example.com', emailConfirmationRequired: true }),
+    );
+    authServiceMock.resendConfirmation.mockReturnValue(of({ message: 'Enviado' }));
+    component.registerForm.setValue({
+      fullName: 'Juan Perez',
+      email: 'user@example.com',
+      password: 'secret1',
+      confirmPassword: 'secret1',
+    });
+    component.onSubmit();
+
+    component.onResendConfirmation();
+
+    expect(authServiceMock.resendConfirmation).toHaveBeenCalledWith('user@example.com');
+    expect(component.resendMessage()).toBe('Enviado');
   });
 
   it('should use the generic fallback message when the backend response is empty', () => {

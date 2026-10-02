@@ -7,6 +7,8 @@
 - `POST /api/auth/refresh`
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
+- `POST /api/auth/confirm-email`
+- `POST /api/auth/resend-confirmation`
 - `POST /api/auth/demo` (opt-in; `404` unless `Demo__Enabled=true`)
 
 ## Motorcycles

@@ -66,6 +66,46 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/register`, data);
   });
 
+  it('register should not store a session when email confirmation is required', async () => {
+    const mock: any = {
+      email: 'x@y.com',
+      emailConfirmationRequired: true,
+      token: '',
+      refreshToken: '',
+    };
+    mockHttp.post.mockReturnValue(of(mock));
+
+    await firstValueFrom(
+      service.register({ fullName: 'Test User', email: 'x@y.com', password: 'pw' }),
+    );
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(service.isAuthenticated()).toBeFalsy();
+  });
+
+  it('confirmEmail should call POST /confirm-email', async () => {
+    mockHttp.post.mockReturnValue(of({ message: 'ok' }));
+
+    const res = await firstValueFrom(service.confirmEmail('a@b.com', 'tok'));
+
+    expect(res.message).toBe('ok');
+    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/confirm-email`, {
+      email: 'a@b.com',
+      token: 'tok',
+    });
+  });
+
+  it('resendConfirmation should call POST /resend-confirmation', async () => {
+    mockHttp.post.mockReturnValue(of({ message: 'ok' }));
+
+    const res = await firstValueFrom(service.resendConfirmation('a@b.com'));
+
+    expect(res.message).toBe('ok');
+    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/resend-confirmation`, {
+      email: 'a@b.com',
+    });
+  });
+
   it('googleLogin should call POST /google and store session', async () => {
     const mock: any = { token: 'google-token', refreshToken: 'google-refresh' };
     mockHttp.post.mockReturnValue(of(mock));

@@ -55,6 +55,8 @@ services:
       # Public demo tenant: off by default. Turn it on deliberately (and only
       # for a controlled demo) with Demo__Enabled=true.
       Demo__Enabled: ${Demo__Enabled:-false}
+      # Require email confirmation before login (default true).
+      EmailConfirmation__Required: ${EmailConfirmation__Required:-true}
     networks:
       - bikontrol-net
       - bikontrol-internal-net
