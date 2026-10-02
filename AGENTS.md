@@ -11,6 +11,9 @@ Motorcycle tracking and maintenance app:
 - Read-only statistics aggregation (`GET /api/statistics/summary`); profile endpoints (`GET/PUT /api/users/me`, `POST /api/users/me/password`); multi-step writes run in transactions (`ITransactionManager`); optimistic concurrency via Postgres `xmin`; CHECK constraints on km/intervals
 - Root `package.json` orchestrates local dev (`dev`, `dev:ui/dev:api`, `db:*`, `docker:dev` scripts)
 
+## Product Direction
+Bikontrol is the **primary product**: a B2C app for motorcycle owners (not workshops — no multi-tenancy). Priority is a sellable, trustworthy app, so reliability, security and observability come before new features. The other repos (SplitIt, MyBudgetBot, portfolio, …) are frozen: dependency bumps and bug fixes only. The maintainer's roadmap lives in `~/.opencode/plan/bikontrol-super-pro-plan.md`.
+
 ## Repository Layout
 ```text
 Bikontrol/
@@ -34,6 +37,13 @@ Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs
 
 ## Frontend Architecture
 Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Vitest via Angular's `@angular/build:unit-test` builder (`npm test` → `ng test --watch=false`), zoneless.
+
+## Quality Gates & Delivery
+- Backend line coverage gate **80%** (`node scripts/check-coverage.mjs 80`, merged cobertura). Frontend runs Vitest but has **no coverage gate yet**.
+- SonarCloud (`santidev21_Bikontrol`) is a **required** status check (Quality Gate on new code).
+- Mutation testing: Stryker.NET on `MaintenanceService` (`stryker-config.json`, break **40**, `.github/workflows/mutation.yml`).
+- CI (`ci.yml`): backend + frontend tests, Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy.
+- `main` is protected: required status checks, no force-push.
 
 ## Commands (run from repo root via root scripts unless noted)
 - Both: `npm run dev` (DB in Docker + frontend + backend, hot reload) · `npm run build` · `npm run test` (see `/test`)
