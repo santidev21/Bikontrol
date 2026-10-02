@@ -69,7 +69,11 @@ jobs:
             # every TS/JS line as 0%-covered and any frontend PR fails the
             # new-code coverage gate. Generated EF migration scaffolding is
             # excluded too (see coverlet.runsettings); migration Up/Down stays.
-            "/d:sonar.coverage.exclusions=**/*.ts,**/*.js,**/*.mjs,**/*.html,**/*.scss,**/*.css,**/Migrations/*.Designer.cs,**/Migrations/*ModelSnapshot.cs"
+            # Program.cs (top-level statements) compiles to a compiler-generated
+            # class that coverlet never instruments (ExcludeByAttribute
+            # CompilerGeneratedAttribute), so Sonar sees its lines as uncovered;
+            # keep this composition root out of the coverage gate.
+            "/d:sonar.coverage.exclusions=**/*.ts,**/*.js,**/*.mjs,**/*.html,**/*.scss,**/*.css,**/Migrations/*.Designer.cs,**/Migrations/*ModelSnapshot.cs,**/Bikontrol.API/Program.cs"
           )
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             args+=(
