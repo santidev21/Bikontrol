@@ -22,7 +22,7 @@ export class UpdateService implements OnDestroy {
 
   init(): void {
     if (!this.swUpdate.isEnabled) return;
-    this.refreshSwVersion();
+    void this.refreshSwVersion();
     this.versionSub = this.swUpdate.versionUpdates
       .pipe(filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY'))
       .subscribe((event) => this.onVersionReady(event));

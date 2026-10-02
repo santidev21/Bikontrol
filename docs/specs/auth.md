@@ -20,7 +20,14 @@
 | `POST` | `/refresh` | Body `{ refreshToken }`. Single-use rotation: concurrent replays conflict and return `401` (expired session). |
 | `POST` | `/forgot-password` | Body `{ email }`. Emails a reset link (always `200` to avoid leaking account existence). |
 | `POST` | `/reset-password` | Body `{ email, token, newPassword }`. Validates the hashed, time-limited token and updates the password. |
-| `POST` | `/demo` | Anonymous demo login. Returns `403` when the configured demo email belongs to a non-demo account (never hands out real accounts). |
+| `POST` | `/demo` | Anonymous demo login. **Opt-in**: returns `404` unless `Demo:Enabled=true`. Returns `403` when the configured demo email belongs to a non-demo account (never hands out real accounts). |
+
+## Demo mode
+
+- The public demo tenant is **opt-in** via `Demo:Enabled` (env `Demo__Enabled`). It defaults to `false` everywhere, including production.
+- When disabled: `POST /api/auth/demo` returns `404` and `DemoUserSeeder` runs no queries — the demo user and its content are never created.
+- When enabled: the seeder creates `demo@bikontrol.com` (`Role=Demo`) plus sample motorcycles/maintenances; the account is read-only (writes return `403`).
+- Development enables it through `appsettings.Development.json`; the Angular build mirrors the flag through `environment.demoEnabled`, which hides the "Probar demo" button when off. Keep the API flag and the frontend flag in sync when enabling a public demo.
 
 ## Sessions (refresh tokens)
 

@@ -7,6 +7,15 @@
           <Format>cobertura,opencover</Format>
           <Exclude>[*.Tests]*,[*.Tests.Integration]*</Exclude>
           <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+          <!--
+            EF Core migration scaffolding is auto-generated and applied verbatim by
+            the integration-test fixture, so coverlet reports it as ~100% covered
+            and it dominates the denominator (it was ~87% of all coverable lines).
+            Exclude only the generated Designer/snapshot files; migration Up/Down
+            logic stays in scope. Mirrors sonar.coverage.exclusions in
+            .github/workflows/sonarcloud.yml.
+          -->
+          <ExcludeByFile>**/Migrations/*.Designer.cs,**/Migrations/*ModelSnapshot.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>
     </DataCollectors>

@@ -1,0 +1,51 @@
+name: Mutation testing
+
+# Stryker.NET on the maintenance-interval logic (MaintenanceService): unit tests
+# with in-memory fakes, so the job is fast and needs no PostgreSQL.
+#
+# Runs when the mutated code, its tests or the config change; weekly on a
+# schedule; and on demand. Fails when the mutation score drops below the `break`
+# threshold in stryker-config.json.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Bikontrol/Bikontrol.Infrastructure/Services/MaintenanceService.cs'
+      - 'Bikontrol/Bikontrol.Tests/MaintenanceService*'
+      - 'stryker-config.json'
+      - '.github/workflows/mutation.yml'
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stryker:
+    name: Stryker.NET (MaintenanceService)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install Stryker.NET
+        run: dotnet tool install --global dotnet-stryker
+
+      - name: Restore
+        run: dotnet restore Bikontrol/Bikontrol.sln
+
+      - name: Run mutation tests
+        run: dotnet stryker --config-file stryker-config.json
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: StrykerOutput/**/reports/

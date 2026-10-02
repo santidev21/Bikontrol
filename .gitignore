@@ -88,3 +88,6 @@ backups/
 
 # SonarScanner for .NET working directory
 .sonarqube/
+
+# Mutation testing output (Stryker.NET)
+StrykerOutput/

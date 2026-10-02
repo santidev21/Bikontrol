@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 
 namespace Bikontrol.Tests.Integration.Infrastructure;
@@ -39,11 +40,16 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         Environment.SetEnvironmentVariable("Jwt__ExpireMinutes", "15");
         Environment.SetEnvironmentVariable("Jwt__RefreshExpireDays", "30");
         Environment.SetEnvironmentVariable("Google__ClientId", "test.apps.googleusercontent.com");
+        // The demo tenant is opt-in; the integration tests exercise it explicitly.
+        Environment.SetEnvironmentVariable("Demo__Enabled", "true");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        // Let tests pick their own client IP so the per-IP rate limiter can be
+        // exercised without tests sharing one budget (TestServer has no IP).
+        builder.ConfigureServices(services => services.AddSingleton<IStartupFilter, ClientIpStartupFilter>());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
