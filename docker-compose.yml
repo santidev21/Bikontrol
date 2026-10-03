@@ -67,8 +67,13 @@ services:
       # Maintenance reminders engine (daily job + dedupe window).
       Reminders__Enabled: ${Reminders__Enabled:-true}
       Reminders__EmailEnabled: ${Reminders__EmailEnabled:-true}
+      Reminders__PushEnabled: ${Reminders__PushEnabled:-true}
       Reminders__DailyHourUtc: ${Reminders__DailyHourUtc:-8}
       Reminders__DedupeDays: ${Reminders__DedupeDays:-3}
+      # Web Push (VAPID). Empty keys = push is a no-op.
+      WebPush__PublicKey: ${WebPush__PublicKey:-}
+      WebPush__PrivateKey: ${WebPush__PrivateKey:-}
+      WebPush__Subject: ${WebPush__Subject:-mailto:contacto.santidev21@gmail.com}
     networks:
       - bikontrol-net
       - bikontrol-internal-net

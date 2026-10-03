@@ -31,4 +31,8 @@ export class UserService {
       newPassword,
     });
   }
+
+  updateReminders(enabled: boolean): Observable<Profile> {
+    return this.http.put<Profile>(`${this.apiUrl}/me/reminders`, { enabled });
+  }
 }

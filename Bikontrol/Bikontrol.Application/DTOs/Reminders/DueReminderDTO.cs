@@ -1,5 +1,23 @@
 namespace Bikontrol.Application.DTOs.Reminders
 {
+    /// <summary>Browser Web Push subscription payload (PushSubscription.toJSON()).</summary>
+    public class RegisterPushSubscriptionRequest
+    {
+        public string Endpoint { get; set; } = string.Empty;
+        public PushSubscriptionKeys Keys { get; set; } = new();
+    }
+
+    public class PushSubscriptionKeys
+    {
+        public string P256dh { get; set; } = string.Empty;
+        public string Auth { get; set; } = string.Empty;
+    }
+
+    public class UnregisterPushSubscriptionRequest
+    {
+        public string Endpoint { get; set; } = string.Empty;
+    }
+
     /// <summary>A maintenance the user should attend to soon (or now).</summary>
     public class DueReminderDTO
     {

@@ -14,6 +14,8 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { UpdateService } from '../../../../shared/services/update.service';
+import { PushService } from '../../service/push.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -29,6 +31,7 @@ export class ProfileComponent {
   private readonly swal = inject(SwalService);
   private readonly httpError = inject(HttpErrorService);
   private readonly updateService = inject(UpdateService);
+  private readonly pushService = inject(PushService);
 
   private readonly profileRes = this.userService.getMeResource();
   readonly profile = computed(() =>
@@ -48,6 +51,10 @@ export class ProfileComponent {
 
   readonly appVersion = this.updateService.appVersion;
   readonly swVersion = this.updateService.swVersion;
+
+  readonly pushSupported = this.pushService.isSupported;
+  readonly remindersEnabled = computed(() => this.profile()?.remindersEnabled ?? false);
+  readonly pushBusy = signal(false);
 
   readonly isDemo = computed(() => this.authService.isDemo());
   readonly canChangePassword = computed(() => !!this.profile()?.hasPassword && !this.isDemo());
@@ -141,6 +148,47 @@ export class ProfileComponent {
         );
       },
     });
+  }
+
+  toggleReminders(): void {
+    if (this.isDemo()) return;
+    const enabled = !this.remindersEnabled();
+    this.userService.updateReminders(enabled).subscribe({
+      next: (data) => {
+        this.profileRes.set(data);
+        this.swal.success(
+          '¡Listo!',
+          enabled ? 'Recordatorios activados.' : 'Recordatorios desactivados.',
+        );
+      },
+      error: (err) =>
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo actualizar la preferencia.'),
+        ),
+    });
+  }
+
+  async togglePush(): Promise<void> {
+    if (this.pushBusy()) return;
+    this.pushBusy.set(true);
+    try {
+      const current = await firstValueFrom(this.pushService.getSubscription());
+      if (current) {
+        await firstValueFrom(this.pushService.unsubscribe());
+        this.swal.success('¡Listo!', 'Notificaciones desactivadas en este dispositivo.');
+      } else {
+        await firstValueFrom(this.pushService.subscribe());
+        this.swal.success('¡Listo!', 'Notificaciones activadas en este dispositivo.');
+      }
+    } catch (err: any) {
+      this.swal.error(
+        'Error',
+        this.httpError.message(err, 'No se pudieron cambiar las notificaciones.'),
+      );
+    } finally {
+      this.pushBusy.set(false);
+    }
   }
 
   logout(): void {

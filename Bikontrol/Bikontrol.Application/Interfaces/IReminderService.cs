@@ -23,5 +23,12 @@ namespace Bikontrol.Application.Interfaces
         /// job right after <see cref="GenerateDueRemindersAsync"/>.
         /// </summary>
         Task<int> SendPendingEmailsAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Delivers still-pending reminders by Web Push and marks them delivered.
+        /// Returns how many users were notified. Called by the daily job after
+        /// the email step.
+        /// </summary>
+        Task<int> SendPendingPushesAsync(CancellationToken cancellationToken = default);
     }
 }

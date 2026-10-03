@@ -40,6 +40,9 @@
 
 ## Reminders
 - `GET /api/reminders/due` (maintenance due/overdue for the current user)
+- `GET /api/reminders/push/vapid-public-key` (anonymous; `null` when push is off)
+- `POST /api/reminders/push/subscribe` (`{ endpoint, keys: { p256dh, auth } }`)
+- `POST /api/reminders/push/unsubscribe` (`{ endpoint }`)
 
 ## Statistics (read-only aggregation, demo allowed)
 - `GET /api/statistics/summary`

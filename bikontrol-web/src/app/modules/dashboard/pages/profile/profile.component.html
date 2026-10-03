@@ -66,6 +66,23 @@
           <span class="row-value">{{ p.createdAt | date: 'yyyy-MM-dd' }}</span>
         </div>
         <div class="profile-row">
+          <span class="row-label">Recordatorios por correo</span>
+          <span class="row-value">
+            @if (!isDemo()) {
+              <button
+                type="button"
+                (click)="toggleReminders()"
+                class="text-primary hover:underline"
+                [attr.aria-pressed]="remindersEnabled()"
+              >
+                {{ remindersEnabled() ? 'Activados' : 'Desactivados' }}
+              </button>
+            } @else {
+              {{ remindersEnabled() ? 'Activados' : 'Desactivados' }}
+            }
+          </span>
+        </div>
+        <div class="profile-row">
           <span class="row-label">Versión</span>
           <span class="row-value"
             >v{{ appVersion }}
@@ -76,6 +93,16 @@
         </div>
       </div>
       <div class="profile-actions">
+        @if (pushSupported && !isDemo()) {
+          <button
+            type="button"
+            (click)="togglePush()"
+            [disabled]="pushBusy()"
+            class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
+          >
+            {{ pushBusy() ? 'Procesando…' : 'Activar/desactivar notificaciones push' }}
+          </button>
+        }
         @if (canChangePassword()) {
           <button
             (click)="openPasswordModal()"

@@ -33,6 +33,8 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<IStatisticsService, StatisticsService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IReminderService, ReminderService>();
+            services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
+            services.AddScoped<IPushSender, Notifications.WebPushSender>();
             services.AddHostedService<BackgroundServices.ReminderBackgroundService>();
             return services;
         }

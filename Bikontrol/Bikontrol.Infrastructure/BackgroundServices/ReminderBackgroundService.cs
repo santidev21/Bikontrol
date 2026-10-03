@@ -86,6 +86,10 @@ namespace Bikontrol.Infrastructure.BackgroundServices
         private bool IsEmailEnabled =>
             !bool.TryParse(_configuration["Reminders:EmailEnabled"], out var enabled) || enabled;
 
+        /// <summary>Whether the Web Push step runs (default true; a no-op without VAPID keys).</summary>
+        private bool IsPushEnabled =>
+            !bool.TryParse(_configuration["Reminders:PushEnabled"], out var enabled) || enabled;
+
         private async Task RunOnceAsync(CancellationToken cancellationToken)
         {
             _lastRunUtc = DateTime.UtcNow;
@@ -101,10 +105,17 @@ namespace Bikontrol.Infrastructure.BackgroundServices
                 emailed = await service.SendPendingEmailsAsync(cancellationToken);
             }
 
+            var pushed = 0;
+            if (IsPushEnabled)
+            {
+                pushed = await service.SendPendingPushesAsync(cancellationToken);
+            }
+
             _logger.LogInformation(
-                "Reminder run complete: {Generated} reminder(s) generated, {Emailed} digest email(s) sent.",
+                "Reminder run complete: {Generated} generated, {Emailed} digest email(s), {Pushed} push delivery(ies).",
                 generated,
-                emailed);
+                emailed,
+                pushed);
         }
     }
 }
