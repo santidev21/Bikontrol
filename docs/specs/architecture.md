@@ -13,7 +13,7 @@ Internet → gateway (nginx) → bikontrol (Angular, :8080)
 | Service | Description |
 |---|---|
 | `db` | PostgreSQL 16 (internal network only, loopback `:5434` locally) |
-| `api` | .NET 8 API (`:8080`, health at `/health`, waits for healthy DB) |
+| `api` | .NET 8 API (`:8080`, `/health` liveness + `/ready` readiness, waits for healthy DB) |
 | `web` | Angular 22 via nginx (`:8080`, loopback `:4200` locally) |
 
 ## Backend Layers (Clean Architecture)

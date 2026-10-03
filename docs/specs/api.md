@@ -1,5 +1,9 @@
 # API Routes
 
+## Health
+- `GET /health` — liveness: `200 Healthy` whenever the process is up (no dependency checks).
+- `GET /ready` — readiness: `200 Healthy` only when PostgreSQL responds; `503` otherwise (own 3s-timeout connection).
+
 ## Auth
 - `POST /api/auth/register`
 - `POST /api/auth/login`

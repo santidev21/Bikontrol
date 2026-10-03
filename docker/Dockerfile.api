@@ -17,6 +17,12 @@ RUN apt-get update \
 
 EXPOSE 8080
 
+# Readiness probe: hits /ready, which checks PostgreSQL. Keeping it in the image
+# means the container is marked unhealthy (and a deploy blocks/rolls back) when
+# the API cannot reach the database, not merely when the process is up.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8080/ready || exit 1
+
 COPY --from=build /app/publish .
 
 # Run as the non-root user defined by the .NET 8 image (APP_UID=1654).
