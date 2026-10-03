@@ -88,6 +88,13 @@ jobs:
         working-directory: bikontrol-web
         run: npm test
 
+      # The production build runs prebuild (scripts/set-env.js) and the AOT
+      # compiler, which the unit tests do not. Build it here so a broken
+      # environment generator or template fails CI instead of the deploy.
+      - name: Build frontend (production)
+        working-directory: bikontrol-web
+        run: npm run build
+
   secret-scan:
     name: Secret scan (Gitleaks)
     runs-on: ubuntu-latest

@@ -157,6 +157,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 | `npm run db:up` / `npm run db:down` | Start / stop Postgres in Docker |
 | `npm run db:migrate` | Apply EF migrations |
 | `npm run db:backup` / `db:verify-backup` / `db:restore` | Dump the DB / prove it restores / restore it |
+| `npm run smoke -- <url>` | Post-deploy smoke test against a running deployment |
 | `npm run docker:dev` | Full stack in Docker (like prod) |
 | `npm run build` | Build frontend and backend |
 | `npm run test` | Run frontend and backend tests |
@@ -189,7 +190,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 
 ## Deployment
 
-Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup and manual deploy commands, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Deploys happen automatically on push to `main` via GitHub Actions. Each deploy backs up (and verifies) the DB, then healthchecks the containers **and** runs a post-deploy smoke test against the public origin (`npm run smoke <url>`); the deploy **rolls back automatically** if either fails. Staging uses the same script with `DEPLOY_DIR`/`SMOKE_URL` overrides. For VPS setup and manual commands, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 

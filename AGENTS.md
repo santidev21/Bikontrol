@@ -42,7 +42,8 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - Backend line coverage gate **80%** (`node scripts/check-coverage.mjs 80`, merged cobertura). Frontend runs Vitest but has **no coverage gate yet**.
 - SonarCloud (`santidev21_Bikontrol`) is a **required** status check (Quality Gate on new code).
 - Mutation testing: Stryker.NET on `MaintenanceService` (`stryker-config.json`, break **40**, `.github/workflows/mutation.yml`).
-- CI (`ci.yml`): backend + frontend tests, Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy.
+- CI (`ci.yml`): backend + frontend tests, **frontend production build** (AOT + env generator), Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy.
+- Deploy (`scripts/deploy.sh`): backup + verify → integrity audit → build → up → container healthcheck → **post-deploy smoke test**; rolls back automatically on either failure. Staging reuses it via `DEPLOY_DIR`/`SMOKE_URL`.
 - `main` is protected: required status checks, no force-push.
 
 ## Commands (run from repo root via root scripts unless noted)
