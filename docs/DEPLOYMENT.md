@@ -50,8 +50,11 @@ Manual backup / restore (VPS or local):
 
 # Local (works with loopback DB on 5434)
 npm run db:backup              # → backups/bikontrol-db-<ts>.sql.gz
+npm run db:verify-backup       # restore the newest backup into a throwaway DB + check it
 npm run db:restore -- backups/bikontrol-db-xxx.sql.gz
 ```
+
+**Verified backups.** A dump is only trusted after it restores. `scripts/db-verify-backup.sh` restores a backup into a temporary `*_restore_check` database inside the running `db` container, asserts the core tables exist and are readable, then drops it — it never touches the live database. `deploy` runs it right after `pg_dump` (a dump that does not restore aborts the deploy), and it can be run on any backup: `./scripts/db-verify-backup.sh backups/backup-XXXX/db.sql.gz`.
 
 **Automatic weekly backups** (recommended, VPS cron — Sunday 02:00 UTC):
 
