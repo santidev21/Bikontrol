@@ -38,6 +38,12 @@ cd /opt/bikontrol && ./scripts/deploy.sh deploy
 3. Copy `deploy/bikontrol.santidev21.tech.conf` into the gateway's `sites-enabled/` and add `bikontrol-net` to the gateway `docker-compose.yml` networks and `init-networks.sh`.
 4. Reload: `docker exec gateway nginx -t && docker exec gateway nginx -s reload`.
 
+### HTTPS & security headers
+
+- **TLS** terminates at the gateway with TLS 1.2/1.3 only, HSTS (`max-age=31536000; includeSubDomains; preload`), OCSP stapling and a strong cipher suite (gateway `snippets/ssl-params.conf` + `security-headers.conf`).
+- **Security headers** (HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP/CORP) are applied at the gateway for every response; the frontend container repeats the essential ones for defense in depth.
+- **Content-Security-Policy** is set per site at the gateway (`sites-enabled/bikontrol.santidev21.tech.conf`) and mirrored in the frontend container (`docker/nginx.conf`). The allow-list is intentionally tight: `'self'` plus Google Identity Services (`accounts.google.com`) and the Font Awesome CDN (`cdnjs.cloudflare.com`); `data:`/`blob:` for resized photos. There is **no `'unsafe-eval'`**. When adding a third-party script/style/font/frame, add its origin to the CSP in **both** places or it will be blocked.
+
 ## Database backups
 
 Every `deploy` call already creates a compressed DB dump (`pg_dump` → `backups/backup-<timestamp>/db.sql.gz`) before pulling new code. Backups are kept in persistent `backups/` (not `/tmp`) with 7-copy retention.
@@ -107,3 +113,12 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `Frontend__BaseUrl` | Base URL for password-reset links (default `https://bikontrol.santidev21.tech`) |
 | `Smtp__Host` / `Smtp__Port` / `Smtp__Username` / `Smtp__Password` / `Smtp__FromEmail` (+ `Smtp__FromName`, `Smtp__EnableSsl`) | SMTP for recovery emails (**required** in prod, otherwise reset links are only logged) |
 | `Cors__AllowedOrigins` | Comma-separated browser origins |
+
+### Secret management & rotation
+
+- **Never in the repo.** Real values live in `/opt/bikontrol/.env` (mode `600`, owned by the deploy user) and, for local dev, in the gitignored `appsettings.Development.json`. `.env.example` only carries placeholders and is checked by Gitleaks on every PR.
+- **Rotating `Jwt__Key`** immediately invalidates every issued access token (all users must log in again). Refresh tokens survive, so sessions renew on the next refresh; rotate during a low-traffic window.
+- **Rotating DB credentials:** update `POSTGRES_PASSWORD` **and** the password inside `ConnectionStrings__DefaultConnection` together (they must match), then `./scripts/deploy.sh deploy`. Existing connections are re-established on restart.
+- **Rotating SMTP / Google / Sentry:** update the matching vars, redeploy.
+- After any rotation, verify: `./scripts/deploy.sh verify` (containers healthy) and a login + `/ready` check. Keep one previous value until the deploy is confirmed healthy, then discard it.
+- **Secret scanning** (Gitleaks) runs in CI; Trivy scans the filesystem. Neither replaces rotating a leaked secret — if a secret ever reaches a commit, rotate it, don't just delete the line.
