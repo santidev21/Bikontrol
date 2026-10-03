@@ -126,7 +126,8 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `EmailConfirmation__Required` | Require email confirmation before login (default `true`). Requires working SMTP; set `false` to skip verification. |
 | `Lockout__Enabled` / `Lockout__MaxFailedAttempts` / `Lockout__Minutes` | Account lockout after repeated failed logins (defaults: `true` / `5` / `15`). |
 | `Sentry__Dsn` / `Sentry__TracesSampleRate` | Error tracking (Sentry). Empty DSN = disabled. Sample rate default `0.1`. |
-| `Reminders__Enabled` / `Reminders__EmailEnabled` / `Reminders__DailyHourUtc` / `Reminders__DedupeDays` | Maintenance reminder engine (defaults: `true` / `true` / `8` (UTC) / `3`). Email digest needs SMTP configured. |
+| `Reminders__Enabled` / `Reminders__EmailEnabled` / `Reminders__PushEnabled` / `Reminders__DailyHourUtc` / `Reminders__DedupeDays` | Maintenance reminder engine (defaults: `true` / `true` / `true` / `8` (UTC) / `3`). Email digest needs SMTP; push needs VAPID. |
+| `WebPush__PublicKey` / `WebPush__PrivateKey` / `WebPush__Subject` | Web Push (VAPID). Generate with `npx web-push generate-vapid-keys --json`. Empty keys disable push (email still works). **Rotating the keys invalidates all existing subscriptions** (users must re-enable notifications). |
 | `DemoUser__Email` / `DemoUser__FullName` | Demo user identity (defaults `demo@bikontrol.com` / `Usuario Demo`); only used when `Demo__Enabled=true` |
 | `Frontend__BaseUrl` | Base URL for password-reset links (default `https://bikontrol.santidev21.tech`) |
 | `Smtp__Host` / `Smtp__Port` / `Smtp__Username` / `Smtp__Password` / `Smtp__FromEmail` (+ `Smtp__FromName`, `Smtp__EnableSsl`) | SMTP for recovery emails (**required** in prod, otherwise reset links are only logged) |

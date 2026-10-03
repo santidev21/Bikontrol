@@ -5,6 +5,7 @@ export interface Profile {
   role: string;
   createdAt: string;
   hasPassword: boolean;
+  remindersEnabled: boolean;
 }
 
 export interface UpdateProfileRequest {

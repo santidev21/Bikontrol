@@ -20,6 +20,8 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
         private readonly IReminderLogRepository _reminderLogRepository;
         private readonly IEmailSender _emailSender;
+        private readonly IPushSubscriptionRepository _pushSubscriptionRepository;
+        private readonly IPushSender _pushSender;
         private readonly IConfiguration _configuration;
 
         public ReminderService(
@@ -31,8 +33,12 @@ namespace Bikontrol.Infrastructure.Services
             IMotorcycleMaintenanceRecordRepository recordRepository,
             IReminderLogRepository reminderLogRepository,
             IEmailSender emailSender,
+            IPushSubscriptionRepository pushSubscriptionRepository,
+            IPushSender pushSender,
             IConfiguration configuration)
         {
+            _pushSubscriptionRepository = pushSubscriptionRepository;
+            _pushSender = pushSender;
             _current = current;
             _userRepository = userRepository;
             _userMaintenanceRepository = userMaintenanceRepository;
@@ -195,6 +201,65 @@ namespace Bikontrol.Infrastructure.Services
                 await _reminderLogRepository.SaveChangesAsync();
 
             return sent;
+        }
+
+        public async Task<int> SendPendingPushesAsync(CancellationToken cancellationToken = default)
+        {
+            var pending = await _reminderLogRepository.GetPendingWithDetailsAsync(ReminderChannel.Pending);
+            if (pending.Count == 0)
+                return 0;
+
+            var now = DateTime.UtcNow;
+            var delivered = 0;
+
+            foreach (var group in pending.GroupBy(r => r.UserId))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var logs = group.ToList();
+                var user = logs[0].User;
+                if (user is null || !user.RemindersEnabled)
+                    continue;
+
+                var subscriptions = await _pushSubscriptionRepository.GetByUserIdAsync(user.Id);
+                if (subscriptions.Count == 0)
+                    continue;
+
+                var payload = new PushPayload
+                {
+                    Title = "Bikontrol: mantenimiento por vencer",
+                    Body = logs.Count == 1
+                        ? $"{logs[0].UserMaintenance?.Name ?? "Mantenimiento"} está por vencer."
+                        : $"{logs.Count} mantenimientos están por vencer.",
+                    Url = "/dashboard"
+                };
+
+                var anyDelivered = false;
+                foreach (var subscription in subscriptions)
+                {
+                    var ok = await _pushSender.SendAsync(subscription, payload);
+                    if (ok)
+                    {
+                        subscription.LastUsedAt = now;
+                        anyDelivered = true;
+                    }
+                    else
+                    {
+                        // Gone (404/410): drop the dead subscription.
+                        await _pushSubscriptionRepository.RemoveByEndpointAsync(subscription.Endpoint);
+                    }
+                }
+
+                if (anyDelivered)
+                {
+                    await _reminderLogRepository.MarkDeliveredAsync(logs.Select(l => l.Id), ReminderChannel.Push, now);
+                    delivered++;
+                }
+            }
+
+            await _pushSubscriptionRepository.SaveChangesAsync();
+            await _reminderLogRepository.SaveChangesAsync();
+            return delivered;
         }
 
         private static string BuildDigestBody(User user, IReadOnlyList<ReminderLog> logs, string baseUrl)

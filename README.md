@@ -24,7 +24,7 @@ a demo.
   or define your own, tracked by km interval, by time (weeks), or both. Each shows % remaining and a
   health bucket (OK / Próximo / Crítico / Vencido) computed from the latest km and the last record.
 - **Record what you did** — mark maintenance performed (with km and date); history feeds the plan.
-- **Reminders** — a daily engine flags maintenance that is overdue or close (≤20 % of its life), deduped so it never nags, and emails **one digest per user** with everything due; the API surfaces what is due (`GET /api/reminders/due`) and you can turn reminders off. Web push is next.
+- **Reminders** — a daily engine flags maintenance that is overdue or close (≤20 % of its life), deduped so it never nags, and delivers **one digest email per user** plus **Web Push** to installed devices; surfacing what is due (`GET /api/reminders/due`) and turning reminders/notifications on or off from Perfil.
 - **Statistics** — fleet km, maintenance health, km per bike, records by type, 6-month activity.
 - **Profile** — edit your name, change your password, see your app version.
 - **Sign in your way** — email + password or "Sign in with Google".

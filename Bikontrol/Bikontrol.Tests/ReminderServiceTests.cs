@@ -156,12 +156,99 @@ public class ReminderServiceTests
         Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel);
     }
 
+    [Fact]
+    public async Task SendPendingPushesAsync_ShouldPushPendingToUserSubscriptionsAndMarkDelivered()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            IsOverdue = true,
+            User = user,
+            UserMaintenance = item
+        });
+
+        var subs = new FakePushSubscriptionRepository();
+        subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/1", P256dh = "k", Auth = "a" });
+        var sender = new FakePushSender();
+
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, pushSubscriptions: subs, pushSender: sender);
+
+        var delivered = await service.SendPendingPushesAsync();
+
+        Assert.Equal(1, delivered);
+        Assert.Single(sender.Sent);
+        Assert.Equal(ReminderChannel.Push, logs.Logs[0].Channel);
+        Assert.NotNull(subs.Subscriptions[0].LastUsedAt);
+    }
+
+    [Fact]
+    public async Task SendPendingPushesAsync_WhenSubscriptionGone_ShouldRemoveIt()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+
+        var subs = new FakePushSubscriptionRepository();
+        subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/gone", P256dh = "k", Auth = "a" });
+        var sender = new FakePushSender();
+        sender.GoneEndpoints.Add("https://push/gone");
+
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, pushSubscriptions: subs, pushSender: sender);
+
+        var delivered = await service.SendPendingPushesAsync();
+
+        Assert.Equal(0, delivered);
+        Assert.Empty(subs.Subscriptions); // dead subscription dropped
+        Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel); // not marked delivered
+    }
+
+    [Fact]
+    public async Task SendPendingPushesAsync_WhenUserHasNoSubscription_ShouldDoNothing()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+
+        var sender = new FakePushSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, pushSender: sender);
+
+        var delivered = await service.SendPendingPushesAsync();
+
+        Assert.Equal(0, delivered);
+        Assert.Empty(sender.Sent);
+        Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel);
+    }
+
     private static ReminderService CreateService(
         FakeUserMaintenanceRepository userMaintenance,
         FakeReminderLogRepository? reminders = null,
         Dictionary<Guid, int>? kmHistories = null,
         FakeEmailSender? emailSender = null,
-        FakeUserRepository? userRepository = null)
+        FakeUserRepository? userRepository = null,
+        FakePushSubscriptionRepository? pushSubscriptions = null,
+        FakePushSender? pushSender = null)
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -178,6 +265,8 @@ public class ReminderServiceTests
             new FakeRecordRepository(),
             reminders ?? new FakeReminderLogRepository(),
             emailSender ?? new FakeEmailSender(),
+            pushSubscriptions ?? new FakePushSubscriptionRepository(),
+            pushSender ?? new FakePushSender(),
             config);
     }
 
@@ -303,6 +392,43 @@ public class ReminderServiceTests
         {
             Sent.Add((toEmail, subject, body));
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakePushSubscriptionRepository : IPushSubscriptionRepository
+    {
+        public List<PushSubscription> Subscriptions { get; } = new();
+        public Task<IReadOnlyList<PushSubscription>> GetByUserIdAsync(Guid userId) =>
+            Task.FromResult<IReadOnlyList<PushSubscription>>(Subscriptions.Where(s => s.UserId == userId).ToList());
+        public Task<IReadOnlyList<PushSubscription>> GetByUserIdsAsync(IEnumerable<Guid> userIds)
+        {
+            var ids = userIds.ToHashSet();
+            return Task.FromResult<IReadOnlyList<PushSubscription>>(Subscriptions.Where(s => ids.Contains(s.UserId)).ToList());
+        }
+        public Task UpsertAsync(PushSubscription subscription)
+        {
+            Subscriptions.Add(subscription);
+            return Task.CompletedTask;
+        }
+        public Task RemoveByEndpointAsync(string endpoint)
+        {
+            Subscriptions.RemoveAll(s => s.Endpoint == endpoint);
+            return Task.CompletedTask;
+        }
+        public Task SaveChangesAsync() => Task.CompletedTask;
+    }
+
+    private sealed class FakePushSender : IPushSender
+    {
+        public List<(PushSubscription Subscription, PushPayload Payload)> Sent { get; } = new();
+        /// <summary>Endpoints that should be reported as gone (404/410).</summary>
+        public HashSet<string> GoneEndpoints { get; } = new();
+        public Task<bool> SendAsync(PushSubscription subscription, PushPayload payload)
+        {
+            if (GoneEndpoints.Contains(subscription.Endpoint))
+                return Task.FromResult(false);
+            Sent.Add((subscription, payload));
+            return Task.FromResult(true);
         }
     }
 }

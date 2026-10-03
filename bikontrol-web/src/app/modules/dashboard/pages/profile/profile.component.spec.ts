@@ -7,6 +7,7 @@ import { UpdateService } from '../../../../shared/services/update.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { UserService } from '../../service/user.service';
+import { PushService } from '../../service/push.service';
 import { ProfileComponent } from './profile.component';
 
 function fakeResource<T>(initial?: T, initialError?: string) {
@@ -29,6 +30,7 @@ const profileMock: any = {
   role: 'User',
   createdAt: '2026-01-01T00:00:00Z',
   hasPassword: true,
+  remindersEnabled: true,
 };
 
 describe('ProfileComponent', () => {
@@ -42,6 +44,7 @@ describe('ProfileComponent', () => {
       getMeResource: vi.fn(() => fakeResource()),
       updateProfile: vi.fn(),
       changePassword: vi.fn(),
+      updateReminders: vi.fn(),
     };
     authServiceMock = { isDemo: vi.fn().mockReturnValue(false), logout: vi.fn() };
     routerMock = { navigate: vi.fn() };
@@ -66,6 +69,15 @@ describe('ProfileComponent', () => {
           },
         },
         { provide: UpdateService, useValue: { appVersion: '0.1.0', swVersion: signal('abc1234') } },
+        {
+          provide: PushService,
+          useValue: {
+            isSupported: false,
+            getSubscription: vi.fn(() => of(null)),
+            subscribe: vi.fn(() => of({})),
+            unsubscribe: vi.fn(() => of({})),
+          },
+        },
       ],
     });
   });
@@ -194,6 +206,29 @@ describe('ProfileComponent', () => {
 
     expect(component.appVersion).toBe('0.1.0');
     expect(component.swVersion()).toBe('abc1234');
+  });
+
+  it('toggles reminders off', () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    const updated = { ...profileMock, remindersEnabled: false };
+    userServiceMock.updateReminders.mockReturnValue(of(updated));
+    const component = create().componentInstance;
+
+    component.toggleReminders();
+
+    expect(userServiceMock.updateReminders).toHaveBeenCalledWith(false);
+    expect(component.remindersEnabled()).toBe(false);
+    expect(swalMock.success).toHaveBeenCalled();
+  });
+
+  it('does not toggle reminders for demo users', () => {
+    authServiceMock.isDemo.mockReturnValue(true);
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    const component = create().componentInstance;
+
+    component.toggleReminders();
+
+    expect(userServiceMock.updateReminders).not.toHaveBeenCalled();
   });
 
   it('logs out and navigates to login', () => {
