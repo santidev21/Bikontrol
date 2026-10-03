@@ -130,6 +130,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 | `npm run dev:ui` / `npm run dev:api` | Frontend / API only |
 | `npm run db:up` / `npm run db:down` | Start / stop Postgres in Docker |
 | `npm run db:migrate` | Apply EF migrations |
+| `npm run db:backup` / `db:verify-backup` / `db:restore` | Dump the DB / prove it restores / restore it |
 | `npm run docker:dev` | Full stack in Docker (like prod) |
 | `npm run build` | Build frontend and backend |
 | `npm run test` | Run frontend and backend tests |
@@ -185,7 +186,7 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - Password recovery via email (SMTP configured in `.env`; reset tokens are hashed and time-limited)
 - Password hashing with a per-user salt
 - Database isolated on an internal Docker network, never on the shared network; transport encrypted with TLS (`ssl=on` + self-signed, `SslMode=Require`)
-- Automated DB backups: local `npm run db:backup`/`db:restore` (7-copy retention) + VPS `deploy.sh backup-db` in persistent `backups/` + cron example in `docs/DEPLOYMENT.md`
+- Automated DB backups: local `npm run db:backup`/`db:restore` (7-copy retention) + VPS `deploy.sh backup-db` in persistent `backups/` + cron example in `docs/DEPLOYMENT.md`. Every dump is **verified** by restoring it into a throwaway database (`npm run db:verify-backup`), and `deploy` aborts if the fresh dump does not restore.
 - Security headers (HTTPS, HSTS) applied by the gateway
 
 ---

@@ -76,6 +76,11 @@ backup_database() {
         if ! gzip -t "${BACKUP_DIR}/db.sql.gz" 2>/dev/null; then
             error_exit "database backup looks corrupt (${BACKUP_DIR}/db.sql.gz) — aborting"
         fi
+        # A gzip-valid dump can still be unrestorable. Restore it into a
+        # throwaway database and check the core tables before trusting it.
+        if ! "${DEPLOY_DIR}/scripts/db-verify-backup.sh" "${BACKUP_DIR}/db.sql.gz"; then
+            error_exit "database backup failed verification — aborting"
+        fi
         # prune old backups, keep last N
         log "Pruning old backups (keeping last $BACKUP_RETENTION) ..."
         ls -dt "${DEPLOY_DIR}/backups"/backup-* 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -rf
