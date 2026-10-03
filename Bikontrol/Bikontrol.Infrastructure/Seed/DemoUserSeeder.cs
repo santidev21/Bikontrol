@@ -174,6 +174,14 @@ namespace Bikontrol.Infrastructure.Seed
                     logger.LogWarning("Demo seeding skipped: {Email} already exists with role {Role}", demoEmail, demoUser.Role);
                     return;
                 }
+                else if (demoUser.IsLockedOut)
+                {
+                    // Bring the demo account back online for visitors (a locked
+                    // demo account blocks the login button until the lockout expires).
+                    demoUser.ResetAccessFailed();
+                    await context.SaveChangesAsync();
+                    logger.LogInformation("Demo user lockout cleared: {Email}", demoEmail);
+                }
                 else
                 {
                     logger.LogInformation("Demo user already exists: {Email}", demoEmail);

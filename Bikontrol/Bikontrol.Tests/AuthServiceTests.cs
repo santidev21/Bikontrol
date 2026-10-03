@@ -456,6 +456,92 @@ public class AuthServiceTests
         Assert.True(repository.Users.Single().IsEmailConfirmed);
     }
 
+    [Fact]
+    public async Task LoginAsync_ShouldLockAccountAfterMaxFailedAttempts()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository, BuildConfiguration());
+        await service.RegisterAsync(new RegisterRequest { Email = "user@bikontrol.com", FullName = "User", Password = "Secret123!" });
+        var user = repository.Users.Single();
+
+        // 5 wrong attempts (default max) lock the account.
+        for (var i = 0; i < 5; i++)
+        {
+            await Assert.ThrowsAsync<AuthException>(
+                () => service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Wrong123!" }));
+        }
+
+        Assert.True(user.IsLockedOut);
+
+        // Even the correct password is rejected while locked out.
+        var locked = await Assert.ThrowsAsync<AuthException>(
+            () => service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" }));
+        Assert.Equal(429, locked.StatusCode);
+        Assert.Contains("bloqueada", locked.Message);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenSuccessful_ShouldClearFailedAttempts()
+    {
+        var user = new User("user@bikontrol.com", "User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository, BuildConfiguration());
+
+        for (var i = 0; i < 4; i++)
+        {
+            await Assert.ThrowsAsync<AuthException>(
+                () => service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Wrong123!" }));
+        }
+
+        Assert.Equal(4, user.AccessFailedCount);
+
+        await service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Secret123!" });
+
+        Assert.Equal(0, user.AccessFailedCount);
+        Assert.False(user.IsLockedOut);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenLockoutDisabled_ShouldNotLock()
+    {
+        var user = new User("user@bikontrol.com", "User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository, BuildConfiguration(lockoutEnabled: false));
+
+        for (var i = 0; i < 10; i++)
+        {
+            await Assert.ThrowsAsync<AuthException>(
+                () => service.LoginAsync(new LoginRequest { Email = user.Email, Password = "Wrong123!" }));
+        }
+
+        Assert.False(user.IsLockedOut);
+        Assert.Equal(0, user.AccessFailedCount);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_ShouldUnlockAccount()
+    {
+        var user = new User("user@bikontrol.com", "User", "hashed:Secret123!");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository, BuildConfiguration());
+        await service.ForgotPasswordAsync(new ForgotPasswordRequest { Email = user.Email });
+        // Lock the account before using the link (reset still clears it).
+        for (var i = 0; i < 5; i++)
+            user.RegisterFailedLogin(5, TimeSpan.FromMinutes(15));
+        Assert.True(user.IsLockedOut);
+        var token = ExtractToken(_emailSender.Sent.Single().Body);
+
+        await service.ResetPasswordAsync(new ResetPasswordRequest
+        {
+            Email = user.Email,
+            Token = token,
+            NewPassword = "NewSecret123!"
+        });
+
+        Assert.False(user.IsLockedOut);
+        Assert.Equal(0, user.AccessFailedCount);
+    }
+
     private static string ExtractToken(string body)
     {
         var marker = "token=";
@@ -482,7 +568,10 @@ public class AuthServiceTests
     // pass null to reproduce an environment where the flag is absent. Email
     // confirmation defaults to off so the pre-existing tests keep issuing
     // sessions; individual tests turn it on.
-    private static IConfiguration BuildConfiguration(string? demoEnabled = "true", bool emailConfirmationRequired = false)
+    private static IConfiguration BuildConfiguration(
+        string? demoEnabled = "true",
+        bool emailConfirmationRequired = false,
+        bool lockoutEnabled = true)
     {
         var values = new Dictionary<string, string?>
         {
@@ -492,7 +581,10 @@ public class AuthServiceTests
             ["Jwt:ExpireMinutes"] = "15",
             ["Jwt:RefreshExpireDays"] = "30",
             ["Frontend:BaseUrl"] = "http://localhost:4200",
-            ["EmailConfirmation:Required"] = emailConfirmationRequired ? "true" : "false"
+            ["EmailConfirmation:Required"] = emailConfirmationRequired ? "true" : "false",
+            ["Lockout:Enabled"] = lockoutEnabled ? "true" : "false",
+            ["Lockout:MaxFailedAttempts"] = "5",
+            ["Lockout:Minutes"] = "15"
         };
         if (demoEnabled is not null)
             values["Demo:Enabled"] = demoEnabled;

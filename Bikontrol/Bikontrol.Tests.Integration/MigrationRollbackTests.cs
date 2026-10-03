@@ -29,15 +29,25 @@ public sealed class MigrationRollbackTests
         var migrations = db.GetInfrastructure().GetRequiredService<IMigrationsAssembly>();
 
         var ordered = migrations.Migrations.Keys.OrderBy(id => id, StringComparer.Ordinal).ToList();
+        var newest = ordered[^1];
         var previous = ordered[^2];
+        var newestColumn = newest.Contains("Lockout", StringComparison.Ordinal) ? "LockoutEnd" : "EmailConfirmedAt";
 
         try
         {
+            // Start from the previous migration so the rollback is a real step.
             await migrator.MigrateAsync(previous);
-            Assert.False(await ColumnExistsAsync(db, "EmailConfirmedAt"));
+
+            // Re-apply the newest migration, then roll it back and re-apply it:
+            // this exercises the generated Up() and Down() end to end.
+            await migrator.MigrateAsync();
+            Assert.True(await ColumnExistsAsync(db, newestColumn));
+
+            await migrator.MigrateAsync(previous);
+            Assert.False(await ColumnExistsAsync(db, newestColumn));
 
             await migrator.MigrateAsync();
-            Assert.True(await ColumnExistsAsync(db, "EmailConfirmedAt"));
+            Assert.True(await ColumnExistsAsync(db, newestColumn));
         }
         finally
         {

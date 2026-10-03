@@ -94,15 +94,32 @@ namespace Bikontrol.Infrastructure.Services
             if (user == null)
                 throw new AuthException("El correo o contraseña son inválidos.");
 
+            // Never run the hasher while locked out, so a locked account cannot
+            // be used to keep guessing (and cannot spend more CPU).
+            if (IsLockoutEnabled() && user.IsLockedOut)
+                throw new AuthException(
+                    "La cuenta está temporalmente bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.",
+                    429);
+
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result != PasswordVerificationResult.Success)
+            {
+                if (IsLockoutEnabled())
+                {
+                    user.RegisterFailedLogin(GetMaxFailedAttempts(), GetLockoutDuration());
+                    await _userRepository.SaveChangesAsync();
+                }
+
                 throw new AuthException("El correo o contraseña son inválidos.");
+            }
 
             if (IsEmailConfirmationRequired() && !user.IsEmailConfirmed)
                 throw new AuthException(
                     "Debes confirmar tu correo antes de iniciar sesión. Revisá tu bandeja o pedí un nuevo enlace.",
                     403);
 
+            // Successful login clears any previous failed-attempt counter.
+            user.ResetAccessFailed();
             var refreshToken = await IssueRefreshTokenAsync(user.Id);
             await _userRepository.SaveChangesAsync();
 
@@ -219,6 +236,8 @@ namespace Bikontrol.Infrastructure.Services
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
+            // A successful password reset unlocks the account.
+            user.ResetAccessFailed();
             // Si era una cuenta Google, ahora tiene contraseña usable.
             user.SetAuthProvider(null);
             // Restablecer la contraseña cierra todas las sesiones existentes.
@@ -314,6 +333,26 @@ namespace Bikontrol.Infrastructure.Services
         private bool IsEmailConfirmationRequired()
         {
             return !bool.TryParse(_configuration["EmailConfirmation:Required"], out var required) || required;
+        }
+
+        /// <summary>Account lockout is on unless explicitly disabled.</summary>
+        private bool IsLockoutEnabled()
+        {
+            return !bool.TryParse(_configuration["Lockout:Enabled"], out var enabled) || enabled;
+        }
+
+        private int GetMaxFailedAttempts()
+        {
+            return int.TryParse(_configuration["Lockout:MaxFailedAttempts"], out var value) && value > 0
+                ? value
+                : 5;
+        }
+
+        private TimeSpan GetLockoutDuration()
+        {
+            return int.TryParse(_configuration["Lockout:Minutes"], out var minutes) && minutes > 0
+                ? TimeSpan.FromMinutes(minutes)
+                : TimeSpan.FromMinutes(15);
         }
 
         private async Task SendConfirmationEmailAsync(User user, string token)

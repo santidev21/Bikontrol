@@ -29,6 +29,13 @@ namespace Bikontrol.Persistence.Entities
         public DateTime? EmailConfirmationTokenExpires { get; private set; }
 
         /// <summary>
+        /// Anti fuerza bruta: intentos fallidos consecutivos de login y, si está
+        /// bloqueada, hasta cuándo (lockout temporal).
+        /// </summary>
+        public int AccessFailedCount { get; private set; }
+        public DateTime? LockoutEnd { get; private set; }
+
+        /// <summary>
         /// Origen de la cuenta: null/"Email" = registro con contraseña,
         /// "Google" = creada vía Google (sin contraseña usable).
         /// </summary>
@@ -99,6 +106,31 @@ namespace Bikontrol.Persistence.Entities
         {
             EmailConfirmedAt = DateTime.UtcNow;
             ClearEmailConfirmationToken();
+        }
+
+        /// <summary>True cuando la cuenta está bloqueada (lockout temporal vigente).</summary>
+        public bool IsLockedOut => LockoutEnd is { } until && until > DateTime.UtcNow;
+
+        /// <summary>
+        /// Registra un login fallido y bloquea la cuenta al alcanzar el máximo.
+        /// </summary>
+        public void RegisterFailedLogin(int maxFailedAttempts, TimeSpan lockoutDuration)
+        {
+            AccessFailedCount++;
+            if (AccessFailedCount >= Math.Max(1, maxFailedAttempts))
+            {
+                // Relative to the current lockout, if any, so re-applying it does
+                // not thrash the column when concurrent attempts lock the account.
+                LockoutEnd = (LockoutEnd ?? DateTime.UtcNow).Add(lockoutDuration);
+                AccessFailedCount = 0;
+            }
+        }
+
+        /// <summary>Limpia el lockout tras un login exitoso o un desbloqueo manual.</summary>
+        public void ResetAccessFailed()
+        {
+            AccessFailedCount = 0;
+            LockoutEnd = null;
         }
 
         public void SetAuthProvider(string? provider)

@@ -15,7 +15,7 @@
 | Method | Route | Notes |
 |---|---|---|
 | `POST` | `/register` | Creates a user. With email confirmation required (default) it returns **no session** and emails a confirmation link; otherwise it returns access + refresh tokens. |
-| `POST` | `/login` | Email + password, returns access + refresh token. |
+| `POST` | `/login` | Email + password, returns access + refresh token. Returns `429` while the account is locked out. |
 | `POST` | `/google` | Body `{ idToken }`. Validates a Google ID token (`Google__ClientId`), creates the user if missing, returns Bikontrol tokens. |
 | `POST` | `/refresh` | Body `{ refreshToken }`. Single-use rotation: concurrent replays conflict and return `401` (expired session). |
 | `POST` | `/forgot-password` | Body `{ email }`. Emails a reset link (always `200` to avoid leaking account existence). |
@@ -39,6 +39,13 @@
 - Existing accounts are grandfathered by the migration (`EmailConfirmedAt = CreatedAt`), so nobody is locked out after deploy.
 - With verification off, registration marks the account confirmed immediately and returns a session (previous behavior).
 - The frontend mirrors this: the register screen shows a "check your inbox" state, `/confirm-email` completes the flow, and login offers to resend the link on `403`.
+
+## Account lockout (anti brute force)
+
+- After `Lockout:MaxFailedAttempts` (default 5) consecutive failed logins the account is locked for `Lockout:Minutes` (default 15). The password hasher is skipped while locked, and login returns `429`.
+- A successful login clears `AccessFailedCount`; a successful password reset also unlocks the account.
+- Opt-out via `Lockout:Enabled` (default true).
+- The demo account is unlocked when its session is issued, so visitors are never blocked by a lockout.
 
 ## Sessions (refresh tokens)
 
