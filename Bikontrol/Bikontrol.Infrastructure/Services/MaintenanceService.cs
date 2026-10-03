@@ -2,6 +2,7 @@ using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
+using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
 
@@ -309,73 +310,9 @@ namespace Bikontrol.Infrastructure.Services
             return result;
         }
 
-        private UpcomingMaintenanceDTO CalculateUpcoming(UserMaintenance maintenance, MotorcycleMaintenanceRecord? lastRecord, int currentKm, DateTime? initialRecordedAt)
-        {
-            var dto = new UpcomingMaintenanceDTO
-            {
-                UserMaintenanceId = maintenance.Id,
-                MotorcycleId = maintenance.MotorcycleId,
-                Name = maintenance.Name,
-                Description = maintenance.Description,
-                TrackingType = maintenance.TrackingType,
-                KmInterval = maintenance.KmInterval,
-                TimeIntervalWeeks = maintenance.TimeIntervalWeeks,
-                LastPerformedAt = lastRecord?.PerformedAt,
-                LastPerformedKm = lastRecord?.PerformedKm
-            };
-
-            if (maintenance.TrackingType == "Km")
-            {
-                var interval = maintenance.KmInterval ?? 0;
-                if (interval <= 0)
-                {
-                    dto.LifePercent = 0;
-                    dto.RemainingKm = 0;
-                    dto.IsOverdue = true;
-                    return dto;
-                }
-
-                var baselineKm = lastRecord?.PerformedKm ?? 0;
-                var used = currentKm - baselineKm;
-                var remaining = interval - used;
-                var life = (int)Math.Floor((double)remaining * 100 / interval);
-
-                dto.RemainingKm = remaining;
-                dto.RemainingDays = 0;
-                dto.IsOverdue = remaining <= 0;
-                dto.LifePercent = Math.Clamp(life, 0, 100);
-                return dto;
-            }
-
-            var intervalDays = (maintenance.TimeIntervalWeeks ?? 0) * 7;
-            if (intervalDays <= 0)
-            {
-                dto.LifePercent = 0;
-                dto.RemainingDays = 0;
-                dto.IsOverdue = true;
-                return dto;
-            }
-
-            if (lastRecord is null && initialRecordedAt is null)
-            {
-                dto.LifePercent = 0;
-                dto.RemainingDays = -intervalDays;
-                dto.IsOverdue = true;
-                return dto;
-            }
-
-            var baselineDate = lastRecord?.PerformedAt.Date ?? initialRecordedAt!.Value.Date;
-            dto.LastPerformedAt = baselineDate;
-            var daysUsed = (DateTime.UtcNow.Date - baselineDate).Days;
-            var remainingDays = intervalDays - daysUsed;
-            var timeLife = (int)Math.Floor((double)remainingDays * 100 / intervalDays);
-
-            dto.RemainingDays = remainingDays;
-            dto.RemainingKm = 0;
-            dto.IsOverdue = remainingDays <= 0;
-            dto.LifePercent = Math.Clamp(timeLife, 0, 100);
-            return dto;
-        }
+        // Shared with the reminder engine so the countdown cannot drift.
+        private static UpcomingMaintenanceDTO CalculateUpcoming(UserMaintenance maintenance, MotorcycleMaintenanceRecord? lastRecord, int currentKm, DateTime? initialRecordedAt)
+            => MaintenanceScheduleCalculator.Calculate(maintenance, lastRecord, currentKm, initialRecordedAt);
 
         private async Task EnsureMotorcycleOwnershipAsync(Guid motorcycleId)
         {

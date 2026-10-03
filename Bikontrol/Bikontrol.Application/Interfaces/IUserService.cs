@@ -8,5 +8,6 @@ namespace Bikontrol.Application.Interfaces
         Task<ProfileDTO> GetMeAsync();
         Task<ProfileDTO> UpdateProfileAsync(UpdateProfileRequest request);
         Task ChangePasswordAsync(ChangePasswordRequest request);
+        Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request);
     }
 }

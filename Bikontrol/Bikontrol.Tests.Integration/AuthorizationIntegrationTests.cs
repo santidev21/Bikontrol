@@ -98,6 +98,23 @@ public sealed class AuthorizationIntegrationTests
         Assert.Equal(HttpStatusCode.TooManyRequests, locked.StatusCode);
     }
 
+    [RequiresDockerFact]
+    public async Task Reminders_RequireAuthAndReturnDueList()
+    {
+        // Anonymous is rejected.
+        var anonymous = _factory.CreateClient();
+        var unauthorized = await anonymous.GetAsync("/api/reminders/due");
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+
+        // An authenticated user with no maintenance gets an empty list, not an error.
+        var client = await RegisterClientAsync();
+        var response = await client.GetAsync("/api/reminders/due");
+        response.EnsureSuccessStatusCode();
+        var due = await response.Content.ReadFromJsonAsync<List<DueReminderResponse>>();
+        Assert.NotNull(due);
+        Assert.Empty(due!);
+    }
+
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();
@@ -133,4 +150,5 @@ public sealed class AuthorizationIntegrationTests
 
     private sealed record AuthResponse(string Token, string RefreshToken);
     private sealed record MotorcycleResponse(Guid Id, string Name, int Km);
+    private sealed record DueReminderResponse(Guid UserMaintenanceId, string Name, bool IsOverdue);
 }

@@ -38,6 +38,9 @@
 - `GET /api/maintenances/motorcycle/{motorcycleId}/records`
 - `GET /api/maintenances/motorcycle/{motorcycleId}/upcoming`
 
+## Reminders
+- `GET /api/reminders/due` (maintenance due/overdue for the current user)
+
 ## Statistics (read-only aggregation, demo allowed)
 - `GET /api/statistics/summary`
 
@@ -45,3 +48,4 @@
 - `GET /api/users/me`
 - `PUT /api/users/me` (`{ fullName }`)
 - `POST /api/users/me/password` (`{ currentPassword, newPassword }`; 400 for Google-only accounts)
+- `PUT /api/users/me/reminders` (`{ enabled }`)

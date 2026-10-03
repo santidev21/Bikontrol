@@ -204,6 +204,12 @@ public class MaintenanceServiceUpcomingTests
             Task.FromResult(_items.Where(x => x.UserId == userId && x.MotorcycleId == motorcycleId && x.IsEnabled).AsEnumerable());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(UserMaintenance entity) => Task.CompletedTask;
+        public Task<IReadOnlyList<UserMaintenance>> GetEnabledForUsersAsync(IEnumerable<Guid> userIds)
+        {
+            var ids = userIds.ToList();
+            return Task.FromResult<IReadOnlyList<UserMaintenance>>(_items.Where(x => ids.Contains(x.UserId) && x.IsEnabled).ToList());
+        }
+
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

@@ -8,6 +8,9 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task<IEnumerable<UserMaintenance>> GetByUserIdAndMotorcycleIdAsync(Guid userId, Guid motorcycleId);
         Task<UserMaintenance?> GetByIdAsync(Guid id);
 
+        /// <summary>All enabled maintenance for a set of users (reminder job).</summary>
+        Task<IReadOnlyList<UserMaintenance>> GetEnabledForUsersAsync(IEnumerable<Guid> userIds);
+
         Task<UserMaintenance> AddAsync(UserMaintenance entity);
         Task UpdateAsync(UserMaintenance entity);
 
