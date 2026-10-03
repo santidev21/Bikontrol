@@ -180,6 +180,7 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - Demo user: read-only account (`demo@bikontrol.com`, `Role=Demo`) via `POST /api/auth/demo` + frontend one-click demo; write operations enforced server-side (403) and hidden in UI. The demo tenant is **opt-in** (`Demo__Enabled`, default `false`): when off the endpoint returns `404` and nothing is seeded. Anonymous demo login refuses to issue tokens when the configured email belongs to a non-demo account (403); role is read from JWT `role` claim with `MapInboundClaims = false`.
 - Motorcycle images: client resizes to JPEG, server accepts only JPEG/PNG/WebP data URLs up to ~1 MB decoded (plus the 1.4M-char DTO cap).
 - Email verification (opt-out via `EmailConfirmation__Required`): registration emails a hashed, time-limited confirmation link and login is blocked until confirmed. Existing accounts are grandfathered by the migration; Google/demo accounts are auto-confirmed.
+- Account lockout (opt-out via `Lockout__Enabled`): after `Lockout__MaxFailedAttempts` (5) failed logins the account is locked for `Lockout__Minutes` (15) and login returns `429`; a successful login or password reset clears it.
 - Password recovery via email (SMTP configured in `.env`; reset tokens are hashed and time-limited)
 - Password hashing with a per-user salt
 - Database isolated on an internal Docker network, never on the shared network; transport encrypted with TLS (`ssl=on` + self-signed, `SslMode=Require`)

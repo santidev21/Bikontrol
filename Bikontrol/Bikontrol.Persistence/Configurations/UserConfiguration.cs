@@ -26,6 +26,8 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(u => u.EmailConfirmedAt);
             builder.Property(u => u.EmailConfirmationTokenHash).HasMaxLength(128);
             builder.Property(u => u.EmailConfirmationTokenExpires);
+            builder.Property(u => u.AccessFailedCount).IsRequired().HasDefaultValue(0);
+            builder.Property(u => u.LockoutEnd);
             builder.Property(u => u.AuthProvider).HasMaxLength(30);
 
             // Concurrencia optimista con xmin (columna de sistema de Postgres).

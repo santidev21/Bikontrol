@@ -57,6 +57,10 @@ services:
       Demo__Enabled: ${Demo__Enabled:-false}
       # Require email confirmation before login (default true).
       EmailConfirmation__Required: ${EmailConfirmation__Required:-true}
+      # Account lockout after repeated failed logins (defaults: on, 5, 15 min).
+      Lockout__Enabled: ${Lockout__Enabled:-true}
+      Lockout__MaxFailedAttempts: ${Lockout__MaxFailedAttempts:-5}
+      Lockout__Minutes: ${Lockout__Minutes:-15}
     networks:
       - bikontrol-net
       - bikontrol-internal-net

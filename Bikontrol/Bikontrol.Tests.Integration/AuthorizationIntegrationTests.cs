@@ -64,6 +64,40 @@ public sealed class AuthorizationIntegrationTests
         Assert.Contains(mine!, m => m.Id == created.Id);
     }
 
+    [RequiresDockerFact]
+    public async Task Login_AfterMaxFailedAttempts_ShouldLockAccountAndReturn429()
+    {
+        // Its own client IP so this test does not spend the per-IP auth rate
+        // limit of the rest of the suite (which shares the "unknown" partition).
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, "203.0.113.250");
+
+        var email = $"locked-{Guid.NewGuid():N}@bikontrol.test";
+        var register = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            email,
+            password = "Secret123!",
+            fullName = "Locked User"
+        });
+        register.EnsureSuccessStatusCode();
+
+        var payload = new { email, password = "Secret123!" };
+        // Register already spends one auth request; wait for the per-IP window
+        // (10/min) to reset so the 6 login calls below are not rate limited.
+        await Task.Delay(TimeSpan.FromSeconds(61));
+
+        // Default limit is 5 failed attempts.
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var wrong = await client.PostAsJsonAsync("/api/auth/login", new { email, password = "Wrong123!" });
+            Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
+        }
+
+        // Correct credentials are rejected with 429 while locked out.
+        var locked = await client.PostAsJsonAsync("/api/auth/login", payload);
+        Assert.Equal(HttpStatusCode.TooManyRequests, locked.StatusCode);
+    }
+
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();

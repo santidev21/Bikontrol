@@ -45,6 +45,8 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         // Integration tests register users directly and use their tokens, so they
         // opt out of email confirmation (which is covered by unit tests).
         Environment.SetEnvironmentVariable("EmailConfirmation__Required", "false");
+        // Account lockout is exercised explicitly by Login_AfterMaxFailedAttempts;
+        // keep the default (5 attempts) so the test can assert the lock.
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
