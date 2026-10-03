@@ -10,12 +10,14 @@ using Bikontrol.Persistence;
 using Bikontrol.Persistence.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 using System.Threading.RateLimiting;
 using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
@@ -128,11 +130,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddHealthChecks();
-
 // PostgreSQL connection
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Health: /health is a liveness probe (no dependencies, the process is up);
+// /ready is a readiness probe that fails when PostgreSQL is unreachable.
+// The DB check uses its own short-timeout connection so a hung database makes
+// /ready fail fast instead of hanging the probe.
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        BuildHealthCheckConnectionString(builder.Configuration.GetConnectionString("DefaultConnection")),
+        name: "postgresql",
+        tags: new[] { "ready" });
 
 // Services & Identity tools
 builder.Services.AddInfrastructure();
@@ -212,7 +222,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+// Liveness: cheap, no dependency checks (used by the web UI/container probes).
 app.MapHealthChecks("/health");
+// Readiness: fails when PostgreSQL is unreachable, so orchestrators can hold
+// traffic back until the API can actually serve it.
+app.MapHealthChecks("/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -242,4 +259,24 @@ if (demoEnabled)
 app.Run();
 
 // Exposed so the integration test project can boot the app with WebApplicationFactory<Program>.
-public partial class Program { }
+public partial class Program
+{
+    /// <summary>
+    /// Bounds the readiness probe: without a short timeout a hung database would
+    /// make <c>/ready</c> hang until the probe's own deadline. Only used by the
+    /// health check; the app's connection string is left untouched.
+    /// </summary>
+    internal static string? BuildHealthCheckConnectionString(string? connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return connectionString;
+        }
+
+        return new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            Timeout = 3,
+            CommandTimeout = 3
+        }.ConnectionString;
+    }
+}

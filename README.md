@@ -88,7 +88,7 @@ npm run docker:dev
 # = docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 ```
 
-- API: `http://127.0.0.1:8080` (health at `/health`)
+- API: `http://127.0.0.1:8080` (liveness at `/health`, readiness at `/ready`)
 - Web: `http://127.0.0.1:4200`
 - DB: `127.0.0.1:5434` (loopback-only)
 - Data persists in the `bikontrol_db_data` volume; `docker compose … down -v` wipes it.
@@ -151,6 +151,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 | Problem | Cause | Fix |
 |---|---|---|
 | Login returns `504 Gateway Timeout` but the API is healthy | Stale PWA service worker cached in the browser | Hard-refresh (`Ctrl+Shift+R`) or clear site data for `localhost:4200` |
+| `/ready` returns `503` | API up but PostgreSQL unreachable | Check the `db` container / `npm run db:up`; `/health` stays `200` by design |
 | Users see an old version after a deploy | Normal PWA behavior | The app detects the new version and shows a "Nueva versión disponible" prompt (reload when ready). Check the served version in Perfil → Versión |
 | `npm run dev` → API auth fails against Docker Postgres | `.env` `POSTGRES_PASSWORD` / `Jwt__Key` still `CHANGE_ME` | Fill `.env` (the root scripts inject it into the API) |
 
