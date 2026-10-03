@@ -65,5 +65,6 @@ public class UsersControllerTests
             LastPasswordRequest = request;
             return Task.CompletedTask;
         }
+        public Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request) => Task.FromResult(Profile);
     }
 }

@@ -92,6 +92,9 @@ public class MaintenanceServiceDemoTests
         public Task<IEnumerable<UserMaintenance>> GetByUserIdAndMotorcycleIdAsync(Guid userId, Guid motorcycleId) => Task.FromResult(Enumerable.Empty<UserMaintenance>());
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
         public Task UpdateAsync(UserMaintenance entity) => Task.CompletedTask;
+        public Task<IReadOnlyList<UserMaintenance>> GetEnabledForUsersAsync(IEnumerable<Guid> userIds) =>
+            Task.FromResult<IReadOnlyList<UserMaintenance>>(new List<UserMaintenance>());
+
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

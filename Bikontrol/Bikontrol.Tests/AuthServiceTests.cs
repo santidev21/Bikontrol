@@ -637,6 +637,11 @@ public class AuthServiceTests
             return Task.CompletedTask;
         }
 
+        public Task<IReadOnlyList<User>> GetReminderRecipientsAsync()
+        {
+            return Task.FromResult<IReadOnlyList<User>>(_seed);
+        }
+
         public Task SaveChangesAsync()
         {
             SaveChangesCalls++;

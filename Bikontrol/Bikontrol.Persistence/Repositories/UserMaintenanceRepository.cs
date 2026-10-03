@@ -33,6 +33,17 @@ namespace Bikontrol.Persistence.Repositories
                 .FirstOrDefaultAsync(umt => umt.Id == id && umt.IsEnabled);
         }
 
+        public async Task<IReadOnlyList<UserMaintenance>> GetEnabledForUsersAsync(IEnumerable<Guid> userIds)
+        {
+            var ids = userIds.Distinct().ToList();
+            if (ids.Count == 0)
+                return new List<UserMaintenance>();
+
+            return await _context.UserMaintenances
+                .Where(umt => ids.Contains(umt.UserId) && umt.IsEnabled)
+                .ToListAsync();
+        }
+
         public async Task<UserMaintenance> AddAsync(UserMaintenance entity)
         {
             await _context.UserMaintenances.AddAsync(entity);

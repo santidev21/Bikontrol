@@ -37,5 +37,12 @@ namespace Bikontrol.API.Controllers
             await _userService.ChangePasswordAsync(request);
             return Ok(new { message = "Contraseña actualizada." });
         }
+
+        [HttpPut("me/reminders")]
+        public async Task<IActionResult> UpdateReminders([FromBody] UpdateRemindersRequest request)
+        {
+            var result = await _userService.UpdateRemindersAsync(request);
+            return Ok(result);
+        }
     }
 }

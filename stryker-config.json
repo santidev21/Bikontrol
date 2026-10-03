@@ -1,13 +1,13 @@
 {
   "stryker-config": {
-    "project": "Bikontrol/Bikontrol.Infrastructure/Bikontrol.Infrastructure.csproj",
+    "project": "Bikontrol/Bikontrol.Application/Bikontrol.Application.csproj",
     "test-projects": ["Bikontrol/Bikontrol.Tests/Bikontrol.Tests.csproj"],
-    "mutate": ["Services/MaintenanceService.cs"],
-    "test-case-filter": "FullyQualifiedName~MaintenanceService",
+    "mutate": ["Services/MaintenanceScheduleCalculator.cs"],
+    "test-case-filter": "FullyQualifiedName~MaintenanceService|FullyQualifiedName~ReminderService|FullyQualifiedName~MaintenanceScheduleCalculator",
     "thresholds": {
-      "high": 55,
-      "low": 45,
-      "break": 40
+      "high": 90,
+      "low": 80,
+      "break": 75
     },
     "reporters": ["progress", "html", "json"],
     "concurrency": 4

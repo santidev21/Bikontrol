@@ -47,6 +47,15 @@ namespace Bikontrol.Persistence.Repositories
             return await _context.Users.AnyAsync(u => u.Email.ToLower() == normalized);
         }
 
+        public async Task<IReadOnlyList<User>> GetReminderRecipientsAsync()
+        {
+            // Only real accounts with reminders on; the read-only demo tenant has
+            // no real inbox, so it is excluded.
+            return await _context.Users
+                .Where(u => u.RemindersEnabled && u.Role != Persistence.Entities.UserRole.Demo)
+                .ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

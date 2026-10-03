@@ -15,6 +15,14 @@ namespace Bikontrol.Application.DTOs.Users
         /// False en cuentas creadas vía Google (no tienen contraseña que cambiar).
         /// </summary>
         public bool HasPassword { get; set; }
+
+        /// <summary>Preferencia de recordatorios de mantenimiento (email/push).</summary>
+        public bool RemindersEnabled { get; set; }
+    }
+
+    public class UpdateRemindersRequest
+    {
+        public bool Enabled { get; set; }
     }
 
     public class UpdateProfileRequest

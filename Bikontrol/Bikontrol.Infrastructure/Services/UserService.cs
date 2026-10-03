@@ -69,6 +69,16 @@ namespace Bikontrol.Infrastructure.Services
             await _userRepository.SaveChangesAsync();
         }
 
+        public async Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request)
+        {
+            EnsureCanWrite();
+            var user = await GetCurrentUserAsync();
+            user.SetRemindersEnabled(request.Enabled);
+            await _userRepository.UpdateAsync(user);
+            await _userRepository.SaveChangesAsync();
+            return ToProfile(user);
+        }
+
         private async Task<User> GetCurrentUserAsync()
         {
             var user = await _userRepository.GetByIdAsync(_current.UserId);

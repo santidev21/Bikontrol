@@ -32,6 +32,8 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<IKmHistoryService, KmHistoryService>();
             services.AddScoped<IStatisticsService, StatisticsService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IReminderService, ReminderService>();
+            services.AddHostedService<BackgroundServices.ReminderBackgroundService>();
             return services;
         }
     }

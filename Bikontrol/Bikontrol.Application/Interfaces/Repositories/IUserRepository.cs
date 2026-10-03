@@ -12,6 +12,9 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task<User?> GetByEmailAsync(string email);
         Task<User?> GetByIdAsync(Guid id);
         Task<bool> ExistsByEmailAsync(string email);
+
+        /// <summary>Users with reminders enabled (candidates for the daily job).</summary>
+        Task<IReadOnlyList<User>> GetReminderRecipientsAsync();
         Task AddAsync(User user);
         Task UpdateAsync(User user);
         Task SaveChangesAsync();

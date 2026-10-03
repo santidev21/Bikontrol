@@ -31,23 +31,25 @@ public sealed class MigrationRollbackTests
         var ordered = migrations.Migrations.Keys.OrderBy(id => id, StringComparer.Ordinal).ToList();
         var newest = ordered[^1];
         var previous = ordered[^2];
-        var newestColumn = newest.Contains("Lockout", StringComparison.Ordinal) ? "LockoutEnd" : "EmailConfirmedAt";
 
         try
         {
             // Start from the previous migration so the rollback is a real step.
             await migrator.MigrateAsync(previous);
+            Assert.True(await IsAppliedAsync(db, previous));
+            Assert.False(await IsAppliedAsync(db, newest));
 
             // Re-apply the newest migration, then roll it back and re-apply it:
-            // this exercises the generated Up() and Down() end to end.
+            // this exercises the generated Up() and Down() end to end, without
+            // hard-coding the schema each migration happens to touch.
             await migrator.MigrateAsync();
-            Assert.True(await ColumnExistsAsync(db, newestColumn));
+            Assert.True(await IsAppliedAsync(db, newest));
 
             await migrator.MigrateAsync(previous);
-            Assert.False(await ColumnExistsAsync(db, newestColumn));
+            Assert.False(await IsAppliedAsync(db, newest));
 
             await migrator.MigrateAsync();
-            Assert.True(await ColumnExistsAsync(db, newestColumn));
+            Assert.True(await IsAppliedAsync(db, newest));
         }
         finally
         {
@@ -56,7 +58,7 @@ public sealed class MigrationRollbackTests
         }
     }
 
-    private static async Task<bool> ColumnExistsAsync(AppDbContext db, string column)
+    private static async Task<bool> IsAppliedAsync(AppDbContext db, string migrationId)
     {
         var connection = db.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
@@ -66,10 +68,10 @@ public sealed class MigrationRollbackTests
 
         await using var command = connection.CreateCommand();
         command.CommandText =
-            "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'users' AND column_name = @column";
+            "SELECT COUNT(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" = @id";
         var parameter = command.CreateParameter();
-        parameter.ParameterName = "@column";
-        parameter.Value = column;
+        parameter.ParameterName = "@id";
+        parameter.Value = migrationId;
         command.Parameters.Add(parameter);
 
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());

@@ -36,6 +36,12 @@ namespace Bikontrol.Persistence.Entities
         public DateTime? LockoutEnd { get; private set; }
 
         /// <summary>
+        /// Preferencia de recordatorios de mantenimiento (email/push). Por
+        /// defecto activados; el usuario puede desactivarlos.
+        /// </summary>
+        public bool RemindersEnabled { get; private set; } = true;
+
+        /// <summary>
         /// Origen de la cuenta: null/"Email" = registro con contraseña,
         /// "Google" = creada vía Google (sin contraseña usable).
         /// </summary>
@@ -131,6 +137,12 @@ namespace Bikontrol.Persistence.Entities
         {
             AccessFailedCount = 0;
             LockoutEnd = null;
+        }
+
+        /// <summary>Activa o desactiva los recordatorios de mantenimiento.</summary>
+        public void SetRemindersEnabled(bool enabled)
+        {
+            RemindersEnabled = enabled;
         }
 
         public void SetAuthProvider(string? provider)

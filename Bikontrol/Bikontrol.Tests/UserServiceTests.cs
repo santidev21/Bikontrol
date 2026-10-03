@@ -224,6 +224,8 @@ public class UserServiceTests
             return Task.CompletedTask;
         }
         public Task UpdateAsync(User user) => Task.CompletedTask;
+        public Task<IReadOnlyList<User>> GetReminderRecipientsAsync() =>
+            Task.FromResult<IReadOnlyList<User>>(_users);
         public Task SaveChangesAsync()
         {
             SaveChangesCalls++;

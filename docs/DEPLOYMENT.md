@@ -126,6 +126,7 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `EmailConfirmation__Required` | Require email confirmation before login (default `true`). Requires working SMTP; set `false` to skip verification. |
 | `Lockout__Enabled` / `Lockout__MaxFailedAttempts` / `Lockout__Minutes` | Account lockout after repeated failed logins (defaults: `true` / `5` / `15`). |
 | `Sentry__Dsn` / `Sentry__TracesSampleRate` | Error tracking (Sentry). Empty DSN = disabled. Sample rate default `0.1`. |
+| `Reminders__Enabled` / `Reminders__DailyHourUtc` / `Reminders__DedupeDays` | Maintenance reminder engine (defaults: `true` / `8` (UTC) / `3`). |
 | `DemoUser__Email` / `DemoUser__FullName` | Demo user identity (defaults `demo@bikontrol.com` / `Usuario Demo`); only used when `Demo__Enabled=true` |
 | `Frontend__BaseUrl` | Base URL for password-reset links (default `https://bikontrol.santidev21.tech`) |
 | `Smtp__Host` / `Smtp__Port` / `Smtp__Username` / `Smtp__Password` / `Smtp__FromEmail` (+ `Smtp__FromName`, `Smtp__EnableSsl`) | SMTP for recovery emails (**required** in prod, otherwise reset links are only logged) |
