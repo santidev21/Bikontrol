@@ -18,6 +18,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using Serilog;
+using Serilog.Events;
 using System.Text;
 using System.Threading.RateLimiting;
 using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
@@ -32,6 +34,40 @@ builder.Configuration
         optional: true,
         reloadOnChange: true)
     .AddEnvironmentVariables();
+
+// Structured logging: JSON in production (parseable by log collectors), readable
+// text in Development. Enriched with the trace id so a request's lines can be
+// correlated. Output goes to stdout, which Docker captures.
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", "Bikontrol.API")
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+        .WriteTo.Console(
+            outputTemplate: context.HostingEnvironment.IsDevelopment()
+                ? "[{Timestamp:HH:mm:ss} {Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}"
+                : "{Timestamp:o} [{Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}");
+});
+
+// Error tracking (Sentry): only active when a DSN is configured, so local dev
+// and CI stay no-op. User PII is not sent.
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.Environment = builder.Environment.EnvironmentName;
+        options.SendDefaultPii = false;
+        options.TracesSampleRate = double.TryParse(builder.Configuration["Sentry:TracesSampleRate"], out var rate)
+            ? rate
+            : 0.1;
+    });
+}
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
@@ -203,6 +239,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Structured request logging: one line per request with method, path, status and
+// duration, correlated by the trace id also emitted on error logs.
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

@@ -78,6 +78,13 @@ Backups are **semanales automáticos** vía cron; cada `deploy` también genera 
 
 Recovery: `gunzip -c backups/backup-xxx/db.sql.gz | docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"` (done by `./scripts/deploy.sh rollback` on failed deploy).
 
+## Observability
+
+- **Structured logs (Serilog)** go to stdout as JSON in production (readable text in Development), so `docker compose logs`/the gateway can collect them. Every log line carries a `TraceId`, and each request is logged once (`HTTP {Method} {Path} responded {StatusCode} in {Elapsed} ms`).
+- **Request correlation:** errors echo an `X-Request-Id` header; the same id appears in the log line, so a user report maps to the exact log entry.
+- **Error tracking (Sentry):** set `Sentry__Dsn` to capture unhandled exceptions with environment, release and trace context. It is a no-op when the DSN is empty (local dev/CI). PII is disabled (`SendDefaultPii=false`).
+- **Uptime monitoring:** point an external monitor (UptimeRobot/Better Stack/`healthchecks.io`, or the gateway) at `GET /ready`; it returns `503` when PostgreSQL is unreachable, so an alert fires before users notice.
+
 ## Database TLS
 
 Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontrol-db`, certs in `/etc/postgresql/ssl` inside the container — never in the data volume, which must stay empty for `initdb`; `ssl=Require` on the server). All connection strings carry `SslMode=Require;Trust Server Certificate=true` (self-signed). The DB remains on `bikontrol-internal-net` only; no host port is published in production (`docker-compose.local.yml` publishes `127.0.0.1:5434` only for local dev).
@@ -95,6 +102,7 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `Demo__Enabled` | Public demo tenant (default `false`). When off, `POST /api/auth/demo` returns `404` and no demo data is seeded. Enable only for a deliberate public demo (also set `environment.demoEnabled` in the web build). |
 | `EmailConfirmation__Required` | Require email confirmation before login (default `true`). Requires working SMTP; set `false` to skip verification. |
 | `Lockout__Enabled` / `Lockout__MaxFailedAttempts` / `Lockout__Minutes` | Account lockout after repeated failed logins (defaults: `true` / `5` / `15`). |
+| `Sentry__Dsn` / `Sentry__TracesSampleRate` | Error tracking (Sentry). Empty DSN = disabled. Sample rate default `0.1`. |
 | `DemoUser__Email` / `DemoUser__FullName` | Demo user identity (defaults `demo@bikontrol.com` / `Usuario Demo`); only used when `Demo__Enabled=true` |
 | `Frontend__BaseUrl` | Base URL for password-reset links (default `https://bikontrol.santidev21.tech`) |
 | `Smtp__Host` / `Smtp__Port` / `Smtp__Username` / `Smtp__Password` / `Smtp__FromEmail` (+ `Smtp__FromName`, `Smtp__EnableSsl`) | SMTP for recovery emails (**required** in prod, otherwise reset links are only logged) |

@@ -1,5 +1,6 @@
 ﻿using Bikontrol.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 
@@ -18,23 +19,32 @@ namespace Bikontrol.API.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // Correlate the error with the logs (and with Serilog's trace id):
+            // echo the id back so a user report maps to a log/metric entry.
+            var requestId = Activity.Current?.Id ?? context.TraceIdentifier;
+            context.Response.Headers["X-Request-Id"] = requestId;
+
             try
             {
                 await _next(context);
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(context, ex, _logger);
+                await HandleExceptionAsync(context, ex, _logger, requestId);
             }
         }
 
-        private static async Task HandleExceptionAsync(HttpContext context, Exception exception, ILogger logger)
+        private static async Task HandleExceptionAsync(
+            HttpContext context,
+            Exception exception,
+            ILogger logger,
+            string requestId)
         {
             if (context.Response.HasStarted)
             {
                 // La respuesta ya empezó a enviarse: no se puede reescribir el
                 // status/body sin romper el stream, así que solo se registra.
-                logger.LogWarning(exception, "Exception after response started: {Message}", exception.Message);
+                logger.LogWarning(exception, "Exception after response started [{RequestId}]: {Message}", requestId, exception.Message);
                 return;
             }
 
@@ -66,13 +76,13 @@ namespace Bikontrol.API.Middleware
                 case DbUpdateConcurrencyException:
                     statusCode = HttpStatusCode.Conflict;
                     message = "Los datos cambiaron mientras los editabas. Recarga e inténtalo de nuevo.";
-                    logger.LogWarning(exception, "Concurrency conflict: {Message}", exception.Message);
+                    logger.LogWarning(exception, "Concurrency conflict [{RequestId}]: {Message}", requestId, exception.Message);
                     break;
 
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     message = "Error inesperado en el servidor.";
-                    logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
+                    logger.LogError(exception, "Unhandled exception [{RequestId}]: {Message}", requestId, exception.Message);
                     break;
             }
 

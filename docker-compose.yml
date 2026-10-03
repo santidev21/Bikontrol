@@ -61,6 +61,9 @@ services:
       Lockout__Enabled: ${Lockout__Enabled:-true}
       Lockout__MaxFailedAttempts: ${Lockout__MaxFailedAttempts:-5}
       Lockout__Minutes: ${Lockout__Minutes:-15}
+      # Error tracking (Sentry). Empty DSN = disabled (no-op).
+      Sentry__Dsn: ${Sentry__Dsn:-}
+      Sentry__TracesSampleRate: ${Sentry__TracesSampleRate:-0.1}
     networks:
       - bikontrol-net
       - bikontrol-internal-net

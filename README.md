@@ -188,6 +188,7 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - Database isolated on an internal Docker network, never on the shared network; transport encrypted with TLS (`ssl=on` + self-signed, `SslMode=Require`)
 - Automated DB backups: local `npm run db:backup`/`db:restore` (7-copy retention) + VPS `deploy.sh backup-db` in persistent `backups/` + cron example in `docs/DEPLOYMENT.md`. Every dump is **verified** by restoring it into a throwaway database (`npm run db:verify-backup`), and `deploy` aborts if the fresh dump does not restore.
 - Security headers (HTTPS, HSTS) applied by the gateway
+- Observability: structured JSON logs (Serilog) with per-request trace ids and an `X-Request-Id` on errors; optional error tracking via Sentry (`Sentry__Dsn`, no-op when empty); `/ready` doubles as the probe for an external uptime monitor
 
 ---
 
