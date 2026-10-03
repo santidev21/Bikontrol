@@ -1,34 +1,60 @@
 # Bikontrol
 
 ![.NET](https://img.shields.io/badge/.NET-8-purple)
-![Angular](https://img.shields.io/badge/Angular-18-red)
+![Angular](https://img.shields.io/badge/Angular-22-red)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+![PWA](https://img.shields.io/badge/PWA-service%20worker-purple)
 
-Bikontrol is a full-stack web app for motorcycle owners to track motorcycles, km history, and maintenance plans.
+**Bikontrol keeps a motorcycle's maintenance on schedule.** You register your bikes, log the
+kilometres you ride, and get a maintenance plan (oil, chain, brakes…) that stays honest with real
+usage instead of a guess. Every item shows how far away it is — by km, by time, or both — and turns
+red **before** it is overdue, so nothing gets forgotten.
 
-<!-- Hero screenshot -->
+It is a production app: **https://bikontrol.santidev21.tech** — a B2C product built for riders, not
+a demo.
+
+<!-- Hero screenshot (add docs/screenshots/dashboard.png — see “Screenshots” below) -->
 <!-- ![Bikontrol dashboard](docs/screenshots/dashboard.png) -->
 
----
+## What it does
 
-## Features
+- **Your motorcycles** — create, edit and disable bikes (brand, year, cc, plate, photo).
+- **Kilometre history** — log rides; the odometer drives the whole maintenance plan.
+- **Maintenance that knows your usage** — follow predefined types (oil, chain, spark plug, brakes…)
+  or define your own, tracked by km interval, by time (weeks), or both. Each shows % remaining and a
+  health bucket (OK / Próximo / Crítico / Vencido) computed from the latest km and the last record.
+- **Record what you did** — mark maintenance performed (with km and date); history feeds the plan.
+- **Statistics** — fleet km, maintenance health, km per bike, records by type, 6-month activity.
+- **Profile** — edit your name, change your password, see your app version.
+- **Sign in your way** — email + password or "Sign in with Google".
 
-- Manage your motorcycles (create, edit, disable)
-- Track km history per motorcycle
-- Maintenance plans with default and user-defined items
-- Record completed maintenance
-- Statistics dashboard (fleet km, maintenance health, activity)
-- User profile (edit name, change password; Google accounts are password-less)
-- JWT authentication with login and register
-- Soft deletes on core entities
+## Why it's trustworthy
+
+Built to be sold, not just shown:
+
+- **Secure auth** — JWT with sliding refresh-token sessions (rotated, stored hashed), per-user salt,
+  **email verification**, **account lockout**, strict **rate limiting** on auth endpoints.
+- **Private by default** — the demo tenant is opt-in; the database lives on an internal Docker
+  network only and never on the shared one.
+- **Operable** — liveness (`/health`) vs readiness (`/ready`, checks PostgreSQL), structured logs with
+  request correlation, optional Sentry, **verified backups** (every dump is restored into a throwaway
+  DB before it is trusted), DB auto-migrations on deploy.
+- **Checked on every change** — backend unit + integration tests (real PostgreSQL via Testcontainers),
+  frontend Vitest, coverage gate, SonarCloud (quality gate + new-code coverage), CodeQL, Gitleaks,
+  Trivy, mutation testing and a migration rollback test; deploys roll back automatically if the
+  health check fails.
 
 ---
 
 ## Tech stack
-- Frontend: Angular 22, SCSS, Tailwind CSS, Vitest
-- Backend: .NET 8, Clean Architecture, EF Core, xUnit
-- Database: PostgreSQL
-- Authentication: JWT
+
+| Layer | Choice |
+| --- | --- |
+| Frontend | Angular 22, SCSS, Tailwind CSS, PWA (service worker), Vitest |
+| Backend | .NET 8, Clean Architecture (API/Application/Domain/Infrastructure/Persistence/Shared), EF Core, xUnit |
+| Database | PostgreSQL 16 (EF Core migrations) |
+| Auth | JWT + refresh tokens, Google OAuth (ID-token flow) |
+| Infra | Docker Compose, nginx gateway (TLS/HSTS/CSP), GitHub Actions → VPS |
 
 ---
 
@@ -169,8 +195,18 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 
 ## Screenshots
 
-<!-- Add your screenshots here -->
-<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
+The images live in [`docs/screenshots/`](docs/screenshots/) (see that folder's README for how to
+capture them). Once added, they are referenced here:
+
+<!--
+| Dashboard | Motorcycle summary |
+| --- | --- |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Motorcycle summary](docs/screenshots/motorcycle-summary.png) |
+
+| Maintenance plan | Statistics |
+| --- | --- |
+| ![Maintenance plan](docs/screenshots/maintenance-plan.png) | ![Statistics](docs/screenshots/statistics.png) |
+-->|
 
 ---
 
@@ -215,7 +251,7 @@ Deploys happen automatically on push to `main` via GitHub Actions. For VPS setup
 - [x] Predefined maintenance items don't appear — the `CleanupAllButUsers` migration had truncated the seeded `MaintenanceTypes` table; fixed with the idempotent `SeedPredefinedMaintenanceTypes` re-seed migration.
 - [x] Create a migrator that automatically applies new tables to the production DB — already implemented: the API runs `db.Database.Migrate()` on startup in any non-Development environment (`Program.cs`), so production applies pending migrations automatically.
 - [x] Create a read-only demo user (view-only, no edits) so people can try the app. — `POST /api/auth/demo` (auto-creates `demo@bikontrol.com` with `Role=Demo`), JWT carries `role` claim, write endpoints return 403 for Demo, frontend shows "Probar demo" button on login + modo solo lectura banner.
-- [x] Add the missing tests. — 144 backend unit tests (interval/%-remaining matrix, write-path integrity, statistics, profile, demo guards + demo-collision, role-claim mapping, image validation, auth, motorcycle CRUD + mapping + DTO validation) + 7 integration tests (real API + PostgreSQL via Testcontainers, pinning the write paths plus demo-forbidden and cross-user authorization) + 160 frontend Vitest tests (statistics/profile views, services, guards, shared refresh included).
+- [x] Add the missing tests. — 163 backend unit tests (auth incl. lockout/email-confirmation, middleware, interval/%-remaining matrix, write-path integrity, statistics, profile, demo guards + demo-collision, role-claim mapping, image validation, motorcycle CRUD + mapping + DTO validation) + 16 integration tests (real API + PostgreSQL via Testcontainers: write paths, auth lockout, rate limiting 429, health/readiness, migration rollback, demo-forbidden and cross-user authorization) + 172 frontend Vitest tests (statistics/profile/confirm-email views, services, guards, shared refresh included).
 - [x] DB backup and security. — `npm run db:backup` / `db:restore` (compressed, retention 7), `deploy.sh backup-db` in persistent `backups/`, Postgres SSL (`ssl=on` + self-signed, `SslMode=Require;Trust Server Certificate=true`). Multi-step writes run in transactions, optimistic concurrency via `xmin`, CHECK constraints on km/intervals, read-only audit in `scripts/db-integrity-audit.sql` (run it + a backup before every deploy with real users).
 - [x] Add the statistics view. — `/dashboard/statistics` backed by read-only `GET /api/statistics/summary` (KPIs, maintenance health, km per bike, records by type, 6-month activity; hand-rolled SVG/CSS charts).
 - [x] Add the profile view. — `/dashboard/profile` backed by `GET/PUT /api/users/me` + `POST /api/users/me/password` (name editable for all; password change only for password accounts).
