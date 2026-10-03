@@ -34,22 +34,42 @@ const googleClientId =
 // Etiqueta visible en Perfil. Súbela solo en releases con cambios visibles (no en cada commit).
 const appVersion = '0.1.0';
 
-function writeEnv(file, apiUrl, production) {
+// Public demo tenant. Must match the API's Demo:Enabled flag (Demo__Enabled in
+// .env). Defaults to false so a production build never shows the demo button
+// unless it is turned on deliberately.
+function readDemoEnabled() {
+  const raw = process.env.DEMO_ENABLED ?? fileEnv.Demo__Enabled ?? fileEnv.DEMO_ENABLED ?? 'false';
+  return String(raw).trim().toLowerCase() === 'true';
+}
+
+function writeEnv(file, apiUrl, production, demoEnabled) {
   const content = `export const environment = {
   production: ${production},
   apiUrl: '${apiUrl}',
   googleClientId: '${googleClientId}',
+  // Public demo tenant. Must match the API's \`Demo:Enabled\` flag; when false
+  // the login screen hides the demo button (POST /api/auth/demo returns 404).
+  demoEnabled: ${demoEnabled},
   // Etiqueta legible de la versión que se muestra en Perfil.
   // Súbela solo en releases con cambios visibles para el usuario (no en cada commit).
-  appVersion: '${appVersion}'
+  appVersion: '${appVersion}',
 };
 `;
   fs.writeFileSync(file, content);
 }
 
+// Dev mirrors Development (demo on by default); prod defaults the demo off.
+const prodDemoEnabled = readDemoEnabled();
 const envDir = path.resolve(__dirname, '..', 'src', 'environments');
 // Dev usa HTTP plano (:5202) para no pelear con el cert autofirmado de Kestrel
 // en el navegador (ERR_CERT_AUTHORITY_INVALID). Prod mantiene su HTTPS real.
-writeEnv(path.join(envDir, 'environment.ts'), 'http://localhost:5202/api', false);
-writeEnv(path.join(envDir, 'environment.prod.ts'), 'https://bikontrol.santidev21.tech/api', true);
-console.log('environment.ts and environment.prod.ts generated');
+writeEnv(path.join(envDir, 'environment.ts'), 'http://localhost:5202/api', false, true);
+writeEnv(
+  path.join(envDir, 'environment.prod.ts'),
+  'https://bikontrol.santidev21.tech/api',
+  true,
+  prodDemoEnabled,
+);
+console.log(
+  `environment.ts and environment.prod.ts generated (prod demoEnabled=${prodDemoEnabled})`,
+);

@@ -4,11 +4,14 @@ set -euo pipefail
 # Bikontrol Deployment Script
 # Usage: ./scripts/deploy.sh [deploy|status|logs|verify|rollback]
 
-DEPLOY_DIR="/opt/bikontrol"
-LOG_FILE="/tmp/bikontrol-deploy.log"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/bikontrol}"
+LOG_FILE="${LOG_FILE:-/tmp/bikontrol-deploy.log}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="${DEPLOY_DIR}/backups/backup-${TIMESTAMP}"
-BACKUP_RETENTION=7
+BACKUP_RETENTION="${BACKUP_RETENTION:-7}"
+# Public base URL the post-deploy smoke test hits (frontend + API under one
+# origin). Override for staging: SMOKE_URL=https://staging.example ./deploy.sh deploy
+SMOKE_URL="${SMOKE_URL:-https://bikontrol.santidev21.tech}"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -210,7 +213,23 @@ verify() {
     [ "$API_STATUS" = "healthy" ] || error_exit "bikontrol-api is not healthy (status: $API_STATUS)"
     [ "$WEB_STATUS" = "healthy" ] || error_exit "bikontrol is not healthy (status: $WEB_STATUS)"
 
-    log "Deployment verified."
+    log "Deployment verified (containers healthy)."
+}
+
+# End-to-end smoke test against the public origin. Catches regressions that the
+# container healthcheck cannot (e.g. the gateway not routing, a broken build
+# being served, the SPA shell not loading).
+smoke() {
+    local script="${DEPLOY_DIR}/scripts/smoke-test.sh"
+    if [ ! -f "$script" ]; then
+        log "WARNING: ${script} not found — skipping smoke test"
+        return 0
+    fi
+    log "Running post-deploy smoke test against ${SMOKE_URL} ..."
+    if ! SMOKE_TIMEOUT="${SMOKE_TIMEOUT:-10}" "$script" "$SMOKE_URL"; then
+        error_exit "smoke test failed against ${SMOKE_URL}"
+    fi
+    log "Smoke test passed."
 }
 
 rollback() {
@@ -248,6 +267,14 @@ rollback() {
 
     (cd "$DEPLOY_DIR" && docker compose up -d --remove-orphans)
     log "Rollback complete."
+
+    # Best-effort: confirm the restored stack actually serves (do not fail the
+    # rollback itself if the smoke test has a transient hiccup).
+    if [ -f "${DEPLOY_DIR}/scripts/smoke-test.sh" ]; then
+        log "Verifying rollback (best effort) ..."
+        SMOKE_TIMEOUT="${SMOKE_TIMEOUT:-10}" "${DEPLOY_DIR}/scripts/smoke-test.sh" "$SMOKE_URL" \
+            || log "WARNING: smoke test after rollback did not pass — investigate"
+    fi
 }
 
 deploy() {
@@ -267,6 +294,13 @@ deploy() {
         error_exit "Deployment failed and was rolled back"
     fi
     verify
+    # A green healthcheck is not enough: prove the public surface actually works
+    # end-to-end, and roll back if it does not.
+    if ! smoke; then
+        log "Deployment failed smoke test — rolling back."
+        rollback
+        error_exit "Deployment failed the smoke test and was rolled back"
+    fi
     log "=== Deployment successful ==="
     status
 }
@@ -289,13 +323,14 @@ case "${1:-deploy}" in
     status) status ;;
     logs) logs ;;
     verify) verify ;;
+    smoke) smoke ;;
     rollback) rollback ;;
     backup|backup-db|backup-only) backup_only ;;
     audit-db) audit_database ;;
     install-cron) install_cron "$@" ;;
     remove-cron) remove_cron ;;
     *)
-        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|rollback|backup-db|audit-db|install-cron|remove-cron]"
+        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|smoke|rollback|backup-db|audit-db|install-cron|remove-cron]"
         exit 1
         ;;
 esac

@@ -31,6 +31,23 @@ Automatic on push to `main` via GitHub Actions, or manual:
 cd /opt/bikontrol && ./scripts/deploy.sh deploy
 ```
 
+Each deploy runs, in order: backup + verify → integrity audit → pull → build → up → **container healthcheck** → **post-deploy smoke test**. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump + config and brings the stack back up).
+
+The smoke test (`scripts/smoke-test.sh`, also `npm run smoke <url>`) hits the public origin and asserts `/health`, `/ready` (DB), the SPA shell and the auth endpoints — read-only, no credentials.
+
+### Staging
+
+The same compose files and script serve a staging environment; point it at a separate deploy dir and host:
+
+```bash
+# On the staging VPS / directory:
+DEPLOY_DIR=/opt/bikontrol-staging \
+SMOKE_URL=https://staging.bikontrol.santidev21.tech \
+  ./scripts/deploy.sh deploy
+```
+
+`DEPLOY_DIR`, `SMOKE_URL`, `LOG_FILE` and `BACKUP_RETENTION` are all environment-overridable, so staging shares the code but keeps its own data, backups and domain. Add a matching gateway site config (see the gateway repo) and a `.env` with staging values.
+
 ## Gateway integration
 
 1. Create DNS A record `bikontrol.santidev21.tech` → VPS IP.
