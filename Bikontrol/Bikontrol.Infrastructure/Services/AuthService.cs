@@ -23,6 +23,7 @@ namespace Bikontrol.Infrastructure.Services
     public class AuthService : IAuthService
     {
         private const int ResetPasswordTokenHours = 2;
+        private const int EmailConfirmationTokenHours = 24;
 
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -59,10 +60,28 @@ namespace Bikontrol.Infrastructure.Services
             user.SetPasswordHash(_passwordHasher.HashPassword(null!, request.Password));
 
             await _userRepository.AddAsync(user);
+            var response = _mapper.Map<RegisterResponse>(user);
+
+            if (IsEmailConfirmationRequired())
+            {
+                // No session until the email is confirmed; send a confirmation link.
+                var confirmationToken = GenerateSecureToken();
+                user.SetEmailConfirmationToken(
+                    HashToken(confirmationToken),
+                    DateTime.UtcNow.AddHours(EmailConfirmationTokenHours));
+                await _userRepository.SaveChangesAsync();
+
+                await SendConfirmationEmailAsync(user, confirmationToken);
+
+                response.EmailConfirmationRequired = true;
+                return response;
+            }
+
+            // Verification disabled: treat the account as confirmed.
+            user.MarkEmailConfirmed();
             var refreshToken = await IssueRefreshTokenAsync(user.Id);
             await _userRepository.SaveChangesAsync();
 
-            var response = _mapper.Map<RegisterResponse>(user);
             response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;
@@ -78,6 +97,11 @@ namespace Bikontrol.Infrastructure.Services
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result != PasswordVerificationResult.Success)
                 throw new AuthException("El correo o contraseña son inválidos.");
+
+            if (IsEmailConfirmationRequired() && !user.IsEmailConfirmed)
+                throw new AuthException(
+                    "Debes confirmar tu correo antes de iniciar sesión. Revisá tu bandeja o pedí un nuevo enlace.",
+                    403);
 
             var refreshToken = await IssueRefreshTokenAsync(user.Id);
             await _userRepository.SaveChangesAsync();
@@ -119,7 +143,13 @@ namespace Bikontrol.Infrastructure.Services
                 var randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
                 user = new User(payload.Email, fullName, _passwordHasher.HashPassword(null!, randomPassword));
                 user.SetAuthProvider("Google");
+                user.MarkEmailConfirmed();
                 await _userRepository.AddAsync(user);
+            }
+            else if (!user.IsEmailConfirmed)
+            {
+                // Google already verified ownership of this email address.
+                user.MarkEmailConfirmed();
             }
 
             var refreshToken = await IssueRefreshTokenAsync(user.Id);
@@ -196,6 +226,43 @@ namespace Bikontrol.Infrastructure.Services
             await _userRepository.SaveChangesAsync();
         }
 
+        public async Task ConfirmEmailAsync(ConfirmEmailRequest request)
+        {
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+            if (user == null)
+                throw new AuthException("El enlace de confirmación no es válido o ya expiró.");
+
+            // Idempotent: confirming an already-confirmed account is a no-op.
+            if (user.IsEmailConfirmed)
+                return;
+
+            if (string.IsNullOrWhiteSpace(user.EmailConfirmationTokenHash)
+                || user.EmailConfirmationTokenExpires is null
+                || user.EmailConfirmationTokenExpires < DateTime.UtcNow)
+                throw new AuthException("El enlace de confirmación no es válido o ya expiró.");
+
+            var providedHash = HashToken(request.Token);
+            if (!FixedTimeEquals(user.EmailConfirmationTokenHash, providedHash))
+                throw new AuthException("El enlace de confirmación no es válido.");
+
+            user.MarkEmailConfirmed();
+            await _userRepository.SaveChangesAsync();
+        }
+
+        public async Task ResendConfirmationAsync(ResendConfirmationRequest request)
+        {
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+            // Always succeed to avoid revealing whether the email is registered.
+            if (user == null || user.IsEmailConfirmed)
+                return;
+
+            var token = GenerateSecureToken();
+            user.SetEmailConfirmationToken(HashToken(token), DateTime.UtcNow.AddHours(EmailConfirmationTokenHours));
+            await _userRepository.SaveChangesAsync();
+
+            await SendConfirmationEmailAsync(user, token);
+        }
+
         public async Task<LoginResponse> DemoLoginAsync()
         {
             if (!IsDemoEnabled())
@@ -219,6 +286,10 @@ namespace Bikontrol.Infrastructure.Services
                 throw new AuthException("El usuario demo no está disponible.", 403);
             }
 
+            // The demo account is usable immediately; it is not a real inbox.
+            if (!user.IsEmailConfirmed)
+                user.MarkEmailConfirmed();
+
             var refreshToken = await IssueRefreshTokenAsync(user.Id);
             await _userRepository.SaveChangesAsync();
 
@@ -233,6 +304,29 @@ namespace Bikontrol.Infrastructure.Services
         private bool IsDemoEnabled()
         {
             return bool.TryParse(_configuration["Demo:Enabled"], out var enabled) && enabled;
+        }
+
+        /// <summary>
+        /// Email verification is required unless explicitly disabled. It fails
+        /// secure: an absent <c>EmailConfirmation:Required</c> value means true,
+        /// so a misconfigured production still blocks unverified logins.
+        /// </summary>
+        private bool IsEmailConfirmationRequired()
+        {
+            return !bool.TryParse(_configuration["EmailConfirmation:Required"], out var required) || required;
+        }
+
+        private async Task SendConfirmationEmailAsync(User user, string token)
+        {
+            var baseUrl = (_configuration["Frontend:BaseUrl"] ?? "http://localhost:4200").TrimEnd('/');
+            var link = $"{baseUrl}/confirm-email?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email)}";
+            var body =
+                $"Hola {user.FullName},\n\n" +
+                "Gracias por registrarte en Bikontrol.\n" +
+                $"Confirmá tu correo con este enlace (expira en {EmailConfirmationTokenHours} horas):\n\n{link}\n\n" +
+                "Si no creaste esta cuenta, ignorá este correo.";
+
+            await _emailSender.SendAsync(user.Email, "Confirmá tu correo de Bikontrol", body);
         }
 
         private LoginResponse BuildLoginResponse(User user, string refreshToken)

@@ -90,6 +90,7 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `Jwt__ExpireMinutes` / `Jwt__RefreshExpireDays` | Token lifetimes (defaults: 15 min / 30 days) |
 | `Google__ClientId` | Google OAuth client ID (**required** for Sign in with Google; public value) |
 | `Demo__Enabled` | Public demo tenant (default `false`). When off, `POST /api/auth/demo` returns `404` and no demo data is seeded. Enable only for a deliberate public demo (also set `environment.demoEnabled` in the web build). |
+| `EmailConfirmation__Required` | Require email confirmation before login (default `true`). Requires working SMTP; set `false` to skip verification. |
 | `DemoUser__Email` / `DemoUser__FullName` | Demo user identity (defaults `demo@bikontrol.com` / `Usuario Demo`); only used when `Demo__Enabled=true` |
 | `Frontend__BaseUrl` | Base URL for password-reset links (default `https://bikontrol.santidev21.tech`) |
 | `Smtp__Host` / `Smtp__Port` / `Smtp__Username` / `Smtp__Password` / `Smtp__FromEmail` (+ `Smtp__FromName`, `Smtp__EnableSsl`) | SMTP for recovery emails (**required** in prod, otherwise reset links are only logged) |

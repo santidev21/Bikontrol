@@ -20,6 +20,15 @@ namespace Bikontrol.Persistence.Entities
         public DateTime? ResetPasswordTokenExpires { get; private set; }
 
         /// <summary>
+        /// Cuando no es null, el email fue verificado. Las cuentas creadas antes
+        /// de esta feature se marcan al migrar; las nuevas quedan pendientes
+        /// hasta confirmar (salvo Google, cuyo email ya viene verificado).
+        /// </summary>
+        public DateTime? EmailConfirmedAt { get; private set; }
+        public string? EmailConfirmationTokenHash { get; private set; }
+        public DateTime? EmailConfirmationTokenExpires { get; private set; }
+
+        /// <summary>
         /// Origen de la cuenta: null/"Email" = registro con contraseña,
         /// "Google" = creada vía Google (sin contraseña usable).
         /// </summary>
@@ -69,6 +78,27 @@ namespace Bikontrol.Persistence.Entities
         {
             ResetPasswordTokenHash = null;
             ResetPasswordTokenExpires = null;
+        }
+
+        public bool IsEmailConfirmed => EmailConfirmedAt is not null;
+
+        public void SetEmailConfirmationToken(string tokenHash, DateTime expiresAt)
+        {
+            EmailConfirmationTokenHash = tokenHash ?? throw new ArgumentNullException(nameof(tokenHash));
+            EmailConfirmationTokenExpires = expiresAt;
+        }
+
+        public void ClearEmailConfirmationToken()
+        {
+            EmailConfirmationTokenHash = null;
+            EmailConfirmationTokenExpires = null;
+        }
+
+        /// <summary>Marca el email como verificado y descarta el token pendiente.</summary>
+        public void MarkEmailConfirmed()
+        {
+            EmailConfirmedAt = DateTime.UtcNow;
+            ClearEmailConfirmationToken();
         }
 
         public void SetAuthProvider(string? provider)

@@ -12,6 +12,9 @@ export type LoginResponse = AuthSession;
 
 export interface RegisterResponse extends AuthSession {
   createdAt: string;
+  // True when the account must confirm its email before logging in; in that
+  // case `token`/`refreshToken` are empty and no session is stored.
+  emailConfirmationRequired: boolean;
 }
 
 export interface RegisterRequest {
@@ -25,5 +28,9 @@ export interface ForgotPasswordResponse {
 }
 
 export interface ResetPasswordResponse {
+  message: string;
+}
+
+export interface MessageResponse {
   message: string;
 }

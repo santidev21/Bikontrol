@@ -25,12 +25,16 @@ namespace Bikontrol.Infrastructure.Mapping
                 .ForMember(dest => dest.Role, opt => opt.Ignore())
                 .ForMember(dest => dest.ResetPasswordTokenHash, opt => opt.Ignore())
                 .ForMember(dest => dest.ResetPasswordTokenExpires, opt => opt.Ignore())
+                .ForMember(dest => dest.EmailConfirmedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.EmailConfirmationTokenHash, opt => opt.Ignore())
+                .ForMember(dest => dest.EmailConfirmationTokenExpires, opt => opt.Ignore())
                 .ForMember(dest => dest.AuthProvider, opt => opt.Ignore())
                 .ForMember(dest => dest.Motorcycles, opt => opt.Ignore());
             CreateMap<User, RegisterResponse>()
                 .ForMember(dest => dest.Token, opt => opt.Ignore())
                 .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())
-                .ForMember(dest => dest.ExpiresIn, opt => opt.Ignore());
+                .ForMember(dest => dest.ExpiresIn, opt => opt.Ignore())
+                .ForMember(dest => dest.EmailConfirmationRequired, opt => opt.Ignore());
             CreateMap<User, LoginResponse>()
                 .ForMember(dest => dest.Token, opt => opt.Ignore())
                 .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())

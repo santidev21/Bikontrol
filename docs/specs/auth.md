@@ -14,12 +14,14 @@
 
 | Method | Route | Notes |
 |---|---|---|
-| `POST` | `/register` | Creates a user, returns access + refresh token. |
+| `POST` | `/register` | Creates a user. With email confirmation required (default) it returns **no session** and emails a confirmation link; otherwise it returns access + refresh tokens. |
 | `POST` | `/login` | Email + password, returns access + refresh token. |
 | `POST` | `/google` | Body `{ idToken }`. Validates a Google ID token (`Google__ClientId`), creates the user if missing, returns Bikontrol tokens. |
 | `POST` | `/refresh` | Body `{ refreshToken }`. Single-use rotation: concurrent replays conflict and return `401` (expired session). |
 | `POST` | `/forgot-password` | Body `{ email }`. Emails a reset link (always `200` to avoid leaking account existence). |
 | `POST` | `/reset-password` | Body `{ email, token, newPassword }`. Validates the hashed, time-limited token and updates the password. |
+| `POST` | `/confirm-email` | Body `{ email, token }`. Validates the hashed, time-limited confirmation token and marks the email confirmed. Idempotent. |
+| `POST` | `/resend-confirmation` | Body `{ email }`. Re-sends the confirmation link if the account exists and is unconfirmed (always `200` to avoid leaking account existence). |
 | `POST` | `/demo` | Anonymous demo login. **Opt-in**: returns `404` unless `Demo:Enabled=true`. Returns `403` when the configured demo email belongs to a non-demo account (never hands out real accounts). |
 
 ## Demo mode
@@ -28,6 +30,15 @@
 - When disabled: `POST /api/auth/demo` returns `404` and `DemoUserSeeder` runs no queries — the demo user and its content are never created.
 - When enabled: the seeder creates `demo@bikontrol.com` (`Role=Demo`) plus sample motorcycles/maintenances; the account is read-only (writes return `403`).
 - Development enables it through `appsettings.Development.json`; the Angular build mirrors the flag through `environment.demoEnabled`, which hides the "Probar demo" button when off. Keep the API flag and the frontend flag in sync when enabling a public demo.
+
+## Email confirmation
+
+- Opt-out via `EmailConfirmation:Required` (env `EmailConfirmation__Required`), default **true**. It fails secure: an absent value means *required*.
+- With verification on, registration creates the account **without a session**, stores a 48-byte token (SHA-256 hash + 24h expiry) and emails a link to `Frontend__BaseUrl/confirm-email?token=...&email=...`. `POST /api/auth/login` returns `403` until `users.EmailConfirmedAt` is set.
+- Google accounts are auto-confirmed (Google already verified the email); demo accounts are confirmed when the demo session is created.
+- Existing accounts are grandfathered by the migration (`EmailConfirmedAt = CreatedAt`), so nobody is locked out after deploy.
+- With verification off, registration marks the account confirmed immediately and returns a session (previous behavior).
+- The frontend mirrors this: the register screen shows a "check your inbox" state, `/confirm-email` completes the flow, and login offers to resend the link on `403`.
 
 ## Sessions (refresh tokens)
 

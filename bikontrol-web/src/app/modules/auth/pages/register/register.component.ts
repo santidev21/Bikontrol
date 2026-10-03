@@ -22,6 +22,10 @@ export class RegisterComponent {
   registerForm: FormGroup;
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly confirmationSent = signal(false);
+  readonly resendMessage = signal<string | null>(null);
+  readonly resendLoading = signal(false);
+  private registeredEmail = '';
 
   constructor() {
     this.registerForm = this.fb.group(
@@ -62,10 +66,33 @@ export class RegisterComponent {
     };
 
     this.authService.register(payload).subscribe({
-      next: () => {
+      next: (response) => {
+        if (response.emailConfirmationRequired) {
+          // No session until the email is confirmed: show the "check inbox" screen.
+          this.registeredEmail = response.email;
+          this.confirmationSent.set(true);
+          return;
+        }
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
+        this.errorMessage.set(this.httpError.message(error));
+      },
+    });
+  }
+
+  onResendConfirmation(): void {
+    if (!this.registeredEmail) return;
+
+    this.resendLoading.set(true);
+    this.resendMessage.set(null);
+    this.authService.resendConfirmation(this.registeredEmail).subscribe({
+      next: (response) => {
+        this.resendLoading.set(false);
+        this.resendMessage.set(response.message);
+      },
+      error: (error) => {
+        this.resendLoading.set(false);
         this.errorMessage.set(this.httpError.message(error));
       },
     });

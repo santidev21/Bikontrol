@@ -17,6 +17,7 @@ describe('LoginComponent', () => {
       login: vi.fn(),
       googleLogin: vi.fn(),
       demoLogin: vi.fn(),
+      resendConfirmation: vi.fn(),
     };
     routerMock = {
       navigate: vi.fn(),
@@ -110,6 +111,28 @@ describe('LoginComponent', () => {
 
     expect(authServiceMock.googleLogin).toHaveBeenCalledWith('id-token-abc');
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
+  });
+
+  it('should offer to resend confirmation when login returns 403', () => {
+    authServiceMock.login.mockReturnValue(
+      throwError(() => ({ status: 403, error: { error: 'Debes confirmar tu correo' } })),
+    );
+    component.loginForm.setValue({ email: 'user@example.com', password: 'secret1' });
+
+    component.onSubmit();
+
+    expect(component.canResendConfirmation()).toBe(true);
+    expect(component.errorMessage()).toBe('Debes confirmar tu correo');
+  });
+
+  it('should resend the confirmation email from the login screen', () => {
+    authServiceMock.resendConfirmation.mockReturnValue(of({ message: 'Enviado' }));
+    component.loginForm.setValue({ email: 'user@example.com', password: 'secret1' });
+
+    component.onResendConfirmation();
+
+    expect(authServiceMock.resendConfirmation).toHaveBeenCalledWith('user@example.com');
+    expect(component.resendMessage()).toBe('Enviado');
   });
 
   it('should log in to the demo and navigate when demo is enabled', () => {

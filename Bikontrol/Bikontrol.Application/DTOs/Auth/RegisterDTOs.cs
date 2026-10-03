@@ -31,5 +31,11 @@ namespace Bikontrol.Application.DTOs.Auth
         public string Token { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
         public int ExpiresIn { get; set; }
+
+        /// <summary>
+        /// True when the account needs to confirm its email before logging in.
+        /// In that case <see cref="Token"/>/<see cref="RefreshToken"/> are empty.
+        /// </summary>
+        public bool EmailConfirmationRequired { get; set; }
     }
 }

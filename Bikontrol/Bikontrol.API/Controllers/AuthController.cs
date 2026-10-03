@@ -59,6 +59,20 @@ namespace Bikontrol.API.Controllers
             return Ok(new { message = "Contraseña actualizada. Ya puedes iniciar sesión." });
         }
 
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
+        {
+            await _authService.ConfirmEmailAsync(request);
+            return Ok(new { message = "Correo confirmado. Ya puedes iniciar sesión." });
+        }
+
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationRequest request)
+        {
+            await _authService.ResendConfirmationAsync(request);
+            return Ok(new { message = "Si tu cuenta existe y no está confirmada, te enviamos un nuevo enlace." });
+        }
+
         [HttpPost("demo")]
         public async Task<IActionResult> DemoLogin()
         {
