@@ -35,7 +35,7 @@
 
 - Opt-out via `EmailConfirmation:Required` (env `EmailConfirmation__Required`), default **true**. It fails secure: an absent value means *required*.
 - With verification on, registration creates the account **without a session**, stores a 48-byte token (SHA-256 hash + 24h expiry) and emails a link to `Frontend__BaseUrl/confirm-email?token=...&email=...`. `POST /api/auth/login` returns `403` until `users.EmailConfirmedAt` is set.
-- Google accounts are auto-confirmed (Google already verified the email), as are demo accounts.
+- Google accounts are auto-confirmed (Google already verified the email); demo accounts are confirmed when the demo session is created.
 - Existing accounts are grandfathered by the migration (`EmailConfirmedAt = CreatedAt`), so nobody is locked out after deploy.
 - With verification off, registration marks the account confirmed immediately and returns a session (previous behavior).
 - The frontend mirrors this: the register screen shows a "check your inbox" state, `/confirm-email` completes the flow, and login offers to resend the link on `403`.

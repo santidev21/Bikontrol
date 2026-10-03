@@ -67,13 +67,17 @@ jobs:
             # backend .NET tests run here, so no coverage is supplied for the
             # Angular frontend or the repo scripts. Without this, Sonar counts
             # every TS/JS line as 0%-covered and any frontend PR fails the
-            # new-code coverage gate. Generated EF migration scaffolding is
-            # excluded too (see coverlet.runsettings); migration Up/Down stays.
-            # Program.cs (top-level statements) compiles to a compiler-generated
-            # class that coverlet never instruments (ExcludeByAttribute
-            # CompilerGeneratedAttribute), so Sonar sees its lines as uncovered;
-            # keep this composition root out of the coverage gate.
-            "/d:sonar.coverage.exclusions=**/*.ts,**/*.js,**/*.mjs,**/*.html,**/*.scss,**/*.css,**/Migrations/*.Designer.cs,**/Migrations/*ModelSnapshot.cs,**/Bikontrol.API/Program.cs"
+            # new-code coverage gate.
+            #
+            # Files coverlet cannot instrument are excluded too, otherwise a new
+            # file of that kind fails the gate even when it is exercised:
+            #  - Program.cs (top-level statements) compiles to a compiler-
+            #    generated class that coverlet never instruments.
+            #  - DTOs are declarative; their auto-properties compile to
+            #    compiler-generated accessors that coverlet never emits.
+            # Generated EF migration scaffolding (Designer/snapshot) is excluded
+            # as well; migration Up is still executed by the integration fixture.
+            "/d:sonar.coverage.exclusions=**/*.ts,**/*.js,**/*.mjs,**/*.html,**/*.scss,**/*.css,**/Migrations/*.Designer.cs,**/Migrations/*ModelSnapshot.cs,**/Bikontrol.API/Program.cs,**/DTOs/**/*.cs"
           )
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             args+=(

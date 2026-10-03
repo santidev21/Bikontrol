@@ -163,7 +163,6 @@ namespace Bikontrol.Infrastructure.Seed
                 {
                     var randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
                     demoUser = new User(demoEmail, demoName, passwordHasher.HashPassword(null!, randomPassword), UserRole.Demo);
-                    demoUser.MarkEmailConfirmed();
                     await context.Users.AddAsync(demoUser);
                     await context.SaveChangesAsync();
                     logger.LogInformation("Demo user seeded: {Email}", demoEmail);
