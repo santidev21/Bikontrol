@@ -66,6 +66,7 @@ services:
       Sentry__TracesSampleRate: ${Sentry__TracesSampleRate:-0.1}
       # Maintenance reminders engine (daily job + dedupe window).
       Reminders__Enabled: ${Reminders__Enabled:-true}
+      Reminders__EmailEnabled: ${Reminders__EmailEnabled:-true}
       Reminders__DailyHourUtc: ${Reminders__DailyHourUtc:-8}
       Reminders__DedupeDays: ${Reminders__DedupeDays:-3}
     networks:

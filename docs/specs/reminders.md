@@ -23,8 +23,11 @@ threshold as the dashboard's "Próximo" bucket. Km and time items use the same r
   at that moment (overdue, life %, remaining km/days).
 - **Dedupe:** an item that already produced a `Due` reminder within `Reminders:DedupeDays`
   (default **3 days**) is skipped, so a chronically overdue item does not nag every day.
-- PR1 only *records* (channel `Pending`). Email (PR2) and web push (PR3) read those rows and mark
-  them delivered, so the engine stays side-effect-free for users.
+- Right after generating, the same run sends **one digest email per user** with all their pending
+  reminders (`ReminderService.SendPendingEmailsAsync`), then marks those rows as channel `Email` with
+  `DeliveredAt`. Set `Reminders:EmailEnabled=false` to record without emailing. Email delivery needs
+  SMTP configured (see [auth.md](auth.md)); without SMTP the sender logs and does not deliver.
+- Web push (PR3) reads any still-`Pending` rows the same way.
 
 ## Preferences
 
@@ -43,5 +46,6 @@ threshold as the dashboard's "Próximo" bucket. Km and time items use the same r
 | Key | Default | Purpose |
 |---|---|---|
 | `Reminders:Enabled` | `true` | Run the daily engine. |
+| `Reminders:EmailEnabled` | `true` | Send the digest email (requires SMTP). |
 | `Reminders:DailyHourUtc` | `8` | Hour (UTC) the engine runs. |
 | `Reminders:DedupeDays` | `3` | Days before the same item can remind again. |

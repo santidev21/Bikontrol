@@ -16,5 +16,12 @@ namespace Bikontrol.Application.Interfaces
         /// deliveries. Returns how many were generated. Called by the daily job.
         /// </summary>
         Task<int> GenerateDueRemindersAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Sends one digest email per user for their pending reminders and marks
+        /// them delivered. Returns how many emails were sent. Called by the daily
+        /// job right after <see cref="GenerateDueRemindersAsync"/>.
+        /// </summary>
+        Task<int> SendPendingEmailsAsync(CancellationToken cancellationToken = default);
     }
 }

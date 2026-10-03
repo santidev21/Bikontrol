@@ -44,6 +44,33 @@ namespace Bikontrol.Persistence.Repositories
             await _context.ReminderLogs.AddAsync(entity);
         }
 
+        public async Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel)
+        {
+            return await _context.ReminderLogs
+                .Include(r => r.User)
+                .Include(r => r.UserMaintenance)
+                .Where(r => r.Channel == channel)
+                .OrderBy(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task MarkDeliveredAsync(IEnumerable<Guid> ids, string channel, DateTime deliveredAt)
+        {
+            var idList = ids.Distinct().ToList();
+            if (idList.Count == 0)
+                return;
+
+            var logs = await _context.ReminderLogs
+                .Where(r => idList.Contains(r.Id))
+                .ToListAsync();
+
+            foreach (var log in logs)
+            {
+                log.Channel = channel;
+                log.DeliveredAt = deliveredAt;
+            }
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

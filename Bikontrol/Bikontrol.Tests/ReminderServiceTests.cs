@@ -2,6 +2,7 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence.Entities;
 using Microsoft.Extensions.Configuration;
@@ -86,24 +87,97 @@ public class ReminderServiceTests
         Assert.Equal(ReminderChannel.Pending, saved.Channel);
     }
 
+    [Fact]
+    public async Task SendPendingEmailsAsync_ShouldSendOneDigestPerUserAndMarkDelivered()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item1 = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var item2 = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item1.Id,
+            Channel = ReminderChannel.Pending,
+            IsOverdue = true,
+            User = user,
+            UserMaintenance = item1
+        });
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item2.Id,
+            Channel = ReminderChannel.Pending,
+            IsOverdue = false,
+            RemainingKm = 50,
+            LifePercent = 10,
+            User = user,
+            UserMaintenance = item2
+        });
+
+        var email = new FakeEmailSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item1 }), reminders: logs, emailSender: email);
+
+        var sent = await service.SendPendingEmailsAsync();
+
+        Assert.Equal(1, sent); // one digest, not two emails
+        var message = Assert.Single(email.Sent);
+        Assert.Equal(user.Email, message.To);
+        Assert.Contains("2 mantenimientos", message.Subject);
+        Assert.All(logs.Logs, l => Assert.Equal(ReminderChannel.Email, l.Channel));
+        Assert.All(logs.Logs, l => Assert.NotNull(l.DeliveredAt));
+    }
+
+    [Fact]
+    public async Task SendPendingEmailsAsync_WhenUserOptedOut_ShouldSkip()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        user.SetRemindersEnabled(false);
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+
+        var email = new FakeEmailSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, emailSender: email);
+
+        var sent = await service.SendPendingEmailsAsync();
+
+        Assert.Equal(0, sent);
+        Assert.Empty(email.Sent);
+        Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel);
+    }
+
     private static ReminderService CreateService(
         FakeUserMaintenanceRepository userMaintenance,
         FakeReminderLogRepository? reminders = null,
-        Dictionary<Guid, int>? kmHistories = null)
+        Dictionary<Guid, int>? kmHistories = null,
+        FakeEmailSender? emailSender = null,
+        FakeUserRepository? userRepository = null)
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["Reminders:DedupeDays"] = "3"
+            ["Reminders:DedupeDays"] = "3",
+            ["Frontend:BaseUrl"] = "http://localhost:4200"
         }).Build();
 
         return new ReminderService(
             new FakeCurrentUserService(UserId),
-            new FakeUserRepository(new[] { new User("u@bikontrol.com", "User", "hash") { } }),
+            userRepository ?? new FakeUserRepository(new[] { new User("u@bikontrol.com", "User", "hash") }),
             userMaintenance,
             new FakeMotorcycleRepository(MotoId),
             new FakeKmHistoryService(kmHistories ?? new Dictionary<Guid, int>()),
             new FakeRecordRepository(),
             reminders ?? new FakeReminderLogRepository(),
+            emailSender ?? new FakeEmailSender(),
             config);
     }
 
@@ -206,6 +280,29 @@ public class ReminderServiceTests
             Logs.Add(entity);
             return Task.CompletedTask;
         }
+        public Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel) =>
+            Task.FromResult<IReadOnlyList<ReminderLog>>(
+                Logs.Where(l => l.Channel == channel).ToList());
+        public Task MarkDeliveredAsync(IEnumerable<Guid> ids, string channel, DateTime deliveredAt)
+        {
+            var idList = ids.ToHashSet();
+            foreach (var log in Logs.Where(l => idList.Contains(l.Id)))
+            {
+                log.Channel = channel;
+                log.DeliveredAt = deliveredAt;
+            }
+            return Task.CompletedTask;
+        }
         public Task SaveChangesAsync() => Task.CompletedTask;
+    }
+
+    private sealed class FakeEmailSender : IEmailSender
+    {
+        public List<(string To, string Subject, string Body)> Sent { get; } = new();
+        public Task SendAsync(string toEmail, string subject, string body)
+        {
+            Sent.Add((toEmail, subject, body));
+            return Task.CompletedTask;
+        }
     }
 }
