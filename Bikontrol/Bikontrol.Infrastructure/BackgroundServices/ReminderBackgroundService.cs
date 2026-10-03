@@ -82,6 +82,10 @@ namespace Bikontrol.Infrastructure.BackgroundServices
             return _lastRunUtc == DateTime.MinValue || _lastRunUtc.Date < nowUtc.Date;
         }
 
+        /// <summary>Whether the digest email step runs (default true).</summary>
+        private bool IsEmailEnabled =>
+            !bool.TryParse(_configuration["Reminders:EmailEnabled"], out var enabled) || enabled;
+
         private async Task RunOnceAsync(CancellationToken cancellationToken)
         {
             _lastRunUtc = DateTime.UtcNow;
@@ -91,7 +95,16 @@ namespace Bikontrol.Infrastructure.BackgroundServices
 
             var generated = await service.GenerateDueRemindersAsync(cancellationToken);
 
-            _logger.LogInformation("Reminder run complete: {Count} reminder(s) generated.", generated);
+            var emailed = 0;
+            if (IsEmailEnabled)
+            {
+                emailed = await service.SendPendingEmailsAsync(cancellationToken);
+            }
+
+            _logger.LogInformation(
+                "Reminder run complete: {Generated} reminder(s) generated, {Emailed} digest email(s) sent.",
+                generated,
+                emailed);
         }
     }
 }
