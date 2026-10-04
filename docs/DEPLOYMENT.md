@@ -109,6 +109,8 @@ Recovery: `gunzip -c backups/backup-xxx/db.sql.gz | docker compose exec -T db ps
 - **Uptime monitoring:** point an external monitor (UptimeRobot/Better Stack/`healthchecks.io`, or the gateway) at `GET /ready`; it returns `503` when PostgreSQL is unreachable, so an alert fires before users notice.
 - **Metrics (OpenTelemetry → Prometheus):** set `Metrics__Enabled=true` (default in `docker-compose.yml`) and the API exposes `/metrics` in Prometheus format (request rate/latency/status, HttpClient, .NET runtime). Scrape config, alert rules and a Grafana dashboard live in [`deploy/monitoring/`](../deploy/monitoring/README.md). The endpoint is internal-only — the public gateway never proxies it.
 
+For incident handling and disaster recovery, see [RUNBOOK.md](RUNBOOK.md).
+
 ## Database TLS
 
 Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontrol-db`, certs in `/etc/postgresql/ssl` inside the container — never in the data volume, which must stay empty for `initdb`; `ssl=Require` on the server). All connection strings carry `SslMode=Require;Trust Server Certificate=true` (self-signed). The DB remains on `bikontrol-internal-net` only; no host port is published in production (`docker-compose.local.yml` publishes `127.0.0.1:5434` only for local dev).
