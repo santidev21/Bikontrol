@@ -42,9 +42,9 @@ Built to be sold, not just shown:
   request correlation, optional Sentry, **verified backups** (every dump is restored into a throwaway
   DB before it is trusted), DB auto-migrations on deploy.
 - **Checked on every change** — backend unit + integration tests (real PostgreSQL via Testcontainers),
-  frontend Vitest, coverage gate, SonarCloud (quality gate + new-code coverage), CodeQL, Gitleaks,
-  Trivy, mutation testing and a migration rollback test; deploys roll back automatically if the
-  health check fails.
+  frontend Vitest, coverage gate, SonarCloud (quality gate + new-code coverage), CodeQL (SAST),
+  Gitleaks, Trivy (SCA), **ZAP baseline (DAST)** against the real stack, mutation testing and a
+  migration rollback test; deploys roll back automatically if the health check fails.
 
 ---
 

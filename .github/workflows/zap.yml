@@ -1,0 +1,91 @@
+name: ZAP baseline (DAST)
+
+# Dynamic application security testing against the real stack (nginx + API + DB),
+# which closes the SAST (CodeQL) + SCA (Trivy) + DAST loop.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, so a newly disclosed class of issue still gets caught.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: zap-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    name: ZAP baseline scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare CI environment
+        run: |
+          {
+            echo "POSTGRES_DB=bikontrol_db"
+            echo "POSTGRES_USER=bikontrol"
+            echo "POSTGRES_PASSWORD=ci_dummy_password"
+            echo "ConnectionStrings__DefaultConnection=Host=bikontrol-db;Port=5432;Database=bikontrol_db;Username=bikontrol;Password=ci_dummy_password;SslMode=Require;Trust Server Certificate=true"
+            echo "Jwt__Key=ci_dummy_key_0123456789abcdef0123456789abcdef"
+            echo "Jwt__Issuer=BikontrolAPI"
+            echo "Jwt__Audience=BikontrolClient"
+            echo "Google__ClientId=ci.apps.googleusercontent.com"
+            echo "Cors__AllowedOrigins=http://127.0.0.1:4200"
+            echo "Frontend__BaseUrl=http://127.0.0.1:4200"
+          } > .env
+
+      - name: Start the stack
+        run: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+
+      - name: Wait for the frontend and API to be ready
+        run: |
+          for i in $(seq 1 60); do
+            web=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:4200/ || true)
+            api=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/ready || true)
+            echo "attempt $i: web=$web api=$api"
+            if [ "$web" = "200" ] && [ "$api" = "200" ]; then
+              echo "Stack is ready."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Stack did not become ready in time." >&2
+          docker compose -f docker-compose.yml -f docker-compose.local.yml logs --tail=80
+          exit 1
+
+      - name: ZAP baseline scan (frontend)
+        # Pinned to v0.15.0 (commit SHA) — third-party action.
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25
+        with:
+          target: 'http://127.0.0.1:4200'
+          rules_file_name: '.zap/rules.tsv'
+          # Fail the check on findings (rules IGNORE the accepted noise).
+          fail_action: true
+          # Keep results in the workflow artifact instead of opening issues.
+          allow_issue_writing: false
+          artifact_name: 'zap-baseline-frontend'
+
+      - name: ZAP baseline scan (API)
+        # Pinned to v0.15.0 (commit SHA) — third-party action.
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25
+        with:
+          target: 'http://127.0.0.1:8080'
+          rules_file_name: '.zap/rules.tsv'
+          fail_action: true
+          allow_issue_writing: false
+          artifact_name: 'zap-baseline-api'
+
+      - name: Stack logs (on failure)
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.local.yml logs --tail=120
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
