@@ -17,6 +17,19 @@ export interface MaintenanceCountStat {
 export interface MonthlyActivity {
   yearMonth: string;
   count: number;
+  cost: number;
+}
+
+export interface MotorcycleCostStat {
+  motorcycleId: string;
+  name: string;
+  cost: number;
+  costPerKm?: number | null;
+}
+
+export interface YearlyCost {
+  year: number;
+  cost: number;
 }
 
 export interface StatisticsSummary {
@@ -26,8 +39,12 @@ export interface StatisticsSummary {
   overdueCount: number;
   dueSoonCount: number;
   lastActivityAt?: string | null;
+  totalCost: number;
+  costPerKm?: number | null;
   health: HealthBucket[];
   kmByMotorcycle: MotorcycleKmStat[];
   recordsByType: MaintenanceCountStat[];
   last6Months: MonthlyActivity[];
+  costByMotorcycle: MotorcycleCostStat[];
+  costByYear: YearlyCost[];
 }

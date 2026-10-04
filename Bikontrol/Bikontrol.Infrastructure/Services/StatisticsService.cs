@@ -106,14 +106,50 @@ namespace Bikontrol.Infrastructure.Services
                 .ThenBy(x => x.Name)
                 .ToList();
 
+            // Cost aggregates: only records that carry a cost are counted, so
+            // users who never enter one see a fleet total of 0 (not NaN).
+            summary.TotalCost = allRecords.Sum(r => r.Cost ?? 0m);
+            summary.CostPerKm = summary.TotalKm > 0
+                ? Math.Round(summary.TotalCost / summary.TotalKm, 4)
+                : null;
+
+            summary.CostByMotorcycle = motorcycles
+                .Select(moto =>
+                {
+                    var cost = recordsByMotorcycle.TryGetValue(moto.Id, out var recs)
+                        ? recs.Sum(r => r.Cost ?? 0m)
+                        : 0m;
+                    return new MotorcycleCostStatDTO
+                    {
+                        MotorcycleId = moto.Id,
+                        Name = string.IsNullOrWhiteSpace(moto.Nickname) ? moto.Name : moto.Nickname,
+                        Cost = cost,
+                        CostPerKm = moto.Km > 0 ? Math.Round(cost / moto.Km, 4) : null
+                    };
+                })
+                .OrderByDescending(x => x.Cost)
+                .ThenBy(x => x.Name)
+                .ToList();
+
+            summary.CostByYear = allRecords
+                .Where(r => r.Cost.HasValue)
+                .GroupBy(r => r.PerformedAt.Year)
+                .Select(g => new YearlyCostDTO { Year = g.Key, Cost = g.Sum(r => r.Cost ?? 0m) })
+                .OrderBy(x => x.Year)
+                .ToList();
+
             var now = DateTime.UtcNow;
             for (var i = 5; i >= 0; i--)
             {
                 var month = new DateTime(now.Year, now.Month, 1).AddMonths(-i);
+                var inMonth = allRecords
+                    .Where(r => r.PerformedAt.Year == month.Year && r.PerformedAt.Month == month.Month)
+                    .ToList();
                 summary.Last6Months.Add(new MonthlyActivityDTO
                 {
                     YearMonth = month.ToString("yyyy-MM"),
-                    Count = allRecords.Count(r => r.PerformedAt.Year == month.Year && r.PerformedAt.Month == month.Month)
+                    Count = inMonth.Count,
+                    Cost = inMonth.Sum(r => r.Cost ?? 0m)
                 });
             }
 

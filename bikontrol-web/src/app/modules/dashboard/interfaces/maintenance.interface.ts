@@ -34,6 +34,7 @@ export interface CreateMaintenanceRecordRequest {
   userMaintenanceId: string;
   performedAt: string;
   performedKm?: number | null;
+  cost?: number | null;
 }
 
 export interface MaintenanceRecord {
@@ -42,6 +43,7 @@ export interface MaintenanceRecord {
   userMaintenanceId: string;
   performedAt: string;
   performedKm?: number | null;
+  cost?: number | null;
   createdAt: string;
   maintenanceName: string;
 }

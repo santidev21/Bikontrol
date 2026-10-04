@@ -50,6 +50,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       userMaintenanceId: ['', Validators.required],
       performedAt: [this.getTodayDate(), Validators.required],
       performedKm: [null],
+      cost: [null, [Validators.min(0)]],
     });
   }
 
@@ -159,6 +160,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       userMaintenanceId: this.form.get('userMaintenanceId')?.value,
       performedAt: performedAt.toISOString(),
       performedKm: selected.trackingType === 'Km' ? performedKm : null,
+      cost: this.form.get('cost')?.value ?? null,
     };
 
     this.isSubmitting.set(true);

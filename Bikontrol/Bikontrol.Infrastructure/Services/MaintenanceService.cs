@@ -201,7 +201,8 @@ namespace Bikontrol.Infrastructure.Services
                 MotorcycleId = request.MotorcycleId,
                 UserMaintenanceId = maintenance.Id,
                 PerformedAt = request.PerformedAt,
-                PerformedKm = request.PerformedKm
+                PerformedKm = request.PerformedKm,
+                Cost = request.Cost
             };
 
             // Registro + avance de odómetro en una sola transacción: antes eran

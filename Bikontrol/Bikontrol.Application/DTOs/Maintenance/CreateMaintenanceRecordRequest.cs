@@ -12,5 +12,8 @@ namespace Bikontrol.Application.DTOs.Maintenance
 
         [Range(0, 1_000_000, ErrorMessage = "El kilometraje debe estar entre 0 y 1,000,000 km.")]
         public int? PerformedKm { get; set; }
+
+        [Range(0, 100_000_000, ErrorMessage = "El costo debe estar entre 0 y 100,000,000.")]
+        public decimal? Cost { get; set; }
     }
 }

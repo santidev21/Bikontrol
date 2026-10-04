@@ -44,6 +44,23 @@
       </div>
     }
 
+    <div>
+      <label for="record-cost" class="block text-sm text-gray-300 mb-1">Costo (opcional)</label>
+      <input
+        id="record-cost"
+        type="number"
+        step="0.01"
+        min="0"
+        inputmode="decimal"
+        formControlName="cost"
+        placeholder="0.00"
+        class="w-full rounded-lg p-2 bg-gray-900 text-white border border-gray-700"
+      />
+      <p class="text-xs text-gray-400 mt-1">
+        Sirve para las estadísticas de gasto. Déjalo vacío si no aplica.
+      </p>
+    </div>
+
     <button
       type="submit"
       [disabled]="isSubmitting()"

@@ -12,7 +12,7 @@
 
 - Multi-step writes are atomic via `ITransactionManager` (`Bikontrol.Persistence.TransactionManager`): maintenance record + odometer advance, motorcycle + initial km, km rollback.
 - Optimistic concurrency with the Postgres `xmin` system column on `Motorcycles`, `UserMaintenanceTypes`, `users` (Npgsql `UseXminAsConcurrencyToken`; the scaffolded `AddColumn xmin` is ignored by the Npgsql SQL generator — no physical column is created). Conflicts surface as `DbUpdateConcurrencyException` → HTTP 409.
-- CHECK constraints: `CK_MotorcycleKmHistories_Km_NonNegative`, `CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative`, `CK_UserMaintenanceTypes_PositiveInterval` (interval > 0 for the selected `TrackingType`).
+- CHECK constraints: `CK_MotorcycleKmHistories_Km_NonNegative`, `CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative`, `CK_MotorcycleMaintenanceRecords_Cost_NonNegative` (`Cost` is nullable `numeric(12,2)`), `CK_UserMaintenanceTypes_PositiveInterval` (interval > 0 for the selected `TrackingType`).
 - Service validation mirrors the constraints (positive interval per tracking type; historical maintenance records below the odometer don't move it and never fail the operation).
 - Read-only audit: `scripts/db-integrity-audit.sql` — every block must return 0 rows. Run it before any deploy/migration once real users exist.
 - Backups: `npm run db:backup` / `db:restore` locally; `deploy.sh backup-db` on the VPS. Always back up before deploying migrations.

@@ -223,10 +223,46 @@ describe('RegisterMaintenanceRecordComponent', () => {
       userMaintenanceId: 'maint-1',
       performedAt: expect.any(String),
       performedKm: 2300,
+      cost: null,
     });
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/motorcycles/summary'], {
       queryParams: { motorcycleId: 'moto-1' },
     });
+  });
+
+  it('should include the cost when the user enters one', async () => {
+    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
+      of([
+        {
+          id: 'maint-1',
+          motorcycleId: 'moto-1',
+          name: 'Aceite',
+          trackingType: 'Km',
+          isEnabled: true,
+          isSystem: false,
+        },
+      ]),
+    );
+    maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(of([]));
+    maintenanceServiceMock.registerMaintenanceRecord.mockReturnValue(of({ id: 'record-1' }));
+
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
+    component.form.get('userMaintenanceId')?.setValue('maint-1');
+    component.form.patchValue({
+      performedAt: new Date().toISOString().split('T')[0],
+      performedKm: 2300,
+      cost: 55.5,
+    });
+
+    component.onSubmit();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(maintenanceServiceMock.registerMaintenanceRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ cost: 55.5 }),
+    );
   });
 
   it('should surface backend errors when registering a maintenance record', () => {
