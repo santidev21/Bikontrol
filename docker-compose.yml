@@ -37,6 +37,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      # In production, deploy.sh applies migrations as a dedicated step
+      # (`deploy.sh migrate`) and .env sets this to false. The default stays
+      # true so local/Docker dev and CI (which do not run deploy.sh) still get
+      # their schema created on startup.
+      Database__RunMigrationsOnStartup: ${Database__RunMigrationsOnStartup:-true}
       Jwt__Key: ${Jwt__Key}
       Jwt__Issuer: ${Jwt__Issuer:-BikontrolAPI}
       Jwt__Audience: ${Jwt__Audience:-BikontrolClient}

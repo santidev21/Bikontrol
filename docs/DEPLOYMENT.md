@@ -31,7 +31,9 @@ Automatic on push to `main` via GitHub Actions, or manual:
 cd /opt/bikontrol && ./scripts/deploy.sh deploy
 ```
 
-Each deploy runs, in order: backup + verify → integrity audit → pull → build → up → **container healthcheck** → **post-deploy smoke test**. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump + config and brings the stack back up).
+Each deploy runs, in order: backup + verify → integrity audit → pull → build → **apply migrations (dedicated step)** → up → **container healthcheck** → **post-deploy smoke test**. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump + config and brings the stack back up).
+
+**Migrations as a dedicated step.** Production does **not** migrate on API startup (`Database__RunMigrationsOnStartup=false`). Instead, `deploy.sh deploy` runs `deploy.sh migrate`, which executes the freshly built API image in migration-only mode (`docker compose run --rm --no-deps api --migrate`), on the internal network, before any container is started for traffic. It is idempotent and fails the deploy (with the pre-deploy backup already taken) before anything is started. Migrate manually with `./scripts/deploy.sh migrate`. Startup migration remains the default outside production (local dev, and the integration test suite).
 
 The smoke test (`scripts/smoke-test.sh`, also `npm run smoke <url>`) hits the public origin and asserts `/health`, `/ready` (DB), the SPA shell and the auth endpoints — read-only, no credentials.
 

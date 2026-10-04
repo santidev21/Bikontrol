@@ -298,12 +298,25 @@ if (metricsEnabled)
     app.MapPrometheusScrapingEndpoint();
 }
 
-if (!app.Environment.IsDevelopment())
+// Migrations can run as a dedicated deploy step (`--migrate`, idempotent,
+// logged, with a pre-deploy backup) instead of racing on startup — the safer
+// option once there is more than one instance. Startup migration stays the
+// default for local/dev and any setup that has not moved to the CLI step.
+var migrateOnly = args.Contains("--migrate");
+var runMigrationsOnStartup =
+    builder.Configuration.GetValue("Database:RunMigrationsOnStartup", true)
+    && !app.Environment.IsDevelopment();
+if (migrateOnly || runMigrationsOnStartup)
 {
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
+        if (migrateOnly)
+        {
+            Log.Information("Migrations applied (--migrate); exiting without starting the server.");
+            return;
+        }
     }
 }
 

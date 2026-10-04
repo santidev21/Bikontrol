@@ -173,6 +173,22 @@ build() {
     log "Build complete."
 }
 
+# Apply EF Core migrations as a dedicated, one-shot step — before the API
+# starts and without racing replicas. Uses the freshly built API image in
+# migration-only mode (`--migrate`), on the internal network so it can reach
+# the database. Idempotent: already-applied migrations are skipped.
+migrate() {
+    log "Applying database migrations (dedicated step)..."
+    # The DB must be reachable; start it (idempotent) and give it a moment. The
+    # api service depends on a healthy db, but `run` starts on demand.
+    (cd "$DEPLOY_DIR" && docker compose up -d db)
+    sleep 5
+    (cd "$DEPLOY_DIR" && \
+        docker compose run --rm --no-deps api --migrate) \
+        || error_exit "database migration failed — aborting (nothing was started)"
+    log "Migrations applied."
+}
+
 up() {
     log "Starting containers..."
     (cd "$DEPLOY_DIR" && docker compose up -d --remove-orphans)
@@ -287,6 +303,7 @@ deploy() {
     audit_database
     pull
     build
+    migrate
     up
     if ! wait_healthy; then
         log "Deployment failed health check — rolling back."
@@ -318,6 +335,7 @@ logs() {
 case "${1:-deploy}" in
     pull) pull ;;
     build) build ;;
+    migrate) migrate ;;
     up) up ;;
     deploy) deploy ;;
     status) status ;;
@@ -330,7 +348,7 @@ case "${1:-deploy}" in
     install-cron) install_cron "$@" ;;
     remove-cron) remove_cron ;;
     *)
-        echo "Usage: $0 [pull|build|up|deploy|status|logs|verify|smoke|rollback|backup-db|audit-db|install-cron|remove-cron]"
+        echo "Usage: $0 [pull|build|migrate|up|deploy|status|logs|verify|smoke|rollback|backup-db|audit-db|install-cron|remove-cron]"
         exit 1
         ;;
 esac

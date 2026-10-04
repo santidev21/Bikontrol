@@ -96,10 +96,11 @@ docker compose up -d
 npm run smoke https://bikontrol.santidev21.tech
 ```
 
-> Migrations: production applies pending migrations on API startup. After
-> restoring an **older** dump, the API will migrate the schema forward again on
-> boot — expected. If the restored data is from before a destructive migration,
-> review what that migration changed before starting the API.
+> Migrations: production applies migrations as a **dedicated deploy step**
+> (`./scripts/deploy.sh migrate`, run automatically before `up`), not on API
+> startup. After restoring an **older** dump, run `./scripts/deploy.sh migrate`
+> (or a full `deploy`) to bring the schema forward. If the restored data is from
+> before a destructive migration, review what that migration changed first.
 
 ### Integrity check after restore
 Run the read-only audit; every block must return 0 rows:
@@ -132,6 +133,7 @@ host is recoverable — see the offsite note in DEPLOYMENT.md.
 | Stack health | `./scripts/deploy.sh status` |
 | Logs | `./scripts/deploy.sh logs` |
 | Deploy | `./scripts/deploy.sh deploy` |
+| Apply migrations | `./scripts/deploy.sh migrate` |
 | Verify only | `./scripts/deploy.sh verify` |
 | Roll back last deploy | `./scripts/deploy.sh rollback` |
 | Manual DB backup | `./scripts/deploy.sh backup-db` |
