@@ -107,6 +107,7 @@ Recovery: `gunzip -c backups/backup-xxx/db.sql.gz | docker compose exec -T db ps
 - **Request correlation:** errors echo an `X-Request-Id` header; the same id appears in the log line, so a user report maps to the exact log entry.
 - **Error tracking (Sentry):** set `Sentry__Dsn` to capture unhandled exceptions with environment, release and trace context. It is a no-op when the DSN is empty (local dev/CI). PII is disabled (`SendDefaultPii=false`).
 - **Uptime monitoring:** point an external monitor (UptimeRobot/Better Stack/`healthchecks.io`, or the gateway) at `GET /ready`; it returns `503` when PostgreSQL is unreachable, so an alert fires before users notice.
+- **Metrics (OpenTelemetry → Prometheus):** set `Metrics__Enabled=true` (default in `docker-compose.yml`) and the API exposes `/metrics` in Prometheus format (request rate/latency/status, HttpClient, .NET runtime). Scrape config, alert rules and a Grafana dashboard live in [`deploy/monitoring/`](../deploy/monitoring/README.md). The endpoint is internal-only — the public gateway never proxies it.
 
 ## Database TLS
 
@@ -126,6 +127,7 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `EmailConfirmation__Required` | Require email confirmation before login (default `true`). Requires working SMTP; set `false` to skip verification. |
 | `Lockout__Enabled` / `Lockout__MaxFailedAttempts` / `Lockout__Minutes` | Account lockout after repeated failed logins (defaults: `true` / `5` / `15`). |
 | `Sentry__Dsn` / `Sentry__TracesSampleRate` | Error tracking (Sentry). Empty DSN = disabled. Sample rate default `0.1`. |
+| `Metrics__Enabled` | Expose OpenTelemetry metrics at `/metrics` (Prometheus format). Default `true` in compose; internal-network only. See [`deploy/monitoring/`](../deploy/monitoring/README.md). |
 | `Reminders__Enabled` / `Reminders__EmailEnabled` / `Reminders__PushEnabled` / `Reminders__DailyHourUtc` / `Reminders__DedupeDays` | Maintenance reminder engine (defaults: `true` / `true` / `true` / `8` (UTC) / `3`). Email digest needs SMTP; push needs VAPID. |
 | `WebPush__PublicKey` / `WebPush__PrivateKey` / `WebPush__Subject` | Web Push (VAPID). Generate with `npx web-push generate-vapid-keys --json`. Empty keys disable push (email still works). **Rotating the keys invalidates all existing subscriptions** (users must re-enable notifications). |
 | `DemoUser__Email` / `DemoUser__FullName` | Demo user identity (defaults `demo@bikontrol.com` / `Usuario Demo`); only used when `Demo__Enabled=true` |

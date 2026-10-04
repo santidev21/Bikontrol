@@ -18,6 +18,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using Serilog;
 using Serilog.Events;
 using System.Text;
@@ -180,6 +182,21 @@ builder.Services.AddHealthChecks()
         name: "postgresql",
         tags: new[] { "ready" });
 
+// Metrics: OpenTelemetry exported in Prometheus format at /metrics. Off by
+// default so the endpoint is only exposed deliberately (Prometheus scrapes the
+// API over the internal Docker network; the public gateway never proxies it).
+var metricsEnabled = builder.Configuration.GetValue<bool>("Metrics:Enabled");
+if (metricsEnabled)
+{
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource.AddService("bikontrol-api"))
+        .WithMetrics(metrics => metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddPrometheusExporter());
+}
+
 // Services & Identity tools
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
@@ -274,6 +291,12 @@ app.MapHealthChecks("/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready")
 });
+
+// Prometheus scrape endpoint (opt-in). Kept on the internal network only.
+if (metricsEnabled)
+{
+    app.MapPrometheusScrapingEndpoint();
+}
 
 if (!app.Environment.IsDevelopment())
 {

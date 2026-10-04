@@ -64,6 +64,9 @@ services:
       # Error tracking (Sentry). Empty DSN = disabled (no-op).
       Sentry__Dsn: ${Sentry__Dsn:-}
       Sentry__TracesSampleRate: ${Sentry__TracesSampleRate:-0.1}
+      # Prometheus metrics at /metrics (internal network only; never proxied by
+      # the public gateway). Off unless explicitly enabled.
+      Metrics__Enabled: ${Metrics__Enabled:-true}
       # Maintenance reminders engine (daily job + dedupe window).
       Reminders__Enabled: ${Reminders__Enabled:-true}
       Reminders__EmailEnabled: ${Reminders__EmailEnabled:-true}

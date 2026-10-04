@@ -47,6 +47,8 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         Environment.SetEnvironmentVariable("EmailConfirmation__Required", "false");
         // Account lockout is exercised explicitly by Login_AfterMaxFailedAttempts;
         // keep the default (5 attempts) so the test can assert the lock.
+        // Metrics are opt-in; enable them so the scrape endpoint can be asserted.
+        Environment.SetEnvironmentVariable("Metrics__Enabled", "true");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
