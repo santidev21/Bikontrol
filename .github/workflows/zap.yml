@@ -28,18 +28,18 @@ jobs:
 
       - name: Prepare CI environment
         run: |
-          cat > .env <<'EOF'
-POSTGRES_DB=bikontrol_db
-POSTGRES_USER=bikontrol
-POSTGRES_PASSWORD=ci_dummy_password
-ConnectionStrings__DefaultConnection=Host=bikontrol-db;Port=5432;Database=bikontrol_db;Username=bikontrol;Password=ci_dummy_password;SslMode=Require;Trust Server Certificate=true
-Jwt__Key=ci_dummy_key_0123456789abcdef0123456789abcdef
-Jwt__Issuer=BikontrolAPI
-Jwt__Audience=BikontrolClient
-Google__ClientId=ci.apps.googleusercontent.com
-Cors__AllowedOrigins=http://127.0.0.1:4200
-Frontend__BaseUrl=http://127.0.0.1:4200
-EOF
+          {
+            echo "POSTGRES_DB=bikontrol_db"
+            echo "POSTGRES_USER=bikontrol"
+            echo "POSTGRES_PASSWORD=ci_dummy_password"
+            echo "ConnectionStrings__DefaultConnection=Host=bikontrol-db;Port=5432;Database=bikontrol_db;Username=bikontrol;Password=ci_dummy_password;SslMode=Require;Trust Server Certificate=true"
+            echo "Jwt__Key=ci_dummy_key_0123456789abcdef0123456789abcdef"
+            echo "Jwt__Issuer=BikontrolAPI"
+            echo "Jwt__Audience=BikontrolClient"
+            echo "Google__ClientId=ci.apps.googleusercontent.com"
+            echo "Cors__AllowedOrigins=http://127.0.0.1:4200"
+            echo "Frontend__BaseUrl=http://127.0.0.1:4200"
+          } > .env
 
       - name: Start the stack
         run: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
