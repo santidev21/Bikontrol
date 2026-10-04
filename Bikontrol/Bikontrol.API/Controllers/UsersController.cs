@@ -11,10 +11,12 @@ namespace Bikontrol.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuditLogService _auditLogService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IAuditLogService auditLogService)
         {
             _userService = userService;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet("me")]
@@ -43,6 +45,12 @@ namespace Bikontrol.API.Controllers
         {
             var result = await _userService.UpdateRemindersAsync(request);
             return Ok(result);
+        }
+
+        [HttpGet("me/activity")]
+        public async Task<IActionResult> GetMyActivity([FromQuery] int limit = 50)
+        {
+            return Ok(await _auditLogService.GetMyActivityAsync(limit));
         }
     }
 }
