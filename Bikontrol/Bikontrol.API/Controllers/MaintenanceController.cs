@@ -12,10 +12,12 @@ namespace Bikontrol.API.Controllers;
 public class MaintenancesController : ControllerBase
 {
     private readonly IMaintenanceService _service;
+    private readonly IMaintenanceAttachmentService _attachmentService;
 
-    public MaintenancesController(IMaintenanceService service)
+    public MaintenancesController(IMaintenanceService service, IMaintenanceAttachmentService attachmentService)
     {
         _service = service;
+        _attachmentService = attachmentService;
     }
 
     [HttpGet("defaults")]
@@ -81,6 +83,25 @@ public class MaintenancesController : ControllerBase
     {
         var result = await _service.GetUpcomingByMotorcycleAsync(motorcycleId);
         return Ok(result);
+    }
+
+    [HttpGet("records/{recordId:guid}/attachments")]
+    public async Task<IActionResult> GetAttachments(Guid recordId)
+    {
+        return Ok(await _attachmentService.GetByRecordAsync(recordId));
+    }
+
+    [HttpPost("records/{recordId:guid}/attachments")]
+    public async Task<IActionResult> AddAttachment(Guid recordId, [FromBody] AddAttachmentRequest request)
+    {
+        return Ok(await _attachmentService.AddAsync(recordId, request));
+    }
+
+    [HttpDelete("records/{recordId:guid}/attachments/{attachmentId:guid}")]
+    public async Task<IActionResult> DeleteAttachment(Guid recordId, Guid attachmentId)
+    {
+        await _attachmentService.DeleteAsync(recordId, attachmentId);
+        return NoContent();
     }
 
     [HttpPut("{id}")]

@@ -137,6 +137,7 @@ public class MaintenanceBookServiceTests
         private readonly List<MotorcycleMaintenanceRecord> _records;
         public FakeRecordRepository(IEnumerable<MotorcycleMaintenanceRecord> records) => _records = records.ToList();
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
+        public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult<IEnumerable<MotorcycleMaintenanceRecord>>(_records);
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult<IEnumerable<MotorcycleMaintenanceRecord>>(_records);
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);

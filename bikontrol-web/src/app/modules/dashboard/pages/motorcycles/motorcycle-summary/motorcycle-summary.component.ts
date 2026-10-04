@@ -11,12 +11,18 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { Motorcycle } from '../../../interfaces/motorcycle.interface';
-import { MaintenanceRecord, UpcomingMaintenance } from '../../../interfaces/maintenance.interface';
+import {
+  MaintenanceRecord,
+  UpcomingMaintenance,
+  MaintenanceAttachment,
+} from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { ImageService } from '../../../../../shared/services/image.service';
 import { AuthService } from '../../../../auth/services/auth.service';
 
 @Component({
@@ -33,6 +39,7 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   private readonly motorcyclesService = inject(MotorcyclesService);
   private readonly swal = inject(SwalService);
   private readonly httpError = inject(HttpErrorService);
+  private readonly imageService = inject(ImageService);
   private readonly authService = inject(AuthService);
 
   readonly motorcycle = signal<Motorcycle | undefined>(undefined);
@@ -43,6 +50,11 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   readonly editableKm = signal(0);
   readonly isSubmittingKm = signal(false);
   readonly isRollingBackKm = signal(false);
+
+  /** Attachments keyed by record id, loaded on demand. */
+  readonly attachmentsByRecord = signal<Record<string, MaintenanceAttachment[]>>({});
+  readonly uploadingRecordId = signal<string | null>(null);
+  readonly viewerImage = signal<MaintenanceAttachment | null>(null);
 
   readonly isDemo = computed(() => this.authService.isDemo());
   readonly motorcycleId = computed(() => this.motorcycle()?.id);
@@ -85,6 +97,7 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     effect(() => {
       if (this.recordsRes.hasValue()) {
         this.maintenanceRecords.set(this.recordsRes.value()!);
+        this.loadAttachmentsFor(this.recordsRes.value()!);
       }
     });
 
@@ -133,6 +146,78 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     this.currentKmRes.reload();
     this.upcomingRes.reload();
     this.recordsRes.reload();
+  }
+
+  private loadAttachmentsFor(records: MaintenanceRecord[]): void {
+    // Fetch attachments per record in parallel; each is a small, on-demand read.
+    for (const record of records) {
+      this.maintenanceService.getAttachments(record.id).subscribe({
+        next: (list) => this.setAttachments(record.id, list),
+        error: () => {
+          // A failed listing should not block the record from rendering.
+        },
+      });
+    }
+  }
+
+  private setAttachments(recordId: string, attachments: MaintenanceAttachment[]): void {
+    this.attachmentsByRecord.update((map) => ({ ...map, [recordId]: attachments }));
+  }
+
+  attachmentsOf(recordId: string): MaintenanceAttachment[] {
+    return this.attachmentsByRecord()[recordId] ?? [];
+  }
+
+  onAttachmentSelected(recordId: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.uploadingRecordId() !== null) return;
+
+    this.uploadingRecordId.set(recordId);
+    this.imageService
+      .resize(file)
+      .then((dataUrl) =>
+        firstValueFrom(this.maintenanceService.addAttachment(recordId, dataUrl, file.name)),
+      )
+      .then((created) => {
+        this.setAttachments(recordId, [...this.attachmentsOf(recordId), created]);
+      })
+      .catch((err) => {
+        this.swal.error('Error', this.httpError.message(err, 'No se pudo adjuntar la imagen.'));
+      })
+      .finally(() => this.uploadingRecordId.set(null));
+  }
+
+  removeAttachment(recordId: string, attachment: MaintenanceAttachment): void {
+    this.swal
+      .confirm('Eliminar adjunto', '¿Eliminar esta imagen del registro?', 'Eliminar', 'Cancelar')
+      .then((result) => {
+        if (!result.isConfirmed) return;
+
+        this.maintenanceService.deleteAttachment(recordId, attachment.id).subscribe({
+          next: () => {
+            this.setAttachments(
+              recordId,
+              this.attachmentsOf(recordId).filter((a) => a.id !== attachment.id),
+            );
+          },
+          error: (err) => {
+            this.swal.error(
+              'Error',
+              this.httpError.message(err, 'No se pudo eliminar el adjunto.'),
+            );
+          },
+        });
+      });
+  }
+
+  openViewer(attachment: MaintenanceAttachment): void {
+    this.viewerImage.set(attachment);
+  }
+
+  closeViewer(): void {
+    this.viewerImage.set(null);
   }
 
   getStrokeDashoffset(percent: number): number {

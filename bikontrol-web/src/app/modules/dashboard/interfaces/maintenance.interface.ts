@@ -46,6 +46,15 @@ export interface MaintenanceRecord {
   maintenanceName: string;
 }
 
+export interface MaintenanceAttachment {
+  id: string;
+  recordId: string;
+  dataUrl: string;
+  fileName?: string | null;
+  contentType: string;
+  createdAt: string;
+}
+
 export interface UpcomingMaintenance {
   userMaintenanceId: string;
   motorcycleId: string;

@@ -13,7 +13,7 @@ public class MaintenancesControllerTests
     {
         var defaults = new List<MaintenanceDTO> { new() { Id = Guid.NewGuid(), Name = "Oil", TrackingType = "Km" } };
         var service = new FakeMaintenanceService { Defaults = defaults };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
 
         var result = await controller.GetDefaults();
 
@@ -26,7 +26,7 @@ public class MaintenancesControllerTests
     {
         var userMaintenances = new List<MaintenanceDTO> { new() { Id = Guid.NewGuid(), Name = "Chain", TrackingType = "Km" } };
         var service = new FakeMaintenanceService { UserMaintenances = userMaintenances };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
 
         var result = await controller.GetMys();
 
@@ -39,7 +39,7 @@ public class MaintenancesControllerTests
     {
         var list = new List<MaintenanceDTO> { new() { Id = Guid.NewGuid(), Name = "Chain", TrackingType = "Km" } };
         var service = new FakeMaintenanceService { UserMaintenancesByMotorcycle = list };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
         var motorcycleId = Guid.NewGuid();
 
         var result = await controller.GetMineByMotorcycle(motorcycleId);
@@ -54,7 +54,7 @@ public class MaintenancesControllerTests
     {
         var maintenance = new MaintenanceDTO { Id = Guid.NewGuid(), Name = "Oil", TrackingType = "Km" };
         var service = new FakeMaintenanceService { MaintenanceById = maintenance };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
 
         var result = await controller.GetById(maintenance.Id);
 
@@ -68,7 +68,7 @@ public class MaintenancesControllerTests
         var dto = new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Oil", TrackingType = "Km", KmInterval = 5000 };
         var created = new MaintenanceDTO { Id = Guid.NewGuid(), MotorcycleId = dto.MotorcycleId, Name = dto.Name, TrackingType = dto.TrackingType };
         var service = new FakeMaintenanceService { CreatedUserMaintenance = created };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
 
         var result = await controller.CreateUser(dto);
 
@@ -81,7 +81,7 @@ public class MaintenancesControllerTests
     public async Task DeleteUser_ShouldCallServiceAndReturnNoContent()
     {
         var service = new FakeMaintenanceService();
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
         var id = Guid.NewGuid();
 
         var result = await controller.DeleteUser(id);
@@ -103,7 +103,7 @@ public class MaintenancesControllerTests
         };
         var resultMaintenance = new MaintenanceDTO { Id = Guid.NewGuid(), Name = "Brake pads", TrackingType = "Km" };
         var service = new FakeMaintenanceService { FollowDefaultResult = resultMaintenance };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
 
         var result = await controller.FollowDefault(request);
 
@@ -137,7 +137,7 @@ public class MaintenancesControllerTests
             MaintenanceName = "Oil"
         };
         var service = new FakeMaintenanceService { CreatedRecord = record };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
 
         var result = await controller.RegisterRecord(request);
 
@@ -151,7 +151,7 @@ public class MaintenancesControllerTests
     {
         var records = new List<MaintenanceRecordDTO> { new() { Id = Guid.NewGuid(), MaintenanceName = "Oil" } };
         var service = new FakeMaintenanceService { Records = records };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
         var motorcycleId = Guid.NewGuid();
 
         var result = await controller.GetMotorcycleRecords(motorcycleId);
@@ -166,7 +166,7 @@ public class MaintenancesControllerTests
     {
         var upcoming = new List<UpcomingMaintenanceDTO> { new() { UserMaintenanceId = Guid.NewGuid(), Name = "Oil" } };
         var service = new FakeMaintenanceService { Upcoming = upcoming };
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
         var motorcycleId = Guid.NewGuid();
 
         var result = await controller.GetMotorcycleUpcoming(motorcycleId);
@@ -181,7 +181,7 @@ public class MaintenancesControllerTests
     {
         var dto = new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Oil", TrackingType = "Km", KmInterval = 5000 };
         var service = new FakeMaintenanceService();
-        var controller = new MaintenancesController(service);
+        var controller = new MaintenancesController(service, new FakeAttachmentService());
         var id = Guid.NewGuid();
 
         var result = await controller.Update(id, dto);
@@ -189,6 +189,51 @@ public class MaintenancesControllerTests
         Assert.IsType<NoContentResult>(result);
         Assert.Equal(id, service.LastUpdateId);
         Assert.Same(dto, service.LastUpdateRequest);
+    }
+
+    [Fact]
+    public async Task GetAttachments_ShouldReturnOkWithList()
+    {
+        var recordId = Guid.NewGuid();
+        var attachments = new List<MaintenanceAttachmentDTO> { new() { Id = Guid.NewGuid(), RecordId = recordId } };
+        var attachmentService = new FakeAttachmentService { Attachments = attachments };
+        var controller = new MaintenancesController(new FakeMaintenanceService(), attachmentService);
+
+        var result = await controller.GetAttachments(recordId);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(attachments, ok.Value);
+        Assert.Equal(recordId, attachmentService.LastRecordId);
+    }
+
+    [Fact]
+    public async Task AddAttachment_ShouldReturnOkWithCreated()
+    {
+        var recordId = Guid.NewGuid();
+        var created = new MaintenanceAttachmentDTO { Id = Guid.NewGuid(), RecordId = recordId };
+        var attachmentService = new FakeAttachmentService { Added = created };
+        var controller = new MaintenancesController(new FakeMaintenanceService(), attachmentService);
+
+        var result = await controller.AddAttachment(recordId, new AddAttachmentRequest { DataUrl = "data:image/png;base64,AAAA" });
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(created, ok.Value);
+        Assert.Equal(recordId, attachmentService.LastRecordId);
+    }
+
+    [Fact]
+    public async Task DeleteAttachment_ShouldReturnNoContent()
+    {
+        var recordId = Guid.NewGuid();
+        var attachmentId = Guid.NewGuid();
+        var attachmentService = new FakeAttachmentService();
+        var controller = new MaintenancesController(new FakeMaintenanceService(), attachmentService);
+
+        var result = await controller.DeleteAttachment(recordId, attachmentId);
+
+        Assert.IsType<NoContentResult>(result);
+        Assert.Equal(recordId, attachmentService.LastRecordId);
+        Assert.Equal(attachmentId, attachmentService.LastDeletedAttachmentId);
     }
 
     private sealed class FakeMaintenanceService : IMaintenanceService
@@ -279,5 +324,32 @@ public class MaintenancesControllerTests
 
         public Task<IReadOnlyDictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>> GetMaintenanceRecordsByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
             => throw new NotImplementedException();
+    }
+
+    private sealed class FakeAttachmentService : IMaintenanceAttachmentService
+    {
+        public IReadOnlyList<MaintenanceAttachmentDTO> Attachments { get; set; } = [];
+        public MaintenanceAttachmentDTO Added { get; set; } = new();
+        public Guid LastRecordId { get; private set; }
+        public Guid LastDeletedAttachmentId { get; private set; }
+
+        public Task<IReadOnlyList<MaintenanceAttachmentDTO>> GetByRecordAsync(Guid recordId)
+        {
+            LastRecordId = recordId;
+            return Task.FromResult(Attachments);
+        }
+
+        public Task<MaintenanceAttachmentDTO> AddAsync(Guid recordId, AddAttachmentRequest request)
+        {
+            LastRecordId = recordId;
+            return Task.FromResult(Added);
+        }
+
+        public Task DeleteAsync(Guid recordId, Guid attachmentId)
+        {
+            LastRecordId = recordId;
+            LastDeletedAttachmentId = attachmentId;
+            return Task.CompletedTask;
+        }
     }
 }

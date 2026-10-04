@@ -149,4 +149,39 @@ describe('MaintenanceService (unit, mocked HttpClient)', () => {
       `${service['apiUrl']}/motorcycle/moto-1/upcoming`,
     );
   });
+
+  it('should fetch attachments of a record', async () => {
+    httpClientMock.get.mockReturnValue(of([{ id: 'att-1' }]));
+
+    const res = await firstValueFrom(service.getAttachments('record-1'));
+
+    expect(res).toEqual([{ id: 'att-1' }]);
+    expect(httpClientMock.get).toHaveBeenCalledWith(
+      `${service['apiUrl']}/records/record-1/attachments`,
+    );
+  });
+
+  it('should add an attachment', async () => {
+    httpClientMock.post.mockReturnValue(of({ id: 'att-1' }));
+
+    const res = await firstValueFrom(
+      service.addAttachment('record-1', 'data:image/png;base64,AAAA', 'factura.png'),
+    );
+
+    expect(res).toEqual({ id: 'att-1' });
+    expect(httpClientMock.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/records/record-1/attachments`,
+      { dataUrl: 'data:image/png;base64,AAAA', fileName: 'factura.png' },
+    );
+  });
+
+  it('should delete an attachment', async () => {
+    httpClientMock.delete.mockReturnValue(of(undefined));
+
+    await firstValueFrom(service.deleteAttachment('record-1', 'att-1'));
+
+    expect(httpClientMock.delete).toHaveBeenCalledWith(
+      `${service['apiUrl']}/records/record-1/attachments/att-1`,
+    );
+  });
 });

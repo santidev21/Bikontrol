@@ -39,6 +39,9 @@
 - `POST /api/maintenances/records`
 - `GET /api/maintenances/motorcycle/{motorcycleId}/records`
 - `GET /api/maintenances/motorcycle/{motorcycleId}/upcoming`
+- `GET /api/maintenances/records/{recordId}/attachments` (photos/documents of a record)
+- `POST /api/maintenances/records/{recordId}/attachments` (`{ dataUrl, fileName }`; JPEG/PNG/WebP data URL, ≤1 MB decoded)
+- `DELETE /api/maintenances/records/{recordId}/attachments/{attachmentId}`
 
 ## Reminders
 - `GET /api/reminders/due` (maintenance due/overdue for the current user)

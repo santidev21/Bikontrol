@@ -117,6 +117,59 @@ public sealed class WritePathsTests
         Assert.DoesNotContain(afterDelete!, m => m.Id == maintenance.Id);
     }
 
+    [RequiresDockerFact]
+    public async Task AddAndDeleteMaintenanceAttachment_ShouldPersist()
+    {
+        var client = await AuthenticatedClientAsync();
+        var moto = await CreateMotorcycleAsync(client, km: 1000);
+
+        // Create a user maintenance, then register a record for it.
+        var maintenanceResponse = await client.PostAsJsonAsync("/api/maintenances/mine", new
+        {
+            motorcycleId = moto.Id,
+            name = "Cambio de aceite",
+            description = "Aceite",
+            trackingType = "Km",
+            kmInterval = 1500,
+            timeIntervalWeeks = 0
+        });
+        maintenanceResponse.EnsureSuccessStatusCode();
+        var maintenance = await maintenanceResponse.Content.ReadFromJsonAsync<MaintenanceResponse>();
+
+        var recordResponse = await client.PostAsJsonAsync("/api/maintenances/records", new
+        {
+            motorcycleId = moto.Id,
+            userMaintenanceId = maintenance!.Id,
+            performedAt = DateTime.UtcNow,
+            performedKm = 1000
+        });
+        recordResponse.EnsureSuccessStatusCode();
+        var record = await recordResponse.Content.ReadFromJsonAsync<RecordResponse>();
+
+        // Attach a 1x1 PNG and confirm it round-trips.
+        var attachResponse = await client.PostAsJsonAsync($"/api/maintenances/records/{record!.Id}/attachments", new
+        {
+            dataUrl = PngDataUrl,
+            fileName = "factura.png"
+        });
+        attachResponse.EnsureSuccessStatusCode();
+        var attachment = await attachResponse.Content.ReadFromJsonAsync<AttachmentResponse>();
+        Assert.Equal("image/png", attachment!.ContentType);
+
+        var list = await client.GetFromJsonAsync<List<AttachmentResponse>>($"/api/maintenances/records/{record.Id}/attachments");
+        Assert.Contains(list!, a => a.Id == attachment.Id);
+
+        var deleteResponse = await client.DeleteAsync($"/api/maintenances/records/{record.Id}/attachments/{attachment.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var afterDelete = await client.GetFromJsonAsync<List<AttachmentResponse>>($"/api/maintenances/records/{record.Id}/attachments");
+        Assert.DoesNotContain(afterDelete!, a => a.Id == attachment.Id);
+    }
+
+    // 1x1 transparent PNG.
+    private const string PngDataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
     private async Task<HttpClient> AuthenticatedClientAsync()
     {
         var client = _factory.CreateClient();
@@ -183,4 +236,8 @@ public sealed class WritePathsTests
     private sealed record CurrentKmResponse(int Km);
 
     private sealed record MaintenanceResponse(Guid Id, string Name, bool IsEnabled);
+
+    private sealed record RecordResponse(Guid Id);
+
+    private sealed record AttachmentResponse(Guid Id, Guid RecordId, string DataUrl, string ContentType, string? FileName);
 }

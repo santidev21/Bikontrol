@@ -44,6 +44,10 @@ namespace Bikontrol.Infrastructure.Mapping
                 .ForMember(dest => dest.ExpiresIn, opt => opt.Ignore());
             CreateMap<User, ProfileDTO>();
 
+            // Record attachments
+            CreateMap<MaintenanceRecordAttachment, MaintenanceAttachmentDTO>()
+                .ForMember(dest => dest.RecordId, opt => opt.MapFrom(src => src.MotorcycleMaintenanceRecordId));
+
             // Motorcycle mapping
             CreateMap<SaveMotorcycleDTO, Motorcycle>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
