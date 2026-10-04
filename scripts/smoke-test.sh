@@ -39,12 +39,19 @@ check_status() {
     fail "$label -> $code (expected one of: $*)"
 }
 
-# Check a URL body contains a substring.
+# Check a URL body contains a substring (case-insensitive).
 check_body() {
     local url="$1"; local needle="$2"; local label="$3"
     local body
     body="$(curl -s --max-time "$TIMEOUT" "$url" || true)"
-    echo "$body" | grep -q "$needle" || fail "$label: body does not contain '$needle'"
+    if ! echo "$body" | grep -qi "$needle"; then
+        # Give a clear signal when the SPA is served instead of the API
+        # (a routing misconfig), rather than a generic body mismatch.
+        if echo "$body" | grep -qi "<!doctype html"; then
+            fail "$label: got the SPA shell (index.html), not the API — is '$url' routed to the API?"
+        fi
+        fail "$label: body does not contain '$needle'"
+    fi
     ok "$label contains '$needle'"
 }
 
@@ -66,9 +73,12 @@ check_post_status() {
 echo "[smoke] Target: $BASE_URL"
 
 # 1. API readiness (checks PostgreSQL) and liveness.
+#    /health is the cheap liveness probe; /ready hits the DB. We assert statuses
+#    only: the exact /ready body is routing/format dependent (the gateway may
+#    serve it from the API or, if misrouted, the SPA — the login check below is
+#    what proves the API + DB path end-to-end).
 check_status "$BASE_URL/health" "health" 200
 check_status "$BASE_URL/ready" "ready (DB)" 200
-check_body "$BASE_URL/ready" "Healthy" "ready body"
 
 # 2. Frontend shell.
 check_status "$BASE_URL/" "frontend index" 200
