@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { Motorcycle } from '../../../interfaces/motorcycle.interface';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
+import { ImageService } from '../../../../../shared/services/image.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
@@ -38,6 +39,17 @@ describe('MotorcycleSummaryComponent', () => {
     maintenanceServiceMock = {
       getUpcomingResource: vi.fn(() => fakeResource()),
       getRecordsResource: vi.fn(() => fakeResource()),
+      getAttachments: vi.fn(() => of([])),
+      addAttachment: vi.fn(() =>
+        of({
+          id: 'a1',
+          recordId: 'r1',
+          dataUrl: 'data:x',
+          contentType: 'image/jpeg',
+          createdAt: '',
+        }),
+      ),
+      deleteAttachment: vi.fn(() => of(undefined)),
     };
     swalMock = {
       error: vi.fn(),
@@ -56,6 +68,10 @@ describe('MotorcycleSummaryComponent', () => {
           useValue: { message: (err: any, fallback: string) => err?.message ?? fallback },
         },
         { provide: AuthService, useValue: { isDemo: () => false } },
+        {
+          provide: ImageService,
+          useValue: { resize: vi.fn(() => Promise.resolve('data:image/jpeg;base64,AAAA')) },
+        },
         { provide: Router, useValue: { getCurrentNavigation: () => null, navigate: vi.fn() } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
       ],
@@ -134,5 +150,51 @@ describe('MotorcycleSummaryComponent', () => {
     expect(motorcyclesServiceMock.downloadMaintenanceBook).toHaveBeenCalledWith('m1', 'pdf');
     expect(createObjectURL).toHaveBeenCalled();
     vi.unstubAllGlobals();
+  });
+
+  it('returns an empty list for a record with no attachments', () => {
+    const component = create();
+    expect(component.attachmentsOf('r1')).toEqual([]);
+  });
+
+  it('uploads a resized image and appends it to the record', async () => {
+    const component = create();
+    const file = new File(['x'], 'factura.png', { type: 'image/png' });
+    const input = { files: [file], value: 'factura.png' } as unknown as HTMLInputElement;
+
+    component.onAttachmentSelected('r1', { target: input } as unknown as Event);
+    await new Promise((resolve) => setTimeout(resolve));
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(maintenanceServiceMock.addAttachment).toHaveBeenCalledWith(
+      'r1',
+      'data:image/jpeg;base64,AAAA',
+      'factura.png',
+    );
+    expect(component.attachmentsOf('r1')).toHaveLength(1);
+    expect(input.value).toBe('');
+  });
+
+  it('removes an attachment after confirming', async () => {
+    const component = create();
+    const attachment = { id: 'a1', recordId: 'r1' } as any;
+    component.attachmentsByRecord.set({ r1: [attachment] });
+
+    component.removeAttachment('r1', attachment);
+    await Promise.resolve();
+
+    expect(maintenanceServiceMock.deleteAttachment).toHaveBeenCalledWith('r1', 'a1');
+    expect(component.attachmentsOf('r1')).toEqual([]);
+  });
+
+  it('opens and closes the image viewer', () => {
+    const component = create();
+    const attachment = { id: 'a1', recordId: 'r1', dataUrl: 'data:x' } as any;
+
+    component.openViewer(attachment);
+    expect(component.viewerImage()).toBe(attachment);
+
+    component.closeViewer();
+    expect(component.viewerImage()).toBeNull();
   });
 });

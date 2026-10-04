@@ -19,6 +19,13 @@ namespace Bikontrol.Persistence.Repositories
             return entity;
         }
 
+        public async Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id)
+        {
+            return await _context.MotorcycleMaintenanceRecords
+                .Include(x => x.UserMaintenance)
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
         public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId)
         {
             return await _context.MotorcycleMaintenanceRecords

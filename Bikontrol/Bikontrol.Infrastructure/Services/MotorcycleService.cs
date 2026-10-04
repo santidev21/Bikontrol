@@ -2,6 +2,7 @@
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
+using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
 using System;

@@ -25,6 +25,7 @@ namespace Bikontrol.Persistence
         public DbSet<MotorcycleMaintenanceRecord> MotorcycleMaintenanceRecords { get; set; } = default!;
         public DbSet<ReminderLog> ReminderLogs { get; set; } = default!;
         public DbSet<PushSubscription> PushSubscriptions { get; set; } = default!;
+        public DbSet<MaintenanceRecordAttachment> MaintenanceRecordAttachments { get; set; } = default!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

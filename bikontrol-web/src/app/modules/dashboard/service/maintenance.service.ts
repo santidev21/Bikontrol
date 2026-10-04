@@ -9,6 +9,7 @@ import {
   CreateMaintenanceRecordRequest,
   MaintenanceRecord,
   UpcomingMaintenance,
+  MaintenanceAttachment,
 } from '../interfaces/maintenance.interface';
 
 @Injectable({
@@ -65,6 +66,25 @@ export class MaintenanceService {
     return this.http.get<UpcomingMaintenance[]>(
       `${this.apiUrl}/motorcycle/${motorcycleId}/upcoming`,
     );
+  }
+
+  getAttachments(recordId: string): Observable<MaintenanceAttachment[]> {
+    return this.http.get<MaintenanceAttachment[]>(`${this.apiUrl}/records/${recordId}/attachments`);
+  }
+
+  addAttachment(
+    recordId: string,
+    dataUrl: string,
+    fileName?: string | null,
+  ): Observable<MaintenanceAttachment> {
+    return this.http.post<MaintenanceAttachment>(`${this.apiUrl}/records/${recordId}/attachments`, {
+      dataUrl,
+      fileName,
+    });
+  }
+
+  deleteAttachment(recordId: string, attachmentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/records/${recordId}/attachments/${attachmentId}`);
   }
 
   /** Reactive read of the predefined maintenance catalog. */

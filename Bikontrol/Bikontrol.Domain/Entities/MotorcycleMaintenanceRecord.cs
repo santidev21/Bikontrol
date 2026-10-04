@@ -11,5 +11,6 @@ namespace Bikontrol.Domain.Entities
 
         public Motorcycle Motorcycle { get; set; } = null!;
         public UserMaintenance UserMaintenance { get; set; } = null!;
+        public ICollection<MaintenanceRecordAttachment> Attachments { get; set; } = new List<MaintenanceRecordAttachment>();
     }
 }
