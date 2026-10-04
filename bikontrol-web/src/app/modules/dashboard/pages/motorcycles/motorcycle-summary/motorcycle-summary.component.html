@@ -51,6 +51,24 @@
         </button>
       }
     </div>
+    <div class="flex gap-3 my-2">
+      <button
+        type="button"
+        (click)="exportMaintenanceBook('pdf')"
+        [disabled]="isExporting()"
+        class="flex-1 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold disabled:opacity-50"
+      >
+        Exportar libro (PDF)
+      </button>
+      <button
+        type="button"
+        (click)="exportMaintenanceBook('csv')"
+        [disabled]="isExporting()"
+        class="flex-1 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold disabled:opacity-50"
+      >
+        Exportar (CSV)
+      </button>
+    </div>
     <div class="maintenance-section">
       <h2 class="text-center">Proximos Mantenimientos</h2>
       @if (!isDemo()) {

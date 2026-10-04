@@ -33,6 +33,7 @@ describe('MotorcycleSummaryComponent', () => {
       getById: vi.fn(),
       addKmHistory: vi.fn(() => of(undefined)),
       rollbackLastKm: vi.fn(() => of(undefined)),
+      downloadMaintenanceBook: vi.fn(() => of(new Blob(['x']))),
     };
     maintenanceServiceMock = {
       getUpcomingResource: vi.fn(() => fakeResource()),
@@ -119,5 +120,19 @@ describe('MotorcycleSummaryComponent', () => {
     await Promise.resolve();
 
     expect(motorcyclesServiceMock.rollbackLastKm).toHaveBeenCalledWith('m1', 1300);
+  });
+
+  it('downloads the maintenance book in the requested format', () => {
+    const createObjectURL = vi.fn(() => 'blob:url');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL });
+    const component = create();
+    component.motorcycle.set({ id: 'm1' } as Motorcycle);
+
+    component.exportMaintenanceBook('pdf');
+
+    expect(motorcyclesServiceMock.downloadMaintenanceBook).toHaveBeenCalledWith('m1', 'pdf');
+    expect(createObjectURL).toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });

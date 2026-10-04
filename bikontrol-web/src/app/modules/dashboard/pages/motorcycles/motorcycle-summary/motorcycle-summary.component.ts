@@ -47,6 +47,7 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   readonly isDemo = computed(() => this.authService.isDemo());
   readonly motorcycleId = computed(() => this.motorcycle()?.id);
   readonly canRegisterMaintenance = computed(() => this.upcomingMaintenances().length > 0);
+  readonly isExporting = signal(false);
 
   private readonly currentKmRes = this.motorcyclesService.getCurrentKmResource(this.motorcycleId);
   private readonly upcomingRes = this.maintenanceService.getUpcomingResource(this.motorcycleId);
@@ -152,6 +153,31 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     if (!id) return;
 
     this.router.navigate(['/dashboard/motorcycles', id, 'maintenance']);
+  }
+
+  exportMaintenanceBook(format: 'pdf' | 'csv'): void {
+    const id = this.motorcycleId();
+    if (!id || this.isExporting()) return;
+
+    this.isExporting.set(true);
+    this.motorcyclesService.downloadMaintenanceBook(id, format).subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `libro-mantenimiento.${format}`;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.isExporting.set(false);
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudo generar el libro de mantenimiento.'),
+        );
+      },
+    });
   }
 
   openEditKmModal(): void {
