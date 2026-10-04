@@ -1,0 +1,26 @@
+# Prometheus scrape configuration for the Bikontrol API.
+#
+# The API exposes OpenTelemetry metrics in Prometheus format at /metrics when
+# `Metrics__Enabled=true`. It is only reachable from inside the Docker network
+# (`bikontrol-internal-net`) — the public gateway never proxies it.
+#
+# Run Prometheus on the same network, e.g.:
+#   docker run -d --name bikontrol-prometheus \
+#     --network bikontrol-internal-net \
+#     -v $PWD/deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+#     -v $PWD/deploy/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro \
+#     -p 127.0.0.1:9090:9090 prom/prometheus:latest
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: bikontrol-api
+    metrics_path: /metrics
+    static_configs:
+      # The API container is on the internal network under this name.
+      - targets: ['bikontrol-api:8080']

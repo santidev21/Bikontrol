@@ -1,0 +1,89 @@
+# Alert rules for the Bikontrol API. Pair these with an Alertmanager (or have
+# Prometheus forward to email/Slack) so they actually notify someone.
+groups:
+  - name: bikontrol-availability
+    rules:
+      # The API stopped responding to scrapes (container down, crash loop, or
+      # hung). This complements the external uptime check on /ready.
+      - alert: BikontrolApiDown
+        expr: up{job="bikontrol-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Bikontrol API is not responding to Prometheus scrapes'
+          description: 'up == 0 for more than 2 minutes. Check the api container and /ready.'
+
+      # PostgreSQL stopped responding to the readiness probe.
+      - alert: BikontrolDatabaseUnreachable
+        expr: up{job="bikontrol-api"} == 0 or probe_success{job="bikontrol-ready"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Bikontrol database is unreachable'
+          description: 'The /ready readiness probe is failing; requests would fail.'
+
+  - name: bikontrol-errors
+    rules:
+      # Server errors over the last 5 minutes, as a share of all requests.
+      - alert: BikontrolHigh5xxRate
+        expr: |
+          sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+          /
+          sum(rate(http_server_request_duration_seconds_count[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Bikontrol API 5xx rate above 5%'
+          description: 'More than 5% of requests have returned 5xx for 10 minutes.'
+
+      # p95 latency creeping up.
+      - alert: BikontrolHighLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_server_request_duration_seconds_bucket[5m])) by (le)
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Bikontrol API p95 latency above 1s'
+          description: 'The 95th percentile request duration has been over 1s for 10 minutes.'
+
+  - name: bikontrol-resources
+    rules:
+      # .NET heap growing a lot (possible leak).
+      - alert: BikontrolHighMemory
+        expr: process_runtime_dotnet_gc_heap_size_bytes > 400 * 1024 * 1024
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Bikontrol API heap above 400 MB'
+          description: 'The managed heap has exceeded 400 MB for 15 minutes.'
+
+# Disk/DB-uptime alerts need a host-level exporter. If node_exporter runs on the
+# VPS, add these (adjust the mountpoint label to your data volume):
+#
+#   - alert: BikontrolDiskLow
+#     expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+#     for: 10m
+#     labels: { severity: warning }
+#     annotations:
+#       summary: 'Disk space below 15% on the host'
+#
+# A blackbox exporter scraping /ready gives the probe_success series used above:
+#   - job_name: bikontrol-ready
+#     metrics_path: /probe
+#     params: { module: [http_2xx] }
+#     static_configs: [{ targets: ['http://bikontrol-api:8080/ready'] }]
+#     relabel_configs:
+#       - source_labels: [__address__]
+#         target_label: __param_target
+#       - source_labels: [__param_target]
+#         target_label: instance
+#       - target_label: __address__
+#         replacement: blackbox-exporter:9115
