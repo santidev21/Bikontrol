@@ -8,15 +8,22 @@ namespace Bikontrol.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<MotorcycleMaintenanceRecord> builder)
         {
-            builder.ToTable("MotorcycleMaintenanceRecords", t => t.HasCheckConstraint(
-                "CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative",
-                "\"PerformedKm\" IS NULL OR \"PerformedKm\" >= 0"));
+            builder.ToTable("MotorcycleMaintenanceRecords", t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative",
+                    "\"PerformedKm\" IS NULL OR \"PerformedKm\" >= 0");
+                t.HasCheckConstraint(
+                    "CK_MotorcycleMaintenanceRecords_Cost_NonNegative",
+                    "\"Cost\" IS NULL OR \"Cost\" >= 0");
+            });
 
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.PerformedAt).IsRequired();
             builder.Property(x => x.CreatedAt).IsRequired();
             builder.Property(x => x.PerformedKm).IsRequired(false);
+            builder.Property(x => x.Cost).HasPrecision(12, 2).IsRequired(false);
 
             builder.HasOne(x => x.Motorcycle)
                 .WithMany(x => x.MaintenanceRecords)

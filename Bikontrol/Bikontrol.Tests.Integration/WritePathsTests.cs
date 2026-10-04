@@ -198,6 +198,41 @@ public sealed class WritePathsTests
         Assert.Contains(activity!, a => a.EntityName == "Motorcycle" && a.Action == "Created");
     }
 
+    [RequiresDockerFact]
+    public async Task RegisterRecordWithCost_ShouldPersistAndAppearInStatistics()
+    {
+        var client = await AuthenticatedClientAsync();
+        var moto = await CreateMotorcycleAsync(client, km: 2000);
+
+        var maintenanceResponse = await client.PostAsJsonAsync("/api/maintenances/mine", new
+        {
+            motorcycleId = moto.Id,
+            name = "Cambio de aceite",
+            description = "Aceite",
+            trackingType = "Km",
+            kmInterval = 1500,
+            timeIntervalWeeks = 0
+        });
+        maintenanceResponse.EnsureSuccessStatusCode();
+        var maintenance = await maintenanceResponse.Content.ReadFromJsonAsync<MaintenanceResponse>();
+
+        var recordResponse = await client.PostAsJsonAsync("/api/maintenances/records", new
+        {
+            motorcycleId = moto.Id,
+            userMaintenanceId = maintenance!.Id,
+            performedAt = DateTime.UtcNow,
+            performedKm = 2000,
+            cost = 55.50m
+        });
+        recordResponse.EnsureSuccessStatusCode();
+        var record = await recordResponse.Content.ReadFromJsonAsync<RecordCostResponse>();
+        Assert.Equal(55.50m, record!.Cost);
+
+        // The cost feeds the read-only statistics summary.
+        var summary = await client.GetFromJsonAsync<StatisticsResponse>("/api/statistics/summary");
+        Assert.Contains(summary!.CostByMotorcycle, c => c.MotorcycleId == moto.Id && c.Cost >= 55.50m);
+    }
+
     private async Task<HttpClient> AuthenticatedClientAsync()
     {
         var client = _factory.CreateClient();
@@ -270,4 +305,10 @@ public sealed class WritePathsTests
     private sealed record AttachmentResponse(Guid Id, Guid RecordId, string DataUrl, string ContentType, string? FileName);
 
     private sealed record ActivityResponse(long Id, string EntityName, string Action, DateTime CreatedAt);
+
+    private sealed record RecordCostResponse(Guid Id, decimal? Cost);
+
+    private sealed record MotorcycleCost(Guid MotorcycleId, string Name, decimal Cost, decimal? CostPerKm);
+
+    private sealed record StatisticsResponse(decimal TotalCost, decimal? CostPerKm, List<MotorcycleCost> CostByMotorcycle);
 }

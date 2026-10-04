@@ -162,6 +162,11 @@
                 @if (record.performedKm != null) {
                   <p class="text-sm text-gray-300 mt-1">Km: {{ record.performedKm }}</p>
                 }
+                @if (record.cost != null) {
+                  <p class="text-sm text-gray-300 mt-1">
+                    Costo: {{ record.cost | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+                  </p>
+                }
 
                 <div class="mt-3">
                   <div class="flex items-center justify-between">

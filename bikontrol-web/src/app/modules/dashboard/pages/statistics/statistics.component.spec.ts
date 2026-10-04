@@ -26,7 +26,14 @@ const summaryMock: any = {
     { motorcycleId: 'm2', name: 'Roja', km: 12000 },
   ],
   recordsByType: [{ name: 'Aceite', count: 3 }],
-  last6Months: [{ yearMonth: '2026-09', count: 2 }],
+  last6Months: [{ yearMonth: '2026-09', count: 2, cost: 120 }],
+  totalCost: 120,
+  costPerKm: 0.006,
+  costByMotorcycle: [
+    { motorcycleId: 'm1', name: 'Negra', cost: 120, costPerKm: 0.015 },
+    { motorcycleId: 'm2', name: 'Roja', cost: 0, costPerKm: null },
+  ],
+  costByYear: [{ year: 2026, cost: 120 }],
 };
 
 describe('StatisticsComponent', () => {

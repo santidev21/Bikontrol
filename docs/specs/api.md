@@ -36,7 +36,7 @@
 - `POST /api/maintenances/follow`
 - `PUT /api/maintenances/{id}`
 - `DELETE /api/maintenances/mine/{id}`
-- `POST /api/maintenances/records`
+- `POST /api/maintenances/records` (optional `cost`, ≥ 0; feeds cost statistics)
 - `GET /api/maintenances/motorcycle/{motorcycleId}/records`
 - `GET /api/maintenances/motorcycle/{motorcycleId}/upcoming`
 - `GET /api/maintenances/records/{recordId}/attachments` (photos/documents of a record)
@@ -50,7 +50,7 @@
 - `POST /api/reminders/push/unsubscribe` (`{ endpoint }`)
 
 ## Statistics (read-only aggregation, demo allowed)
-- `GET /api/statistics/summary`
+- `GET /api/statistics/summary` (includes cost aggregates: `totalCost`, `costPerKm`, `costByMotorcycle`, `costByYear` and per-month `cost`)
 
 ## Users (profile)
 - `GET /api/users/me`

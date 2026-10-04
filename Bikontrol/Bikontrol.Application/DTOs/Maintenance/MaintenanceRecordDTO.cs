@@ -7,6 +7,7 @@ namespace Bikontrol.Application.DTOs.Maintenance
         public Guid UserMaintenanceId { get; set; }
         public DateTime PerformedAt { get; set; }
         public int? PerformedKm { get; set; }
+        public decimal? Cost { get; set; }
         public DateTime CreatedAt { get; set; }
         public string MaintenanceName { get; set; } = string.Empty;
     }

@@ -34,6 +34,18 @@
             <span class="kpi-value">{{ s.dueSoonCount }}</span>
             <span class="kpi-label">Vencen pronto</span>
           </div>
+          <div class="kpi-card bg-gray-800">
+            <span class="kpi-value">{{
+              s.totalCost | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+            }}</span>
+            <span class="kpi-label">Gasto total</span>
+          </div>
+          <div class="kpi-card bg-gray-800">
+            <span class="kpi-value">
+              {{ s.costPerKm != null ? (s.costPerKm | number: '1.2-2') : '—' }}
+            </span>
+            <span class="kpi-label">Costo / km</span>
+          </div>
         </div>
         @defer (on viewport) {
           <div class="stats-section">
@@ -87,6 +99,50 @@
                       ></div>
                     </div>
                     <span class="bar-count">{{ t.count }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (s.costByMotorcycle.length > 0) {
+            <div class="stats-section">
+              <h2 class="text-center">Gasto por moto</h2>
+              <div class="stat-card">
+                @for (c of s.costByMotorcycle; track c.motorcycleId) {
+                  <div class="bar-row">
+                    <span class="bar-name">{{ c.name }}</span>
+                    <div class="bar-track">
+                      <div
+                        class="bar-fill"
+                        [style.width.%]="barWidth(c.cost, maxMotoCost())"
+                        [style.background]="'#6366f1'"
+                      ></div>
+                    </div>
+                    <span class="bar-count">{{
+                      c.cost | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (s.costByYear.length > 0) {
+            <div class="stats-section">
+              <h2 class="text-center">Gasto por año</h2>
+              <div class="stat-card">
+                @for (c of s.costByYear; track c.year) {
+                  <div class="bar-row">
+                    <span class="bar-name">{{ c.year }}</span>
+                    <div class="bar-track">
+                      <div
+                        class="bar-fill"
+                        [style.width.%]="barWidth(c.cost, maxYearCost())"
+                        [style.background]="'#0ea5e9'"
+                      ></div>
+                    </div>
+                    <span class="bar-count">{{
+                      c.cost | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}</span>
                   </div>
                 }
               </div>

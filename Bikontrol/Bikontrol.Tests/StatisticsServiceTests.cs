@@ -45,13 +45,13 @@ public class StatisticsServiceTests
         {
             [moto1Id] = new()
             {
-                new() { MotorcycleId = moto1Id, MaintenanceName = "Aceite", PerformedAt = thisMonthA },
-                new() { MotorcycleId = moto1Id, MaintenanceName = "Cadena", PerformedAt = thisMonthB },
-                new() { MotorcycleId = moto1Id, MaintenanceName = "Aceite", PerformedAt = twoMonthsAgo }
+                new() { MotorcycleId = moto1Id, MaintenanceName = "Aceite", PerformedAt = thisMonthA, Cost = 40m },
+                new() { MotorcycleId = moto1Id, MaintenanceName = "Cadena", PerformedAt = thisMonthB, Cost = 20m },
+                new() { MotorcycleId = moto1Id, MaintenanceName = "Aceite", PerformedAt = twoMonthsAgo, Cost = 100m }
             },
             [moto2Id] = new()
             {
-                new() { MotorcycleId = moto2Id, MaintenanceName = "Aceite", PerformedAt = sevenMonthsAgo }
+                new() { MotorcycleId = moto2Id, MaintenanceName = "Aceite", PerformedAt = sevenMonthsAgo, Cost = 60m }
             }
         };
 
@@ -86,7 +86,42 @@ public class StatisticsServiceTests
         Assert.Equal(2, result.Last6Months[^1].Count);
         Assert.Equal(now.ToString("yyyy-MM"), result.Last6Months[^1].YearMonth);
 
+        // Cost aggregates (only records with a cost are counted).
+        Assert.Equal(220m, result.TotalCost);
+        Assert.Equal(0.011m, result.CostPerKm); // 220 / 20000 km
+        Assert.Equal(160m, result.Last6Months.Sum(m => m.Cost)); // excludes the 7-months-ago record
+        Assert.Equal(220m, result.CostByYear.Sum(y => y.Cost));
+
+        var moto1Cost = result.CostByMotorcycle.Single(c => c.MotorcycleId == moto1Id);
+        Assert.Equal(160m, moto1Cost.Cost);
+        Assert.Equal(0.02m, moto1Cost.CostPerKm); // 160 / 8000 km
+        var moto2Cost = result.CostByMotorcycle.Single(c => c.MotorcycleId == moto2Id);
+        Assert.Equal(60m, moto2Cost.Cost);
+        Assert.Equal(0.005m, moto2Cost.CostPerKm); // 60 / 12000 km
+
         Assert.Equal(thisMonthB, result.LastActivityAt);
+    }
+
+    [Fact]
+    public async Task GetSummaryAsync_WithoutCostsOrKm_ShouldReturnZeroAndNullCostPerKm()
+    {
+        var motoId = Guid.NewGuid();
+        var motorcycles = new List<MotorcycleDTO> { new() { Id = motoId, Name = "Moto", Nickname = "M", Km = 0 } };
+        var records = new Dictionary<Guid, List<MaintenanceRecordDTO>>
+        {
+            [motoId] = new() { new() { MotorcycleId = motoId, MaintenanceName = "Aceite", PerformedAt = DateTime.UtcNow } }
+        };
+
+        var service = new StatisticsService(
+            new FakeMotorcycleService(motorcycles),
+            new FakeMaintenanceService(new(), records));
+
+        var result = await service.GetSummaryAsync();
+
+        Assert.Equal(0m, result.TotalCost);
+        Assert.Null(result.CostPerKm);
+        Assert.Null(result.CostByMotorcycle.Single().CostPerKm); // km == 0
+        Assert.Empty(result.CostByYear); // no record carried a cost
     }
 
     [Fact]

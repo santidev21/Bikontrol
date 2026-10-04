@@ -64,6 +64,14 @@ export class StatisticsComponent {
     Math.max(0, ...(this.summaryData()?.health.map((h) => h.count) ?? [])),
   );
 
+  readonly maxMotoCost = computed(() =>
+    Math.max(0, ...(this.summaryData()?.costByMotorcycle.map((c) => c.cost) ?? [])),
+  );
+
+  readonly maxYearCost = computed(() =>
+    Math.max(0, ...(this.summaryData()?.costByYear.map((c) => c.cost) ?? [])),
+  );
+
   constructor() {
     effect(() => {
       const error = this.summary.error();
