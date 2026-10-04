@@ -16,3 +16,10 @@
 - Service validation mirrors the constraints (positive interval per tracking type; historical maintenance records below the odometer don't move it and never fail the operation).
 - Read-only audit: `scripts/db-integrity-audit.sql` — every block must return 0 rows. Run it before any deploy/migration once real users exist.
 - Backups: `npm run db:backup` / `db:restore` locally; `deploy.sh backup-db` on the VPS. Always back up before deploying migrations.
+
+## Audit log
+
+- `audit_logs` (append-only) records who changed what: `UserId` (null for background jobs), `EntityName`, `EntityId`, `Action` (`Created`/`Updated`/`Deleted`), `Changes` (jsonb diff, sensitive columns redacted) and `CreatedAt`.
+- Written automatically by `AppDbContext.SaveChangesAsync` for user-facing entities (`User`, `Motorcycle`, `UserMaintenance`, `MotorcycleMaintenanceRecord`, `MotorcycleKmHistory`, `MaintenanceRecordAttachment`); infrastructure tables (tokens, push subscriptions, reminder logs) are intentionally excluded.
+- Read through `GET /api/users/me/activity`.
+- Attachments: `maintenance_record_attachments` stores resized image data URLs (JPEG/PNG/WebP, ≤1 MB decoded), cascade-deleted with their maintenance record.

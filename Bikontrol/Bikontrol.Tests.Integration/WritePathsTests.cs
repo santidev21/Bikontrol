@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Bikontrol.Persistence;
 using Bikontrol.Tests.Integration.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bikontrol.Tests.Integration;
 
@@ -170,6 +173,31 @@ public sealed class WritePathsTests
     private const string PngDataUrl =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
+    [RequiresDockerFact]
+    public async Task WriteOperation_ShouldRecordAuditLog()
+    {
+        var client = await AuthenticatedClientAsync();
+        var moto = await CreateMotorcycleAsync(client, km: 1010);
+
+        // The audit row is written in the same SaveChanges as the motorcycle, so
+        // it must be visible once the request returns.
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var audit = await db.AuditLogs
+            .Where(a => a.EntityName == "Motorcycle" && a.EntityId == moto.Id.ToString())
+            .OrderByDescending(a => a.Id)
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(audit);
+        Assert.Equal("Created", audit!.Action);
+        Assert.NotNull(audit.UserId);
+        Assert.Contains("Name", audit.Changes);
+
+        // The same trail is exposed to the user through the API.
+        var activity = await client.GetFromJsonAsync<List<ActivityResponse>>("/api/users/me/activity");
+        Assert.Contains(activity!, a => a.EntityName == "Motorcycle" && a.Action == "Created");
+    }
+
     private async Task<HttpClient> AuthenticatedClientAsync()
     {
         var client = _factory.CreateClient();
@@ -240,4 +268,6 @@ public sealed class WritePathsTests
     private sealed record RecordResponse(Guid Id);
 
     private sealed record AttachmentResponse(Guid Id, Guid RecordId, string DataUrl, string ContentType, string? FileName);
+
+    private sealed record ActivityResponse(long Id, string EntityName, string Action, DateTime CreatedAt);
 }

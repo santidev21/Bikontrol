@@ -1,4 +1,5 @@
 using Bikontrol.API.Controllers;
+using Bikontrol.Application.DTOs.Audit;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,7 @@ public class UsersControllerTests
     {
         var profile = new ProfileDTO { Id = Guid.NewGuid(), Email = "a@b.c", FullName = "Santi", HasPassword = true };
         var service = new FakeUserService { Profile = profile };
-        var controller = new UsersController(service);
+        var controller = new UsersController(service, new FakeAuditLogService());
 
         var result = await controller.GetMe();
 
@@ -25,7 +26,7 @@ public class UsersControllerTests
     {
         var profile = new ProfileDTO { Id = Guid.NewGuid(), FullName = "New" };
         var service = new FakeUserService { Profile = profile };
-        var controller = new UsersController(service);
+        var controller = new UsersController(service, new FakeAuditLogService());
         var request = new UpdateProfileRequest { FullName = "New" };
 
         var result = await controller.UpdateMe(request);
@@ -39,13 +40,27 @@ public class UsersControllerTests
     public async Task ChangePassword_ShouldForwardRequestAndReturnOk()
     {
         var service = new FakeUserService();
-        var controller = new UsersController(service);
+        var controller = new UsersController(service, new FakeAuditLogService());
         var request = new ChangePasswordRequest { CurrentPassword = "old", NewPassword = "newsecret" };
 
         var result = await controller.ChangePassword(request);
 
         Assert.IsType<OkObjectResult>(result);
         Assert.Same(request, service.LastPasswordRequest);
+    }
+
+    [Fact]
+    public async Task GetMyActivity_ShouldReturnOkWithEntries()
+    {
+        var entries = new List<AuditLogDTO> { new() { Id = 1, EntityName = "Motorcycle", Action = "Created" } };
+        var auditService = new FakeAuditLogService { Activity = entries };
+        var controller = new UsersController(new FakeUserService(), auditService);
+
+        var result = await controller.GetMyActivity(10);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(entries, ok.Value);
+        Assert.Equal(10, auditService.LastLimit);
     }
 
     private sealed class FakeUserService : IUserService
@@ -66,5 +81,17 @@ public class UsersControllerTests
             return Task.CompletedTask;
         }
         public Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request) => Task.FromResult(Profile);
+    }
+
+    private sealed class FakeAuditLogService : IAuditLogService
+    {
+        public IReadOnlyList<AuditLogDTO> Activity { get; set; } = [];
+        public int LastLimit { get; private set; }
+
+        public Task<IReadOnlyList<AuditLogDTO>> GetMyActivityAsync(int limit = 50)
+        {
+            LastLimit = limit;
+            return Task.FromResult(Activity);
+        }
     }
 }
