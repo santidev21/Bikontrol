@@ -23,7 +23,7 @@ public class MotorcyclesControllerTests
         };
         var created = new MotorcycleDTO { Id = Guid.NewGuid(), Name = dto.Name, Brand = dto.Brand, Year = dto.Year, Nickname = dto.Nickname, Km = dto.Km, Displacement = dto.Displacement, Plate = dto.Plate, Image = "default.png" };
         var service = new FakeMotorcycleService { CreateResult = created };
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
 
         var result = await controller.Create(dto);
 
@@ -39,7 +39,7 @@ public class MotorcyclesControllerTests
     {
         var motorcycle = new MotorcycleDTO { Id = Guid.NewGuid(), Name = "XTZ", Brand = "Yamaha", Year = 2024, Nickname = "La azul", Km = 1000, Image = "default.png", Displacement = 150, Plate = "ABC123" };
         var service = new FakeMotorcycleService { GetByIdResult = motorcycle };
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
 
         var result = await controller.GetById(motorcycle.Id);
 
@@ -52,7 +52,7 @@ public class MotorcyclesControllerTests
     {
         // El "no encontrado" ahora vive en el servicio (NotFound → 404 vía middleware).
         var service = new FakeMotorcycleService { GetByIdThrows = new NotFoundException("Motocicleta no encontrada.") };
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
 
         await Assert.ThrowsAsync<NotFoundException>(() => controller.GetById(Guid.NewGuid()));
     }
@@ -65,7 +65,7 @@ public class MotorcyclesControllerTests
             new() { Id = Guid.NewGuid(), Name = "XTZ", Brand = "Yamaha", Year = 2024, Nickname = "La azul", Km = 1000, Image = "default.png", Displacement = 150, Plate = "ABC123" }
         };
         var service = new FakeMotorcycleService { GetMineResult = motorcycles };
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
 
         var result = await controller.GetMyMotorcycles();
 
@@ -77,7 +77,7 @@ public class MotorcyclesControllerTests
     public async Task GetCurrentKm_ShouldWrapTheKilometersInAnonymousObject()
     {
         var service = new FakeMotorcycleService { CurrentKm = 1520 };
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
 
         var result = await controller.GetCurrentKm(Guid.NewGuid());
 
@@ -91,7 +91,7 @@ public class MotorcyclesControllerTests
     public async Task AddKmHistory_ShouldCallServiceAndReturnNoContent()
     {
         var service = new FakeMotorcycleService();
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
         var request = new AddKmHistoryRequest { Km = 2000 };
 
         var result = await controller.AddKmHistory(Guid.NewGuid(), request);
@@ -104,7 +104,7 @@ public class MotorcyclesControllerTests
     public async Task RollbackLastKm_ShouldCallServiceAndReturnNoContent()
     {
         var service = new FakeMotorcycleService();
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
         var request = new RollbackKmHistoryRequest { NewKm = 1800 };
 
         var result = await controller.RollbackLastKm(Guid.NewGuid(), request);
@@ -117,7 +117,7 @@ public class MotorcyclesControllerTests
     public async Task Update_ShouldCallServiceAndReturnNoContent()
     {
         var service = new FakeMotorcycleService();
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
         var dto = new SaveMotorcycleDTO
         {
             Name = "XTZ",
@@ -139,13 +139,35 @@ public class MotorcyclesControllerTests
     public async Task SoftDelete_ShouldCallServiceAndReturnNoContent()
     {
         var service = new FakeMotorcycleService();
-        var controller = new MotorcyclesController(service);
+        var controller = new MotorcyclesController(service, new FakeMaintenanceBookService());
         var id = Guid.NewGuid();
 
         var result = await controller.SoftDelete(id);
 
         Assert.IsType<NoContentResult>(result);
         Assert.Equal(id, service.LastDeletedId);
+    }
+
+    [Fact]
+    public async Task GetMaintenanceBookCsv_ShouldReturnFileWithCsvContentType()
+    {
+        var controller = new MotorcyclesController(new FakeMotorcycleService(), new FakeMaintenanceBookService());
+
+        var result = await controller.GetMaintenanceBookCsv(Guid.NewGuid());
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv", file.ContentType);
+    }
+
+    [Fact]
+    public async Task GetMaintenanceBookPdf_ShouldReturnFileWithPdfContentType()
+    {
+        var controller = new MotorcyclesController(new FakeMotorcycleService(), new FakeMaintenanceBookService());
+
+        var result = await controller.GetMaintenanceBookPdf(Guid.NewGuid());
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/pdf", file.ContentType);
     }
 
     private sealed class FakeMotorcycleService : IMotorcycleService
@@ -196,5 +218,12 @@ public class MotorcyclesControllerTests
             LastDeletedId = id;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeMaintenanceBookService : IMaintenanceBookService
+    {
+        public Task<MaintenanceBookDTO> GetBookAsync(Guid motorcycleId) => Task.FromResult(new MaintenanceBookDTO());
+        public Task<byte[]> GetCsvAsync(Guid motorcycleId) => Task.FromResult(Array.Empty<byte>());
+        public Task<byte[]> GetPdfAsync(Guid motorcycleId) => Task.FromResult(Array.Empty<byte>());
     }
 }

@@ -24,6 +24,8 @@
 - `GET /api/motorcycles/{id}/km/current`
 - `POST /api/motorcycles/{id}/km-history`
 - `DELETE /api/motorcycles/{id}/km-history/last`
+- `GET /api/motorcycles/{id}/maintenance-book/book.csv` (maintenance book as CSV)
+- `GET /api/motorcycles/{id}/maintenance-book/book.pdf` (maintenance book as a shareable PDF)
 
 ## Maintenances
 - `GET /api/maintenances/defaults`

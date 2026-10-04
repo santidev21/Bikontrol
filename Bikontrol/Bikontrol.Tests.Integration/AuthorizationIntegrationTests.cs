@@ -99,6 +99,25 @@ public sealed class AuthorizationIntegrationTests
     }
 
     [RequiresDockerFact]
+    public async Task MaintenanceBook_ShouldReturnCsvAndPdfFiles()
+    {
+        var client = await RegisterClientAsync();
+        var created = await CreateMotorcycleAsync(client);
+
+        var csv = await client.GetAsync($"/api/motorcycles/{created.Id}/maintenance-book/book.csv");
+        csv.EnsureSuccessStatusCode();
+        Assert.Equal("text/csv", csv.Content.Headers.ContentType?.MediaType);
+        var csvBody = await csv.Content.ReadAsStringAsync();
+        Assert.Contains("Fecha,Odometro", csvBody);
+
+        var pdf = await client.GetAsync($"/api/motorcycles/{created.Id}/maintenance-book/book.pdf");
+        pdf.EnsureSuccessStatusCode();
+        Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
+        var pdfBytes = await pdf.Content.ReadAsByteArrayAsync();
+        Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString(pdfBytes, 0, 4));
+    }
+
+    [RequiresDockerFact]
     public async Task Reminders_RequireAuthAndReturnDueList()
     {
         // Anonymous is rejected.

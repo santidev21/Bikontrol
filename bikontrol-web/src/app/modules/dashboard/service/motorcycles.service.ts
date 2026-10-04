@@ -70,4 +70,11 @@ export class MotorcyclesService {
       body: { newKm },
     });
   }
+
+  /** Downloads the motorcycle's maintenance book as a blob (PDF or CSV). */
+  downloadMaintenanceBook(id: string, format: 'pdf' | 'csv'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/maintenance-book/book.${format}`, {
+      responseType: 'blob',
+    });
+  }
 }

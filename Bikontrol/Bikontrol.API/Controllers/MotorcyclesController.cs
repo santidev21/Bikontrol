@@ -11,10 +11,12 @@ namespace Bikontrol.API.Controllers
     public class MotorcyclesController : ControllerBase
     {
         private readonly IMotorcycleService _motorcycleService;
+        private readonly IMaintenanceBookService _maintenanceBookService;
 
-        public MotorcyclesController(IMotorcycleService motorcycleService)
+        public MotorcyclesController(IMotorcycleService motorcycleService, IMaintenanceBookService maintenanceBookService)
         {
             _motorcycleService = motorcycleService;
+            _maintenanceBookService = maintenanceBookService;
         }
 
         [HttpPost]
@@ -56,6 +58,20 @@ namespace Bikontrol.API.Controllers
         {
             await _motorcycleService.RollbackLastKmAsync(id, request.NewKm);
             return NoContent();
+        }
+
+        [HttpGet("{id}/maintenance-book/book.csv")]
+        public async Task<IActionResult> GetMaintenanceBookCsv(Guid id)
+        {
+            var bytes = await _maintenanceBookService.GetCsvAsync(id);
+            return File(bytes, "text/csv", $"mantenimiento-{id}.csv");
+        }
+
+        [HttpGet("{id}/maintenance-book/book.pdf")]
+        public async Task<IActionResult> GetMaintenanceBookPdf(Guid id)
+        {
+            var bytes = await _maintenanceBookService.GetPdfAsync(id);
+            return File(bytes, "application/pdf", $"mantenimiento-{id}.pdf");
         }
 
         [HttpPut("{id}")]

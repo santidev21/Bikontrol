@@ -148,4 +148,17 @@ describe('MotorcyclesService (unit, mocked HttpClient)', () => {
       },
     );
   });
+
+  it('should download the maintenance book as a blob', async () => {
+    const blob = new Blob(['x']);
+    mockHttp.get.mockReturnValue(of(blob));
+
+    const res = await firstValueFrom(service.downloadMaintenanceBook('moto-1', 'pdf'));
+
+    expect(res).toBe(blob);
+    expect(mockHttp.get).toHaveBeenCalledWith(
+      `${service['apiUrl']}/moto-1/maintenance-book/book.pdf`,
+      { responseType: 'blob' },
+    );
+  });
 });
