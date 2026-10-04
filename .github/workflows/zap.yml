@@ -33,6 +33,7 @@ jobs:
             echo "POSTGRES_USER=bikontrol"
             echo "POSTGRES_PASSWORD=ci_dummy_password"
             echo "ConnectionStrings__DefaultConnection=Host=bikontrol-db;Port=5432;Database=bikontrol_db;Username=bikontrol;Password=ci_dummy_password;SslMode=Require;Trust Server Certificate=true"
+            echo "Database__RunMigrationsOnStartup=true"
             echo "Jwt__Key=ci_dummy_key_0123456789abcdef0123456789abcdef"
             echo "Jwt__Issuer=BikontrolAPI"
             echo "Jwt__Audience=BikontrolClient"
