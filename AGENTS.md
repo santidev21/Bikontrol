@@ -43,6 +43,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - Backend line coverage gate **80%** (`node scripts/check-coverage.mjs 80`, merged cobertura). Frontend coverage gate via Vitest v8 (`npm run test:ui:coverage`; thresholds in `bikontrol-web/angular.json`) scoped to TS logic (templates/bootstrap excluded) and ratcheted up over time — current baseline ~74% lines.
 - SonarCloud (`santidev21_Bikontrol`) is a **required** status check (Quality Gate on new code).
 - Mutation testing: Stryker.NET on `MaintenanceService` (`stryker-config.json`, break **40**, `.github/workflows/mutation.yml`).
+- API contract: `ApiContractTests` regenerates `docs/api/openapi.json` (routes/requests) and `docs/api/dto-contract.json` (all DTO shapes) and fails CI when they change without the client. Refresh with `npm run api:contract:update` (see `docs/specs/api.md`).
 - CI (`ci.yml`): backend + frontend tests, **frontend production build** (AOT + env generator), Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy.
 - Deploy (`scripts/deploy.sh`): backup + verify → integrity audit → build → up → container healthcheck → **post-deploy smoke test**; rolls back automatically on either failure. Staging reuses it via `DEPLOY_DIR`/`SMOKE_URL`.
 - `main` is protected: required status checks, no force-push.
@@ -51,6 +52,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - Both: `npm run dev` (DB in Docker + frontend + backend, hot reload) · `npm run build` · `npm run test` (see `/test`)
 - Single side: `npm run dev:ui` · `npm run dev:api`
 - Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`, runs unit + integration; integration needs Docker and auto-skips without it) · `npm run build:api` (see `backend-test` skill)
+- API contract: `npm run api:contract:update` (regenerate `docs/api/*.json` after an intentional contract change)
 - Frontend: `npm run test:ui` (= `ng test --watch=false`, Vitest) · `npm run test:ui:coverage` (= coverage gate in CI) · `npm run build:ui` (see `frontend-test`)
 - Migrations: `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`) · `npm run db:migrate` (= `dotnet ef database update …`)
 - DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down` · `npm run db:backup` / `db:restore` (compressed, 7-copy retention)

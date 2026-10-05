@@ -58,3 +58,20 @@
 - `POST /api/users/me/password` (`{ currentPassword, newPassword }`; 400 for Google-only accounts)
 - `PUT /api/users/me/reminders` (`{ enabled }`)
 - `GET /api/users/me/activity` (the current user's audit trail, newest first; `?limit` 1–200, default 50)
+
+## Contract snapshots (client sync)
+
+The API and the Angular client are kept in sync by committed snapshots, guarded by
+`ApiContractTests` (runs in the required backend-tests check):
+
+- `docs/api/openapi.json` — the OpenAPI document (routes, parameters, request bodies and
+  validation), generated with the same configuration the app serves
+  (`SwaggerExtensions.AddBikontrolSwagger`). Because controllers return `IActionResult`,
+  Swashbuckle cannot infer response types, so responses are covered by the file below.
+- `docs/api/dto-contract.json` — the JSON shape (property names, types, required/optional) of
+  every DTO in `Bikontrol.Application` and `Bikontrol.API`, including responses and nested objects.
+
+Any route or DTO shape change fails CI until the snapshot is refreshed, forcing the client
+update in the same pass. After reviewing the change, run `npm run api:contract:update` and
+commit the diff. Update the Angular type/service and its `.spec.ts` in the same PR (see the
+`api-contract` skill).
