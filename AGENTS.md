@@ -42,7 +42,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 ## Quality Gates & Delivery
 - Backend line coverage gate **80%** (`node scripts/check-coverage.mjs 80`, merged cobertura). Frontend coverage gate via Vitest v8 (`npm run test:ui:coverage`; thresholds in `bikontrol-web/angular.json`) scoped to TS logic (templates/bootstrap excluded) and ratcheted up over time — current baseline ~74% lines.
 - SonarCloud (`santidev21_Bikontrol`) is a **required** status check (Quality Gate on new code).
-- Mutation testing: Stryker.NET on `MaintenanceService` (`stryker-config.json`, break **40**, `.github/workflows/mutation.yml`).
+- Mutation testing: Stryker.NET on `MaintenanceScheduleCalculator` (`stryker-config.json`, break **75**) and on `MaintenanceService` (`stryker-maintenance-service.json`, break **90**), via `.github/workflows/mutation.yml`.
 - API contract: `ApiContractTests` regenerates `docs/api/openapi.json` (routes/requests) and `docs/api/dto-contract.json` (all DTO shapes) and fails CI when they change without the client. Refresh with `npm run api:contract:update` (see `docs/specs/api.md`).
 - E2E: Playwright drives the critical flow (register → motorcycle → maintenance → record → overdue) against the real stack (`e2e/`, `.github/workflows/e2e.yml`; `npm run test:e2e`).
 - CI (`ci.yml`): backend + frontend tests, **frontend production build** (AOT + env generator), Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy. E2E runs in `.github/workflows/e2e.yml`.

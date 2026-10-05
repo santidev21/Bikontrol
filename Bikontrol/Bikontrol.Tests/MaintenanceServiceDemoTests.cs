@@ -18,28 +18,32 @@ public class MaintenanceServiceDemoTests
     public async Task CreateUserMaintenanceAsync_WhenDemo_ShouldThrowForbidden()
     {
         var service = CreateService(isDemo: true);
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.CreateUserMaintenanceAsync(new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Test", Description = "Desc", KmInterval = 5000 }));
+        var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.CreateUserMaintenanceAsync(new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Test", Description = "Desc", KmInterval = 5000 }));
+        Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
     }
 
     [Fact]
     public async Task FollowDefaultAsync_WhenDemo_ShouldThrowForbidden()
     {
         var service = CreateService(isDemo: true);
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.FollowDefaultAsync(Guid.NewGuid(), Guid.NewGuid(), 1000, 0, "Km"));
+        var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.FollowDefaultAsync(Guid.NewGuid(), Guid.NewGuid(), 1000, 0, "Km"));
+        Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
     }
 
     [Fact]
     public async Task RegisterMaintenanceRecordAsync_WhenDemo_ShouldThrowForbidden()
     {
         var service = CreateService(isDemo: true);
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RegisterMaintenanceRecordAsync(new CreateMaintenanceRecordRequest { MotorcycleId = Guid.NewGuid(), UserMaintenanceId = Guid.NewGuid(), PerformedAt = DateTime.UtcNow, PerformedKm = 100 }));
+        var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RegisterMaintenanceRecordAsync(new CreateMaintenanceRecordRequest { MotorcycleId = Guid.NewGuid(), UserMaintenanceId = Guid.NewGuid(), PerformedAt = DateTime.UtcNow, PerformedKm = 100 }));
+        Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
     }
 
     [Fact]
     public async Task DeleteUserMaintenanceAsync_WhenDemo_ShouldThrowForbidden()
     {
         var service = CreateService(isDemo: true);
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.DeleteUserMaintenanceAsync(Guid.NewGuid()));
+        var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.DeleteUserMaintenanceAsync(Guid.NewGuid()));
+        Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
     }
 
     private MaintenanceService CreateService(bool isDemo)

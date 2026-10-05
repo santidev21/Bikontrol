@@ -1,12 +1,14 @@
 name: Mutation testing
 
-# Stryker.NET on the maintenance countdown (MaintenanceScheduleCalculator): it is
-# the shared logic behind the dashboard and the reminders, tested with in-memory
-# fakes, so the job is fast and needs no PostgreSQL.
+# Stryker.NET on the two pieces of maintenance logic that matter most:
+# - MaintenanceScheduleCalculator (Application): the shared countdown behind the
+#   dashboard and the reminders, tested with in-memory fakes.
+# - MaintenanceService (Infrastructure): the CRUD/ownership/record write paths.
+# Both run without PostgreSQL, so the jobs are fast.
 #
-# Runs when the mutated code, its tests or the config change; weekly on a
-# schedule; and on demand. Fails when the mutation score drops below the `break`
-# threshold in stryker-config.json.
+# Runs when the mutated code, its tests or the configs change; weekly on a
+# schedule; and on demand. Each job fails when its mutation score drops below the
+# `break` threshold in its config.
 on:
   pull_request:
     branches: [main]
@@ -16,6 +18,7 @@ on:
       - 'Bikontrol/Bikontrol.Tests/MaintenanceService*'
       - 'Bikontrol/Bikontrol.Tests/ReminderServiceTests.cs'
       - 'stryker-config.json'
+      - 'stryker-maintenance-service.json'
       - '.github/workflows/mutation.yml'
   schedule:
     - cron: '0 4 * * 1'
@@ -26,8 +29,16 @@ permissions:
 
 jobs:
   stryker:
-    name: Stryker.NET (MaintenanceScheduleCalculator)
+    name: Stryker.NET (${{ matrix.target.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: MaintenanceScheduleCalculator
+            config: stryker-config.json
+          - name: MaintenanceService
+            config: stryker-maintenance-service.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,11 +55,11 @@ jobs:
         run: dotnet restore Bikontrol/Bikontrol.sln
 
       - name: Run mutation tests
-        run: dotnet stryker --config-file stryker-config.json
+        run: dotnet stryker --config-file ${{ matrix.target.config }}
 
       - name: Upload mutation report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mutation-report
+          name: mutation-report-${{ matrix.target.name }}
           path: StrykerOutput/**/reports/

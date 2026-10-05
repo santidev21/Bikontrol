@@ -144,6 +144,26 @@ public class MaintenanceServiceIntervalTests
         Assert.Equal("ZFresh", result[1].Name);
     }
 
+    [Fact]
+    public async Task Km_MultipleMaintenances_SameLife_ShouldOrderByNameAscending()
+    {
+        var userId = Guid.NewGuid();
+        var motorcycleId = Guid.NewGuid();
+        // Ambos al 50% de vida: el empate se rompe por nombre ascendente.
+        var beta = KmMaintenance(kmInterval: 1000, name: "Beta");
+        var alpha = KmMaintenance(kmInterval: 1000, name: "Alpha");
+
+        var service = CreateService(userId, motorcycleId,
+            new List<UserMaintenance> { beta, alpha },
+            currentKm: 500, initialDate: null, lastRecords: new());
+
+        var result = (await service.GetUpcomingByMotorcycleAsync(motorcycleId)).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Alpha", result[0].Name);
+        Assert.Equal("Beta", result[1].Name);
+    }
+
     // ---------- Tiempo ----------
 
     [Fact]
@@ -262,7 +282,7 @@ public class MaintenanceServiceIntervalTests
     public async Task Register_WithFutureDate_ShouldThrowValidation()
     {
         var ctx = RegisterContext(KmMaintenance(kmInterval: 5000));
-        await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
             new CreateMaintenanceRecordRequest
             {
                 MotorcycleId = ctx.MotorcycleId,
@@ -270,13 +290,14 @@ public class MaintenanceServiceIntervalTests
                 PerformedAt = DateTime.UtcNow.AddDays(1),
                 PerformedKm = 100
             }));
+        Assert.Equal("No puedes agregar mantenimientos posteriores al dia de hoy", ex.Message);
     }
 
     [Fact]
     public async Task Register_KmTrackingWithoutKm_ShouldThrowValidation()
     {
         var ctx = RegisterContext(KmMaintenance(kmInterval: 5000));
-        await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
             new CreateMaintenanceRecordRequest
             {
                 MotorcycleId = ctx.MotorcycleId,
@@ -284,6 +305,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedAt = DateTime.UtcNow,
                 PerformedKm = null
             }));
+        Assert.Equal("Debes ingresar kilometraje para este mantenimiento.", ex.Message);
     }
 
     [Fact]
@@ -291,7 +313,7 @@ public class MaintenanceServiceIntervalTests
     {
         var last = Record(performedKm: 5000, performedAt: DateTime.UtcNow.AddDays(-30));
         var ctx = RegisterContext(KmMaintenance(kmInterval: 5000), lastRecord: last, currentKm: 8000);
-        await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
             new CreateMaintenanceRecordRequest
             {
                 MotorcycleId = ctx.MotorcycleId,
@@ -299,6 +321,26 @@ public class MaintenanceServiceIntervalTests
                 PerformedAt = DateTime.UtcNow,
                 PerformedKm = 4000
             }));
+        Assert.Equal("No puedes agregar mantenimiento anterior al ultimo", ex.Message);
+    }
+
+    [Fact]
+    public async Task Register_KmEqualToLastRecord_ShouldBeAllowed()
+    {
+        // Igual al último km registrado no es "anterior": debe permitirse.
+        var last = Record(performedKm: 5000, performedAt: DateTime.UtcNow.AddDays(-30));
+        var ctx = RegisterContext(KmMaintenance(kmInterval: 5000), lastRecord: last, currentKm: 8000);
+
+        var result = await ctx.Service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = ctx.MotorcycleId,
+                UserMaintenanceId = ctx.MaintenanceId,
+                PerformedAt = DateTime.UtcNow,
+                PerformedKm = 5000
+            });
+
+        Assert.Equal(5000, result.PerformedKm);
     }
 
     [Fact]
@@ -316,11 +358,72 @@ public class MaintenanceServiceIntervalTests
                 MotorcycleId = ctx.MotorcycleId,
                 UserMaintenanceId = ctx.MaintenanceId,
                 PerformedAt = DateTime.UtcNow,
-                PerformedKm = 6000
+                PerformedKm = 6000,
+                Cost = 123.45m
             });
 
         Assert.Equal("Aceite", result.MaintenanceName);
+        // El registro persistido debe conservar todos sus campos (no solo el nombre).
+        Assert.Equal(ctx.MotorcycleId, result.MotorcycleId);
+        Assert.Equal(ctx.MaintenanceId, result.UserMaintenanceId);
+        Assert.Equal(6000, result.PerformedKm);
+        Assert.Equal(123.45m, result.Cost);
         Assert.Empty(kmService.AddedKms);
+    }
+
+    [Fact]
+    public async Task Register_KmEqualToOdometer_ShouldNotAdvanceOdometer()
+    {
+        // Igual al odómetro actual no avanza (solo lo hace si es estrictamente mayor).
+        var kmService = new FakeKmHistoryService(currentKm: 8000, initialRecordedAt: DateTime.UtcNow.AddDays(-60));
+        var ctx = RegisterContext(KmMaintenance(kmInterval: 5000), lastRecord: null, kmService: kmService);
+
+        await ctx.Service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = ctx.MotorcycleId,
+                UserMaintenanceId = ctx.MaintenanceId,
+                PerformedAt = DateTime.UtcNow,
+                PerformedKm = 8000
+            });
+
+        Assert.Empty(kmService.AddedKms);
+    }
+
+    [Fact]
+    public async Task Register_NotOwnedMotorcycle_ShouldThrowForbidden()
+    {
+        // El mantenimiento es del usuario, pero la moto pertenece a otro: la
+        // verificación de propiedad del endpoint no debe saltarse.
+        var userId = Guid.NewGuid();
+        var motorcycleId = Guid.NewGuid();
+        var maintenance = KmMaintenance(kmInterval: 5000);
+        maintenance.UserId = userId;
+        maintenance.MotorcycleId = motorcycleId;
+
+        var foreignMotorcycle = new Motorcycle("Moto", "Brand", 2024, "N", 150, "ABC123", Guid.NewGuid())
+        {
+            Id = motorcycleId
+        };
+
+        var service = new MaintenanceService(
+            new FakeMaintenanceRepository(),
+            new FakeUserMaintenanceRepository(new List<UserMaintenance> { maintenance }),
+            new FakeMotorcycleRepository(foreignMotorcycle),
+            new FakeKmHistoryService(currentKm: 1000),
+            new FakeRecordRepository(new()),
+            Mapper,
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
+
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = motorcycleId,
+                UserMaintenanceId = maintenance.Id,
+                PerformedAt = DateTime.UtcNow,
+                PerformedKm = 1500
+            }));
     }
 
     [Fact]
@@ -345,7 +448,7 @@ public class MaintenanceServiceIntervalTests
     public async Task Create_KmTrackingWithoutPositiveInterval_ShouldThrowValidation()
     {
         var ctx = RegisterContext(KmMaintenance(kmInterval: 5000));
-        await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.CreateUserMaintenanceAsync(
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.CreateUserMaintenanceAsync(
             new SaveMaintenanceDTO
             {
                 MotorcycleId = ctx.MotorcycleId,
@@ -353,13 +456,14 @@ public class MaintenanceServiceIntervalTests
                 TrackingType = "Km",
                 KmInterval = 0
             }));
+        Assert.Equal("Debes indicar un intervalo de kilometraje mayor a cero.", ex.Message);
     }
 
     [Fact]
     public async Task Create_TimeTrackingWithoutPositiveInterval_ShouldThrowValidation()
     {
         var ctx = RegisterContext(TimeMaintenance(weeks: 4));
-        await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.CreateUserMaintenanceAsync(
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.CreateUserMaintenanceAsync(
             new SaveMaintenanceDTO
             {
                 MotorcycleId = ctx.MotorcycleId,
@@ -367,6 +471,7 @@ public class MaintenanceServiceIntervalTests
                 TrackingType = "Time",
                 TimeIntervalWeeks = null
             }));
+        Assert.Equal("Debes indicar un intervalo de tiempo mayor a cero.", ex.Message);
     }
 
     [Fact]
@@ -375,6 +480,66 @@ public class MaintenanceServiceIntervalTests
         var ctx = RegisterContext(TimeMaintenance(weeks: 4));
         await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.FollowDefaultAsync(
             ctx.MotorcycleId, Guid.NewGuid(), 1000, 0, "Time"));
+    }
+
+    [Fact]
+    public async Task Register_MaintenanceNotFound_ShouldThrowNotFound()
+    {
+        var ctx = RegisterContext(KmMaintenance(kmInterval: 5000));
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = ctx.MotorcycleId,
+                UserMaintenanceId = Guid.NewGuid(),
+                PerformedAt = DateTime.UtcNow,
+                PerformedKm = 100
+            }));
+        Assert.Equal("Mantenimiento no encontrado.", ex.Message);
+    }
+
+    [Fact]
+    public async Task Register_MaintenanceNotOwned_ShouldThrowForbidden()
+    {
+        var userId = Guid.NewGuid();
+        var motorcycleId = Guid.NewGuid();
+        var foreignMaintenance = KmMaintenance(kmInterval: 5000);
+        foreignMaintenance.UserId = Guid.NewGuid();
+        foreignMaintenance.MotorcycleId = motorcycleId;
+
+        var service = new MaintenanceService(
+            new FakeMaintenanceRepository(),
+            new FakeUserMaintenanceRepository(new List<UserMaintenance> { foreignMaintenance }),
+            new FakeMotorcycleRepository(new Motorcycle("Moto", "Brand", 2024, "N", 150, "ABC123", userId) { Id = motorcycleId }),
+            new FakeKmHistoryService(currentKm: 1000),
+            new FakeRecordRepository(new()),
+            Mapper,
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
+
+        var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = motorcycleId,
+                UserMaintenanceId = foreignMaintenance.Id,
+                PerformedAt = DateTime.UtcNow,
+                PerformedKm = 1500
+            }));
+        Assert.Equal("No tienes permisos para registrar este mantenimiento.", ex.Message);
+    }
+
+    [Fact]
+    public async Task Register_MotorcycleMismatch_ShouldThrowValidation()
+    {
+        var ctx = RegisterContext(KmMaintenance(kmInterval: 5000));
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = Guid.NewGuid(),
+                UserMaintenanceId = ctx.MaintenanceId,
+                PerformedAt = DateTime.UtcNow,
+                PerformedKm = 100
+            }));
+        Assert.Equal("El mantenimiento no pertenece a la motocicleta seleccionada.", ex.Message);
     }
 
     // ---------- Helpers ----------
