@@ -24,6 +24,7 @@
     "test:ui": "npm --prefix bikontrol-web run test",
     "test:ui:coverage": "npm --prefix bikontrol-web run test:coverage",
     "test:api": "dotnet test Bikontrol/Bikontrol.sln",
+    "api:contract:update": "dotnet test Bikontrol/Bikontrol.Tests/Bikontrol.Tests.csproj --filter FullyQualifiedName~ApiContractTests -e UPDATE_API_CONTRACT=1",
     "db:update": "dotnet ef database update --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",
     "db:migration:add": "dotnet ef migrations add --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",
     "db:migration:remove": "dotnet ef migrations remove --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",

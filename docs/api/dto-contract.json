@@ -1,0 +1,270 @@
+{
+  "Bikontrol.Application.DTOs.Audit.AuditLogDTO": {
+    "action": "string",
+    "changes": "string",
+    "createdAt": "datetime",
+    "entityId": "string",
+    "entityName": "string",
+    "id": "integer"
+  },
+  "Bikontrol.Application.DTOs.Auth.ConfirmEmailRequest": {
+    "email": "string",
+    "token": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.ForgotPasswordRequest": {
+    "email": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.GoogleLoginRequest": {
+    "idToken": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.LoginRequest": {
+    "email": "string",
+    "password": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.LoginResponse": {
+    "email": "string",
+    "expiresIn": "integer",
+    "fullName": "string",
+    "id": "guid",
+    "refreshToken": "string",
+    "role": "string",
+    "token": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.RefreshTokenRequest": {
+    "refreshToken": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.RegisterRequest": {
+    "email": "string",
+    "fullName": "string",
+    "password": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.RegisterResponse": {
+    "createdAt": "datetime",
+    "email": "string",
+    "emailConfirmationRequired": "bool",
+    "expiresIn": "integer",
+    "fullName": "string",
+    "id": "guid",
+    "refreshToken": "string",
+    "role": "string",
+    "token": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.ResendConfirmationRequest": {
+    "email": "string"
+  },
+  "Bikontrol.Application.DTOs.Auth.ResetPasswordRequest": {
+    "email": "string",
+    "newPassword": "string",
+    "token": "string"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.AddAttachmentRequest": {
+    "dataUrl": "string",
+    "fileName": "string"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.CreateMaintenanceRecordRequest": {
+    "cost": "number?",
+    "motorcycleId": "guid",
+    "performedAt": "datetime",
+    "performedKm": "integer?",
+    "userMaintenanceId": "guid"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.FollowDefaultRequest": {
+    "defaultId": "guid",
+    "kmInterval": "integer?",
+    "motorcycleId": "guid",
+    "timeIntervalWeeks": "integer?",
+    "trackingType": "string"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.MaintenanceAttachmentDTO": {
+    "contentType": "string",
+    "createdAt": "datetime",
+    "dataUrl": "string",
+    "fileName": "string",
+    "id": "guid",
+    "recordId": "guid"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.MaintenanceDTO": {
+    "baseTypeId": "guid?",
+    "description": "string",
+    "id": "guid",
+    "isEnabled": "bool",
+    "isSystem": "bool",
+    "kmInterval": "integer?",
+    "motorcycleId": "guid",
+    "name": "string",
+    "timeIntervalWeeks": "integer?",
+    "trackingType": "string"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.MaintenanceRecordDTO": {
+    "cost": "number?",
+    "createdAt": "datetime",
+    "id": "guid",
+    "maintenanceName": "string",
+    "motorcycleId": "guid",
+    "performedAt": "datetime",
+    "performedKm": "integer?",
+    "userMaintenanceId": "guid"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.SaveMaintenanceDTO": {
+    "baseTypeId": "guid?",
+    "description": "string",
+    "kmInterval": "integer?",
+    "motorcycleId": "guid",
+    "name": "string",
+    "timeIntervalWeeks": "integer?",
+    "trackingType": "string"
+  },
+  "Bikontrol.Application.DTOs.Maintenance.UpcomingMaintenanceDTO": {
+    "description": "string",
+    "isOverdue": "bool",
+    "kmInterval": "integer?",
+    "lastPerformedAt": "datetime?",
+    "lastPerformedKm": "integer?",
+    "lifePercent": "integer",
+    "motorcycleId": "guid",
+    "name": "string",
+    "remainingDays": "integer",
+    "remainingKm": "integer",
+    "timeIntervalWeeks": "integer?",
+    "trackingType": "string",
+    "userMaintenanceId": "guid"
+  },
+  "Bikontrol.Application.DTOs.Motorcycle.AddKmHistoryRequest": {
+    "km": "integer"
+  },
+  "Bikontrol.Application.DTOs.Motorcycle.MaintenanceBookDTO": {
+    "brand": "string",
+    "currentKm": "integer",
+    "displacement": "integer",
+    "entries": "List\u003CMaintenanceBookEntryDTO\u003E",
+    "firstKm": "integer?",
+    "motorcycleId": "guid",
+    "name": "string",
+    "nickname": "string",
+    "plate": "string",
+    "ridingSince": "datetime?",
+    "totalMaintenances": "integer",
+    "year": "integer"
+  },
+  "Bikontrol.Application.DTOs.Motorcycle.MaintenanceBookEntryDTO": {
+    "description": "string",
+    "kmInterval": "integer?",
+    "name": "string",
+    "performedAt": "datetime",
+    "performedKm": "integer?",
+    "timeIntervalWeeks": "integer?",
+    "trackingType": "string"
+  },
+  "Bikontrol.Application.DTOs.Motorcycle.MotorcycleDTO": {
+    "brand": "string",
+    "displacement": "integer",
+    "id": "guid",
+    "image": "string",
+    "km": "integer",
+    "name": "string",
+    "nickname": "string",
+    "plate": "string",
+    "year": "integer"
+  },
+  "Bikontrol.Application.DTOs.Motorcycle.RollbackKmHistoryRequest": {
+    "newKm": "integer"
+  },
+  "Bikontrol.Application.DTOs.Motorcycle.SaveMotorcycleDTO": {
+    "brand": "string",
+    "displacement": "integer",
+    "image": "string",
+    "km": "integer",
+    "name": "string",
+    "nickname": "string",
+    "plate": "string",
+    "year": "integer"
+  },
+  "Bikontrol.Application.DTOs.Reminders.DueReminderDTO": {
+    "description": "string",
+    "isOverdue": "bool",
+    "lastPerformedAt": "datetime?",
+    "lastPerformedKm": "integer?",
+    "lifePercent": "integer",
+    "motorcycleId": "guid",
+    "motorcycleName": "string",
+    "name": "string",
+    "remainingDays": "integer",
+    "remainingKm": "integer",
+    "trackingType": "string",
+    "userMaintenanceId": "guid"
+  },
+  "Bikontrol.Application.DTOs.Reminders.PushSubscriptionKeys": {
+    "auth": "string",
+    "p256dh": "string"
+  },
+  "Bikontrol.Application.DTOs.Reminders.RegisterPushSubscriptionRequest": {
+    "endpoint": "string",
+    "keys": "PushSubscriptionKeys"
+  },
+  "Bikontrol.Application.DTOs.Reminders.UnregisterPushSubscriptionRequest": {
+    "endpoint": "string"
+  },
+  "Bikontrol.Application.DTOs.Statistics.HealthBucketDTO": {
+    "bucket": "string",
+    "count": "integer"
+  },
+  "Bikontrol.Application.DTOs.Statistics.MaintenanceCountStatDTO": {
+    "count": "integer",
+    "name": "string"
+  },
+  "Bikontrol.Application.DTOs.Statistics.MonthlyActivityDTO": {
+    "cost": "number",
+    "count": "integer",
+    "yearMonth": "string"
+  },
+  "Bikontrol.Application.DTOs.Statistics.MotorcycleCostStatDTO": {
+    "cost": "number",
+    "costPerKm": "number?",
+    "motorcycleId": "guid",
+    "name": "string"
+  },
+  "Bikontrol.Application.DTOs.Statistics.MotorcycleKmStatDTO": {
+    "km": "integer",
+    "motorcycleId": "guid",
+    "name": "string"
+  },
+  "Bikontrol.Application.DTOs.Statistics.StatisticsSummaryDTO": {
+    "costByMotorcycle": "List\u003CMotorcycleCostStatDTO\u003E",
+    "costByYear": "List\u003CYearlyCostDTO\u003E",
+    "costPerKm": "number?",
+    "dueSoonCount": "integer",
+    "health": "List\u003CHealthBucketDTO\u003E",
+    "kmByMotorcycle": "List\u003CMotorcycleKmStatDTO\u003E",
+    "last6Months": "List\u003CMonthlyActivityDTO\u003E",
+    "lastActivityAt": "datetime?",
+    "overdueCount": "integer",
+    "recordsByType": "List\u003CMaintenanceCountStatDTO\u003E",
+    "totalCost": "number",
+    "totalKm": "integer",
+    "totalMaintenanceRecords": "integer",
+    "totalMotorcycles": "integer"
+  },
+  "Bikontrol.Application.DTOs.Statistics.YearlyCostDTO": {
+    "cost": "number",
+    "year": "integer"
+  },
+  "Bikontrol.Application.DTOs.Users.ChangePasswordRequest": {
+    "currentPassword": "string",
+    "newPassword": "string"
+  },
+  "Bikontrol.Application.DTOs.Users.ProfileDTO": {
+    "createdAt": "datetime",
+    "email": "string",
+    "fullName": "string",
+    "hasPassword": "bool",
+    "id": "guid",
+    "remindersEnabled": "bool",
+    "role": "string"
+  },
+  "Bikontrol.Application.DTOs.Users.UpdateProfileRequest": {
+    "fullName": "string"
+  },
+  "Bikontrol.Application.DTOs.Users.UpdateRemindersRequest": {
+    "enabled": "bool"
+  }
+}

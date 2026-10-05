@@ -1,4 +1,5 @@
 using AutoMapper;
+using Bikontrol.API.Extensions;
 using Bikontrol.API.Middleware;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure;
@@ -164,9 +165,9 @@ builder.Services.AddRateLimiter(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// OpenAPI/Swagger lives in one place so the API contract test generates the
+// exact same document that Swagger UI serves (see docs/api/openapi.json).
+builder.Services.AddBikontrolSwagger();
 
 // PostgreSQL connection
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -200,37 +201,6 @@ if (metricsEnabled)
 // Services & Identity tools
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
-
-// Swagger
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new() { Title = "Bikontrol API", Version = "v1" });
-
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter 'Bearer' [space] and then your valid token.\n\nExample: Bearer eyJhbGciOiJIUzI1NiIsInR5..."
-    });
-
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
 
 // Configure InvalidModelStateResponseFactory
 builder.Services.Configure<ApiBehaviorOptions>(options =>
