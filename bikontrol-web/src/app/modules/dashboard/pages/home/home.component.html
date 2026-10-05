@@ -3,8 +3,19 @@
   <p class="text-gray-400 mb-4 text-center">Tus motocicletas</p>
 
   @if (motorcycles.value().length === 0) {
-    <div class="text-center text-gray-500 mt-8">
-      No tienes motos agregadas, por favor agrega una usando el botón de abajo.
+    <div class="bg-card rounded-xl p-6 mt-6 text-center">
+      <h2 class="text-lg font-bold text-primary mb-2">¡Te damos la bienvenida!</h2>
+      <p class="text-sm text-textdark mb-4">
+        Agregá tu moto y elegí un plan de mantenimiento en un par de minutos.
+      </p>
+      @if (!isDemo) {
+        <button
+          routerLink="/dashboard/onboarding"
+          class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
+        >
+          Comenzar
+        </button>
+      }
     </div>
   }
 
