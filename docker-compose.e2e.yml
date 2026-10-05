@@ -1,0 +1,26 @@
+# Compose overrides for the Playwright E2E stack (CI and local runs).
+# Usage (from the repo root, with the E2E environment variables exported):
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml -f docker-compose.e2e.yml up -d --build
+#
+# Differences from the local override:
+# - The web is published on 127.0.0.1:4300 so it never clashes with a dev web on :4200.
+# - The web is built with a same-origin `API_URL=/api` and serves an nginx config
+#   that proxies /api/ to the API, mirroring the production gateway. This keeps the
+#   app same-origin so the strict `connect-src 'self'` CSP allows the API calls.
+# - The API is told to skip email confirmation, so the E2E suite can register and
+#   log in without a mailbox.
+services:
+  web:
+    build:
+      args:
+        API_URL: /api
+    volumes:
+      - ./docker/nginx.e2e.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:4300:8080"
+
+  api:
+    environment:
+      EmailConfirmation__Required: "false"
+      # The E2E suite drives the real UI, so keep the demo tenant off.
+      Demo__Enabled: "false"

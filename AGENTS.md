@@ -44,7 +44,8 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - SonarCloud (`santidev21_Bikontrol`) is a **required** status check (Quality Gate on new code).
 - Mutation testing: Stryker.NET on `MaintenanceService` (`stryker-config.json`, break **40**, `.github/workflows/mutation.yml`).
 - API contract: `ApiContractTests` regenerates `docs/api/openapi.json` (routes/requests) and `docs/api/dto-contract.json` (all DTO shapes) and fails CI when they change without the client. Refresh with `npm run api:contract:update` (see `docs/specs/api.md`).
-- CI (`ci.yml`): backend + frontend tests, **frontend production build** (AOT + env generator), Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy.
+- E2E: Playwright drives the critical flow (register → motorcycle → maintenance → record → overdue) against the real stack (`e2e/`, `.github/workflows/e2e.yml`; `npm run test:e2e`).
+- CI (`ci.yml`): backend + frontend tests, **frontend production build** (AOT + env generator), Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy. E2E runs in `.github/workflows/e2e.yml`.
 - Deploy (`scripts/deploy.sh`): backup + verify → integrity audit → build → up → container healthcheck → **post-deploy smoke test**; rolls back automatically on either failure. Staging reuses it via `DEPLOY_DIR`/`SMOKE_URL`.
 - `main` is protected: required status checks, no force-push.
 
@@ -54,6 +55,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - Backend: `npm run test:api` (= `dotnet test Bikontrol/Bikontrol.sln`, runs unit + integration; integration needs Docker and auto-skips without it) · `npm run build:api` (see `backend-test` skill)
 - API contract: `npm run api:contract:update` (regenerate `docs/api/*.json` after an intentional contract change)
 - Frontend: `npm run test:ui` (= `ng test --watch=false`, Vitest) · `npm run test:ui:coverage` (= coverage gate in CI) · `npm run build:ui` (see `frontend-test`)
+- E2E: `npm run test:e2e` (Playwright; needs the stack up — see `e2e/README.md`)
 - Migrations: `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`) · `npm run db:migrate` (= `dotnet ef database update …`)
 - DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down` · `npm run db:backup` / `db:restore` (compressed, 7-copy retention)
 - Pre-deploy with real users: `npm run db:backup` first, then run `scripts/db-integrity-audit.sql` (read-only; every block must return 0 rows), then deploy (prod auto-applies migrations at startup)

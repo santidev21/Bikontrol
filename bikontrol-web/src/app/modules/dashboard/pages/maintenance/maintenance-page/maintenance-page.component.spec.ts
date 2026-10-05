@@ -88,10 +88,13 @@ describe('MaintenancePageComponent', () => {
 
     component.goToAddMaintenance();
 
+    // `maintenance` and `add` must be separate segments: a slash inside one array
+    // element is URL-encoded and the route never matches (regression guard).
     expect(routerMock.navigate).toHaveBeenCalledWith([
       '/dashboard/motorcycles',
       'moto-1',
-      'maintenance/add',
+      'maintenance',
+      'add',
     ]);
   });
 });

@@ -10,6 +10,7 @@ Prefer the root scripts, from the repo root:
 ```bash
 npm run test:ui           # = ng test --watch=false (from bikontrol-web/)
 npm run test:ui:coverage  # same tests + coverage gate enforced in CI
+npm run test:e2e          # Playwright E2E against the running stack (see e2e/README.md)
 npm run build:ui          # production build
 ```
 

@@ -43,8 +43,8 @@ Built to be sold, not just shown:
   DB before it is trusted), DB auto-migrations on deploy.
 - **Checked on every change** — backend unit + integration tests (real PostgreSQL via Testcontainers),
   frontend Vitest, coverage gates (backend ≥80%, frontend ratcheted), SonarCloud (quality gate + new-code coverage), CodeQL (SAST),
-  Gitleaks, Trivy (SCA), **ZAP baseline (DAST)** against the real stack, mutation testing and a
-  migration rollback test; deploys roll back automatically if the health check fails.
+  Gitleaks, Trivy (SCA), **ZAP baseline (DAST)** against the real stack, **Playwright E2E** of the critical
+  flow, mutation testing and a migration rollback test; deploys roll back automatically if the health check fails.
 
 ---
 

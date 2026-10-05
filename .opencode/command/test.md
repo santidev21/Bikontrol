@@ -13,6 +13,7 @@ Or per side:
 npm run test:api   # = dotnet test Bikontrol/Bikontrol.sln (xUnit)
 npm run test:ui    # = ng test --watch=false (Vitest, from bikontrol-web/)
 npm run test:ui:coverage   # frontend coverage gate (CI)
+npm run test:e2e   # Playwright E2E (needs the stack up; see e2e/README.md)
 ```
 
 Extra input: $ARGUMENTS (e.g. a test name filter or a single suite: `backend` / `frontend`).
