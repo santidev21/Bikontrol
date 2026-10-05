@@ -4,7 +4,7 @@ This file is the working context for Bikontrol. Keep it updated when architectur
 
 ## Project Snapshot
 Motorcycle tracking and maintenance app:
-- Angular 22 frontend (SCSS, Tailwind CSS, PWA service worker; Vitest tests) — views: home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
+- Angular 22 frontend (SCSS, Tailwind CSS, PWA service worker; Vitest tests) — views: onboarding (`/dashboard/onboarding`), home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
 - .NET 8 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
 - PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
 - JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, per-user salt password hashing, password recovery via SMTP email, soft deletes
