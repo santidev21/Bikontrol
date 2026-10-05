@@ -47,6 +47,18 @@ export const routes: Routes = [
       ),
   },
 
+  // Legal (public)
+  {
+    path: 'terminos',
+    loadComponent: () =>
+      import('./modules/legal/terms/terms.component').then((c) => c.TermsComponent),
+  },
+  {
+    path: 'privacidad',
+    loadComponent: () =>
+      import('./modules/legal/privacy/privacy.component').then((c) => c.PrivacyComponent),
+  },
+
   // Dashboard
   {
     path: 'dashboard',
