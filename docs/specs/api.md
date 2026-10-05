@@ -59,6 +59,7 @@
 - `PUT /api/users/me/reminders` (`{ enabled }`)
 - `GET /api/users/me/activity` (the current user's audit trail, newest first; `?limit` 1–200, default 50)
 - `GET /api/users/me/export` (everything the current user owns as one JSON document: profile, motorcycles, maintenances, maintenance records and attachments; "download my data")
+- `POST /api/users/me/delete` (`{ confirmation: "ELIMINAR", password? }`; irreversible: purges owned data and anonymizes the account — see [ADR 003](../adr/003-account-deletion.md))
 
 ## Contract snapshots (client sync)
 

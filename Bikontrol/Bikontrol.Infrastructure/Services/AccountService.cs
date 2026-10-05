@@ -7,6 +7,7 @@ using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
+using Microsoft.AspNetCore.Identity;
 
 namespace Bikontrol.Infrastructure.Services
 {
@@ -21,7 +22,10 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IUserMaintenanceRepository _userMaintenanceRepository;
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
         private readonly IMaintenanceRecordAttachmentRepository _attachmentRepository;
+        private readonly IAccountRepository _accountRepository;
         private readonly IKmHistoryService _kmHistoryService;
+        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly ITransactionManager _transactions;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
 
@@ -31,7 +35,10 @@ namespace Bikontrol.Infrastructure.Services
             IUserMaintenanceRepository userMaintenanceRepository,
             IMotorcycleMaintenanceRecordRepository recordRepository,
             IMaintenanceRecordAttachmentRepository attachmentRepository,
+            IAccountRepository accountRepository,
             IKmHistoryService kmHistoryService,
+            IPasswordHasher<User> passwordHasher,
+            ITransactionManager transactions,
             IMapper mapper,
             ICurrentUserService current)
         {
@@ -40,7 +47,10 @@ namespace Bikontrol.Infrastructure.Services
             _userMaintenanceRepository = userMaintenanceRepository;
             _recordRepository = recordRepository;
             _attachmentRepository = attachmentRepository;
+            _accountRepository = accountRepository;
             _kmHistoryService = kmHistoryService;
+            _passwordHasher = passwordHasher;
+            _transactions = transactions;
             _mapper = mapper;
             _current = current;
         }
@@ -92,6 +102,41 @@ namespace Bikontrol.Infrastructure.Services
                 MaintenanceRecords = recordDtos,
                 Attachments = _mapper.Map<List<MaintenanceAttachmentDTO>>(attachments),
             };
+        }
+
+        public async Task DeleteMyAccountAsync(DeleteAccountRequest request)
+        {
+            // The demo tenant is shared: nobody may delete it.
+            if (_current.IsDemo)
+            {
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+            }
+
+            if (!string.Equals(request.Confirmation?.Trim(), "ELIMINAR", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ValidationException("Escribe ELIMINAR para confirmar.");
+            }
+
+            var user = await _userRepository.GetByIdAsync(_current.UserId)
+                ?? throw new NotFoundException("Usuario no encontrado.");
+
+            if (user.HasPassword)
+            {
+                if (string.IsNullOrWhiteSpace(request.Password)
+                    || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
+                        != PasswordVerificationResult.Success)
+                {
+                    throw new ValidationException("La contraseña no es correcta.");
+                }
+            }
+
+            await _transactions.ExecuteInTransactionAsync(async () =>
+            {
+                await _accountRepository.PurgeUserDataAsync(user.Id);
+                user.Anonymize();
+                await _userRepository.UpdateAsync(user);
+                await _userRepository.SaveChangesAsync();
+            });
         }
 
         private ProfileDTO ToProfile(User user)

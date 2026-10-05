@@ -57,6 +57,11 @@ export class ProfileComponent {
   readonly pushBusy = signal(false);
   readonly isExporting = signal(false);
 
+  readonly isDeleteModalOpen = signal(false);
+  readonly deleteConfirmation = signal('');
+  readonly deletePassword = signal('');
+  readonly isDeleting = signal(false);
+
   readonly isDemo = computed(() => this.authService.isDemo());
   readonly canChangePassword = computed(() => !!this.profile()?.hasPassword && !this.isDemo());
   readonly initials = computed(() => {
@@ -220,5 +225,49 @@ export class ProfileComponent {
         );
       },
     });
+  }
+
+  openDeleteModal(): void {
+    this.deleteConfirmation.set('');
+    this.deletePassword.set('');
+    this.isDeleteModalOpen.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.isDeleteModalOpen.set(false);
+    this.isDeleting.set(false);
+  }
+
+  confirmDeleteAccount(): void {
+    if (this.isDeleting()) return;
+
+    if (this.deleteConfirmation().trim().toUpperCase() !== 'ELIMINAR') {
+      this.swal.error('¡Error!', 'Escribe ELIMINAR para confirmar.');
+      return;
+    }
+    if (this.canChangePassword() && !this.deletePassword()) {
+      this.swal.error('¡Error!', 'Ingresá tu contraseña para confirmar.');
+      return;
+    }
+
+    this.isDeleting.set(true);
+    this.userService
+      .deleteAccount(this.canChangePassword() ? this.deletePassword() : null)
+      .subscribe({
+        next: () => {
+          this.isDeleting.set(false);
+          this.isDeleteModalOpen.set(false);
+          this.swal
+            .success('Cuenta eliminada', 'Tu cuenta y tus datos fueron eliminados.')
+            .then(() => {
+              this.authService.logout();
+              this.router.navigate(['/login']);
+            });
+        },
+        error: (err) => {
+          this.isDeleting.set(false);
+          this.swal.error('Error', this.httpError.message(err, 'No se pudo eliminar tu cuenta.'));
+        },
+      });
   }
 }

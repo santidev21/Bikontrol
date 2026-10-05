@@ -40,4 +40,12 @@ export class UserService {
   exportMyData(): Observable<UserDataExport> {
     return this.http.get<UserDataExport>(`${this.apiUrl}/me/export`);
   }
+
+  /** Irreversibly deletes the account. `password` is required for password accounts. */
+  deleteAccount(password: string | null): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/me/delete`, {
+      confirmation: 'ELIMINAR',
+      password,
+    });
+  }
 }

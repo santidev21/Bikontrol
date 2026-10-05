@@ -205,3 +205,13 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.danger-btn {
+  background: #dc2626;
+  color: #fff;
+}
+
+.danger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

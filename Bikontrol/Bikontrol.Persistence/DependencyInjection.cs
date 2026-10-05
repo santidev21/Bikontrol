@@ -15,6 +15,7 @@ namespace Bikontrol.Persistence
         public static IServiceCollection AddPersistence(this IServiceCollection services)
         {
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IMotorcycleRepository, MotorcycleRepository>();
             services.AddScoped<IMaintenanceRepository, MaintenanceRepository>();

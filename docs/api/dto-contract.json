@@ -252,6 +252,10 @@
     "currentPassword": "string",
     "newPassword": "string"
   },
+  "Bikontrol.Application.DTOs.Users.DeleteAccountRequest": {
+    "confirmation": "string",
+    "password": "string"
+  },
   "Bikontrol.Application.DTOs.Users.ProfileDTO": {
     "createdAt": "datetime",
     "email": "string",

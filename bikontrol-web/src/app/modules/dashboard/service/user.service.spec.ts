@@ -88,4 +88,17 @@ describe('UserService (unit, mocked HttpClient)', () => {
     expect(res).toEqual(mock);
     expect(mockHttp.get).toHaveBeenCalledWith(`${service['apiUrl']}/me/export`);
   });
+
+  it('should delete the account with the confirmation word', async () => {
+    const mock = { message: 'Tu cuenta fue eliminada.' };
+    mockHttp.post.mockReturnValue(of(mock));
+
+    const res = await firstValueFrom(service.deleteAccount('secret'));
+
+    expect(res).toEqual(mock);
+    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/me/delete`, {
+      confirmation: 'ELIMINAR',
+      password: 'secret',
+    });
+  });
 });

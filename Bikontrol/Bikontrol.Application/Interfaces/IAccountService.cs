@@ -9,5 +9,12 @@ namespace Bikontrol.Application.Interfaces
         /// "download my data" flow.
         /// </summary>
         Task<UserDataExportDTO> ExportMyDataAsync();
+
+        /// <summary>
+        /// Irreversibly deletes the current user's account: purges owned data and
+        /// anonymizes the account row. Requires the confirmation word and, for
+        /// password accounts, the current password.
+        /// </summary>
+        Task DeleteMyAccountAsync(DeleteAccountRequest request);
     }
 }

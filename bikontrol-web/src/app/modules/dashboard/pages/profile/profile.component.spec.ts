@@ -46,6 +46,7 @@ describe('ProfileComponent', () => {
       changePassword: vi.fn(),
       updateReminders: vi.fn(),
       exportMyData: vi.fn(),
+      deleteAccount: vi.fn(),
     };
     authServiceMock = { isDemo: vi.fn().mockReturnValue(false), logout: vi.fn() };
     routerMock = { navigate: vi.fn() };
@@ -267,5 +268,68 @@ describe('ProfileComponent', () => {
     component.downloadMyData();
 
     expect(swalMock.error).toHaveBeenCalledWith('Error', 'boom');
+  });
+
+  it('requires the exact confirmation word to delete the account', () => {
+    const component = create().componentInstance;
+    component.deleteConfirmation.set('borrar');
+
+    component.confirmDeleteAccount();
+
+    expect(userServiceMock.deleteAccount).not.toHaveBeenCalled();
+    expect(swalMock.error).toHaveBeenCalledWith('¡Error!', 'Escribe ELIMINAR para confirmar.');
+  });
+
+  it('requires the password to delete a password account', () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    const component = create().componentInstance;
+    component.deleteConfirmation.set('ELIMINAR');
+    component.deletePassword.set('');
+
+    component.confirmDeleteAccount();
+
+    expect(userServiceMock.deleteAccount).not.toHaveBeenCalled();
+    expect(swalMock.error).toHaveBeenCalledWith('¡Error!', 'Ingresá tu contraseña para confirmar.');
+  });
+
+  it('deletes the account, logs out and navigates to login', async () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    userServiceMock.deleteAccount.mockReturnValue(of({ message: 'ok' }));
+    const component = create().componentInstance;
+    component.deleteConfirmation.set('ELIMINAR');
+    component.deletePassword.set('secret');
+
+    component.confirmDeleteAccount();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(userServiceMock.deleteAccount).toHaveBeenCalledWith('secret');
+    expect(authServiceMock.logout).toHaveBeenCalled();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('does not require a password for Google accounts', () => {
+    userServiceMock.getMeResource.mockReturnValue(
+      fakeResource({ ...profileMock, hasPassword: false }),
+    );
+    userServiceMock.deleteAccount.mockReturnValue(of({ message: 'ok' }));
+    const component = create().componentInstance;
+    component.deleteConfirmation.set('ELIMINAR');
+
+    component.confirmDeleteAccount();
+
+    expect(userServiceMock.deleteAccount).toHaveBeenCalledWith(null);
+  });
+
+  it('surfaces an error when account deletion fails', () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    userServiceMock.deleteAccount.mockReturnValue(throwError(() => ({ message: 'nope' })));
+    const component = create().componentInstance;
+    component.deleteConfirmation.set('ELIMINAR');
+    component.deletePassword.set('secret');
+
+    component.confirmDeleteAccount();
+
+    expect(swalMock.error).toHaveBeenCalledWith('Error', 'nope');
   });
 });
