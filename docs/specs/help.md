@@ -1,6 +1,6 @@
 # Help / FAQ
 
-Public, unauthenticated page at `/ayuda` (`modules/help`). Linked from the
+Public, unauthenticated page at `/help` (`modules/help`). Linked from the
 profile ("Ayuda y preguntas frecuentes") and the login/register footers.
 
 It documents the real flows — onboarding, motorcycles, maintenance, reminders,
