@@ -1,0 +1,127 @@
+<div class="min-h-screen bg-bg px-4 py-8">
+  <div class="max-w-2xl mx-auto">
+    <a routerLink="/" class="text-sm text-primary hover:underline">← Volver</a>
+
+    <h1 class="text-2xl font-bold text-primary mt-4 mb-1">Ayuda</h1>
+    <p class="text-sm text-gray-500 mb-6">Cómo usar Bikontrol, paso a paso.</p>
+
+    <div class="space-y-6 text-sm text-gray-800 leading-relaxed">
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Primeros pasos</h2>
+        <ol class="list-decimal pl-5 space-y-1">
+          <li>Creá tu cuenta y, si te lo pedimos, confirmá tu correo desde el enlace del email.</li>
+          <li>
+            En la pantalla de inicio tocá <strong>Comenzar</strong>: cargás tu moto y elegís un plan
+            de mantenimiento en un par de minutos.
+          </li>
+        </ol>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Tu moto</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Agregar una moto:</strong> desde Inicio, botón “+ Agregar motocicleta”.</li>
+          <li><strong>Editar:</strong> en la tarjeta de la moto, menú “⋮” → Editar.</li>
+          <li>
+            <strong>Actualizar kilometraje:</strong> en el resumen de la moto, ícono de lápiz junto
+            a “Kilometraje Actual”.
+          </li>
+          <li>
+            <strong>Corregir el km:</strong> “¿Te equivocaste con el kilometraje? Reviértelo aquí.”
+          </li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Mantenimiento</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>
+            <strong>Seguir uno predefinido:</strong> en “Agregar mantenimientos”, tocá “⋮” en un
+            predeterminado → Seguir, y definí el intervalo.
+          </li>
+          <li>
+            <strong>Crear uno propio:</strong> “+ Agregar mantenimiento personalizado”, con nombre,
+            descripción, tipo (Km o Tiempo) e intervalo.
+          </li>
+          <li>
+            <strong>Registrar un mantenimiento hecho:</strong> en el resumen, “+ Registrar
+            mantenimiento”, elegí cuál, fecha, km y costo (opcional).
+          </li>
+          <li>
+            <strong>Próximos:</strong> el resumen muestra cada mantenimiento con su % de vida; en
+            rojo cuando ya venció.
+          </li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Recordatorios</h2>
+        <p>
+          Bikontrol te avisa cuando un mantenimiento está por vencer (por km o por tiempo), por
+          <strong>email</strong> y, si lo activás, por <strong>notificaciones push</strong>. Podés
+          prenderlos o apagarlos en <strong>Perfil</strong>.
+        </p>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Exportar y adjuntar</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>
+            <strong>Libro de mantenimiento:</strong> en el resumen, “Exportar libro (PDF)” o
+            “Exportar (CSV)”.
+          </li>
+          <li>
+            <strong>Fotos y documentos:</strong> en cada registro, “+ Adjuntar” (facturas o fotos).
+          </li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Costos y estadísticas</h2>
+        <p>
+          Si cargás el costo al registrar un mantenimiento, en <strong>Estadísticas</strong> ves el
+          gasto total, por moto, por año y el costo por kilómetro.
+        </p>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Tu cuenta</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>
+            <strong>Descargar tus datos:</strong> Perfil → “Descargar mis datos” (archivo JSON).
+          </li>
+          <li><strong>Cambiar contraseña:</strong> Perfil → “Cambiar contraseña”.</li>
+          <li>
+            <strong>Eliminar tu cuenta:</strong> Perfil → “Eliminar mi cuenta” (borra tus datos y es
+            irreversible).
+          </li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-3">Preguntas frecuentes</h2>
+        <div class="space-y-2">
+          @for (faq of faqs; track faq.question) {
+            <details class="border border-gray-200 rounded-lg p-3">
+              <summary class="font-semibold text-gray-800 cursor-pointer">
+                {{ faq.question }}
+              </summary>
+              <p class="mt-2 text-gray-700">{{ faq.answer }}</p>
+            </details>
+          }
+        </div>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-900 mb-2">Soporte</h2>
+        <p>¿No encontrás la respuesta? Escribinos a {{ supportContact }}.</p>
+      </section>
+    </div>
+
+    <p class="text-center text-xs text-gray-500 mt-8">
+      <a routerLink="/terminos" class="hover:underline">Términos</a>
+      ·
+      <a routerLink="/privacidad" class="hover:underline">Privacidad</a>
+    </p>
+  </div>
+</div>

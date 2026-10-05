@@ -59,6 +59,12 @@ export const routes: Routes = [
       import('./modules/legal/privacy/privacy.component').then((c) => c.PrivacyComponent),
   },
 
+  // Help (public)
+  {
+    path: 'ayuda',
+    loadComponent: () => import('./modules/help/help.component').then((c) => c.HelpComponent),
+  },
+
   // Dashboard
   {
     path: 'dashboard',
