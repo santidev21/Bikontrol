@@ -63,6 +63,13 @@ export const routes: Routes = [
           import('./modules/dashboard/pages/home/home.component').then((c) => c.HomeComponent),
       },
       {
+        path: 'onboarding',
+        loadComponent: () =>
+          import('./modules/dashboard/pages/onboarding/onboarding.component').then(
+            (c) => c.OnboardingComponent,
+          ),
+      },
+      {
         path: 'motorcycles/summary',
         loadComponent: () =>
           import('./modules/dashboard/pages/motorcycles/motorcycle-summary/motorcycle-summary.component').then(
