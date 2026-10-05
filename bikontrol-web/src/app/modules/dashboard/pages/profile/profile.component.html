@@ -92,6 +92,21 @@
           </span>
         </div>
       </div>
+      <div class="profile-card mt-4">
+        <h3 class="font-semibold text-primary mb-1">Mis datos</h3>
+        <p class="text-sm text-gray-500 mb-3">
+          Descargá una copia de tu información (perfil, motos, mantenimientos y registros) en un
+          archivo JSON.
+        </p>
+        <button
+          type="button"
+          (click)="downloadMyData()"
+          [disabled]="isExporting()"
+          class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
+        >
+          {{ isExporting() ? 'Preparando…' : 'Descargar mis datos' }}
+        </button>
+      </div>
       <div class="profile-actions">
         @if (pushSupported && !isDemo()) {
           <button

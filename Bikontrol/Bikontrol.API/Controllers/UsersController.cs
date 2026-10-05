@@ -12,11 +12,13 @@ namespace Bikontrol.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuditLogService _auditLogService;
+        private readonly IAccountService _accountService;
 
-        public UsersController(IUserService userService, IAuditLogService auditLogService)
+        public UsersController(IUserService userService, IAuditLogService auditLogService, IAccountService accountService)
         {
             _userService = userService;
             _auditLogService = auditLogService;
+            _accountService = accountService;
         }
 
         [HttpGet("me")]
@@ -51,6 +53,13 @@ namespace Bikontrol.API.Controllers
         public async Task<IActionResult> GetMyActivity([FromQuery] int limit = 50)
         {
             return Ok(await _auditLogService.GetMyActivityAsync(limit));
+        }
+
+        /// <summary>Downloads everything the current user owns as one document.</summary>
+        [HttpGet("me/export")]
+        public async Task<IActionResult> ExportMyData()
+        {
+            return Ok(await _accountService.ExportMyDataAsync());
         }
     }
 }

@@ -266,5 +266,13 @@
   },
   "Bikontrol.Application.DTOs.Users.UpdateRemindersRequest": {
     "enabled": "bool"
+  },
+  "Bikontrol.Application.DTOs.Users.UserDataExportDTO": {
+    "attachments": "List\u003CMaintenanceAttachmentDTO\u003E",
+    "exportedAt": "datetime",
+    "maintenanceRecords": "List\u003CMaintenanceRecordDTO\u003E",
+    "maintenances": "List\u003CMaintenanceDTO\u003E",
+    "motorcycles": "List\u003CMotorcycleDTO\u003E",
+    "profile": "ProfileDTO"
   }
 }
