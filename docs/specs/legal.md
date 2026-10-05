@@ -2,8 +2,8 @@
 
 Public, unauthenticated pages linked from the login and register footers:
 
-- `/terminos` → Terms and Conditions (`modules/legal/terms`).
-- `/privacidad` → Privacy Policy (`modules/legal/privacy`).
+- `/terms` → Terms and Conditions (`modules/legal/terms`).
+- `/privacy` → Privacy Policy (`modules/legal/privacy`).
 
 **The copy is a template**, marked with a visible "Borrador" banner and `[COMPLETAR]`
 markers. It is scaffolding, not legal advice: the definitive text must be reviewed

@@ -49,19 +49,19 @@ export const routes: Routes = [
 
   // Legal (public)
   {
-    path: 'terminos',
+    path: 'terms',
     loadComponent: () =>
       import('./modules/legal/terms/terms.component').then((c) => c.TermsComponent),
   },
   {
-    path: 'privacidad',
+    path: 'privacy',
     loadComponent: () =>
       import('./modules/legal/privacy/privacy.component').then((c) => c.PrivacyComponent),
   },
 
   // Help (public)
   {
-    path: 'ayuda',
+    path: 'help',
     loadComponent: () => import('./modules/help/help.component').then((c) => c.HelpComponent),
   },
 
