@@ -6,5 +6,6 @@ export const rootRedirectGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return router.parseUrl(authService.isAuthenticated() ? '/dashboard' : '/login');
+  // Already signed in → straight to the dashboard. Guests get the landing page.
+  return authService.isAuthenticated() ? router.parseUrl('/dashboard') : true;
 };

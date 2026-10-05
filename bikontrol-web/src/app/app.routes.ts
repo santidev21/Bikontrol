@@ -9,7 +9,7 @@ export const routes: Routes = [
     pathMatch: 'full',
     canActivate: [rootRedirectGuard],
     loadComponent: () =>
-      import('./modules/auth/pages/login/login.component').then((c) => c.LoginComponent),
+      import('./modules/marketing/landing/landing.component').then((c) => c.LandingComponent),
   },
 
   // Auth
