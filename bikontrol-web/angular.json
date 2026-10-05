@@ -92,6 +92,29 @@
             "buildTarget": "bikontrol-web:build:development",
             "tsConfig": "tsconfig.spec.json",
             "setupFiles": ["src/setup-vitest.ts"]
+          },
+          "configurations": {
+            "coverage": {
+              "coverage": true,
+              "coverageReporters": ["text-summary", "json-summary", "cobertura", "html"],
+              "coverageInclude": ["src/**/*.ts"],
+              "coverageExclude": [
+                "src/**/*.spec.ts",
+                "src/setup-vitest.ts",
+                "src/main.ts",
+                "src/environments/**",
+                "src/app/app.config.ts",
+                "src/app/app.routes.ts",
+                "src/app/**/*.interface.ts",
+                "src/app/modules/auth/interfaces/*.model.ts"
+              ],
+              "coverageThresholds": {
+                "statements": 71,
+                "branches": 64,
+                "functions": 65,
+                "lines": 72
+              }
+            }
           }
         },
         "lint": {
