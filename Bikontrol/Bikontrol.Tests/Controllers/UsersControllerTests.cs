@@ -76,10 +76,29 @@ public class UsersControllerTests
         Assert.Same(export, ok.Value);
     }
 
+    [Fact]
+    public async Task DeleteMyAccount_ShouldForwardRequestAndReturnOk()
+    {
+        var accountService = new FakeAccountService();
+        var controller = new UsersController(new FakeUserService(), new FakeAuditLogService(), accountService);
+        var request = new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "secret" };
+
+        var result = await controller.DeleteMyAccount(request);
+
+        Assert.IsType<OkObjectResult>(result);
+        Assert.Same(request, accountService.LastDeleteRequest);
+    }
+
     private sealed class FakeAccountService : IAccountService
     {
         public UserDataExportDTO Export { get; set; } = new();
+        public DeleteAccountRequest? LastDeleteRequest { get; private set; }
         public Task<UserDataExportDTO> ExportMyDataAsync() => Task.FromResult(Export);
+        public Task DeleteMyAccountAsync(DeleteAccountRequest request)
+        {
+            LastDeleteRequest = request;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeUserService : IUserService

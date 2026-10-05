@@ -1,4 +1,5 @@
 using AutoMapper;
+using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
@@ -6,6 +7,7 @@ using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
+using Microsoft.AspNetCore.Identity;
 
 namespace Bikontrol.Tests;
 
@@ -102,35 +104,127 @@ public class AccountServiceTests
         Assert.Empty(result.Attachments);
     }
 
+    [Fact]
+    public async Task DeleteMyAccountAsync_WrongConfirmation_ShouldThrowValidation()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed:secret");
+        var accountRepository = new FakeAccountRepository();
+        var service = CreateService(user.Id, user, accountRepository: accountRepository);
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "nope", Password = "secret" }));
+
+        Assert.Equal("Escribe ELIMINAR para confirmar.", ex.Message);
+        Assert.Equal(0, accountRepository.PurgeCalls);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccountAsync_WrongPassword_ShouldThrowValidation()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed:secret");
+        var accountRepository = new FakeAccountRepository();
+        var service = CreateService(user.Id, user, accountRepository: accountRepository);
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "wrong" }));
+
+        Assert.Equal("La contraseña no es correcta.", ex.Message);
+        Assert.Equal(0, accountRepository.PurgeCalls);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccountAsync_PasswordAccount_ShouldPurgeAndAnonymize()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed:secret");
+        var userRepository = new FakeUserRepository(user);
+        var accountRepository = new FakeAccountRepository();
+        var service = CreateService(user.Id, user, userRepository: userRepository, accountRepository: accountRepository);
+
+        // Case-insensitive confirmation is accepted.
+        await service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "eliminar", Password = "secret" });
+
+        Assert.Equal(1, accountRepository.PurgeCalls);
+        Assert.Equal(user.Id, accountRepository.LastPurgedUserId);
+        Assert.Equal($"deleted+{user.Id}@bikontrol.local", user.Email);
+        Assert.Equal("Cuenta eliminada", user.FullName);
+        Assert.False(user.RemindersEnabled);
+        Assert.Equal(1, userRepository.SaveChangesCalls);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccountAsync_GoogleAccount_ShouldNotRequirePassword()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed:random");
+        user.SetAuthProvider("Google");
+        var accountRepository = new FakeAccountRepository();
+        var service = CreateService(user.Id, user, accountRepository: accountRepository);
+
+        await service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR" });
+
+        Assert.Equal(1, accountRepository.PurgeCalls);
+        Assert.Equal($"deleted+{user.Id}@bikontrol.local", user.Email);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccountAsync_WhenDemo_ShouldThrowForbidden()
+    {
+        var user = new User("demo@bikontrol.com", "Demo", "hashed:secret");
+        var accountRepository = new FakeAccountRepository();
+        var service = CreateService(user.Id, user, accountRepository: accountRepository, role: UserRole.Demo);
+
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
+            service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "secret" }));
+        Assert.Equal(0, accountRepository.PurgeCalls);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccountAsync_UnknownUser_ShouldThrowNotFound()
+    {
+        var service = CreateService(Guid.NewGuid(), null);
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "x" }));
+    }
+
     private static Motorcycle MotorcycleFor(Guid userId, string name)
         => new(name, "Yamaha", 2024, "Apodo", 150, "ABC123", userId) { Id = Guid.NewGuid() };
 
     private static AccountService CreateService(
         Guid userId,
         User? user,
+        FakeUserRepository? userRepository = null,
+        FakeAccountRepository? accountRepository = null,
         IEnumerable<Motorcycle>? motorcycles = null,
         IEnumerable<UserMaintenance>? maintenances = null,
         IEnumerable<MotorcycleMaintenanceRecord>? records = null,
         IEnumerable<MaintenanceRecordAttachment>? attachments = null,
-        IReadOnlyDictionary<Guid, int>? currentKms = null)
+        IReadOnlyDictionary<Guid, int>? currentKms = null,
+        string? role = null)
     {
         return new AccountService(
-            new FakeUserRepository(user),
+            userRepository ?? new FakeUserRepository(user),
             new FakeMotorcycleRepository(motorcycles ?? Array.Empty<Motorcycle>()),
             new FakeUserMaintenanceRepository(maintenances ?? Array.Empty<UserMaintenance>()),
             new FakeRecordRepository(records ?? Array.Empty<MotorcycleMaintenanceRecord>()),
             new FakeAttachmentRepository(attachments ?? Array.Empty<MaintenanceRecordAttachment>()),
+            accountRepository ?? new FakeAccountRepository(),
             new FakeKmHistoryService(currentKms ?? new Dictionary<Guid, int>()),
+            new FakePasswordHasher(),
+            new FakeTransactionManager(),
             Mapper,
-            new FakeCurrentUserService(userId));
+            new FakeCurrentUserService(userId, role));
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService
     {
-        public FakeCurrentUserService(Guid userId) => UserId = userId;
+        public FakeCurrentUserService(Guid userId, string? role = null)
+        {
+            UserId = userId;
+            Role = role ?? UserRole.User;
+        }
         public Guid UserId { get; }
-        public string Role => UserRole.User;
-        public bool IsDemo => false;
+        public string Role { get; }
+        public bool IsDemo => Role == UserRole.Demo;
     }
 
     private sealed class FakeUserRepository : IUserRepository
@@ -144,7 +238,12 @@ public class AccountServiceTests
             Task.FromResult<IReadOnlyList<User>>(_user is null ? Array.Empty<User>() : new[] { _user });
         public Task AddAsync(User user) => Task.CompletedTask;
         public Task UpdateAsync(User user) => Task.CompletedTask;
-        public Task SaveChangesAsync() => Task.CompletedTask;
+        public int SaveChangesCalls { get; private set; }
+        public Task SaveChangesAsync()
+        {
+            SaveChangesCalls++;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeMotorcycleRepository : IMotorcycleRepository
@@ -229,5 +328,33 @@ public class AccountServiceTests
         public Task<IReadOnlyDictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
             Task.FromResult<IReadOnlyDictionary<Guid, DateTime?>>(new Dictionary<Guid, DateTime?>());
         public Task RollbackLastKmAsync(Guid motorcycleId, int newKm) => Task.CompletedTask;
+    }
+
+    private sealed class FakePasswordHasher : IPasswordHasher<User>
+    {
+        public string HashPassword(User user, string password) => $"hashed:{password}";
+        public PasswordVerificationResult VerifyHashedPassword(User user, string hashedPassword, string providedPassword) =>
+            hashedPassword == $"hashed:{providedPassword}"
+                ? PasswordVerificationResult.Success
+                : PasswordVerificationResult.Failed;
+    }
+
+    private sealed class FakeTransactionManager : ITransactionManager
+    {
+        public Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default) => action();
+        public Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default) => action();
+    }
+
+    private sealed class FakeAccountRepository : IAccountRepository
+    {
+        public int PurgeCalls { get; private set; }
+        public Guid? LastPurgedUserId { get; private set; }
+
+        public Task PurgeUserDataAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            PurgeCalls++;
+            LastPurgedUserId = userId;
+            return Task.CompletedTask;
+        }
     }
 }

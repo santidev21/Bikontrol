@@ -61,5 +61,17 @@ namespace Bikontrol.API.Controllers
         {
             return Ok(await _accountService.ExportMyDataAsync());
         }
+
+        /// <summary>
+        /// Irreversibly deletes the current account (owned data purged, account
+        /// anonymized). Requires the confirmation word and, for password accounts,
+        /// the current password.
+        /// </summary>
+        [HttpPost("me/delete")]
+        public async Task<IActionResult> DeleteMyAccount([FromBody] DeleteAccountRequest request)
+        {
+            await _accountService.DeleteMyAccountAsync(request);
+            return Ok(new { message = "Tu cuenta fue eliminada." });
+        }
     }
 }

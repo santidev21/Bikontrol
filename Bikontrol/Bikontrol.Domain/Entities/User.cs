@@ -161,5 +161,29 @@ namespace Bikontrol.Persistence.Entities
         public bool HasPassword => AuthProvider != "Google";
 
         public bool IsDemo => Role == UserRole.Demo;
+
+        /// <summary>
+        /// Scrambles the account's personal data while keeping the row, so the
+        /// append-only audit trail keeps a stable owner reference. The email is
+        /// replaced with a unique tombstone, freeing the original address for a
+        /// future registration, and the password hash is replaced with an
+        /// unusable value. Owned data is purged separately.
+        /// </summary>
+        public void Anonymize()
+        {
+            Email = $"deleted+{Id}@bikontrol.local";
+            FullName = "Cuenta eliminada";
+            PasswordHash = $"deleted:{Guid.NewGuid():N}";
+            Role = UserRole.User;
+            AuthProvider = null;
+            ResetPasswordTokenHash = null;
+            ResetPasswordTokenExpires = null;
+            EmailConfirmationTokenHash = null;
+            EmailConfirmationTokenExpires = null;
+            EmailConfirmedAt = null;
+            AccessFailedCount = 0;
+            LockoutEnd = null;
+            RemindersEnabled = false;
+        }
     }
 }

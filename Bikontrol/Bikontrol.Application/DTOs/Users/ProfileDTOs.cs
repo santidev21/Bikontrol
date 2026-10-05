@@ -43,4 +43,18 @@ namespace Bikontrol.Application.DTOs.Users
         [MaxLength(128, ErrorMessage = "La contraseña no puede superar los 128 caracteres.")]
         public string NewPassword { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// Confirms an irreversible account deletion. <c>Confirmation</c> must be the
+    /// exact word ELIMINAR; <c>Password</c> is required for password accounts.
+    /// </summary>
+    public class DeleteAccountRequest
+    {
+        [Required(ErrorMessage = "Escribe ELIMINAR para confirmar.")]
+        [MaxLength(20)]
+        public string Confirmation { get; set; } = string.Empty;
+
+        [MaxLength(128)]
+        public string? Password { get; set; }
+    }
 }
