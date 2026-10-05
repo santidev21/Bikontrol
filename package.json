@@ -22,6 +22,7 @@
     "build:api": "dotnet build Bikontrol/Bikontrol.sln",
     "test": "npm run test:ui && npm run test:api",
     "test:ui": "npm --prefix bikontrol-web run test",
+    "test:ui:coverage": "npm --prefix bikontrol-web run test:coverage",
     "test:api": "dotnet test Bikontrol/Bikontrol.sln",
     "db:update": "dotnet ef database update --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",
     "db:migration:add": "dotnet ef migrations add --project Bikontrol/Bikontrol.Persistence/Bikontrol.Persistence.csproj --startup-project Bikontrol/Bikontrol.API/Bikontrol.API.csproj",

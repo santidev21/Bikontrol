@@ -84,9 +84,17 @@ jobs:
         working-directory: bikontrol-web
         run: npm run format:check
 
-      - name: Run frontend tests
+      - name: Run frontend tests with coverage
         working-directory: bikontrol-web
-        run: npm test
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: bikontrol-web/coverage/
+          retention-days: 7
 
       # The production build runs prebuild (scripts/set-env.js) and the AOT
       # compiler, which the unit tests do not. Build it here so a broken
