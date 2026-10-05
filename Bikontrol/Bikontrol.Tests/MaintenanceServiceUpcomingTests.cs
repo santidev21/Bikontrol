@@ -159,8 +159,40 @@ public class MaintenanceServiceUpcomingTests
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
+        var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
             service.GetUpcomingByMotorcyclesAsync(new[] { owned, foreign }));
+        Assert.Equal("No tienes permisos para ver estas motocicletas.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetUpcomingByMotorcyclesAsync_ShouldOrderMostUrgentFirstThenByName()
+    {
+        var userId = Guid.NewGuid();
+        var motoA = Guid.NewGuid();
+
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
+        var service = new MaintenanceService(
+            new FakeMaintenanceRepository(),
+            new FakeUserMaintenanceRepository(new List<UserMaintenance>
+            {
+                new() { Id = Guid.NewGuid(), UserId = userId, MotorcycleId = motoA, Name = "ZUrgent", TrackingType = "Km", KmInterval = 500, IsEnabled = true },
+                new() { Id = Guid.NewGuid(), UserId = userId, MotorcycleId = motoA, Name = "BFresh", TrackingType = "Km", KmInterval = 1000, IsEnabled = true },
+                new() { Id = Guid.NewGuid(), UserId = userId, MotorcycleId = motoA, Name = "AFresh", TrackingType = "Km", KmInterval = 1000, IsEnabled = true }
+            }),
+            new FakeMotorcycleRepository(CreateMotorcycle(motoA, userId)),
+            new FakeKmHistoryService(500),
+            new FakeRecordRepository(),
+            mapper,
+            new FakeCurrentUserService(userId),
+            new FakeTransactionManager());
+
+        var result = await service.GetUpcomingByMotorcyclesAsync(new[] { motoA });
+
+        var ordered = result[motoA];
+        Assert.Equal(3, ordered.Count);
+        Assert.Equal("ZUrgent", ordered[0].Name);   // 0% life (most urgent)
+        Assert.Equal("AFresh", ordered[1].Name);    // 50%, tie broken by name asc
+        Assert.Equal("BFresh", ordered[2].Name);
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService
