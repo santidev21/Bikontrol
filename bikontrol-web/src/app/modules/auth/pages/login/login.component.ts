@@ -121,6 +121,15 @@ export class LoginComponent implements AfterViewInit {
   private renderGoogleButton(): void {
     if (!window.google?.accounts?.id) return;
 
+    // No client id => Google throws "Missing required parameter: client_id".
+    // Skip rendering the button instead of sending users to a Google error page.
+    if (!environment.googleClientId) {
+      if (typeof console !== 'undefined') {
+        console.warn('[auth] Google client id is not configured; hiding Google sign-in.');
+      }
+      return;
+    }
+
     window.google.accounts.id.initialize({
       client_id: environment.googleClientId,
       callback: (response: { credential?: string }) => this.onGoogleCredential(response),

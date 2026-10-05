@@ -102,6 +102,10 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.web
+      args:
+        # Public Google OAuth client id, baked into the bundle. Sourced from the
+        # deploy .env (Google__ClientId); empty disables the Google button.
+        GOOGLE_CLIENT_ID: ${Google__ClientId:-}
     container_name: bikontrol
     restart: unless-stopped
     depends_on:

@@ -2,6 +2,10 @@
 # Node 24: Angular 22 CLI requires Node >=22.22.3 / >=24.15.0.
 FROM node:24-alpine AS build
 ARG API_URL=https://bikontrol.santidev21.tech/api
+# Public Google OAuth client id for "Sign in with Google". Baked into the bundle
+# at build time (set-env.js reads GOOGLE_CLIENT_ID). Public value, no secret.
+ARG GOOGLE_CLIENT_ID=
+ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
 WORKDIR /src
 
 COPY bikontrol-web/package.json bikontrol-web/package-lock.json ./
