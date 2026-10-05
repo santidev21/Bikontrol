@@ -17,6 +17,11 @@ RUN npm ci --no-audit --no-fund
 
 COPY bikontrol-web/ ./
 
+# App version shown on the Profile screen. release-please owns version.txt at the
+# repo root; set-env.js (prebuild) reads ../../version.txt, so place it at
+# /version.txt inside the image.
+COPY version.txt /version.txt
+
 RUN npm run build
 
 # Serve stage — unprivileged nginx (runs as non-root nginx user, listens on 8080)

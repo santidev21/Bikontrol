@@ -1,0 +1,25 @@
+name: Release
+
+# release-please maintains CHANGELOG.md and the product version (version.txt,
+# mirrored into bikontrol-web/package.json) from Conventional Commits. It opens
+# a "release" PR; merging that PR creates the GitHub Release and tag. It runs on
+# push to main only, so it never blocks a feature PR.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run release-please
+        # Pinned to v4 (commit SHA) — third-party action.
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

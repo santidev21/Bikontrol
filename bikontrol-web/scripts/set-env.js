@@ -31,8 +31,19 @@ const fileEnv = parseEnvFile(envPath);
 const googleClientId =
   process.env.GOOGLE_CLIENT_ID || fileEnv.GOOGLE_CLIENT_ID || fileEnv.Google__ClientId || '';
 
-// Etiqueta visible en Perfil. Súbela solo en releases con cambios visibles (no en cada commit).
-const appVersion = '0.1.0';
+// Etiqueta visible en Perfil. Fuente única: el `version.txt` de la raíz, que
+// mantiene release-please. En Docker el archivo se copia a `/version.txt`
+// (ver docker/Dockerfile.web).
+const appVersion = readVersion();
+
+function readVersion() {
+  try {
+    const raw = fs.readFileSync(path.resolve(__dirname, '..', '..', 'version.txt'), 'utf-8');
+    return raw.trim() || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
 
 // Public demo tenant. Must match the API's Demo:Enabled flag (Demo__Enabled in
 // .env). Defaults to false so a production build never shows the demo button
