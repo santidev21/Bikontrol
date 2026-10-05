@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../service/user.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -19,7 +19,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './profile.component.scss',
