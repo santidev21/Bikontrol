@@ -1,0 +1,103 @@
+<div class="min-h-screen bg-bg px-4 py-8">
+  <div class="max-w-2xl mx-auto">
+    <a routerLink="/" class="text-sm text-primary hover:underline">← Volver</a>
+
+    <h1 class="text-2xl font-bold text-primary mt-4 mb-1">Política de Privacidad</h1>
+    <p class="text-xs text-gray-500 mb-4">Última actualización: {{ lastUpdated }}</p>
+
+    <div class="bg-amber-50 border border-amber-300 text-amber-900 rounded-lg p-3 mb-6 text-sm">
+      <strong>Borrador.</strong> Este texto es una plantilla inicial generada como andamiaje, no
+      asesoría legal. Reemplazá las secciones marcadas con <code>[COMPLETAR]</code> por tu versión
+      definitiva y hacela revisar por un profesional antes de publicar.
+    </div>
+
+    <div class="space-y-5 text-sm text-gray-800 leading-relaxed">
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">1. Responsable del tratamiento</h2>
+        <p>[COMPLETAR: nombre/razón social, domicilio y datos de contacto del responsable].</p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">2. Qué datos tratamos</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Datos de cuenta: nombre, correo y (si te registrás con contraseña) su hash.</li>
+          <li>
+            Datos de tus motos y mantenimientos: marca, modelo, kilometraje, servicios, costos.
+          </li>
+          <li>Imágenes que subís (fotos de motos y comprobantes de mantenimiento).</li>
+          <li>Si iniciás sesión con Google: identificador y correo verificados por Google.</li>
+          <li>Si activás notificaciones push: el identificador de suscripción de tu navegador.</li>
+          <li>Registros técnicos mínimos (p. ej. direcciones IP para límites de seguridad).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">3. Para qué usamos los datos</h2>
+        <p>
+          Para prestarte el servicio: gestionar tu cuenta, calcular y recordar mantenimientos,
+          mostrarte estadísticas y enviarte correos transaccionales (confirmación de cuenta,
+          recuperación de contraseña, recordatorios de mantenimiento).
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">4. Base legal</h2>
+        <p>
+          [COMPLETAR: base jurídica aplicable (consentimiento, ejecución del contrato, interés
+          legítimo)].
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">5. Con quién compartimos</h2>
+        <p>
+          No vendemos tus datos. Usamos proveedores que los procesan por nosotros: Google (inicio de
+          sesión), un servicio de correo (SMTP) para los emails y el proveedor de hosting/base de
+          datos donde se alojan. [COMPLETAR: lista de encargados y ubicación de los servidores].
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">6. Cuánto tiempo los conservamos</h2>
+        <p>
+          Mientras tu cuenta esté activa. Si eliminás tu cuenta, borramos tus datos personales y
+          anonimizamos el registro (ver más abajo).
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">7. Tus derechos</h2>
+        <p>
+          Podés ejercer tus derechos de acceso, rectificación y supresión desde tu perfil: usá
+          <strong>“Descargar mis datos”</strong> para obtener una copia y
+          <strong>“Eliminar mi cuenta”</strong> para borrar tu cuenta y tus datos. Para otros
+          pedidos (portabilidad, oposición, etc.) escribinos a {{ contactEmail }}. [COMPLETAR:
+          autoridad de control competente].
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">8. Seguridad</h2>
+        <p>
+          Aplicamos medidas técnicas razonables: contraseñas con sal, sesiones con tokens rotados,
+          acceso a la base de datos restringido a la red interna del servidor y cabeceras de
+          seguridad.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">9. Cambios</h2>
+        <p>Si actualizamos esta política, lo indicaremos en la fecha de “última actualización”.</p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-gray-900 mb-1">10. Contacto</h2>
+        <p>Consultas sobre privacidad: {{ contactEmail }}.</p>
+      </section>
+    </div>
+
+    <p class="text-sm text-primary mt-8">
+      Ver también los <a routerLink="/terminos" class="underline">Términos y Condiciones</a>.
+    </p>
+  </div>
+</div>
