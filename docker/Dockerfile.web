@@ -1,11 +1,15 @@
 # Bikontrol frontend (Angular 22) — build stage
 # Node 24: Angular 22 CLI requires Node >=22.22.3 / >=24.15.0.
 FROM node:24-alpine AS build
-ARG API_URL=https://bikontrol.santidev21.tech/api
 # Public Google OAuth client id for "Sign in with Google". Baked into the bundle
 # at build time (set-env.js reads GOOGLE_CLIENT_ID). Public value, no secret.
 ARG GOOGLE_CLIENT_ID=
 ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+# API base URL baked into the prod bundle. `prebuild` (set-env.js) reads API_URL,
+# so the value must be set before `npm run build` (post-build rewrites of the
+# hashed .js invalidate ngsw.json integrity and break the service worker).
+ARG API_URL=https://bikontrol.santidev21.tech/api
+ENV API_URL=${API_URL}
 WORKDIR /src
 
 COPY bikontrol-web/package.json bikontrol-web/package-lock.json ./
@@ -13,10 +17,6 @@ RUN npm ci --no-audit --no-fund
 
 COPY bikontrol-web/ ./
 
-# La API URL se fija ANTES del build. Reescribir los .js ya hasheados después
-# (como se hacía antes) invalida los hashes de integridad de ngsw.json y rompe
-# la verificación del service worker.
-RUN sed -i "s|apiUrl: '[^']*'|apiUrl: '${API_URL}'|" src/environments/environment.prod.ts
 RUN npm run build
 
 # Serve stage — unprivileged nginx (runs as non-root nginx user, listens on 8080)

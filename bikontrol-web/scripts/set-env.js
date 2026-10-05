@@ -61,15 +61,14 @@ function writeEnv(file, apiUrl, production, demoEnabled) {
 // Dev mirrors Development (demo on by default); prod defaults the demo off.
 const prodDemoEnabled = readDemoEnabled();
 const envDir = path.resolve(__dirname, '..', 'src', 'environments');
+// Producer URL: overridable via API_URL so the container can point the bundle at
+// a same-origin `/api` (E2E) or another host without editing source. Defaults to
+// the production URL.
+const prodApiUrl = process.env.API_URL || 'https://bikontrol.santidev21.tech/api';
 // Dev usa HTTP plano (:5202) para no pelear con el cert autofirmado de Kestrel
 // en el navegador (ERR_CERT_AUTHORITY_INVALID). Prod mantiene su HTTPS real.
 writeEnv(path.join(envDir, 'environment.ts'), 'http://localhost:5202/api', false, true);
-writeEnv(
-  path.join(envDir, 'environment.prod.ts'),
-  'https://bikontrol.santidev21.tech/api',
-  true,
-  prodDemoEnabled,
-);
+writeEnv(path.join(envDir, 'environment.prod.ts'), prodApiUrl, true, prodDemoEnabled);
 console.log(
-  `environment.ts and environment.prod.ts generated (prod demoEnabled=${prodDemoEnabled})`,
+  `environment.ts and environment.prod.ts generated (prod apiUrl=${prodApiUrl}, prod demoEnabled=${prodDemoEnabled})`,
 );

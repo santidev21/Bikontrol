@@ -89,6 +89,9 @@ export class MaintenancePageComponent implements OnInit {
   }
 
   goToAddMaintenance(): void {
-    this.router.navigate(['/dashboard/motorcycles', this.motorcycleId(), 'maintenance/add']);
+    // `maintenance/add` must be two path segments: a slash inside a single array
+    // element is URL-encoded and the route would never match (falls back to the
+    // dashboard catch-all).
+    this.router.navigate(['/dashboard/motorcycles', this.motorcycleId(), 'maintenance', 'add']);
   }
 }
