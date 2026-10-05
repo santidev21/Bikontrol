@@ -196,6 +196,16 @@ Deploys happen automatically on push to `main` via GitHub Actions. Each deploy b
 
 ---
 
+## Releases
+
+Versioning and the changelog are automated with
+[release-please](https://github.com/googleapis/release-please) (`.github/workflows/release.yml`): from
+**Conventional Commits** it opens a release PR that updates [`CHANGELOG.md`](CHANGELOG.md) and
+`version.txt`; merging it tags `vX.Y.Z` and publishes the GitHub Release. The version shown on the
+Profile screen is read from `version.txt`.
+
+---
+
 ## Screenshots
 
 The images live in [`docs/screenshots/`](docs/screenshots/) (see that folder's README for how to
