@@ -32,12 +32,12 @@ describe('rootRedirectGuard', () => {
     expect(result).toEqual({ redirectedTo: '/dashboard' });
   });
 
-  it('should redirect to /login for guests', () => {
+  it('should allow guests through to the landing page', () => {
     authService.isAuthenticated.mockReturnValue(false);
 
     const result = TestBed.runInInjectionContext(() => rootRedirectGuard({} as any, {} as any));
 
-    expect(router.parseUrl).toHaveBeenCalledWith('/login');
-    expect(result).toEqual({ redirectedTo: '/login' });
+    expect(result).toBe(true);
+    expect(router.parseUrl).not.toHaveBeenCalled();
   });
 });
