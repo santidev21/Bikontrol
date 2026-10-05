@@ -55,6 +55,7 @@ export class ProfileComponent {
   readonly pushSupported = this.pushService.isSupported;
   readonly remindersEnabled = computed(() => this.profile()?.remindersEnabled ?? false);
   readonly pushBusy = signal(false);
+  readonly isExporting = signal(false);
 
   readonly isDemo = computed(() => this.authService.isDemo());
   readonly canChangePassword = computed(() => !!this.profile()?.hasPassword && !this.isDemo());
@@ -194,5 +195,30 @@ export class ProfileComponent {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  downloadMyData(): void {
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+    this.userService.exportMyData().subscribe({
+      next: (data) => {
+        this.isExporting.set(false);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `bikontrol-mis-datos-${new Date().toISOString().slice(0, 10)}.json`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.swal.success('¡Listo!', 'Descargamos tus datos en un archivo JSON.');
+      },
+      error: (err) => {
+        this.isExporting.set(false);
+        this.swal.error(
+          'Error',
+          this.httpError.message(err, 'No se pudieron descargar tus datos.'),
+        );
+      },
+    });
   }
 }

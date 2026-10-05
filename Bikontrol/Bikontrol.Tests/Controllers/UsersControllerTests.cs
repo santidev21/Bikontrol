@@ -13,7 +13,7 @@ public class UsersControllerTests
     {
         var profile = new ProfileDTO { Id = Guid.NewGuid(), Email = "a@b.c", FullName = "Santi", HasPassword = true };
         var service = new FakeUserService { Profile = profile };
-        var controller = new UsersController(service, new FakeAuditLogService());
+        var controller = new UsersController(service, new FakeAuditLogService(), new FakeAccountService());
 
         var result = await controller.GetMe();
 
@@ -26,7 +26,7 @@ public class UsersControllerTests
     {
         var profile = new ProfileDTO { Id = Guid.NewGuid(), FullName = "New" };
         var service = new FakeUserService { Profile = profile };
-        var controller = new UsersController(service, new FakeAuditLogService());
+        var controller = new UsersController(service, new FakeAuditLogService(), new FakeAccountService());
         var request = new UpdateProfileRequest { FullName = "New" };
 
         var result = await controller.UpdateMe(request);
@@ -40,7 +40,7 @@ public class UsersControllerTests
     public async Task ChangePassword_ShouldForwardRequestAndReturnOk()
     {
         var service = new FakeUserService();
-        var controller = new UsersController(service, new FakeAuditLogService());
+        var controller = new UsersController(service, new FakeAuditLogService(), new FakeAccountService());
         var request = new ChangePasswordRequest { CurrentPassword = "old", NewPassword = "newsecret" };
 
         var result = await controller.ChangePassword(request);
@@ -54,13 +54,32 @@ public class UsersControllerTests
     {
         var entries = new List<AuditLogDTO> { new() { Id = 1, EntityName = "Motorcycle", Action = "Created" } };
         var auditService = new FakeAuditLogService { Activity = entries };
-        var controller = new UsersController(new FakeUserService(), auditService);
+        var controller = new UsersController(new FakeUserService(), auditService, new FakeAccountService());
 
         var result = await controller.GetMyActivity(10);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         Assert.Same(entries, ok.Value);
         Assert.Equal(10, auditService.LastLimit);
+    }
+
+    [Fact]
+    public async Task ExportMyData_ShouldReturnOkWithExport()
+    {
+        var export = new UserDataExportDTO { ExportedAt = DateTime.UtcNow, Profile = new ProfileDTO { Email = "a@b.c" } };
+        var accountService = new FakeAccountService { Export = export };
+        var controller = new UsersController(new FakeUserService(), new FakeAuditLogService(), accountService);
+
+        var result = await controller.ExportMyData();
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(export, ok.Value);
+    }
+
+    private sealed class FakeAccountService : IAccountService
+    {
+        public UserDataExportDTO Export { get; set; } = new();
+        public Task<UserDataExportDTO> ExportMyDataAsync() => Task.FromResult(Export);
     }
 
     private sealed class FakeUserService : IUserService

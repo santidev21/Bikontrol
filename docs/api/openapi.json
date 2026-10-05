@@ -1133,6 +1133,18 @@
           }
         }
       }
+    },
+    "/api/Users/me/export": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {

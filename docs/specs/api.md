@@ -58,6 +58,7 @@
 - `POST /api/users/me/password` (`{ currentPassword, newPassword }`; 400 for Google-only accounts)
 - `PUT /api/users/me/reminders` (`{ enabled }`)
 - `GET /api/users/me/activity` (the current user's audit trail, newest first; `?limit` 1–200, default 50)
+- `GET /api/users/me/export` (everything the current user owns as one JSON document: profile, motorcycles, maintenances, maintenance records and attachments; "download my data")
 
 ## Contract snapshots (client sync)
 

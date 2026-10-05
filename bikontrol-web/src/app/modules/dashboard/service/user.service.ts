@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { Profile } from '../interfaces/profile.interface';
+import { Profile, UserDataExport } from '../interfaces/profile.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -34,5 +34,10 @@ export class UserService {
 
   updateReminders(enabled: boolean): Observable<Profile> {
     return this.http.put<Profile>(`${this.apiUrl}/me/reminders`, { enabled });
+  }
+
+  /** Downloads everything the current user owns as one JSON document. */
+  exportMyData(): Observable<UserDataExport> {
+    return this.http.get<UserDataExport>(`${this.apiUrl}/me/export`);
   }
 }

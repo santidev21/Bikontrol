@@ -71,4 +71,21 @@ describe('UserService (unit, mocked HttpClient)', () => {
       newPassword: 'newsecret',
     });
   });
+
+  it('should download the user data export', async () => {
+    const mock: any = {
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: { id: '1' },
+      motorcycles: [],
+      maintenances: [],
+      maintenanceRecords: [],
+      attachments: [],
+    };
+    mockHttp.get.mockReturnValue(of(mock));
+
+    const res = await firstValueFrom(service.exportMyData());
+
+    expect(res).toEqual(mock);
+    expect(mockHttp.get).toHaveBeenCalledWith(`${service['apiUrl']}/me/export`);
+  });
 });

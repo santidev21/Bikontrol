@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { UpdateService } from '../../../../shared/services/update.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -45,6 +45,7 @@ describe('ProfileComponent', () => {
       updateProfile: vi.fn(),
       changePassword: vi.fn(),
       updateReminders: vi.fn(),
+      exportMyData: vi.fn(),
     };
     authServiceMock = { isDemo: vi.fn().mockReturnValue(false), logout: vi.fn() };
     routerMock = { navigate: vi.fn() };
@@ -238,5 +239,33 @@ describe('ProfileComponent', () => {
 
     expect(authServiceMock.logout).toHaveBeenCalled();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('downloads the user data and confirms', () => {
+    const createObjectUrl = vi.fn(() => 'blob:mock');
+    const revokeObjectUrl = vi.fn();
+    (URL as any).createObjectURL = createObjectUrl;
+    (URL as any).revokeObjectURL = revokeObjectUrl;
+    userServiceMock.exportMyData.mockReturnValue(of({ exportedAt: 'x' }));
+    const component = create().componentInstance;
+
+    component.downloadMyData();
+
+    expect(userServiceMock.exportMyData).toHaveBeenCalled();
+    expect(createObjectUrl).toHaveBeenCalled();
+    expect(revokeObjectUrl).toHaveBeenCalled();
+    expect(swalMock.success).toHaveBeenCalledWith(
+      '¡Listo!',
+      'Descargamos tus datos en un archivo JSON.',
+    );
+  });
+
+  it('surfaces an error when the data export fails', () => {
+    userServiceMock.exportMyData.mockReturnValue(throwError(() => ({ message: 'boom' })));
+    const component = create().componentInstance;
+
+    component.downloadMyData();
+
+    expect(swalMock.error).toHaveBeenCalledWith('Error', 'boom');
   });
 });
