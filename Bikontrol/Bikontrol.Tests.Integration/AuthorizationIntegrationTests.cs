@@ -70,7 +70,7 @@ public sealed class AuthorizationIntegrationTests
         // Its own client IP so this test does not spend the per-IP auth rate
         // limit of the rest of the suite (which shares the "unknown" partition).
         var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, "203.0.113.250");
+        client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
 
         var email = $"locked-{Guid.NewGuid():N}@bikontrol.test";
         var register = await client.PostAsJsonAsync("/api/auth/register", new

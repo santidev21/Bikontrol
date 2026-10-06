@@ -22,8 +22,8 @@ public sealed class RateLimitIntegrationTests
     public async Task AuthLogin_WhenExceedingPerIpLimit_ShouldReturn429()
     {
         var client = _factory.CreateClient();
-        // TEST-NET-3 address unique to this test run -> its own limiter partition.
-        var clientIp = $"203.0.113.{Random.Shared.Next(1, 254)}";
+        // A unique client IP per run -> its own limiter partition.
+        var clientIp = TestClientIps.Next();
 
         var statuses = new List<HttpStatusCode>();
         for (var attempt = 0; attempt < PermitLimit + 1; attempt++)
