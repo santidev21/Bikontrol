@@ -37,7 +37,7 @@ Bikontrol/
 Clean Architecture layers: `API` (controllers) → `Application` (services, DTOs; AutoMapper 12 pinned) → `Domain` (entities with soft deletes) → `Persistence` (EF Core, `DbContext`, migrations) + `Infrastructure` → `Shared`. In Development the API takes DB/JWT values from `.env` via the root scripts (fallback: `Bikontrol.API/appsettings.Development.json`, gitignored, created from the committed `.example` template). Repositories never persist on their own — services (or `ITransactionManager`) call `SaveChangesAsync`; integration tests (`Bikontrol.Tests.Integration`, Testcontainers + Postgres) pin the write paths because the unit fakes do not persist.
 
 ## Frontend Architecture
-Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Vitest via Angular's `@angular/build:unit-test` builder (`npm test` → `ng test --watch=false`), zoneless.
+Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config.json`, SweetAlert2 dialogs). Tests are Vitest via Angular's `@angular/build:unit-test` builder (`npm test` → `ng test --watch=false`), zoneless. i18n is runtime and dependency-free (`shared/i18n`, Spanish default, ES/EN switcher; see `docs/specs/i18n.md`).
 
 ## Quality Gates & Delivery
 - Backend line coverage gate **80%** (`node scripts/check-coverage.mjs 80`, merged cobertura). Frontend coverage gate via Vitest v8 (`npm run test:ui:coverage`; thresholds in `bikontrol-web/angular.json`) scoped to TS logic (templates/bootstrap excluded) and ratcheted up over time — current baseline ~74% lines.

@@ -10,3 +10,4 @@ Detail specs for Bikontrol. Start with [AGENTS.md](../../AGENTS.md) for the proj
 - [legal.md](legal.md) — public Terms/Privacy pages (templates pending legal review)
 - [help.md](help.md) — public Help/FAQ page (how-to + FAQ)
 - [landing.md](landing.md) — public root landing page (value prop + CTAs)
+- [i18n.md](i18n.md) — runtime internationalization (Spanish default, English, switcher)
