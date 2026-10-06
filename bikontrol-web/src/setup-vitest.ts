@@ -2,6 +2,19 @@
 // @angular/build:unit-test runner (zoneless), so nothing to do here except
 // polyfills that jsdom does not provide.
 
+import { beforeEach } from 'vitest';
+
+// Each test starts with default preferences (e.g. language = Spanish); the i18n
+// service persists the chosen language in localStorage, which is shared between
+// test files when isolation is off.
+beforeEach(() => {
+  try {
+    localStorage.clear();
+  } catch {
+    // localStorage may be unavailable; ignore.
+  }
+});
+
 // jsdom does not implement IntersectionObserver, required by @defer (on viewport).
 if (typeof (globalThis as any).IntersectionObserver === 'undefined') {
   class MockIntersectionObserver {

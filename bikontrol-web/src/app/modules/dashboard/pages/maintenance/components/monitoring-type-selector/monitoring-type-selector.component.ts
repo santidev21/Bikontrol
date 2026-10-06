@@ -1,9 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
+import { TranslatePipe } from '../../../../../../shared/i18n/translate.pipe';
+
 @Component({
   selector: 'app-monitoring-type-selector',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './monitoring-type-selector.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './monitoring-type-selector.component.scss',

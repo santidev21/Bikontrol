@@ -8,7 +8,7 @@
     role="presentation"
     (click)="$event.stopPropagation()"
   >
-    <h2 class="text-2xl font-bold mb-2 text-gray-800">Seguir Mantenimiento</h2>
+    <h2 class="text-2xl font-bold mb-2 text-gray-800">{{ 'follow.title' | t }}</h2>
     <p class="text-gray-700 font-medium mb-4">{{ maintenance().name }}</p>
     <form [formGroup]="followForm" (ngSubmit)="onConfirm()" class="space-y-4">
       <app-monitoring-type-selector
@@ -21,14 +21,14 @@
           (click)="onClose()"
           class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
-          Cancelar
+          {{ 'common.cancel' | t }}
         </button>
         <button
           type="submit"
           [disabled]="isFollowing()"
           class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
         >
-          {{ isFollowing() ? 'Guardando...' : 'Agregar Mantenimiento' }}
+          {{ (isFollowing() ? 'follow.submitting' : 'follow.submit') | t }}
         </button>
       </div>
     </form>
