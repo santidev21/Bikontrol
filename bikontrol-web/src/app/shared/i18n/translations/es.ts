@@ -5,7 +5,7 @@ export const es: Record<string, string> = {
   // Common
   'common.email': 'Correo',
   'common.emailPlaceholder': 'correo@example.com',
-  'common.password': 'Contraseña',
+  'common.password': 'Contraseña', // NOSONAR: i18n label, not a credential
   'common.newPassword': 'Nueva contraseña',
   'common.confirmPassword': 'Confirmar contraseña',
   'common.emailRequired': 'El correo es obligatorio.',

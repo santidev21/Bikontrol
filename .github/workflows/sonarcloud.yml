@@ -83,7 +83,14 @@ jobs:
             # repetition is tool output, not something to factor out, so exclude
             # the Migrations folder from copy-paste detection. Migration Up is
             # still executed by the integration fixture and reviewed in the PR.
-            "/d:sonar.cpd.exclusions=**/Migrations/**"
+            #
+            # Also excluded from copy-paste detection:
+            #  - i18n dictionaries: `es` and `en` mirror each other by design
+            #    (same keys, translated values), which CPD reads as duplication.
+            #  - component templates: Tailwind markup (cards, form fields) is
+            #    presentation, not logic; factoring it out adds indirection with
+            #    no behavioural gain.
+            "/d:sonar.cpd.exclusions=**/Migrations/**,**/shared/i18n/translations/*.ts,**/*.html"
           )
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             args+=(
