@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AUTH_IMPORTS } from '../../auth-imports';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
 import { environment } from '@env/environment';
 
 declare global {
@@ -25,6 +26,7 @@ export class LoginComponent implements AfterViewInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private httpError = inject(HttpErrorService);
+  private i18n = inject(I18nService);
 
   loginForm: FormGroup;
   readonly submitted = signal(false);
@@ -93,9 +95,9 @@ export class LoginComponent implements AfterViewInit {
     this.resendLoading.set(true);
     this.resendMessage.set(null);
     this.authService.resendConfirmation(email).subscribe({
-      next: (response) => {
+      next: () => {
         this.resendLoading.set(false);
-        this.resendMessage.set(response.message);
+        this.resendMessage.set(this.i18n.t('auth.login.resendSent'));
       },
       error: (error) => {
         this.resendLoading.set(false);
@@ -113,7 +115,7 @@ export class LoginComponent implements AfterViewInit {
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
         this.demoLoading.set(false);
-        this.errorMessage.set(this.httpError.message(error, 'No se pudo iniciar la demo.'));
+        this.errorMessage.set(this.httpError.message(error, this.i18n.t('auth.login.demoError')));
       },
     });
   }
@@ -148,7 +150,7 @@ export class LoginComponent implements AfterViewInit {
 
   onGoogleCredential(response: { credential?: string }): void {
     if (!response?.credential) {
-      this.errorMessage.set('No se pudo obtener la credencial de Google.');
+      this.errorMessage.set(this.i18n.t('auth.login.googleError'));
       return;
     }
 

@@ -2,7 +2,11 @@
   class="bg-gray-800 text-white shadow-md p-4 flex items-center justify-between fixed w-full z-20"
 >
   @if (!showBackButton) {
-    <button (click)="toggleSidebar()" class="p-2 rounded hover:bg-gray-700" aria-label="Abrir menú">
+    <button
+      (click)="toggleSidebar()"
+      class="p-2 rounded hover:bg-gray-700"
+      [attr.aria-label]="'nav.openMenu' | t"
+    >
       <svg
         aria-hidden="true"
         xmlns="http://www.w3.org/2000/svg"
@@ -16,7 +20,11 @@
     </button>
   }
   @if (showBackButton) {
-    <button (click)="goBack()" class="p-2 rounded hover:bg-gray-700" aria-label="Volver">
+    <button
+      (click)="goBack()"
+      class="p-2 rounded hover:bg-gray-700"
+      [attr.aria-label]="'nav.back' | t"
+    >
       <svg
         aria-hidden="true"
         xmlns="http://www.w3.org/2000/svg"
@@ -32,14 +40,14 @@
 
   <div class="flex items-center gap-2">
     <img src="logo.webp" alt="Bikontrol logo" class="h-8 w-auto" />
-    <span class="text-xl font-bold">Bikontrol</span>
+    <span class="text-xl font-bold">{{ 'app.name' | t }}</span>
   </div>
 
   <div class="relative">
     <button
       (click)="toggleProfile()"
       class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center"
-      aria-label="Abrir menú de perfil"
+      [attr.aria-label]="'nav.profileMenu' | t"
       [attr.aria-expanded]="profileOpen()"
     >
       <svg
@@ -57,12 +65,15 @@
     </button>
 
     @if (profileOpen()) {
-      <ul class="absolute right-0 mt-2 w-36 bg-white text-gray-800 rounded shadow-lg">
+      <ul class="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg">
         <li class="px-4 py-2 hover:bg-gray-100">
-          <a routerLink="/dashboard/profile" (click)="toggleProfile()">Mi perfil</a>
+          <a routerLink="/dashboard/profile" (click)="toggleProfile()">{{ 'nav.myProfile' | t }}</a>
         </li>
         <li class="px-4 py-2 hover:bg-gray-100">
-          <button (click)="logout()">Cerrar sesión</button>
+          <app-language-switcher />
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-100">
+          <button (click)="logout()">{{ 'nav.logout' | t }}</button>
         </li>
       </ul>
     }
@@ -74,14 +85,14 @@
   [class.translate-x-0]="sidebarOpen()"
   [class.-translate-x-full]="!sidebarOpen()"
 >
-  <div class="p-4 font-bold text-xl border-b border-gray-700">Menú</div>
+  <div class="p-4 font-bold text-xl border-b border-gray-700">{{ 'nav.menu' | t }}</div>
   <ul class="mt-4 flex flex-col gap-2">
     <li>
       <a
         routerLink="/dashboard/home"
         (click)="closeSidebar()"
         class="block px-4 py-2 hover:bg-gray-700 rounded"
-        >Inicio</a
+        >{{ 'nav.home' | t }}</a
       >
     </li>
     <li>
@@ -89,7 +100,7 @@
         routerLink="/dashboard/statistics"
         (click)="closeSidebar()"
         class="block px-4 py-2 hover:bg-gray-700 rounded"
-        >Estadísticas</a
+        >{{ 'nav.statistics' | t }}</a
       >
     </li>
   </ul>

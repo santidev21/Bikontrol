@@ -51,7 +51,7 @@ describe('ConfirmEmailComponent', () => {
 
     expect(authServiceMock.confirmEmail).toHaveBeenCalledWith('user@example.com', 'token-abc');
     expect(component.success()).toBe(true);
-    expect(component.successMessage()).toBe('Correo confirmado.');
+    expect(component.successMessage()).toBe('Correo confirmado. Ya puedes iniciar sesión.');
     expect(component.loading()).toBe(false);
   });
 

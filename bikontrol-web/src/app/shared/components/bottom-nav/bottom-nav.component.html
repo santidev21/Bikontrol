@@ -15,13 +15,13 @@
         />
       </svg>
     </span>
-    <span class="text-xs">Inicio</span>
+    <span class="text-xs">{{ 'nav.home' | t }}</span>
   </a>
 
   <a
     routerLink="/dashboard/statistics"
     class="flex flex-col items-center"
-    aria-label="Estadísticas"
+    [attr.aria-label]="'nav.statistics' | t"
   >
     <span>
       <svg
@@ -34,10 +34,14 @@
         <path d="M640-160v-280h160v280H640Zm-240 0v-640h160v640H400Zm-240 0v-440h160v440H160Z" />
       </svg>
     </span>
-    <span class="text-xs">Estadísticas</span>
+    <span class="text-xs">{{ 'nav.statistics' | t }}</span>
   </a>
 
-  <a routerLink="/dashboard/profile" class="flex flex-col items-center" aria-label="Perfil">
+  <a
+    routerLink="/dashboard/profile"
+    class="flex flex-col items-center"
+    [attr.aria-label]="'nav.profile' | t"
+  >
     <span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -51,6 +55,6 @@
         />
       </svg>
     </span>
-    <span class="text-xs">Perfil</span>
+    <span class="text-xs">{{ 'nav.profile' | t }}</span>
   </a>
 </nav>

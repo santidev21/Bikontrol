@@ -2,30 +2,32 @@
   <div class="w-full max-w-sm p-6 bg-card rounded-2xl shadow-lg">
     <img src="logo.webp" alt="Bikontrol logo" class="mx-auto mb-4 w-24 h-24" />
 
-    <h1 class="text-2xl font-bold text-center mb-6 text-primary">Bikontrol</h1>
+    <h1 class="text-2xl font-bold text-center mb-6 text-primary">{{ 'app.name' | t }}</h1>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
       <div class="mb-4">
-        <label for="login-email" class="block text-sm font-medium text-textdark mb-1">Correo</label>
+        <label for="login-email" class="block text-sm font-medium text-textdark mb-1">{{
+          'common.email' | t
+        }}</label>
         <input
           id="login-email"
           type="email"
           formControlName="email"
           class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-          placeholder="correo@example.com"
+          [placeholder]="'common.emailPlaceholder' | t"
         />
         @if (isInvalid('email') && f['email'].errors?.['required']) {
-          <small class="text-red-500 text-xs font-bold"> El correo es obligatorio. </small>
+          <small class="text-red-500 text-xs font-bold"> {{ 'common.emailRequired' | t }} </small>
         }
         @if (isInvalid('email') && f['email'].errors?.['email']) {
-          <small class="text-red-500 text-xs font-bold"> Ingresa un correo válido. </small>
+          <small class="text-red-500 text-xs font-bold"> {{ 'common.emailInvalid' | t }} </small>
         }
       </div>
 
       <div class="mb-2">
-        <label for="login-password" class="block text-sm font-medium text-textdark mb-1"
-          >Contraseña</label
-        >
+        <label for="login-password" class="block text-sm font-medium text-textdark mb-1">{{
+          'common.password' | t
+        }}</label>
         <input
           id="login-password"
           type="password"
@@ -34,17 +36,19 @@
           placeholder="••••••••"
         />
         @if (isInvalid('password') && f['password'].errors?.['required']) {
-          <small class="text-red-500 text-xs font-bold"> La contraseña es obligatoria. </small>
+          <small class="text-red-500 text-xs font-bold">
+            {{ 'common.passwordRequired' | t }}
+          </small>
         }
         @if (isInvalid('password') && f['password'].errors?.['minlength']) {
-          <small class="text-red-500 text-xs font-bold"> Debe tener al menos 6 caracteres. </small>
+          <small class="text-red-500 text-xs font-bold"> {{ 'common.passwordMin' | t }} </small>
         }
       </div>
 
       <div class="text-right mb-4">
-        <a routerLink="/forgot-password" class="text-xs text-primary hover:underline"
-          >¿Olvidaste tu contraseña?</a
-        >
+        <a routerLink="/forgot-password" class="text-xs text-primary hover:underline">{{
+          'auth.login.forgot' | t
+        }}</a>
       </div>
 
       <button
@@ -52,7 +56,7 @@
         [disabled]="loginForm.invalid"
         class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
       >
-        Ingresar
+        {{ 'auth.login.submit' | t }}
       </button>
 
       @if (errorMessage()) {
@@ -68,7 +72,7 @@
           [disabled]="resendLoading()"
           class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
         >
-          {{ resendLoading() ? 'Enviando...' : 'Reenviar correo de confirmación' }}
+          {{ (resendLoading() ? 'auth.login.resendLoading' : 'auth.login.resend') | t }}
         </button>
       }
 
@@ -81,7 +85,7 @@
 
     <div class="flex items-center gap-3 my-4">
       <span class="flex-1 border-t border-accent"></span>
-      <span class="text-xs text-textdark">o continuar con</span>
+      <span class="text-xs text-textdark">{{ 'auth.login.orContinue' | t }}</span>
       <span class="flex-1 border-t border-accent"></span>
     </div>
 
@@ -92,7 +96,7 @@
       routerLink="/register"
       class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
     >
-      Registrarse
+      {{ 'auth.login.register' | t }}
     </button>
 
     @if (demoEnabled) {
@@ -102,16 +106,19 @@
         [disabled]="demoLoading()"
         class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
       >
-        {{ demoLoading() ? 'Cargando demo...' : '¿Querés probar la demo?' }}
+        {{ (demoLoading() ? 'auth.login.demoLoading' : 'auth.login.demo') | t }}
       </button>
     }
 
-    <p class="text-center text-xs text-gray-500 mt-6">
-      <a routerLink="/help" class="hover:underline">Ayuda</a>
-      ·
-      <a routerLink="/terms" class="hover:underline">Términos</a>
-      ·
-      <a routerLink="/privacy" class="hover:underline">Privacidad</a>
-    </p>
+    <div class="flex flex-col items-center gap-2 mt-6">
+      <app-language-switcher />
+      <p class="text-center text-xs text-gray-500">
+        <a routerLink="/help" class="hover:underline">{{ 'common.help' | t }}</a>
+        ·
+        <a routerLink="/terms" class="hover:underline">{{ 'common.terms' | t }}</a>
+        ·
+        <a routerLink="/privacy" class="hover:underline">{{ 'common.privacy' | t }}</a>
+      </p>
+    </div>
   </div>
 </div>
