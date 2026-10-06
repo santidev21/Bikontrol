@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthService } from '../../auth/services/auth.service';
 import { HttpErrorService } from '../../../shared/services/http-error.service';
+import { I18nService } from '../../../shared/i18n/i18n.service';
 import { LandingComponent } from './landing.component';
 
 @Component({ selector: 'app-stub', standalone: true, template: '' })
@@ -13,6 +14,7 @@ describe('LandingComponent', () => {
   let authServiceMock: any;
 
   beforeEach(() => {
+    localStorage.clear(); // default language is Spanish
     authServiceMock = { demoLogin: vi.fn(() => of({ token: 't' })) };
     TestBed.configureTestingModule({
       imports: [LandingComponent],
@@ -45,5 +47,17 @@ describe('LandingComponent', () => {
 
     // environment.demoEnabled is true in the dev/test environment.
     expect(authServiceMock.demoLogin).toHaveBeenCalled();
+  });
+
+  it('renders English after switching the language at runtime', () => {
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+
+    TestBed.inject(I18nService).setLanguage('en');
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Your motorcycle maintenance, under control.');
+    expect(text).toContain('Start for free');
   });
 });

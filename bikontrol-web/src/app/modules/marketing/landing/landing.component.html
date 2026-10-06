@@ -3,39 +3,41 @@
   <header class="max-w-5xl mx-auto flex items-center justify-between px-4 py-4">
     <div class="flex items-center gap-2">
       <img src="logo.webp" alt="Bikontrol logo" class="w-9 h-9" />
-      <span class="text-xl font-bold text-primary">Bikontrol</span>
+      <span class="text-xl font-bold text-primary">{{ 'app.name' | t }}</span>
     </div>
-    <nav class="flex items-center gap-3 text-sm">
-      <a routerLink="/help" class="hidden sm:inline text-primary hover:underline">Ayuda</a>
-      <a routerLink="/login" class="text-primary hover:underline">Ingresar</a>
-      <a
-        routerLink="/register"
-        class="px-3 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
-        >Crear cuenta</a
-      >
-    </nav>
+    <div class="flex items-center gap-3">
+      <app-language-switcher />
+      <nav class="flex items-center gap-3 text-sm">
+        <a routerLink="/help" class="hidden sm:inline text-primary hover:underline">{{
+          'landing.help' | t
+        }}</a>
+        <a routerLink="/login" class="text-primary hover:underline">{{ 'landing.signIn' | t }}</a>
+        <a
+          routerLink="/register"
+          class="px-3 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
+          >{{ 'landing.createAccount' | t }}</a
+        >
+      </nav>
+    </div>
   </header>
 
   <!-- Hero -->
   <section class="max-w-5xl mx-auto px-4 pt-8 pb-12 text-center">
     <h1 class="text-3xl sm:text-4xl font-bold text-primary leading-tight">
-      El mantenimiento de tu moto, bajo control.
+      {{ 'landing.hero.title' | t }}
     </h1>
-    <p class="text-gray-600 mt-4 max-w-xl mx-auto">
-      Registrá tus motos, seguí cada service y recibí un aviso antes de que venza. Simple, privado y
-      gratis para dueños de motos.
-    </p>
+    <p class="text-gray-600 mt-4 max-w-xl mx-auto">{{ 'landing.hero.subtitle' | t }}</p>
 
     <div class="flex flex-col sm:flex-row gap-3 justify-center mt-6">
       <a
         routerLink="/register"
         class="px-5 py-3 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
-        >Empezar gratis</a
+        >{{ 'landing.cta.start' | t }}</a
       >
       <a
         routerLink="/login"
         class="px-5 py-3 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold"
-        >Ya tengo cuenta</a
+        >{{ 'landing.cta.haveAccount' | t }}</a
       >
       @if (demoEnabled) {
         <button
@@ -44,7 +46,7 @@
           [disabled]="demoLoading()"
           class="px-5 py-3 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
         >
-          {{ demoLoading() ? 'Cargando demo…' : 'Probar la demo' }}
+          {{ (demoLoading() ? 'landing.cta.demoLoading' : 'landing.cta.demo') | t }}
         </button>
       }
     </div>
@@ -56,15 +58,15 @@
   <!-- Value props -->
   <section class="max-w-5xl mx-auto px-4 pb-12">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      @for (feature of features; track feature.title) {
+      @for (feature of features; track feature.titleKey) {
         <div class="bg-white rounded-xl shadow-sm p-5 text-left">
           <div
             class="w-9 h-9 rounded-full bg-secondary/40 text-primary flex items-center justify-center mb-3 font-bold"
           >
             ✓
           </div>
-          <h2 class="font-bold text-gray-900">{{ feature.title }}</h2>
-          <p class="text-sm text-gray-600 mt-1">{{ feature.description }}</p>
+          <h2 class="font-bold text-gray-900">{{ feature.titleKey | t }}</h2>
+          <p class="text-sm text-gray-600 mt-1">{{ feature.descKey | t }}</p>
         </div>
       }
     </div>
@@ -73,17 +75,19 @@
   <!-- How it works -->
   <section class="bg-white border-y border-gray-100">
     <div class="max-w-5xl mx-auto px-4 py-12">
-      <h2 class="text-2xl font-bold text-primary text-center mb-8">Cómo funciona</h2>
+      <h2 class="text-2xl font-bold text-primary text-center mb-8">
+        {{ 'landing.how.title' | t }}
+      </h2>
       <ol class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        @for (step of steps; track step.title; let i = $index) {
+        @for (step of steps; track step.titleKey; let i = $index) {
           <li class="text-center">
             <div
               class="w-10 h-10 mx-auto rounded-full bg-primary text-textlight flex items-center justify-center font-bold mb-3"
             >
               {{ i + 1 }}
             </div>
-            <h3 class="font-bold text-gray-900">{{ step.title }}</h3>
-            <p class="text-sm text-gray-600 mt-1">{{ step.description }}</p>
+            <h3 class="font-bold text-gray-900">{{ step.titleKey | t }}</h3>
+            <p class="text-sm text-gray-600 mt-1">{{ step.descKey | t }}</p>
           </li>
         }
       </ol>
@@ -93,11 +97,11 @@
   <!-- Trust -->
   <section class="max-w-5xl mx-auto px-4 py-12">
     <div class="bg-card rounded-2xl p-6 sm:p-8 text-center">
-      <h2 class="text-xl font-bold text-primary mb-3">Pensado para que confíes tus datos</h2>
+      <h2 class="text-xl font-bold text-primary mb-3">{{ 'landing.trust.title' | t }}</h2>
       <ul class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-textdark">
-        <li><strong>Backups verificados</strong> de la base de datos.</li>
-        <li><strong>Cuenta y datos tuyos</strong>: los descargás o los borrás cuando quieras.</li>
-        <li><strong>Sin publicidad</strong> ni venta de tus datos.</li>
+        <li>{{ 'landing.trust.backups' | t }}</li>
+        <li>{{ 'landing.trust.data' | t }}</li>
+        <li>{{ 'landing.trust.noAds' | t }}</li>
       </ul>
     </div>
   </section>
@@ -111,12 +115,12 @@
 
   <!-- Final CTA -->
   <section class="max-w-5xl mx-auto px-4 pb-16 text-center">
-    <h2 class="text-2xl font-bold text-primary">Empezá en 2 minutos</h2>
-    <p class="text-gray-600 mt-2">Cargá tu primer moto y tu plan de mantenimiento hoy mismo.</p>
+    <h2 class="text-2xl font-bold text-primary">{{ 'landing.final.title' | t }}</h2>
+    <p class="text-gray-600 mt-2">{{ 'landing.final.subtitle' | t }}</p>
     <a
       routerLink="/register"
       class="inline-block mt-5 px-6 py-3 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
-      >Crear mi cuenta</a
+      >{{ 'landing.final.button' | t }}</a
     >
   </section>
 
@@ -125,11 +129,11 @@
     <div
       class="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500"
     >
-      <span>Bikontrol — mantenimiento de motos para dueños.</span>
+      <span>{{ 'landing.footer.tagline' | t }}</span>
       <nav class="flex gap-4">
-        <a routerLink="/help" class="hover:underline">Ayuda</a>
-        <a routerLink="/terms" class="hover:underline">Términos</a>
-        <a routerLink="/privacy" class="hover:underline">Privacidad</a>
+        <a routerLink="/help" class="hover:underline">{{ 'landing.footer.help' | t }}</a>
+        <a routerLink="/terms" class="hover:underline">{{ 'landing.footer.terms' | t }}</a>
+        <a routerLink="/privacy" class="hover:underline">{{ 'landing.footer.privacy' | t }}</a>
       </nav>
     </div>
   </footer>
