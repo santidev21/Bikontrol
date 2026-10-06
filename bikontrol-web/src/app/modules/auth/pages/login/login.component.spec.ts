@@ -132,7 +132,7 @@ describe('LoginComponent', () => {
     component.onResendConfirmation();
 
     expect(authServiceMock.resendConfirmation).toHaveBeenCalledWith('user@example.com');
-    expect(component.resendMessage()).toBe('Enviado');
+    expect(component.resendMessage()).toBe('Te enviamos un nuevo enlace de confirmación.');
   });
 
   it('should log in to the demo and navigate when demo is enabled', () => {

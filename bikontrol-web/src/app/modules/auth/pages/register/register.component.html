@@ -2,13 +2,12 @@
   <div class="w-full max-w-sm p-6 bg-card rounded-2xl shadow-lg">
     <img src="logo.webp" alt="Bikontrol logo" class="mx-auto mb-4 w-24 h-24" />
 
-    <h1 class="text-2xl font-bold text-center mb-6 text-primary">Crear cuenta</h1>
+    <h1 class="text-2xl font-bold text-center mb-6 text-primary">
+      {{ 'auth.register.title' | t }}
+    </h1>
 
     @if (confirmationSent()) {
-      <p class="text-sm text-textdark text-center mb-6">
-        Te enviamos un correo de confirmación. Revisá tu bandeja (y la carpeta de spam) y hacé clic
-        en el enlace para activar tu cuenta.
-      </p>
+      <p class="text-sm text-textdark text-center mb-6">{{ 'auth.register.confirmSent' | t }}</p>
 
       <button
         type="button"
@@ -16,7 +15,7 @@
         [disabled]="resendLoading()"
         class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
       >
-        {{ resendLoading() ? 'Enviando...' : 'Reenviar correo de confirmación' }}
+        {{ (resendLoading() ? 'auth.login.resendLoading' : 'auth.login.resend') | t }}
       </button>
 
       @if (resendMessage()) {
@@ -35,49 +34,51 @@
         routerLink="/login"
         class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
       >
-        Ir al inicio de sesión
+        {{ 'auth.confirm.goToLogin' | t }}
       </button>
     } @else {
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
         <div class="mb-4">
-          <label for="register-fullname" class="block text-sm font-medium text-textdark mb-1"
-            >Nombre completo</label
-          >
+          <label for="register-fullname" class="block text-sm font-medium text-textdark mb-1">{{
+            'auth.register.fullName' | t
+          }}</label>
           <input
             id="register-fullname"
             type="text"
             formControlName="fullName"
             class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-            placeholder="Ej: Juan Pérez"
+            [placeholder]="'auth.register.fullNamePlaceholder' | t"
           />
           @if (isInvalid('fullName')) {
-            <small class="text-red-500 text-xs font-bold"> El nombre es obligatorio. </small>
+            <small class="text-red-500 text-xs font-bold">
+              {{ 'common.passwordRequired' | t }}
+            </small>
           }
         </div>
 
         <div class="mb-4">
-          <label for="register-email" class="block text-sm font-medium text-textdark mb-1"
-            >Correo</label
-          >
+          <label for="register-email" class="block text-sm font-medium text-textdark mb-1">{{
+            'common.email' | t
+          }}</label>
           <input
             id="register-email"
             type="email"
             formControlName="email"
             class="w-full px-4 py-2 border border-accent rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none"
-            placeholder="correo@example.com"
+            [placeholder]="'common.emailPlaceholder' | t"
           />
           @if (isInvalid('email') && f['email'].errors?.['required']) {
-            <small class="text-red-500 text-xs font-bold"> El correo es obligatorio. </small>
+            <small class="text-red-500 text-xs font-bold"> {{ 'common.emailRequired' | t }} </small>
           }
           @if (isInvalid('email') && f['email'].errors?.['email']) {
-            <small class="text-red-500 text-xs font-bold"> Formato de correo inválido. </small>
+            <small class="text-red-500 text-xs font-bold"> {{ 'common.emailInvalid' | t }} </small>
           }
         </div>
 
         <div class="mb-4">
-          <label for="register-password" class="block text-sm font-medium text-textdark mb-1"
-            >Contraseña</label
-          >
+          <label for="register-password" class="block text-sm font-medium text-textdark mb-1">{{
+            'common.password' | t
+          }}</label>
           <input
             id="register-password"
             type="password"
@@ -86,19 +87,19 @@
             placeholder="••••••••"
           />
           @if (isInvalid('password') && f['password'].errors?.['required']) {
-            <small class="text-red-500 text-xs font-bold"> La contraseña es obligatoria. </small>
+            <small class="text-red-500 text-xs font-bold">
+              {{ 'common.passwordRequired' | t }}
+            </small>
           }
           @if (isInvalid('password') && f['password'].errors?.['minlength']) {
-            <small class="text-red-500 text-xs font-bold">
-              Debe tener al menos 6 caracteres.
-            </small>
+            <small class="text-red-500 text-xs font-bold"> {{ 'common.passwordMin' | t }} </small>
           }
         </div>
 
         <div class="mb-6">
-          <label for="register-confirm" class="block text-sm font-medium text-textdark mb-1"
-            >Confirmar contraseña</label
-          >
+          <label for="register-confirm" class="block text-sm font-medium text-textdark mb-1">{{
+            'common.confirmPassword' | t
+          }}</label>
           <input
             id="register-confirm"
             type="password"
@@ -107,13 +108,17 @@
             placeholder="••••••••"
           />
           @if (isInvalid('confirmPassword') && f['confirmPassword'].errors?.['required']) {
-            <small class="text-red-500 text-xs font-bold"> Debes confirmar la contraseña. </small>
+            <small class="text-red-500 text-xs font-bold">
+              {{ 'common.confirmRequired' | t }}
+            </small>
           }
           @if (
             registerForm.errors?.['passwordMismatch'] &&
             (f['confirmPassword'].dirty || f['confirmPassword'].touched)
           ) {
-            <small class="text-red-500 text-xs font-bold"> Las contraseñas no coinciden. </small>
+            <small class="text-red-500 text-xs font-bold">
+              {{ 'common.passwordMismatch' | t }}
+            </small>
           }
         </div>
 
@@ -122,7 +127,7 @@
           [disabled]="registerForm.invalid"
           class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
         >
-          Registrarse
+          {{ 'auth.register.submit' | t }}
         </button>
 
         @if (errorMessage()) {
@@ -136,17 +141,20 @@
           routerLink="/login"
           class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
         >
-          Volver al inicio de sesión
+          {{ 'common.backToLogin' | t }}
         </button>
       </form>
     }
 
-    <p class="text-center text-xs text-gray-500 mt-6">
-      <a routerLink="/help" class="hover:underline">Ayuda</a>
-      ·
-      <a routerLink="/terms" class="hover:underline">Términos</a>
-      ·
-      <a routerLink="/privacy" class="hover:underline">Privacidad</a>
-    </p>
+    <div class="flex flex-col items-center gap-2 mt-6">
+      <app-language-switcher />
+      <p class="text-center text-xs text-gray-500">
+        <a routerLink="/help" class="hover:underline">{{ 'common.help' | t }}</a>
+        ·
+        <a routerLink="/terms" class="hover:underline">{{ 'common.terms' | t }}</a>
+        ·
+        <a routerLink="/privacy" class="hover:underline">{{ 'common.privacy' | t }}</a>
+      </p>
+    </div>
   </div>
 </div>

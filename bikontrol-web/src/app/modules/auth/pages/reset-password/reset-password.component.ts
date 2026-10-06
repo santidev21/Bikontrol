@@ -17,10 +17,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [FormsModule, ReactiveFormsModule, RouterModule, TranslatePipe],
   templateUrl: './reset-password.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './reset-password.component.scss',
@@ -31,6 +33,7 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
   private httpError = inject(HttpErrorService);
+  private i18n = inject(I18nService);
 
   form: FormGroup;
   readonly submitted = signal(false);
@@ -82,8 +85,8 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     this.authService
       .resetPassword(this.email!, this.token!, this.form.value.newPassword)
       .subscribe({
-        next: (response) => {
-          this.successMessage.set(response.message);
+        next: () => {
+          this.successMessage.set(this.i18n.t('auth.reset.success'));
           this.redirectTimer = setTimeout(() => this.router.navigate(['/login']), 2000);
         },
         error: (error) => {

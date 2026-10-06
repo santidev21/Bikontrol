@@ -49,7 +49,9 @@ describe('ForgotPasswordComponent', () => {
     component.onSubmit();
 
     expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('user@example.com');
-    expect(component.successMessage()).toBe('Revisa tu correo.');
+    expect(component.successMessage()).toBe(
+      'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.',
+    );
     expect(component.errorMessage()).toBeNull();
   });
 

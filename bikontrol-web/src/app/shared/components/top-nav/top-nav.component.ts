@@ -10,11 +10,13 @@ import {
 import { NavigationEnd } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../modules/auth/services/auth.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../i18n/language-switcher.component';
 import { Subscription, filter } from 'rxjs';
 
 @Component({
   selector: 'app-top-nav',
-  imports: [RouterModule],
+  imports: [RouterModule, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './top-nav.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './top-nav.component.scss',

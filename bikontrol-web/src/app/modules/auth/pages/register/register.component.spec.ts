@@ -135,7 +135,7 @@ describe('RegisterComponent', () => {
     component.onResendConfirmation();
 
     expect(authServiceMock.resendConfirmation).toHaveBeenCalledWith('user@example.com');
-    expect(component.resendMessage()).toBe('Enviado');
+    expect(component.resendMessage()).toBe('Te enviamos un nuevo enlace de confirmación.');
   });
 
   it('should use the generic fallback message when the backend response is empty', () => {

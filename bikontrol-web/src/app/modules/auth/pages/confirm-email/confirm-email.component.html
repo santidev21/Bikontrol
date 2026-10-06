@@ -2,10 +2,10 @@
   <div class="w-full max-w-sm p-6 bg-card rounded-2xl shadow-lg text-center">
     <img src="logo.webp" alt="Bikontrol logo" class="mx-auto mb-4 w-24 h-24" />
 
-    <h1 class="text-2xl font-bold mb-6 text-primary">Confirmar correo</h1>
+    <h1 class="text-2xl font-bold mb-6 text-primary">{{ 'auth.confirm.title' | t }}</h1>
 
     @if (loading()) {
-      <p class="text-sm text-textdark mb-6">Confirmando tu correo...</p>
+      <p class="text-sm text-textdark mb-6">{{ 'auth.confirm.loading' | t }}</p>
     } @else if (success()) {
       <small class="text-green-600 text-xs block mb-6 font-bold">{{ successMessage() }}</small>
     } @else {
@@ -17,7 +17,7 @@
       routerLink="/login"
       class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
     >
-      Ir al inicio de sesión
+      {{ 'auth.confirm.goToLogin' | t }}
     </button>
   </div>
 </div>

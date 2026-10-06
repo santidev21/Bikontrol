@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AUTH_IMPORTS } from '../../auth-imports';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
 
 @Component({
   selector: 'app-register',
@@ -18,6 +19,7 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private httpError = inject(HttpErrorService);
+  private i18n = inject(I18nService);
 
   registerForm: FormGroup;
   readonly submitted = signal(false);
@@ -87,9 +89,9 @@ export class RegisterComponent {
     this.resendLoading.set(true);
     this.resendMessage.set(null);
     this.authService.resendConfirmation(this.registeredEmail).subscribe({
-      next: (response) => {
+      next: () => {
         this.resendLoading.set(false);
-        this.resendMessage.set(response.message);
+        this.resendMessage.set(this.i18n.t('auth.login.resendSent'));
       },
       error: (error) => {
         this.resendLoading.set(false);

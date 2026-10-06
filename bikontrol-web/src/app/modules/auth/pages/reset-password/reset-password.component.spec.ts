@@ -89,7 +89,7 @@ describe('ResetPasswordComponent', () => {
       'token-abc',
       '123456',
     );
-    expect(component.successMessage()).toBe('Contraseña actualizada.');
+    expect(component.successMessage()).toBe('Contraseña actualizada. Ya puedes iniciar sesión.');
     vi.runAllTimers();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
     vi.useRealTimers();
