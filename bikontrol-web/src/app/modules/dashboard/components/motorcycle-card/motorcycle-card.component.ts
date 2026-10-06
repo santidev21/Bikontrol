@@ -16,9 +16,12 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { AuthService } from '../../../auth/services/auth.service';
 
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-motorcycle-card',
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './motorcycle-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './motorcycle-card.component.scss',
@@ -29,6 +32,7 @@ export class MotorcycleCardComponent implements OnInit {
   private swal = inject(SwalService);
   private httpError = inject(HttpErrorService);
   private authService = inject(AuthService);
+  private i18n = inject(I18nService);
 
   @Input() motorcycle!: Motorcycle;
   @Output() deleted = new EventEmitter<void>();
@@ -67,14 +71,11 @@ export class MotorcycleCardComponent implements OnInit {
     this.motorcyclesService.deleteMotorcycle(this.motorcycle.id!).subscribe({
       next: () => {
         this.swal
-          .success('¡Eliminada!', 'La motocicleta fue eliminada correctamente.')
+          .success(this.i18n.t('motoCard.deletedTitle'), this.i18n.t('motoCard.deletedText'))
           .then(() => this.deleted.emit());
       },
       error: (err) => {
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo eliminar la motocicleta.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('motoCard.deleteError')));
       },
     });
   }
@@ -84,10 +85,10 @@ export class MotorcycleCardComponent implements OnInit {
 
     this.swal
       .confirm(
-        '¿Estás seguro?',
-        `Esto eliminará permanentemente "${this.motorcycle.name}".`,
-        'Sí, eliminar',
-        'Cancelar',
+        this.i18n.t('motoCard.deleteConfirmTitle'),
+        this.i18n.t('motoCard.deleteConfirmText', { name: this.motorcycle.name }),
+        this.i18n.t('common.yesDelete'),
+        this.i18n.t('common.cancel'),
         'warning',
       )
       .then((result) => {

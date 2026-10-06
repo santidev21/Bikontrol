@@ -18,9 +18,12 @@ import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-register-maintenance-record',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './register-maintenance-record.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register-maintenance-record.component.scss',
@@ -33,6 +36,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
   private motorcyclesService = inject(MotorcyclesService);
   private swal = inject(SwalService);
   private httpError = inject(HttpErrorService);
+  private i18n = inject(I18nService);
 
   readonly motorcycleId = signal('');
   readonly maintenances = signal<Maintenance[]>([]);
@@ -95,7 +99,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
         this.maintenances.set(list);
       },
       error: () => {
-        this.swal.error('Error', 'No se pudo cargar los mantenimientos de la moto.');
+        this.swal.error(this.i18n.t('common.error'), this.i18n.t('record.loadError'));
       },
     });
   }
@@ -139,7 +143,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
     const today = new Date(this.getTodayDate());
 
     if (performedAt > today) {
-      this.swal.warning('Error', 'No puedes agregar mantenimientos posteriores al dia de hoy');
+      this.swal.warning(this.i18n.t('common.error'), this.i18n.t('record.futureDate'));
       return;
     }
 
@@ -151,7 +155,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       performedKm != null &&
       performedKm < lastKm
     ) {
-      this.swal.warning('Error', 'No puedes agregar mantenimiento anterior al ultimo');
+      this.swal.warning(this.i18n.t('common.error'), this.i18n.t('record.beforeLast'));
       return;
     }
 
@@ -167,7 +171,7 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
     this.maintenanceService.registerMaintenanceRecord(payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.swal.success('¡Éxito!', 'Se registró el mantenimiento correctamente.').then(() => {
+        this.swal.success(this.i18n.t('common.success'), this.i18n.t('record.saved')).then(() => {
           this.router.navigate(['/dashboard/motorcycles/summary'], {
             queryParams: { motorcycleId: this.motorcycleId() },
           });
@@ -176,8 +180,8 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.isSubmitting.set(false);
         this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo registrar el mantenimiento.'),
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('record.saveError')),
         );
       },
     });

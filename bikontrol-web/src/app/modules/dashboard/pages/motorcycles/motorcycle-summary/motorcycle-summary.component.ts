@@ -25,9 +25,12 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 import { ImageService } from '../../../../../shared/services/image.service';
 import { AuthService } from '../../../../auth/services/auth.service';
 
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-motorcycle-summary',
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
   templateUrl: './motorcycle-summary.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './motorcycle-summary.component.scss',
@@ -39,6 +42,7 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   private readonly motorcyclesService = inject(MotorcyclesService);
   private readonly swal = inject(SwalService);
   private readonly httpError = inject(HttpErrorService);
+  private readonly i18n = inject(I18nService);
   private readonly imageService = inject(ImageService);
   private readonly authService = inject(AuthService);
 
@@ -88,8 +92,8 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
       const error = this.upcomingRes.error();
       if (error) {
         this.swal.error(
-          'Error',
-          this.httpError.message(error, 'No se pudieron cargar los mantenimientos próximos.'),
+          this.i18n.t('common.error'),
+          this.httpError.message(error, this.i18n.t('summary.upcomingError')),
         );
       }
     });
@@ -105,8 +109,8 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
       const error = this.recordsRes.error();
       if (error) {
         this.swal.error(
-          'Error',
-          this.httpError.message(error, 'No se pudieron cargar los registros de mantenimiento.'),
+          this.i18n.t('common.error'),
+          this.httpError.message(error, this.i18n.t('summary.recordsError')),
         );
       }
     });
@@ -184,14 +188,22 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
         this.setAttachments(recordId, [...this.attachmentsOf(recordId), created]);
       })
       .catch((err) => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo adjuntar la imagen.'));
+        this.swal.error(
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('summary.attachError')),
+        );
       })
       .finally(() => this.uploadingRecordId.set(null));
   }
 
   removeAttachment(recordId: string, attachment: MaintenanceAttachment): void {
     this.swal
-      .confirm('Eliminar adjunto', '¿Eliminar esta imagen del registro?', 'Eliminar', 'Cancelar')
+      .confirm(
+        this.i18n.t('summary.removeAttachmentTitle'),
+        this.i18n.t('summary.removeAttachmentText'),
+        this.i18n.t('summary.delete'),
+        this.i18n.t('common.cancel'),
+      )
       .then((result) => {
         if (!result.isConfirmed) return;
 
@@ -204,8 +216,8 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             this.swal.error(
-              'Error',
-              this.httpError.message(err, 'No se pudo eliminar el adjunto.'),
+              this.i18n.t('common.error'),
+              this.httpError.message(err, this.i18n.t('summary.removeAttachmentError')),
             );
           },
         });
@@ -258,8 +270,8 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.isExporting.set(false);
         this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo generar el libro de mantenimiento.'),
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('summary.bookError')),
         );
       },
     });
@@ -280,7 +292,7 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     if (!id || this.isSubmittingKm()) return;
 
     if (this.editableKm() < this.currentKm()) {
-      this.swal.error('¡Error!', 'No puede agregar un Kilometraje inferior al actual.');
+      this.swal.error(this.i18n.t('common.error'), this.i18n.t('summary.kmLowerError'));
       return;
     }
 
@@ -288,15 +300,17 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     this.motorcyclesService.addKmHistory(id, this.editableKm()).subscribe({
       next: () => {
         this.closeEditKmModal();
-        this.swal.success('¡Exito!.', 'Se ha actualizado el Km de su motocicleta.').then(() => {
-          this.reloadData();
-        });
+        this.swal
+          .success(this.i18n.t('common.success'), this.i18n.t('summary.kmUpdated'))
+          .then(() => {
+            this.reloadData();
+          });
       },
       error: (err) => {
         this.isSubmittingKm.set(false);
         this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo actualizar el kilometraje.'),
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('summary.kmUpdateError')),
         );
       },
     });
@@ -308,10 +322,10 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
 
     this.swal
       .confirm(
-        'Confirmar reversión',
-        'Esto revertirá únicamente el último cambio de kilometraje.',
-        'Revertir',
-        'Cancelar',
+        this.i18n.t('summary.rollbackConfirmTitle'),
+        this.i18n.t('summary.rollbackConfirmText'),
+        this.i18n.t('summary.rollbackConfirmOk'),
+        this.i18n.t('common.cancel'),
       )
       .then((result) => {
         if (!result.isConfirmed) return;
@@ -320,15 +334,15 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
         this.motorcyclesService.rollbackLastKm(id, this.currentKm()).subscribe({
           next: () => {
             this.swal
-              .success('¡Éxito!', 'Se revirtió el último cambio de kilometraje.')
+              .success(this.i18n.t('common.success'), this.i18n.t('summary.kmRolledBack'))
               .then(() => {
                 this.reloadData();
               });
           },
           error: (err) => {
             this.swal.error(
-              'Error',
-              this.httpError.message(err, 'No se pudo revertir el kilometraje.'),
+              this.i18n.t('common.error'),
+              this.httpError.message(err, this.i18n.t('summary.kmRollbackError')),
             );
           },
           complete: () => {

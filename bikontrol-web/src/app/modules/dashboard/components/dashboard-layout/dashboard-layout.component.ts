@@ -5,9 +5,11 @@ import { BottomNavComponent } from '../../../../shared/components/bottom-nav/bot
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../auth/services/auth.service';
 
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+
 @Component({
   selector: 'app-dashboard-layout',
-  imports: [TopNavComponent, BottomNavComponent, RouterOutlet],
+  imports: [TopNavComponent, BottomNavComponent, RouterOutlet, TranslatePipe],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard-layout.component.scss',

@@ -6,9 +6,11 @@ import { MotorcyclesService } from '../../service/motorcycles.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+
 @Component({
   selector: 'app-home',
-  imports: [MotorcycleCardComponent, RouterModule],
+  imports: [MotorcycleCardComponent, RouterModule, TranslatePipe],
   templateUrl: './home.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.component.scss',
