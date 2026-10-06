@@ -19,9 +19,12 @@ import { hasError as formHasError } from '../../../../../shared/utils/form.utils
 
 const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
 
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-save-motorcycle',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './save-motorcycle.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './save-motorcycle.component.scss',
@@ -34,6 +37,7 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   private swal = inject(SwalService);
   private httpError = inject(HttpErrorService);
   private imageService = inject(ImageService);
+  private i18n = inject(I18nService);
 
   motorcycleForm: FormGroup;
   readonly isSubmitting = signal(false);
@@ -88,7 +92,10 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo cargar la motocicleta.'));
+        this.swal.error(
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('saveMotorcycle.loadError')),
+        );
       },
     });
   }
@@ -120,12 +127,15 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       return;
     }
     if (!file.type.startsWith('image/')) {
-      this.swal.warning('Archivo inválido', 'Selecciona un archivo de imagen válido.');
+      this.swal.warning(this.i18n.t('common.invalidFile'), this.i18n.t('common.selectValidImage'));
       input.value = '';
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      this.swal.warning('Archivo muy grande', 'La imagen no puede superar 2 MB.');
+      this.swal.warning(
+        this.i18n.t('common.imageTooLarge'),
+        this.i18n.t('common.imageTooLargeText'),
+      );
       input.value = '';
       return;
     }
@@ -137,7 +147,7 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
         this.previewSrc.set(resized);
       })
       .catch(() => {
-        this.swal.warning('Archivo inválido', 'No se pudo leer la imagen seleccionada.');
+        this.swal.warning(this.i18n.t('common.invalidFile'), this.i18n.t('common.imageReadError'));
         input.value = '';
       });
   }
@@ -150,7 +160,10 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
   onSubmit(): void {
     if (this.motorcycleForm.invalid) {
       this.motorcycleForm.markAllAsTouched();
-      this.swal.warning('Formulario incompleto', 'Por favor completa todos los campos requeridos.');
+      this.swal.warning(
+        this.i18n.t('common.formIncomplete'),
+        this.i18n.t('common.completeRequired'),
+      );
       return;
     }
 
@@ -167,12 +180,15 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting.set(false);
         this.swal
-          .success('¡Éxito!', 'Motocicleta agregada correctamente.')
+          .success(this.i18n.t('common.success'), this.i18n.t('saveMotorcycle.added'))
           .then(() => this.router.navigate(['/dashboard']));
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo agregar la motocicleta.'));
+        this.swal.error(
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('saveMotorcycle.addError')),
+        );
       },
     });
   }
@@ -182,14 +198,14 @@ export class SaveMotorcycleComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting.set(false);
         this.swal
-          .success('¡Éxito!', 'Motocicleta actualizada correctamente.')
+          .success(this.i18n.t('common.success'), this.i18n.t('saveMotorcycle.updated'))
           .then(() => this.router.navigate(['/dashboard']));
       },
       error: (err) => {
         this.isSubmitting.set(false);
         this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo actualizar la motocicleta.'),
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('saveMotorcycle.updateError')),
         );
       },
     });

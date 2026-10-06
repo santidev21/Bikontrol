@@ -1,19 +1,17 @@
 <div class="p-4">
-  <h1 class="text-2xl font-bold mb-2 text-center">Bienvenido de nuevo</h1>
-  <p class="text-gray-400 mb-4 text-center">Tus motocicletas</p>
+  <h1 class="text-2xl font-bold mb-2 text-center">{{ 'home.welcome' | t }}</h1>
+  <p class="text-gray-400 mb-4 text-center">{{ 'home.subtitle' | t }}</p>
 
   @if (motorcycles.value().length === 0) {
     <div class="bg-card rounded-xl p-6 mt-6 text-center">
-      <h2 class="text-lg font-bold text-primary mb-2">¡Te damos la bienvenida!</h2>
-      <p class="text-sm text-textdark mb-4">
-        Agregá tu moto y elegí un plan de mantenimiento en un par de minutos.
-      </p>
+      <h2 class="text-lg font-bold text-primary mb-2">{{ 'home.emptyTitle' | t }}</h2>
+      <p class="text-sm text-textdark mb-4">{{ 'home.emptyText' | t }}</p>
       @if (!isDemo) {
         <button
           routerLink="/dashboard/onboarding"
           class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
         >
-          Comenzar
+          {{ 'home.start' | t }}
         </button>
       }
     </div>
@@ -34,7 +32,7 @@
         routerLink="/dashboard/motorcycles/add"
         class="w-full mt-6 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors"
       >
-        + Agregar motocicleta
+        {{ 'home.addMotorcycle' | t }}
       </button>
     </div>
   }

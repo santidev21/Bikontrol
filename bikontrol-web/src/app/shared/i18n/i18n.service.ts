@@ -32,7 +32,7 @@ export class I18nService {
     }
   }
 
-  t(key: string, params?: Record<string, string | number>): string {
+  t(key: string, params?: Record<string, unknown>): string {
     let value = DICTIONARIES[this.current()][key] ?? es[key] ?? key;
     if (params) {
       for (const [name, replacement] of Object.entries(params)) {

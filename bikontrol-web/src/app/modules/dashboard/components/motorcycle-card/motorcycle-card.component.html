@@ -25,7 +25,9 @@
       {{ motorcycle.name }}
     </h2>
     <p class="text-gray-500 text-sm">{{ motorcycle.brand }} - {{ motorcycle.year }}</p>
-    <p class="text-sm mt-1 text-gray-700">Apodo: {{ motorcycle.nickname }}</p>
+    <p class="text-sm mt-1 text-gray-700">
+      {{ 'motoCard.nickname' | t: { name: motorcycle.nickname } }}
+    </p>
 
     <p class="mt-2 flex items-center text-gray-600 text-sm">
       <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
@@ -66,7 +68,7 @@
           85-28-29 57 57-29-28Z"
               />
             </svg>
-            <span>Editar</span>
+            <span>{{ 'motoCard.edit' | t }}</span>
           </button>
           <button
             (click)="confirmDelete($event)"
@@ -86,7 +88,7 @@
             0h80v-360h-80v360ZM280-720v520-520Z"
               />
             </svg>
-            <span>Borrar</span>
+            <span>{{ 'motoCard.delete' | t }}</span>
           </button>
         </div>
       }

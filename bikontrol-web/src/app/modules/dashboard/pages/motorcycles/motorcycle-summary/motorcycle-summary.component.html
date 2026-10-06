@@ -16,7 +16,7 @@
             <span class="brand">{{ m.brand }}</span>
           </div>
           <h1 class="name">{{ m.name }}</h1>
-          <span class="nickname">{{ m.nickname || 'Sin apodo' }}</span>
+          <span class="nickname">{{ m.nickname || ('motoCard.noNickname' | t) }}</span>
         </div>
       </div>
     </div>
@@ -24,9 +24,13 @@
       class="km-card bg-gray-800 rounded-xl shadow-md p-4 my-6 hover:shadow-lg transition-shadow relative"
     >
       <div class="km-header">
-        <span>Kilometraje Actual</span>
+        <span>{{ 'summary.currentKm' | t }}</span>
         @if (!isDemo()) {
-          <button class="edit-km-btn" (click)="openEditKmModal()" aria-label="Editar kilometraje">
+          <button
+            class="edit-km-btn"
+            (click)="openEditKmModal()"
+            [attr.aria-label]="'summary.editKm' | t"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               height="18px"
@@ -47,7 +51,7 @@
       </p>
       @if (!isDemo()) {
         <button class="rollback-km-link" (click)="rollbackLastKm()" [disabled]="isRollingBackKm()">
-          ¿Te equivocaste con el kilometraje? Reviértelo aquí.
+          {{ 'summary.rollbackHint' | t }}
         </button>
       }
     </div>
@@ -58,7 +62,7 @@
         [disabled]="isExporting()"
         class="flex-1 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold disabled:opacity-50"
       >
-        Exportar libro (PDF)
+        {{ 'summary.exportPdf' | t }}
       </button>
       <button
         type="button"
@@ -66,18 +70,18 @@
         [disabled]="isExporting()"
         class="flex-1 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold disabled:opacity-50"
       >
-        Exportar (CSV)
+        {{ 'summary.exportCsv' | t }}
       </button>
     </div>
     <div class="maintenance-section">
-      <h2 class="text-center">Proximos Mantenimientos</h2>
+      <h2 class="text-center">{{ 'summary.upcoming' | t }}</h2>
       @if (!isDemo()) {
         <button
           (click)="goToRegisterMaintenanceRecord()"
           [disabled]="!canRegisterMaintenance()"
           class="w-full mt-4 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          + Registrar mantenimiento
+          {{ 'summary.registerMaintenance' | t }}
         </button>
       }
       @if (upcomingMaintenances().length > 0) {
@@ -107,48 +111,57 @@
                 @if (maintenance.trackingType === 'Km') {
                   <div [class.text-red-400]="maintenance.isOverdue">
                     {{
-                      maintenance.isOverdue
-                        ? 'Vencido por ' + maintenance.remainingKm * -1 + ' km'
-                        : 'Faltan ' + maintenance.remainingKm + ' km'
+                      (maintenance.isOverdue ? 'summary.overdueKm' : 'summary.remainingKm')
+                        | t
+                          : {
+                              n: maintenance.isOverdue
+                                ? maintenance.remainingKm * -1
+                                : maintenance.remainingKm,
+                            }
                     }}
                   </div>
                 }
                 @if (maintenance.trackingType === 'Time') {
                   <div [class.text-red-400]="maintenance.isOverdue">
                     {{
-                      maintenance.isOverdue
-                        ? 'Vencido por ' + maintenance.remainingDays * -1 + ' día(s)'
-                        : 'Faltan ' + maintenance.remainingDays + ' día(s)'
+                      (maintenance.isOverdue ? 'summary.overdueDays' : 'summary.remainingDays')
+                        | t
+                          : {
+                              n: maintenance.isOverdue
+                                ? maintenance.remainingDays * -1
+                                : maintenance.remainingDays,
+                            }
                     }}
                   </div>
                 }
               </div>
               @if (maintenance.lastPerformedAt) {
                 <p class="tile-last">
-                  Último mantenimiento: {{ maintenance.lastPerformedAt | date: 'yyyy-MM-dd' }}
+                  {{
+                    'summary.lastPerformed'
+                      | t: { date: (maintenance.lastPerformedAt | date: 'yyyy-MM-dd') }
+                  }}
                 </p>
               }
             </div>
           }
         </div>
       } @else {
-        <p class="text-gray-400 text-center my-4">
-          Aún no has agregado mantenimientos para esta moto.
-        </p>
+        <p class="text-gray-400 text-center my-4">{{ 'summary.noMaintenances' | t }}</p>
       }
       @if (!isDemo()) {
         <button
           (click)="goToMaintenanceCatalog()"
           class="w-full mt-6 py-2 bg-gray-700 text-textlight rounded-lg hover:bg-gray-600 transition-colors font-semibold"
         >
-          + Agregar mantenimientos
+          {{ 'summary.addMaintenances' | t }}
         </button>
       }
     </div>
     <hr class="section-divider" />
     @defer (on viewport) {
       <div class="maintenance-section mt-6">
-        <h2 class="text-center">Registro de mantenimientos</h2>
+        <h2 class="text-center">{{ 'summary.records' | t }}</h2>
         @if (maintenanceRecords().length > 0) {
           <div>
             @for (record of maintenanceRecords(); track record) {
@@ -160,25 +173,35 @@
                   }}</span>
                 </div>
                 @if (record.performedKm != null) {
-                  <p class="text-sm text-gray-300 mt-1">Km: {{ record.performedKm }}</p>
+                  <p class="text-sm text-gray-300 mt-1">
+                    {{ 'summary.recordKm' | t: { n: record.performedKm } }}
+                  </p>
                 }
                 @if (record.cost != null) {
                   <p class="text-sm text-gray-300 mt-1">
-                    Costo: {{ record.cost | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+                    {{
+                      'summary.recordCost'
+                        | t: { c: (record.cost | currency: 'COP' : 'symbol-narrow' : '1.0-2') }
+                    }}
                   </p>
                 }
 
                 <div class="mt-3">
                   <div class="flex items-center justify-between">
                     <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                      Fotos y documentos
+                      {{ 'summary.photos' | t }}
                     </span>
                     @if (!isDemo()) {
                       <label
                         class="attach-btn"
                         [class.attach-btn--busy]="uploadingRecordId() === record.id"
                       >
-                        {{ uploadingRecordId() === record.id ? 'Subiendo…' : '+ Adjuntar' }}
+                        {{
+                          (uploadingRecordId() === record.id
+                            ? 'summary.uploading'
+                            : 'summary.attach'
+                          ) | t
+                        }}
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp"
@@ -198,18 +221,20 @@
                             type="button"
                             class="attachment-thumb__image"
                             (click)="openViewer(attachment)"
-                            [attr.aria-label]="attachment.fileName ?? 'Ver adjunto'"
+                            [attr.aria-label]="
+                              attachment.fileName ?? ('summary.viewAttachment' | t)
+                            "
                           >
                             <img
                               [src]="attachment.dataUrl"
-                              [alt]="attachment.fileName ?? 'Adjunto'"
+                              [alt]="attachment.fileName ?? ('summary.attachment' | t)"
                             />
                           </button>
                           @if (!isDemo()) {
                             <button
                               type="button"
                               class="attachment-thumb__remove"
-                              aria-label="Eliminar adjunto"
+                              [attr.aria-label]="'summary.removeAttachment' | t"
                               (click)="removeAttachment(record.id, attachment)"
                             >
                               ×
@@ -224,52 +249,57 @@
             }
           </div>
         } @else {
-          <p class="text-gray-400 text-center my-4">
-            Aún no hay registros de mantenimientos para esta moto.
-          </p>
+          <p class="text-gray-400 text-center my-4">{{ 'summary.noRecords' | t }}</p>
         }
       </div>
     } @placeholder {
-      <p class="text-gray-400 text-center my-4">Cargando registros…</p>
+      <p class="text-gray-400 text-center my-4">{{ 'summary.loadingRecords' | t }}</p>
     }
   </div>
 } @else {
   <div class="p-4 text-center">
-    <p class="text-red-500 font-bold">No se encontró información de la motocicleta.</p>
-    <p class="text-gray-600">Serás redirigido al inicio en breve.</p>
+    <p class="text-red-500 font-bold">{{ 'summary.notFound' | t }}</p>
+    <p class="text-gray-600">{{ 'summary.redirecting' | t }}</p>
   </div>
 }
 
 @if (isEditKmModalOpen()) {
   <div class="modal-backdrop">
     <div class="km-modal">
-      <h3>Ingrese el nuevo Kilometraje de su motocicleta</h3>
+      <h3>{{ 'summary.editKmTitle' | t }}</h3>
       <input
         type="number"
         min="0"
-        aria-label="Kilometraje"
+        [attr.aria-label]="'summary.kmLabel' | t"
         [ngModel]="editableKm()"
         (ngModelChange)="editableKm.set($event)"
         class="km-input"
-        placeholder="Kilometraje"
+        [placeholder]="'summary.kmLabel' | t"
       />
       <div class="km-modal-actions">
-        <button class="cancel-btn" (click)="closeEditKmModal()">Cancelar</button>
-        <button class="accept-btn" [disabled]="isSubmittingKm()" (click)="saveKm()">Aceptar</button>
+        <button class="cancel-btn" (click)="closeEditKmModal()">{{ 'summary.cancel' | t }}</button>
+        <button class="accept-btn" [disabled]="isSubmittingKm()" (click)="saveKm()">
+          {{ 'summary.accept' | t }}
+        </button>
       </div>
     </div>
   </div>
 }
 
 @if (viewerImage(); as image) {
-  <button type="button" class="modal-backdrop" aria-label="Cerrar adjunto" (click)="closeViewer()">
+  <button
+    type="button"
+    class="modal-backdrop"
+    [attr.aria-label]="'summary.closeAttachment' | t"
+    (click)="closeViewer()"
+  >
     <div class="attachment-viewer">
-      <img [src]="image.dataUrl" [alt]="image.fileName ?? 'Adjunto'" />
+      <img [src]="image.dataUrl" [alt]="image.fileName ?? ('summary.attachment' | t)" />
       <div class="attachment-viewer__footer">
         @if (image.fileName) {
           <span class="text-sm text-gray-200">{{ image.fileName }}</span>
         }
-        <span class="cancel-btn">Cerrar</span>
+        <span class="cancel-btn">{{ 'summary.close' | t }}</span>
       </div>
     </div>
   </button>
