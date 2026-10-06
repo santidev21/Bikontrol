@@ -1,41 +1,43 @@
 <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6 mt-6">
   <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">
-    {{ isEditMode() ? 'Editar Mantenimiento' : 'Registrar Mantenimiento' }}
+    {{ (isEditMode() ? 'maintForm.editTitle' : 'maintForm.createTitle') | t }}
   </h2>
 
   <form [formGroup]="maintenanceForm" (ngSubmit)="onSubmit()" class="space-y-4">
     <!-- Nombre -->
     <div>
-      <label for="maint-name" class="block text-gray-700 font-semibold mb-1">Nombre *</label>
+      <label for="maint-name" class="block text-gray-700 font-semibold mb-1"
+        >{{ 'maintForm.name' | t }} *</label
+      >
       <input
         id="maint-name"
         formControlName="name"
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        placeholder="Ej: Cambio de aceite"
+        placeholder="Cambio de aceite"
       />
       @if (hasError('name', 'required')) {
-        <small class="text-red-500 font-bold"> Campo requerido </small>
+        <small class="text-red-500 font-bold"> {{ 'common.required' | t }} </small>
       }
       @if (hasError('name', 'minlength')) {
-        <small class="text-red-500 font-bold"> Mínimo 2 caracteres </small>
+        <small class="text-red-500 font-bold"> {{ 'common.min2' | t }} </small>
       }
     </div>
 
     <!-- Descripcion -->
     <div>
       <label for="maint-description" class="block text-gray-700 font-semibold mb-1"
-        >Descripcion *</label
+        >{{ 'maintForm.description' | t }} *</label
       >
       <input
         id="maint-description"
         formControlName="description"
         type="text"
         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-        placeholder="Ej: Realizar cambio de aceite frecuente"
+        placeholder="Cambio de aceite frecuente"
       />
       @if (hasError('description', 'required')) {
-        <small class="text-red-500 font-bold"> Campo requerido </small>
+        <small class="text-red-500 font-bold"> {{ 'common.required' | t }} </small>
       }
     </div>
 
@@ -50,11 +52,8 @@
       class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors"
     >
       {{
-        isSubmitting()
-          ? 'Guardando...'
-          : isEditMode()
-            ? 'Actualizar Mantenimiento'
-            : 'Guardar Mantenimiento'
+        (isSubmitting() ? 'maintForm.saving' : isEditMode() ? 'maintForm.update' : 'maintForm.save')
+          | t
       }}
     </button>
   </form>

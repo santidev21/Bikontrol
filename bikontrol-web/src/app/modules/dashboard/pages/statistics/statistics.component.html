@@ -1,55 +1,55 @@
 <div class="p-4">
-  <h1 class="stats-title">Estadísticas</h1>
+  <h1 class="stats-title">{{ 'stats.title' | t }}</h1>
 
   @if (summary.isLoading()) {
-    <p class="text-gray-400 text-center my-4">Cargando estadísticas…</p>
+    <p class="text-gray-400 text-center my-4">{{ 'stats.loading' | t }}</p>
   }
 
   @if (summaryData(); as s) {
     <div>
       @if (s.totalMotorcycles === 0) {
         <div class="text-center my-6">
-          <p class="text-gray-400">Aún no tienes motocicletas para mostrar estadísticas.</p>
-          <a routerLink="/dashboard/home" class="stats-link">Ir al inicio</a>
+          <p class="text-gray-400">{{ 'stats.noMotorcycles' | t }}</p>
+          <a routerLink="/dashboard/home" class="stats-link">{{ 'stats.goHome' | t }}</a>
         </div>
       } @else {
         <div class="kpi-grid">
           <div class="kpi-card bg-gray-800">
             <span class="kpi-value">{{ s.totalMotorcycles }}</span>
-            <span class="kpi-label">Motos</span>
+            <span class="kpi-label">{{ 'stats.motorcycles' | t }}</span>
           </div>
           <div class="kpi-card bg-gray-800">
             <span class="kpi-value">{{ s.totalKm }}</span>
-            <span class="kpi-label">Km totales</span>
+            <span class="kpi-label">{{ 'stats.totalKm' | t }}</span>
           </div>
           <div class="kpi-card bg-gray-800">
             <span class="kpi-value">{{ s.totalMaintenanceRecords }}</span>
-            <span class="kpi-label">Mantenimientos</span>
+            <span class="kpi-label">{{ 'stats.maintenances' | t }}</span>
           </div>
           <div class="kpi-card bg-gray-800" [class.kpi-alert]="s.overdueCount > 0">
             <span class="kpi-value">{{ s.overdueCount }}</span>
-            <span class="kpi-label">Vencidos</span>
+            <span class="kpi-label">{{ 'stats.overdue' | t }}</span>
           </div>
           <div class="kpi-card bg-gray-800" [class.kpi-warn]="s.dueSoonCount > 0">
             <span class="kpi-value">{{ s.dueSoonCount }}</span>
-            <span class="kpi-label">Vencen pronto</span>
+            <span class="kpi-label">{{ 'stats.dueSoon' | t }}</span>
           </div>
           <div class="kpi-card bg-gray-800">
             <span class="kpi-value">{{
               s.totalCost | currency: 'COP' : 'symbol-narrow' : '1.0-0'
             }}</span>
-            <span class="kpi-label">Gasto total</span>
+            <span class="kpi-label">{{ 'stats.totalSpend' | t }}</span>
           </div>
           <div class="kpi-card bg-gray-800">
             <span class="kpi-value">
               {{ s.costPerKm != null ? (s.costPerKm | number: '1.2-2') : '—' }}
             </span>
-            <span class="kpi-label">Costo / km</span>
+            <span class="kpi-label">{{ 'stats.costPerKm' | t }}</span>
           </div>
         </div>
         @defer (on viewport) {
           <div class="stats-section">
-            <h2 class="text-center">Salud de mantenimientos</h2>
+            <h2 class="text-center">{{ 'stats.health' | t }}</h2>
             <div class="stat-card">
               @for (h of s.health; track h) {
                 <div class="bar-row">
@@ -67,7 +67,7 @@
             </div>
           </div>
           <div class="stats-section">
-            <h2 class="text-center">Kilometraje por moto</h2>
+            <h2 class="text-center">{{ 'stats.kmByMotorcycle' | t }}</h2>
             <div class="stat-card">
               @for (m of s.kmByMotorcycle; track m) {
                 <div class="bar-row">
@@ -86,7 +86,7 @@
           </div>
           @if (s.recordsByType.length > 0) {
             <div class="stats-section">
-              <h2 class="text-center">Mantenimientos por tipo</h2>
+              <h2 class="text-center">{{ 'stats.byType' | t }}</h2>
               <div class="stat-card">
                 @for (t of s.recordsByType; track t) {
                   <div class="bar-row">
@@ -106,7 +106,7 @@
           }
           @if (s.costByMotorcycle.length > 0) {
             <div class="stats-section">
-              <h2 class="text-center">Gasto por moto</h2>
+              <h2 class="text-center">{{ 'stats.costByMotorcycle' | t }}</h2>
               <div class="stat-card">
                 @for (c of s.costByMotorcycle; track c.motorcycleId) {
                   <div class="bar-row">
@@ -128,7 +128,7 @@
           }
           @if (s.costByYear.length > 0) {
             <div class="stats-section">
-              <h2 class="text-center">Gasto por año</h2>
+              <h2 class="text-center">{{ 'stats.costByYear' | t }}</h2>
               <div class="stat-card">
                 @for (c of s.costByYear; track c.year) {
                   <div class="bar-row">
@@ -149,7 +149,7 @@
             </div>
           }
           <div class="stats-section">
-            <h2 class="text-center">Actividad (últimos 6 meses)</h2>
+            <h2 class="text-center">{{ 'stats.activity' | t }}</h2>
             <div class="stat-card">
               <div class="month-bars">
                 @for (m of s.last6Months; track m) {
@@ -167,13 +167,13 @@
               </div>
               @if (s.lastActivityAt) {
                 <p class="tile-last">
-                  Última actividad: {{ s.lastActivityAt | date: 'yyyy-MM-dd' }}
+                  {{ 'stats.lastActivity' | t: { date: (s.lastActivityAt | date: 'yyyy-MM-dd') } }}
                 </p>
               }
             </div>
           </div>
         } @placeholder {
-          <p class="text-gray-400 text-center my-4">Cargando gráficos…</p>
+          <p class="text-gray-400 text-center my-4">{{ 'stats.loadingCharts' | t }}</p>
         }
       }
     </div>

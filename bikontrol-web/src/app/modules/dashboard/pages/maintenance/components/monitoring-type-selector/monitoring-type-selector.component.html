@@ -1,6 +1,6 @@
 <div class="space-y-2 mt-2" [formGroup]="form">
   <div>
-    <span class="block text-gray-700 font-semibold mb-2">Tipo de Monitoreo *</span>
+    <span class="block text-gray-700 font-semibold mb-2">{{ 'monitor.type' | t }} *</span>
     <div class="flex gap-6">
       <div class="flex items-center gap-2">
         <input
@@ -11,7 +11,9 @@
           class="w-4 h-4 accent-primary cursor-pointer"
           [disabled]="isEditMode"
         />
-        <label for="monitoringTypeKm" class="text-gray-700 cursor-pointer">Km</label>
+        <label for="monitoringTypeKm" class="text-gray-700 cursor-pointer">{{
+          'monitor.km' | t
+        }}</label>
       </div>
       <div class="flex items-center gap-2">
         <input
@@ -22,7 +24,9 @@
           class="w-4 h-4 accent-primary cursor-pointer"
           [disabled]="isEditMode"
         />
-        <label for="monitoringTypeTime" class="text-gray-700 cursor-pointer">Tiempo</label>
+        <label for="monitoringTypeTime" class="text-gray-700 cursor-pointer">{{
+          'monitor.time' | t
+        }}</label>
       </div>
     </div>
   </div>
@@ -33,20 +37,20 @@
         <input
           formControlName="kmInterval"
           type="number"
-          aria-label="Intervalo en kilómetros"
+          [attr.aria-label]="'monitor.kmInterval' | t"
           class="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
           placeholder="0"
         />
-        <span class="text-gray-700 font-semibold">Km</span>
+        <span class="text-gray-700 font-semibold">{{ 'monitor.km' | t }}</span>
       </div>
       @if (hasError('kmInterval', 'required')) {
-        <small class="text-red-500 font-bold"> Campo requerido </small>
+        <small class="text-red-500 font-bold"> {{ 'common.required' | t }} </small>
       }
       @if (hasError('kmInterval', 'min')) {
-        <small class="text-red-500 font-bold"> Debe ser mayor a 1 </small>
+        <small class="text-red-500 font-bold"> {{ 'monitor.greaterThan1' | t }} </small>
       }
       @if (hasError('kmInterval', 'max')) {
-        <small class="text-red-500 font-bold"> No puede superar 1,000,000 km </small>
+        <small class="text-red-500 font-bold"> {{ 'monitor.kmMax' | t }} </small>
       }
     </div>
   }
@@ -55,30 +59,30 @@
     <div>
       <div class="flex gap-2">
         <input
-          type="number"
           formControlName="timeIntervalWeeks"
-          aria-label="Intervalo en semanas"
+          type="number"
+          [attr.aria-label]="'monitor.weeksInterval' | t"
           class="w-32 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
           placeholder="0"
         />
         <select
           formControlName="timeIntervalUnit"
-          aria-label="Unidad de tiempo"
+          [attr.aria-label]="'monitor.timeUnit' | t"
           class="flex-1 border border-gray-300 rounded-lg p-2 bg-white focus:ring-2 focus:ring-primary focus:outline-none"
         >
-          <option value="weeks">Semanas</option>
-          <option value="months">Meses</option>
-          <option value="years">Años</option>
+          <option value="weeks">{{ 'monitor.weeks' | t }}</option>
+          <option value="months">{{ 'monitor.months' | t }}</option>
+          <option value="years">{{ 'monitor.years' | t }}</option>
         </select>
       </div>
       @if (hasError('timeIntervalWeeks', 'required')) {
-        <small class="text-red-500 font-bold"> Campo requerido </small>
+        <small class="text-red-500 font-bold"> {{ 'common.required' | t }} </small>
       }
       @if (hasError('timeIntervalWeeks', 'min')) {
-        <small class="text-red-500 font-bold"> Debe ser mayor a 1 </small>
+        <small class="text-red-500 font-bold"> {{ 'monitor.greaterThan1' | t }} </small>
       }
       @if (hasError('timeIntervalWeeks', 'max')) {
-        <small class="text-red-500 font-bold"> No puede superar 10 años </small>
+        <small class="text-red-500 font-bold"> {{ 'monitor.weeksMax' | t }} </small>
       }
     </div>
   }

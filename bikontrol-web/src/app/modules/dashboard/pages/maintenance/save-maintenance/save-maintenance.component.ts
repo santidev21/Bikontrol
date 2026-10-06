@@ -17,9 +17,12 @@ import { hasError as formHasError } from '../../../../../shared/utils/form.utils
 import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
 
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-save-maintenance',
-  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
+  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent, TranslatePipe],
   templateUrl: './save-maintenance.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './save-maintenance.component.scss',
@@ -31,6 +34,7 @@ export class SaveMaintenanceComponent implements OnDestroy, OnInit {
   private route = inject(ActivatedRoute);
   private swal = inject(SwalService);
   private httpError = inject(HttpErrorService);
+  private i18n = inject(I18nService);
 
   maintenanceForm: FormGroup;
   readonly isSubmitting = signal(false);
@@ -89,10 +93,7 @@ export class SaveMaintenanceComponent implements OnDestroy, OnInit {
         this.maintenanceForm.get('monitoringType')?.disable();
       },
       error: (err) => {
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo cargar el mantenimiento.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('maintForm.loadError')));
       },
     });
   }
@@ -100,7 +101,10 @@ export class SaveMaintenanceComponent implements OnDestroy, OnInit {
   onSubmit(): void {
     if (this.maintenanceForm.invalid) {
       this.maintenanceForm.markAllAsTouched();
-      this.swal.warning('Formulario incompleto', 'Por favor completa todos los campos requeridos.');
+      this.swal.warning(
+        this.i18n.t('common.formIncomplete'),
+        this.i18n.t('common.completeRequired'),
+      );
       return;
     }
 
@@ -146,7 +150,7 @@ export class SaveMaintenanceComponent implements OnDestroy, OnInit {
 
   addMaintenance(maintenance: SaveMaintenanceDTO): void {
     if (!maintenance.motorcycleId) {
-      this.swal.error('Error', 'Debes seleccionar una motocicleta para crear el mantenimiento.');
+      this.swal.error(this.i18n.t('common.error'), this.i18n.t('maintForm.noMotorcycle'));
       this.isSubmitting.set(false);
       return;
     }
@@ -154,16 +158,15 @@ export class SaveMaintenanceComponent implements OnDestroy, OnInit {
     this.maintenanceService.createUserMaintenance(maintenance).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.swal.success('Éxito', 'Mantenimiento agregado correctamente.').then(() => {
-          this.router.navigate(['/dashboard/motorcycles', this.motorcycleId(), 'maintenance']);
-        });
+        this.swal
+          .success(this.i18n.t('common.success'), this.i18n.t('maintForm.added'))
+          .then(() => {
+            this.router.navigate(['/dashboard/motorcycles', this.motorcycleId(), 'maintenance']);
+          });
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo agregar el mantenimiento.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('maintForm.addError')));
       },
     });
   }
@@ -172,20 +175,19 @@ export class SaveMaintenanceComponent implements OnDestroy, OnInit {
     this.maintenanceService.updateMaintenance(id, maintenance).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.swal.success('Éxito', 'Mantenimiento actualizado correctamente.').then(() => {
-          this.router.navigate([
-            '/dashboard/motorcycles',
-            this.motorcycleId() || maintenance.motorcycleId,
-            'maintenance',
-          ]);
-        });
+        this.swal
+          .success(this.i18n.t('common.success'), this.i18n.t('maintForm.updated'))
+          .then(() => {
+            this.router.navigate([
+              '/dashboard/motorcycles',
+              this.motorcycleId() || maintenance.motorcycleId,
+              'maintenance',
+            ]);
+          });
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo actualizar el mantenimiento.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('maintForm.updateError')));
       },
     });
   }

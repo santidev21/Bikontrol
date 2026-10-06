@@ -1,8 +1,8 @@
 <div class="p-4">
-  <h1 class="profile-title">Perfil</h1>
+  <h1 class="profile-title">{{ 'profile.title' | t }}</h1>
 
   @if (isLoading()) {
-    <p class="text-gray-400 text-center my-4">Cargando perfil…</p>
+    <p class="text-gray-400 text-center my-4">{{ 'profile.loading' | t }}</p>
   }
 
   @if (!isLoading() && profile(); as p) {
@@ -14,7 +14,11 @@
             <div>
               <h2 class="profile-name">{{ p.fullName }}</h2>
               @if (!isDemo()) {
-                <button class="edit-name-btn" (click)="startEditName()" aria-label="Editar nombre">
+                <button
+                  class="edit-name-btn"
+                  (click)="startEditName()"
+                  [attr.aria-label]="'profile.editName' | t"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     height="16px"
@@ -37,13 +41,15 @@
                 (ngModelChange)="editableName.set($event)"
                 maxlength="200"
                 class="name-input"
-                placeholder="Tu nombre"
-                aria-label="Nombre"
+                [placeholder]="'profile.name' | t"
+                [attr.aria-label]="'profile.name' | t"
               />
               <button class="accept-btn" [disabled]="isSavingName()" (click)="saveName()">
-                Guardar
+                {{ 'profile.save' | t }}
               </button>
-              <button class="cancel-btn" (click)="cancelEditName()">Cancelar</button>
+              <button class="cancel-btn" (click)="cancelEditName()">
+                {{ 'common.cancel' | t }}
+              </button>
             </div>
           }
           <p class="profile-email">{{ p.email }}</p>
@@ -52,21 +58,21 @@
       </div>
       <div class="profile-card">
         <div class="profile-row">
-          <span class="row-label">Correo</span>
+          <span class="row-label">{{ 'profile.email' | t }}</span>
           <span class="row-value">{{ p.email }}</span>
         </div>
         <div class="profile-row">
-          <span class="row-label">Tipo de cuenta</span>
+          <span class="row-label">{{ 'profile.accountType' | t }}</span>
           <span class="row-value">{{
-            p.hasPassword ? 'Correo y contraseña' : 'Inicio con Google'
+            (p.hasPassword ? 'profile.accountTypePassword' : 'profile.accountTypeGoogle') | t
           }}</span>
         </div>
         <div class="profile-row">
-          <span class="row-label">Miembro desde</span>
+          <span class="row-label">{{ 'profile.memberSince' | t }}</span>
           <span class="row-value">{{ p.createdAt | date: 'yyyy-MM-dd' }}</span>
         </div>
         <div class="profile-row">
-          <span class="row-label">Recordatorios por correo</span>
+          <span class="row-label">{{ 'profile.emailReminders' | t }}</span>
           <span class="row-value">
             @if (!isDemo()) {
               <button
@@ -75,15 +81,15 @@
                 class="text-primary hover:underline"
                 [attr.aria-pressed]="remindersEnabled()"
               >
-                {{ remindersEnabled() ? 'Activados' : 'Desactivados' }}
+                {{ (remindersEnabled() ? 'profile.enabled' : 'profile.disabled') | t }}
               </button>
             } @else {
-              {{ remindersEnabled() ? 'Activados' : 'Desactivados' }}
+              {{ (remindersEnabled() ? 'profile.enabled' : 'profile.disabled') | t }}
             }
           </span>
         </div>
         <div class="profile-row">
-          <span class="row-label">Versión</span>
+          <span class="row-label">{{ 'profile.version' | t }}</span>
           <span class="row-value"
             >v{{ appVersion }}
             @if (swVersion()) {
@@ -93,32 +99,27 @@
         </div>
       </div>
       <div class="profile-card mt-4">
-        <h3 class="font-semibold text-primary mb-1">Mis datos</h3>
-        <p class="text-sm text-gray-500 mb-3">
-          Descargá una copia de tu información (perfil, motos, mantenimientos y registros) en un
-          archivo JSON.
-        </p>
+        <h3 class="font-semibold text-primary mb-1">{{ 'profile.myDataTitle' | t }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ 'profile.myDataText' | t }}</p>
         <button
           type="button"
           (click)="downloadMyData()"
           [disabled]="isExporting()"
           class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
         >
-          {{ isExporting() ? 'Preparando…' : 'Descargar mis datos' }}
+          {{ (isExporting() ? 'profile.exporting' : 'profile.downloadData') | t }}
         </button>
       </div>
       @if (!isDemo()) {
         <div class="profile-card mt-4 !border-red-200">
-          <h3 class="font-semibold text-red-600 mb-1">Zona de peligro</h3>
-          <p class="text-sm text-gray-500 mb-3">
-            Eliminar tu cuenta borra tus motos, mantenimientos y registros, y es irreversible.
-          </p>
+          <h3 class="font-semibold text-red-600 mb-1">{{ 'profile.dangerTitle' | t }}</h3>
+          <p class="text-sm text-gray-500 mb-3">{{ 'profile.dangerText' | t }}</p>
           <button
             type="button"
             (click)="openDeleteModal()"
             class="w-full py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-semibold"
           >
-            Eliminar mi cuenta
+            {{ 'profile.deleteAccount' | t }}
           </button>
         </div>
       }
@@ -130,7 +131,7 @@
             [disabled]="pushBusy()"
             class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
           >
-            {{ pushBusy() ? 'Procesando…' : 'Activar/desactivar notificaciones push' }}
+            {{ (pushBusy() ? 'profile.pushProcessing' : 'profile.pushToggle') | t }}
           </button>
         }
         @if (canChangePassword()) {
@@ -138,25 +139,23 @@
             (click)="openPasswordModal()"
             class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors font-semibold"
           >
-            Cambiar contraseña
+            {{ 'profile.changePassword' | t }}
           </button>
         }
         @if (!p.hasPassword && !isDemo()) {
-          <p class="google-note">
-            Iniciaste sesión con Google, por eso no tienes contraseña que cambiar.
-          </p>
+          <p class="google-note">{{ 'profile.googleNote' | t }}</p>
         }
         <a
           routerLink="/help"
           class="w-full block text-center py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold"
         >
-          Ayuda y preguntas frecuentes
+          {{ 'profile.help' | t }}
         </a>
         <button
           (click)="logout()"
           class="w-full py-2 bg-gray-700 text-textlight rounded-lg hover:bg-gray-600 transition-colors font-semibold"
         >
-          Cerrar sesión
+          {{ 'nav.logout' | t }}
         </button>
       </div>
     </div>
@@ -166,9 +165,9 @@
 @if (isPasswordModalOpen()) {
   <div class="modal-backdrop">
     <div class="password-modal">
-      <h3>Cambiar contraseña</h3>
+      <h3>{{ 'profile.passwordTitle' | t }}</h3>
       <label class="modal-label"
-        >Contraseña actual
+        >{{ 'profile.currentPassword' | t }}
         <input
           type="password"
           [ngModel]="currentPassword()"
@@ -178,7 +177,7 @@
         />
       </label>
       <label class="modal-label"
-        >Nueva contraseña
+        >{{ 'profile.newPassword' | t }}
         <input
           type="password"
           [ngModel]="newPassword()"
@@ -188,7 +187,7 @@
         />
       </label>
       <label class="modal-label"
-        >Confirmar nueva contraseña
+        >{{ 'profile.confirmNewPassword' | t }}
         <input
           type="password"
           [ngModel]="confirmPassword()"
@@ -198,9 +197,9 @@
         />
       </label>
       <div class="modal-actions">
-        <button class="cancel-btn" (click)="closePasswordModal()">Cancelar</button>
+        <button class="cancel-btn" (click)="closePasswordModal()">{{ 'common.cancel' | t }}</button>
         <button class="accept-btn" [disabled]="isChangingPassword()" (click)="changePassword()">
-          Guardar
+          {{ 'profile.save' | t }}
         </button>
       </div>
     </div>
@@ -210,43 +209,40 @@
 @if (isDeleteModalOpen()) {
   <div class="modal-backdrop">
     <div class="password-modal">
-      <h3>Eliminar mi cuenta</h3>
-      <p class="text-sm text-gray-600 mb-4">
-        Esta acción es permanente: se borrarán tus motos, mantenimientos y registros, y la cuenta
-        quedará anonimizada.
-      </p>
+      <h3>{{ 'profile.deleteAccount' | t }}</h3>
+      <p class="text-sm text-gray-600 mb-4">{{ 'profile.deleteModalText' | t }}</p>
       <label class="modal-label"
-        >Escribí ELIMINAR para confirmar
+        >{{ 'profile.deleteConfirmLabel' | t }}
         <input
           type="text"
           [ngModel]="deleteConfirmation()"
           (ngModelChange)="deleteConfirmation.set($event)"
           class="modal-input"
-          aria-label="Confirmación"
+          [attr.aria-label]="'profile.deleteConfirmAria' | t"
           autocomplete="off"
         />
       </label>
       @if (canChangePassword()) {
         <label class="modal-label"
-          >Tu contraseña
+          >{{ 'profile.deletePasswordLabel' | t }}
           <input
             type="password"
             [ngModel]="deletePassword()"
             (ngModelChange)="deletePassword.set($event)"
             class="modal-input"
-            aria-label="Contraseña"
+            [attr.aria-label]="'common.password' | t"
             autocomplete="current-password"
           />
         </label>
       }
       <div class="modal-actions">
-        <button class="cancel-btn" (click)="closeDeleteModal()">Cancelar</button>
+        <button class="cancel-btn" (click)="closeDeleteModal()">{{ 'common.cancel' | t }}</button>
         <button
           class="cancel-btn danger-btn"
           [disabled]="isDeleting()"
           (click)="confirmDeleteAccount()"
         >
-          {{ isDeleting() ? 'Eliminando…' : 'Eliminar cuenta' }}
+          {{ (isDeleting() ? 'profile.deleting' : 'profile.deleteAccountConfirm') | t }}
         </button>
       </div>
     </div>

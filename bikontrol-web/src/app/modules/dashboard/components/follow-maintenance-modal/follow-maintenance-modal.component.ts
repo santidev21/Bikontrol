@@ -14,9 +14,12 @@ import { MonitoringTypeSelectorComponent } from '../../pages/maintenance/compone
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-follow-maintenance-modal',
-  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent],
+  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent, TranslatePipe],
   templateUrl: './follow-maintenance-modal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -32,6 +35,7 @@ export class FollowMaintenanceModalComponent implements OnInit {
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly swal = inject(SwalService);
   private readonly httpError = inject(HttpErrorService);
+  private readonly i18n = inject(I18nService);
 
   readonly isFollowing = signal(false);
   followForm: FormGroup;
@@ -61,7 +65,10 @@ export class FollowMaintenanceModalComponent implements OnInit {
   onConfirm(): void {
     if (this.followForm.invalid) {
       this.followForm.markAllAsTouched();
-      this.swal.warning('Formulario incompleto', 'Por favor completa todos los campos requeridos.');
+      this.swal.warning(
+        this.i18n.t('common.formIncomplete'),
+        this.i18n.t('common.completeRequired'),
+      );
       return;
     }
 
@@ -83,7 +90,7 @@ export class FollowMaintenanceModalComponent implements OnInit {
 
     if (!payload.motorcycleId) {
       this.isFollowing.set(false);
-      this.swal.error('Error', 'Debes seleccionar una motocicleta para asociar el mantenimiento.');
+      this.swal.error(this.i18n.t('common.error'), this.i18n.t('follow.noMotorcycle'));
       return;
     }
 
@@ -91,15 +98,12 @@ export class FollowMaintenanceModalComponent implements OnInit {
       next: () => {
         this.isFollowing.set(false);
         this.swal
-          .success('Agregado!', 'El mantenimiento fue agregado a tus mantenimientos.')
+          .success(this.i18n.t('follow.addedTitle'), this.i18n.t('follow.addedText'))
           .then(() => this.saved.emit());
       },
       error: (err) => {
         this.isFollowing.set(false);
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo agregar el mantenimiento.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('follow.addError')));
       },
     });
   }

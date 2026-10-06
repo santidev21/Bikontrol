@@ -14,9 +14,12 @@ import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { AuthService } from '../../../../auth/services/auth.service';
 
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-maintenance-page',
-  imports: [RouterModule, MaintenanceInfoCardComponent],
+  imports: [RouterModule, MaintenanceInfoCardComponent, TranslatePipe],
   templateUrl: './maintenance-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './maintenance-page.component.scss',
@@ -28,6 +31,7 @@ export class MaintenancePageComponent implements OnInit {
   private readonly swal = inject(SwalService);
   private readonly httpError = inject(HttpErrorService);
   private readonly authService = inject(AuthService);
+  private readonly i18n = inject(I18nService);
 
   readonly motorcycleId = signal('');
   readonly isDemo = computed(() => this.authService.isDemo());
@@ -48,10 +52,7 @@ export class MaintenancePageComponent implements OnInit {
     effect(() => {
       const error = this.userRes.error();
       if (error) {
-        this.swal.error(
-          'Error',
-          this.httpError.message(error, 'No se pudieron cargar tus mantenimientos.'),
-        );
+        this.swal.error('Error', this.httpError.message(error, this.i18n.t('maint.loadError')));
       }
     });
 
@@ -60,10 +61,7 @@ export class MaintenancePageComponent implements OnInit {
       if (error) {
         this.swal.error(
           'Error',
-          this.httpError.message(
-            error,
-            'No se pudieron cargar los mantenimientos predeterminados.',
-          ),
+          this.httpError.message(error, this.i18n.t('maint.defaultsLoadError')),
         );
       }
     });
@@ -73,8 +71,8 @@ export class MaintenancePageComponent implements OnInit {
     const motorcycleId = this.route.snapshot.paramMap.get('motorcycleId');
     if (!motorcycleId) {
       this.swal.warning(
-        'Contexto requerido',
-        'Primero selecciona una motocicleta para gestionar mantenimientos.',
+        this.i18n.t('maint.contextRequiredTitle'),
+        this.i18n.t('maint.contextRequiredText'),
       );
       this.router.navigate(['/dashboard/home']);
       return;

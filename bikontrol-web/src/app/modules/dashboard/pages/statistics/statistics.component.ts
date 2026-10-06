@@ -28,9 +28,11 @@ const MONTH_LABELS = [
   'dic',
 ];
 
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+
 @Component({
   selector: 'app-statistics',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   templateUrl: './statistics.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './statistics.component.scss',

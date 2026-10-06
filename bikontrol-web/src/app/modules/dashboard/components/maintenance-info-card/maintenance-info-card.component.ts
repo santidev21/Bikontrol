@@ -18,9 +18,12 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 import { AuthService } from '../../../auth/services/auth.service';
 import { FollowMaintenanceModalComponent } from '../follow-maintenance-modal/follow-maintenance-modal.component';
 
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
+
 @Component({
   selector: 'app-maintenance-info-card',
-  imports: [IntervalFormatPipe, FollowMaintenanceModalComponent],
+  imports: [IntervalFormatPipe, FollowMaintenanceModalComponent, TranslatePipe],
   templateUrl: './maintenance-info-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './maintenance-info-card.component.scss',
@@ -31,6 +34,7 @@ export class MaintenanceInfoCardComponent {
   private swal = inject(SwalService);
   private httpError = inject(HttpErrorService);
   private authService = inject(AuthService);
+  private i18n = inject(I18nService);
 
   @Input() maintenance!: Maintenance;
   @Input() isDefault!: boolean;
@@ -85,14 +89,11 @@ export class MaintenanceInfoCardComponent {
     this.maintenanceService.deleteMaintenance(this.maintenance.id).subscribe({
       next: () => {
         this.swal
-          .success('¡Eliminado!', 'El mantenimiento fue eliminado correctamente.')
+          .success(this.i18n.t('infoCard.deletedTitle'), this.i18n.t('infoCard.deletedText'))
           .then(() => this.refresh.emit());
       },
       error: (err) => {
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudo eliminar el mantenimiento.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('infoCard.deleteError')));
       },
     });
   }
@@ -102,10 +103,10 @@ export class MaintenanceInfoCardComponent {
 
     this.swal
       .confirm(
-        '¿Estás seguro?',
-        `Esto eliminará permanentemente "${this.maintenance.name}".`,
-        'Sí, eliminar',
-        'Cancelar',
+        this.i18n.t('motoCard.deleteConfirmTitle'),
+        this.i18n.t('infoCard.confirmText', { name: this.maintenance.name }),
+        this.i18n.t('common.yesDelete'),
+        this.i18n.t('common.cancel'),
         'warning',
       )
       .then((result) => {

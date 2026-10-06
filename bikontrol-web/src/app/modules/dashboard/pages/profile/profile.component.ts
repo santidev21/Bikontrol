@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { I18nService } from '../../../../shared/i18n/i18n.service';
 import { UserService } from '../../service/user.service';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -19,7 +21,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './profile.component.scss',
@@ -32,6 +34,7 @@ export class ProfileComponent {
   private readonly httpError = inject(HttpErrorService);
   private readonly updateService = inject(UpdateService);
   private readonly pushService = inject(PushService);
+  private readonly i18n = inject(I18nService);
 
   private readonly profileRes = this.userService.getMeResource();
   readonly profile = computed(() =>
@@ -75,7 +78,10 @@ export class ProfileComponent {
     effect(() => {
       const error = this.profileRes.error();
       if (error) {
-        this.swal.error('Error', this.httpError.message(error, 'No se pudo cargar tu perfil.'));
+        this.swal.error(
+          this.i18n.t('common.error'),
+          this.httpError.message(error, this.i18n.t('profile.loadError')),
+        );
       }
     });
   }
@@ -94,7 +100,7 @@ export class ProfileComponent {
     if (this.isSavingName()) return;
     const fullName = this.editableName().trim();
     if (!fullName) {
-      this.swal.error('¡Error!', 'El nombre no puede estar vacío.');
+      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.nameEmpty'));
       return;
     }
 
@@ -103,11 +109,14 @@ export class ProfileComponent {
       next: (data) => {
         this.profileRes.set(data);
         this.cancelEditName();
-        this.swal.success('¡Éxito!', 'Se actualizó tu nombre.');
+        this.swal.success(this.i18n.t('common.success'), this.i18n.t('profile.nameUpdated'));
       },
       error: (err) => {
         this.isSavingName.set(false);
-        this.swal.error('Error', this.httpError.message(err, 'No se pudo actualizar tu nombre.'));
+        this.swal.error(
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('profile.nameUpdateError')),
+        );
       },
     });
   }
@@ -128,15 +137,15 @@ export class ProfileComponent {
     if (this.isChangingPassword()) return;
 
     if (!this.currentPassword() || !this.newPassword()) {
-      this.swal.error('¡Error!', 'Completa todos los campos.');
+      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.passwordComplete'));
       return;
     }
     if (this.newPassword().length < 6) {
-      this.swal.error('¡Error!', 'La nueva contraseña debe tener al menos 6 caracteres.');
+      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.passwordMin6'));
       return;
     }
     if (this.newPassword() !== this.confirmPassword()) {
-      this.swal.error('¡Error!', 'La confirmación no coincide con la nueva contraseña.');
+      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.passwordMismatch'));
       return;
     }
 
@@ -144,13 +153,13 @@ export class ProfileComponent {
     this.userService.changePassword(this.currentPassword(), this.newPassword()).subscribe({
       next: () => {
         this.closePasswordModal();
-        this.swal.success('¡Éxito!', 'Se actualizó tu contraseña.');
+        this.swal.success(this.i18n.t('common.success'), this.i18n.t('profile.passwordUpdated'));
       },
       error: (err) => {
         this.isChangingPassword.set(false);
         this.swal.error(
           'Error',
-          this.httpError.message(err, 'No se pudo actualizar tu contraseña.'),
+          this.httpError.message(err, this.i18n.t('profile.passwordUpdateError')),
         );
       },
     });
@@ -163,14 +172,14 @@ export class ProfileComponent {
       next: (data) => {
         this.profileRes.set(data);
         this.swal.success(
-          '¡Listo!',
-          enabled ? 'Recordatorios activados.' : 'Recordatorios desactivados.',
+          this.i18n.t('common.doneTitle'),
+          this.i18n.t(enabled ? 'profile.remindersOn' : 'profile.remindersOff'),
         );
       },
       error: (err) =>
         this.swal.error(
           'Error',
-          this.httpError.message(err, 'No se pudo actualizar la preferencia.'),
+          this.httpError.message(err, this.i18n.t('profile.remindersError')),
         ),
     });
   }
@@ -182,16 +191,13 @@ export class ProfileComponent {
       const current = await firstValueFrom(this.pushService.getSubscription());
       if (current) {
         await firstValueFrom(this.pushService.unsubscribe());
-        this.swal.success('¡Listo!', 'Notificaciones desactivadas en este dispositivo.');
+        this.swal.success(this.i18n.t('common.doneTitle'), this.i18n.t('profile.pushOff'));
       } else {
         await firstValueFrom(this.pushService.subscribe());
-        this.swal.success('¡Listo!', 'Notificaciones activadas en este dispositivo.');
+        this.swal.success(this.i18n.t('common.doneTitle'), this.i18n.t('profile.pushOn'));
       }
     } catch (err: any) {
-      this.swal.error(
-        'Error',
-        this.httpError.message(err, 'No se pudieron cambiar las notificaciones.'),
-      );
+      this.swal.error('Error', this.httpError.message(err, this.i18n.t('profile.pushError')));
     } finally {
       this.pushBusy.set(false);
     }
@@ -215,14 +221,11 @@ export class ProfileComponent {
         anchor.download = `bikontrol-mis-datos-${new Date().toISOString().slice(0, 10)}.json`;
         anchor.click();
         URL.revokeObjectURL(url);
-        this.swal.success('¡Listo!', 'Descargamos tus datos en un archivo JSON.');
+        this.swal.success(this.i18n.t('common.doneTitle'), this.i18n.t('profile.dataReady'));
       },
       error: (err) => {
         this.isExporting.set(false);
-        this.swal.error(
-          'Error',
-          this.httpError.message(err, 'No se pudieron descargar tus datos.'),
-        );
+        this.swal.error('Error', this.httpError.message(err, this.i18n.t('profile.dataError')));
       },
     });
   }
@@ -242,11 +245,17 @@ export class ProfileComponent {
     if (this.isDeleting()) return;
 
     if (this.deleteConfirmation().trim().toUpperCase() !== 'ELIMINAR') {
-      this.swal.error('¡Error!', 'Escribe ELIMINAR para confirmar.');
+      this.swal.error(
+        this.i18n.t('common.errorTitle'),
+        this.i18n.t('profile.deleteConfirmInvalid'),
+      );
       return;
     }
     if (this.canChangePassword() && !this.deletePassword()) {
-      this.swal.error('¡Error!', 'Ingresá tu contraseña para confirmar.');
+      this.swal.error(
+        this.i18n.t('common.errorTitle'),
+        this.i18n.t('profile.deletePasswordRequired'),
+      );
       return;
     }
 
@@ -258,7 +267,7 @@ export class ProfileComponent {
           this.isDeleting.set(false);
           this.isDeleteModalOpen.set(false);
           this.swal
-            .success('Cuenta eliminada', 'Tu cuenta y tus datos fueron eliminados.')
+            .success(this.i18n.t('profile.deletedTitle'), this.i18n.t('profile.deletedText'))
             .then(() => {
               this.authService.logout();
               this.router.navigate(['/login']);
@@ -266,7 +275,7 @@ export class ProfileComponent {
         },
         error: (err) => {
           this.isDeleting.set(false);
-          this.swal.error('Error', this.httpError.message(err, 'No se pudo eliminar tu cuenta.'));
+          this.swal.error('Error', this.httpError.message(err, this.i18n.t('profile.deleteError')));
         },
       });
   }
