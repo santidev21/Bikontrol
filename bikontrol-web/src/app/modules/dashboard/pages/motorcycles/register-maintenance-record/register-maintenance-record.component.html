@@ -24,6 +24,7 @@
                   [id]="'record-item-' + maintenance.id"
                   type="checkbox"
                   class="h-4 w-4"
+                  [attr.aria-label]="maintenance.name"
                   [checked]="isSelected(maintenance.id)"
                   (change)="toggleSelection(maintenance.id, $event)"
                 />
