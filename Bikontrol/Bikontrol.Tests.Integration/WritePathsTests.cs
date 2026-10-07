@@ -66,16 +66,25 @@ public sealed class WritePathsTests
     }
 
     [RequiresDockerFact]
-    public async Task SoftDeleteMotorcycle_ShouldPersist()
+    public async Task SoftDeleteMotorcycle_ShouldPersistAndPurgeDependentData()
     {
         var client = await AuthenticatedClientAsync();
         var created = await CreateMotorcycleAsync(client, km: 1000);
+        var maintenance = await CreateMaintenanceAsync(client, created.Id);
+        await RegisterRecordAsync(client, created.Id, maintenance.Id, performedKm: 1000);
 
         var response = await client.DeleteAsync($"/api/motorcycles/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         var mine = await client.GetFromJsonAsync<List<MotorcycleResponse>>("/api/motorcycles/mine");
         Assert.DoesNotContain(mine!, m => m.Id == created.Id);
+
+        // The soft-delete must also purge the motorcycle's records and disable
+        // its maintenances, so nothing is left pointing at a disabled parent.
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False(await db.MotorcycleMaintenanceRecords.AnyAsync(r => r.MotorcycleId == created.Id));
+        Assert.False(await db.UserMaintenances.AnyAsync(m => m.MotorcycleId == created.Id && m.IsEnabled));
     }
 
     [RequiresDockerFact]
@@ -92,32 +101,27 @@ public sealed class WritePathsTests
     }
 
     [RequiresDockerFact]
-    public async Task CreateAndDeleteUserMaintenance_ShouldPersist()
+    public async Task CreateAndDeleteUserMaintenance_ShouldPersistAndPurgeRecords()
     {
         var client = await AuthenticatedClientAsync();
         var created = await CreateMotorcycleAsync(client, km: 1000);
-
-        var payload = new
-        {
-            motorcycleId = created.Id,
-            name = "Cambio de aceite",
-            description = "Aceite",
-            trackingType = "Km",
-            kmInterval = 1500,
-            timeIntervalWeeks = 0
-        };
-        var createResponse = await client.PostAsJsonAsync("/api/maintenances/mine", payload);
-        createResponse.EnsureSuccessStatusCode();
-        var maintenance = await createResponse.Content.ReadFromJsonAsync<MaintenanceResponse>();
+        var maintenance = await CreateMaintenanceAsync(client, created.Id);
 
         var afterCreate = await client.GetFromJsonAsync<List<MaintenanceResponse>>("/api/maintenances/mine");
-        Assert.Contains(afterCreate!, m => m.Id == maintenance!.Id);
+        Assert.Contains(afterCreate!, m => m.Id == maintenance.Id);
 
-        var deleteResponse = await client.DeleteAsync($"/api/maintenances/mine/{maintenance!.Id}");
+        var record = await RegisterRecordAsync(client, created.Id, maintenance.Id, performedKm: 1000);
+
+        var deleteResponse = await client.DeleteAsync($"/api/maintenances/mine/{maintenance.Id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
         var afterDelete = await client.GetFromJsonAsync<List<MaintenanceResponse>>("/api/maintenances/mine");
         Assert.DoesNotContain(afterDelete!, m => m.Id == maintenance.Id);
+
+        // Deleting a maintenance must also purge its records (audit check 8).
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False(await db.MotorcycleMaintenanceRecords.AnyAsync(r => r.Id == record.Id));
     }
 
     [RequiresDockerFact]
@@ -231,6 +235,35 @@ public sealed class WritePathsTests
         // The cost feeds the read-only statistics summary.
         var summary = await client.GetFromJsonAsync<StatisticsResponse>("/api/statistics/summary");
         Assert.Contains(summary!.CostByMotorcycle, c => c.MotorcycleId == moto.Id && c.Cost >= 55.50m);
+    }
+
+    private static async Task<MaintenanceResponse> CreateMaintenanceAsync(HttpClient client, Guid motorcycleId)
+    {
+        var response = await client.PostAsJsonAsync("/api/maintenances/mine", new
+        {
+            motorcycleId,
+            name = "Cambio de aceite",
+            description = "Aceite",
+            trackingType = "Km",
+            kmInterval = 1500,
+            timeIntervalWeeks = 0
+        });
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MaintenanceResponse>())!;
+    }
+
+    private static async Task<RecordResponse> RegisterRecordAsync(
+        HttpClient client, Guid motorcycleId, Guid userMaintenanceId, int performedKm)
+    {
+        var response = await client.PostAsJsonAsync("/api/maintenances/records", new
+        {
+            motorcycleId,
+            userMaintenanceId,
+            performedAt = DateTime.UtcNow,
+            performedKm
+        });
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<RecordResponse>())!;
     }
 
     private async Task<HttpClient> AuthenticatedClientAsync()
