@@ -42,4 +42,20 @@ describe('HomeComponent (httpResource)', () => {
     expect(fixture.componentInstance.motorcycles.value().length).toBe(1);
     expect(fixture.componentInstance.motorcycles.value()[0].name).toBe('XTZ');
   });
+
+  it('does not show the empty state while the motorcycles are still loading', async () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+
+    // The request is in-flight: the resource still reports loading.
+    expect(fixture.componentInstance.motorcycles.isLoading()).toBe(true);
+    expect(fixture.nativeElement.textContent).not.toContain('Te damos la bienvenida');
+
+    httpMock.expectOne((r) => r.url.endsWith('/motorcycles/mine')).flush([]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Once loading finishes with no motorcycles, the empty state appears.
+    expect(fixture.nativeElement.textContent).toContain('Te damos la bienvenida');
+  });
 });
