@@ -85,11 +85,7 @@ test('register → motorcycle → maintenance → record → odometer → due', 
   await page.getByRole('button', { name: '+ Registrar mantenimiento' }).click();
   await expect(page).toHaveURL(/\/dashboard\/motorcycles\/.+\/register-maintenance$/);
 
-  const maintenanceSelect = page.locator('#record-maintenance');
-  const optionValue = await maintenanceSelect
-    .locator('option', { hasText: 'Aceite E2E' })
-    .getAttribute('value');
-  await maintenanceSelect.selectOption(optionValue!);
+  await page.getByRole('checkbox', { name: /Aceite E2E/ }).click();
   await page.locator('#record-km').fill('1000');
   await page.getByRole('button', { name: 'Registrar mantenimiento' }).click();
   await confirmSuccessDialog(page);

@@ -143,6 +143,15 @@
                   }}
                 </p>
               }
+              @if (!isDemo()) {
+                <button
+                  type="button"
+                  class="tile-register-btn"
+                  (click)="registerMaintenance(maintenance)"
+                >
+                  {{ 'summary.register' | t }}
+                </button>
+              }
             </div>
           }
         </div>

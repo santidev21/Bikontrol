@@ -158,6 +158,25 @@
   color: #6b7280;
 }
 
+.tile-register-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary, #003559);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
 .life-ring {
   width: 64px;
   height: 64px;
