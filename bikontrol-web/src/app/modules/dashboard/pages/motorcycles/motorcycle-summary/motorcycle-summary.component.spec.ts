@@ -27,6 +27,7 @@ describe('MotorcycleSummaryComponent', () => {
   let motorcyclesServiceMock: any;
   let maintenanceServiceMock: any;
   let swalMock: any;
+  let routerMock: any;
 
   beforeEach(() => {
     motorcyclesServiceMock = {
@@ -56,6 +57,7 @@ describe('MotorcycleSummaryComponent', () => {
       success: vi.fn().mockReturnValue(Promise.resolve({})),
       confirm: vi.fn().mockReturnValue(Promise.resolve({ isConfirmed: true })),
     };
+    routerMock = { getCurrentNavigation: () => null, navigate: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [MotorcycleSummaryComponent],
@@ -72,7 +74,7 @@ describe('MotorcycleSummaryComponent', () => {
           provide: ImageService,
           useValue: { resize: vi.fn(() => Promise.resolve('data:image/jpeg;base64,AAAA')) },
         },
-        { provide: Router, useValue: { getCurrentNavigation: () => null, navigate: vi.fn() } },
+        { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
       ],
     });
@@ -90,6 +92,21 @@ describe('MotorcycleSummaryComponent', () => {
 
     component.upcomingMaintenances.set([{ name: 'Aceite' } as any]);
     expect(component.canRegisterMaintenance()).toBe(true);
+  });
+
+  it('opens the register form with the tile maintenance preselected', () => {
+    const component = create();
+    component.motorcycle.set({ id: 'm1' } as Motorcycle);
+
+    component.registerMaintenance({
+      userMaintenanceId: 'um-1',
+      name: 'Aceite',
+    } as any);
+
+    expect(routerMock.navigate).toHaveBeenCalledWith(
+      ['/dashboard/motorcycles', 'm1', 'register-maintenance'],
+      { queryParams: { userMaintenanceId: 'um-1' } },
+    );
   });
 
   it('opens and closes the edit km modal around the current km', () => {
