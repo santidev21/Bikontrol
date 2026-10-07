@@ -43,6 +43,23 @@ builder.Configuration
 // correlated. Output goes to stdout, which Docker captures.
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
+    // One template for every sink. In dev it is short; in prod it is ISO-8601 so
+    // the file lines sort lexicographically and are easy to grep.
+    var outputTemplate = context.HostingEnvironment.IsDevelopment()
+        ? "[{Timestamp:HH:mm:ss} {Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}"
+        : "{Timestamp:o} [{Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}";
+
+    // Daily rolling log file so it can be read/opened directly (a plain .txt/.log)
+    // instead of only `docker logs`. In containers it lands on a mounted volume
+    // (/app/logs); override the location with Log__Path. 14 files, 50 MB each.
+    var logPath = context.Configuration["Log__Path"];
+    if (string.IsNullOrWhiteSpace(logPath))
+    {
+        logPath = context.HostingEnvironment.IsDevelopment()
+            ? Path.Combine("logs", "bikontrol-api-.log")
+            : "/app/logs/bikontrol-api-.log";
+    }
+
     loggerConfiguration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
@@ -50,10 +67,16 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
         .Enrich.WithProperty("Application", "Bikontrol.API")
         .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-        .WriteTo.Console(
-            outputTemplate: context.HostingEnvironment.IsDevelopment()
-                ? "[{Timestamp:HH:mm:ss} {Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}"
-                : "{Timestamp:o} [{Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}");
+        .WriteTo.Console(outputTemplate: outputTemplate, formatProvider: System.Globalization.CultureInfo.InvariantCulture)
+        .WriteTo.File(
+            path: logPath,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 14,
+            fileSizeLimitBytes: 50_000_000,
+            rollOnFileSizeLimit: true,
+            shared: true,
+            outputTemplate: outputTemplate,
+            formatProvider: System.Globalization.CultureInfo.InvariantCulture);
 });
 
 // Error tracking (Sentry): only active when a DSN is configured, so local dev
