@@ -170,8 +170,9 @@ async function api(method, path, body) {
   const data = text ? safeJson(text) : null;
 
   if (!res.ok) {
-    const detail =
-      (data && (data.message || data.title || data.error)) || text || res.statusText;
+    const detail = sanitizeForLog(
+      (data && (data.message || data.title || data.error)) || text || res.statusText,
+    );
     let hint = '';
     if (res.status === 401) {
       hint = path.includes('/auth/refresh')
@@ -195,6 +196,17 @@ function safeJson(text) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Neutralises server-controlled text before it reaches the terminal. Strips
+ * control characters (including CR/LF, which could forge log lines) and caps
+ * the length, so an error stays readable without risking log injection.
+ */
+function sanitizeForLog(value) {
+  return String(value ?? '')
+    .replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ')
+    .slice(0, 500);
 }
 
 async function authenticate() {
@@ -236,34 +248,36 @@ async function authenticate() {
     password: CONFIG.password,
   });
   CONFIG.token = session.token;
-  log(`Authenticated as ${session.email} (role ${session.role}).`);
+  log(`Authenticated (role ${session.role}).`);
 }
 
 function looksLikeJwt(value) {
   return value.split('.').length === 3 && value.startsWith('eyJ');
 }
 
-/** Decodes the access token and warns about the usual reasons a 401 happens. */
+/**
+ * Decodes the access token to warn about the usual 401 causes. It never prints
+ * the token or any of its claims — those come from the environment and are
+ * treated as sensitive.
+ */
 function inspectToken(token) {
   const parts = token.split('.');
   if (parts.length !== 3 || !token.startsWith('eyJ')) {
     log(
-      `Warning: BIKONTROL_TOKEN does not look like a JWT (length ${token.length}). ` +
-        'Make sure you copied localStorage["token"] (not "null", not refreshToken).',
+      'Warning: BIKONTROL_TOKEN does not look like a JWT. Make sure you copied ' +
+        'localStorage["token"] (not "null", not the refreshToken).',
     );
     return;
   }
   try {
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
     if (payload.role === undefined) {
-      log('Warning: token has no "role" claim — this looks like the refreshToken, not the access token.');
+      log('Warning: this looks like the refreshToken, not the access token.');
       return;
     }
-    if (payload.exp) {
-      const leftSec = Math.round(payload.exp - Date.now() / 1000);
-      log(leftSec > 0 ? `Token valid for ~${Math.round(leftSec / 60)} min.` : `Warning: token expired ${-leftSec}s ago.`);
+    if (payload.exp && payload.exp - Date.now() / 1000 <= 0) {
+      log('Warning: the access token is expired; log in again and copy a fresh one.');
     }
-    if (payload.email) log(`Token subject: ${payload.email}`);
   } catch {
     log('Warning: could not decode the token payload.');
   }
@@ -339,7 +353,7 @@ async function buildPlan(motorcycleId) {
   const ceilingKm =
     CONFIG.currentKmOverride > 0 ? Math.min(CONFIG.currentKmOverride, detectedKm) : detectedKm;
   if (CONFIG.currentKmOverride > 0 && CONFIG.currentKmOverride > detectedKm) {
-    log(`Note: CURRENT_KM ${CONFIG.currentKmOverride} > odometer ${detectedKm}; using ${detectedKm}.`);
+    log('Note: CURRENT_KM is above the odometer; using the real odometer reading.');
   }
 
   const startDate = resolveRideStart(motorcycle.year);
@@ -390,7 +404,7 @@ async function buildPlan(motorcycleId) {
 function printPlan(plan) {
   log('');
   log(`Motorcycle : ${plan.motorcycle.name} ${plan.motorcycle.brand} (${plan.motorcycle.year}) ` +
-      `"${plan.motorcycle.nickname}" — ${CONFIG.motorcycleId}${CONFIG.userId ? ` — user ${CONFIG.userId}` : ''}`);
+      `"${plan.motorcycle.nickname}" — ${plan.motorcycle.id}`);
   log(`Odometer   : detected ${plan.detectedKm} km, ceiling used ${plan.ceilingKm} km`);
   log(`Start of use: ${isoDate(plan.startDate)} (assumed)`);
   log('');
@@ -477,25 +491,25 @@ function log(message) {
   console.log(message);
 }
 
-/** Shows enough of a secret to confirm *which* value was pasted, without leaking it. */
-function redact(value) {
-  if (!value) return '(empty)';
-  if (value.length <= 12) return `"${value}" (length ${value.length})`;
-  return `${value.slice(0, 6)}…${value.slice(-4)} (length ${value.length})`;
-}
-
 async function main() {
   if (process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(readFileSync(new URL(import.meta.url), 'utf8').split('*/')[0]);
     return;
   }
 
-  log(`API: ${CONFIG.apiUrl}${CONFIG.apply ? '' : '  (dry run)'}`);
+  // Never print the configured values themselves (they come from the
+  // environment and are treated as sensitive): only which source was used.
+  const apiSource = process.env.API_URL ? 'API_URL' : 'default (production)';
+  log(`API: ${apiSource}${CONFIG.apply ? '' : '  (dry run)'}`);
   if (CONFIG.debug) {
-    log(`debug: accessToken    = ${redact(CONFIG.token)}`);
-    log(`debug: refreshToken   = ${redact(CONFIG.refreshToken)}`);
-    log(`debug: email/password = ${CONFIG.email ? CONFIG.email : '(none)'}${CONFIG.password ? ' + password' : ''}`);
-    log(`debug: motorcycleId   = ${CONFIG.motorcycleId || '(auto)'}`);
+    const authMethod = CONFIG.token
+      ? 'access token'
+      : CONFIG.refreshToken
+        ? 'refresh token'
+        : CONFIG.email
+          ? 'email/password'
+          : '(none)';
+    log(`debug: auth method = ${authMethod}`);
   }
   await authenticate();
 
@@ -535,6 +549,6 @@ async function resolveMotorcycleId() {
 }
 
 main().catch((error) => {
-  console.error(`\nError: ${error.message}`);
+  console.error(`\nError: ${sanitizeForLog(error?.message ?? error)}`);
   process.exitCode = 1;
 });
