@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/santidev21/Bikontrol/compare/v0.2.1...v0.3.0) (2026-10-07)
+
+
+### Features
+
+* **maintenance:** multi-select registration and quick register from summary ([#81](https://github.com/santidev21/Bikontrol/issues/81)) ([a1e8db7](https://github.com/santidev21/Bikontrol/commit/a1e8db72a378088a5a73c86fab8f85f27b9fec1f))
+
+
+### Bug Fixes
+
+* **web:** use Bikontrol icons and keep navigation clear of safe areas ([#85](https://github.com/santidev21/Bikontrol/issues/85)) ([3b58f6d](https://github.com/santidev21/Bikontrol/commit/3b58f6ddf1fa81a5790e7451e42dc5d7892679fa))
+
 ## [0.2.1](https://github.com/santidev21/Bikontrol/compare/v0.2.0...v0.2.1) (2026-10-07)
 
 
