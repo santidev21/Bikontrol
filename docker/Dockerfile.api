@@ -25,6 +25,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
 
 COPY --from=build /app/publish .
 
+# Log directory for the Serilog file sink. Created (and owned) by the runtime
+# user so a named volume mounted at /app/logs inherits the right permissions.
+RUN mkdir -p /app/logs && chown $APP_UID:$APP_UID /app/logs
+
 # Run as the non-root user defined by the .NET 8 image (APP_UID=1654).
 USER $APP_UID
 
