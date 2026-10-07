@@ -15,6 +15,11 @@
   /* Text */
   --color-text-dark: #003559;
   --color-text-light: #ffffff;
+
+  /* Safe areas (notch / iOS home indicator / Android gesture bar).
+     Non-zero only when the viewport uses viewport-fit=cover; 0px elsewhere. */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Maintenance record attachments (motorcycle summary).

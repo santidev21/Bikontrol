@@ -1,0 +1,6 @@
+nav {
+  /* Keep the items clear of the iOS home indicator / Android gesture bar.
+     Falls back to a plain 0.75rem of vertical padding off-device. */
+  padding-top: calc(0.75rem + var(--safe-area-top, 0px));
+  padding-bottom: calc(0.75rem + var(--safe-area-bottom, 0px));
+}
