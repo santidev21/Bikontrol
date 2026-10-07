@@ -201,7 +201,8 @@ export const es: Record<string, string> = {
   'record.noMaintenances': 'Aún no tenés mantenimientos para esta moto.',
   'record.selectAtLeastOne': 'Selecciona al menos un mantenimiento.',
   'record.kmRequired': 'Ingresa el kilometraje para los mantenimientos por km.',
-  'record.sharedKmHint': 'Km actual de la moto: {km}. Se aplica a todos los mantenimientos por kilometraje.',
+  'record.sharedKmHint':
+    'Km actual de la moto: {km}. Se aplica a todos los mantenimientos por kilometraje.',
   'record.itemLastKm': 'Último: {last}',
   'record.partialTitle': 'Registro parcial',
   'record.partialText': 'No se pudieron registrar: {names}. El resto sí se guardó.',

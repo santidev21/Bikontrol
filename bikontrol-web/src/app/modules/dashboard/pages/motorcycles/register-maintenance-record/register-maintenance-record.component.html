@@ -4,15 +4,24 @@
   @if (loaded() && maintenances().length === 0) {
     <p class="text-gray-400 text-center my-4">{{ 'record.noMaintenances' | t }}</p>
   } @else {
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="bg-gray-800 rounded-xl p-4 space-y-4" [class.hidden]="!loaded()">
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="bg-gray-800 rounded-xl p-4 space-y-4"
+      [class.hidden]="!loaded()"
+    >
       <div>
         <p class="block text-sm text-gray-300 mb-2">{{ 'record.selectMaintenances' | t }}</p>
 
         <div class="space-y-2">
           @for (maintenance of maintenances(); track maintenance.id) {
             <div class="rounded-lg border border-gray-700 p-2">
-              <label class="flex items-center gap-2 cursor-pointer">
+              <label
+                [attr.for]="'record-item-' + maintenance.id"
+                class="flex items-center gap-2 cursor-pointer"
+              >
                 <input
+                  [id]="'record-item-' + maintenance.id"
                   type="checkbox"
                   class="h-4 w-4"
                   [checked]="isSelected(maintenance.id)"
