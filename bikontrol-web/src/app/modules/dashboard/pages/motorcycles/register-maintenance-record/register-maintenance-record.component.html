@@ -48,6 +48,7 @@
                     min="0"
                     step="0.01"
                     inputmode="decimal"
+                    [attr.aria-label]="('record.cost' | t) + ' — ' + maintenance.name"
                     [value]="costOf(maintenance.id)"
                     (input)="setCost(maintenance.id, $event)"
                     [placeholder]="'record.cost' | t"
