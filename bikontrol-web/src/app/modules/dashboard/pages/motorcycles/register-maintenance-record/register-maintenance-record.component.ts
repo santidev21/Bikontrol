@@ -97,13 +97,13 @@ export class RegisterMaintenanceRecordComponent implements OnInit, OnDestroy {
     return this.selectedIds().includes(id);
   }
 
-  toggleSelection(id: string, event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
+  toggleSelection(id: string): void {
+    const nowSelected = !this.isSelected(id);
     this.selectedIds.update((ids) =>
-      checked ? [...ids, id] : ids.filter((current) => current !== id),
+      nowSelected ? [...ids, id] : ids.filter((current) => current !== id),
     );
 
-    if (!checked) {
+    if (!nowSelected) {
       this.costs.update((costs) => {
         const { [id]: _removed, ...rest } = costs;
         return rest;

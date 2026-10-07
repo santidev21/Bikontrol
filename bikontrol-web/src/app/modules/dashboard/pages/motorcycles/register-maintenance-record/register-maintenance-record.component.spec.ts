@@ -81,8 +81,7 @@ describe('RegisterMaintenanceRecordComponent', () => {
     component = TestBed.runInInjectionContext(() => new RegisterMaintenanceRecordComponent());
   });
 
-  const select = (id: string) =>
-    component.toggleSelection(id, { target: { checked: true } } as any);
+  const select = (id: string) => component.toggleSelection(id);
   const today = () => new Date().toISOString().split('T')[0];
 
   it('should redirect to home when no motorcycle id is present', () => {

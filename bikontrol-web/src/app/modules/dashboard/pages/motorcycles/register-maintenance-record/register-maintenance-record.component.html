@@ -16,23 +16,30 @@
         <div class="space-y-2">
           @for (maintenance of maintenances(); track maintenance.id) {
             <div class="rounded-lg border border-gray-700 p-2">
-              <label
-                [attr.for]="'record-item-' + maintenance.id"
-                class="flex items-center gap-2 cursor-pointer"
+              <button
+                type="button"
+                role="checkbox"
+                [attr.aria-checked]="isSelected(maintenance.id)"
+                [attr.aria-label]="maintenance.name"
+                (click)="toggleSelection(maintenance.id)"
+                class="flex items-center gap-2 w-full text-left cursor-pointer bg-transparent border-none p-0"
               >
-                <input
-                  [id]="'record-item-' + maintenance.id"
-                  type="checkbox"
-                  class="h-4 w-4"
-                  [attr.aria-label]="maintenance.name"
-                  [checked]="isSelected(maintenance.id)"
-                  (change)="toggleSelection(maintenance.id, $event)"
-                />
+                <span
+                  class="flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[11px] leading-none"
+                  [class.bg-primary]="isSelected(maintenance.id)"
+                  [class.border-primary]="isSelected(maintenance.id)"
+                  [class.border-gray-500]="!isSelected(maintenance.id)"
+                  [class.text-textlight]="isSelected(maintenance.id)"
+                >
+                  @if (isSelected(maintenance.id)) {
+                    <span aria-hidden="true">✓</span>
+                  }
+                </span>
                 <span class="text-white text-sm">
                   {{ maintenance.name }}
                   <span class="text-gray-400">({{ maintenance.trackingType }})</span>
                 </span>
-              </label>
+              </button>
 
               @if (isSelected(maintenance.id)) {
                 <div class="mt-2 flex items-center gap-2">
