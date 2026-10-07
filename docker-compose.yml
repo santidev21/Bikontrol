@@ -82,6 +82,15 @@ services:
       WebPush__PublicKey: ${WebPush__PublicKey:-}
       WebPush__PrivateKey: ${WebPush__PrivateKey:-}
       WebPush__Subject: ${WebPush__Subject:-mailto:contacto.santidev21@gmail.com}
+    volumes:
+      # Serilog writes here (see Program.cs): a plain, readable .log file that
+      # survives container recreation (docker volume bikontrol_api_logs).
+      - bikontrol_api_logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - bikontrol-net
       - bikontrol-internal-net
@@ -110,6 +119,11 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - bikontrol-net
     healthcheck:
@@ -133,3 +147,4 @@ networks:
 
 volumes:
   bikontrol_db_data:
+  bikontrol_api_logs:
