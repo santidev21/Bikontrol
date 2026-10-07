@@ -245,6 +245,16 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/motorcycles', id, 'register-maintenance']);
   }
 
+  /** Opens the register form with this upkeep already selected. */
+  registerMaintenance(maintenance: UpcomingMaintenance): void {
+    const id = this.motorcycleId();
+    if (!id) return;
+
+    this.router.navigate(['/dashboard/motorcycles', id, 'register-maintenance'], {
+      queryParams: { userMaintenanceId: maintenance.userMaintenanceId },
+    });
+  }
+
   goToMaintenanceCatalog(): void {
     const id = this.motorcycleId();
     if (!id) return;

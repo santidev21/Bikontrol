@@ -8,31 +8,47 @@ import { MotorcyclesService } from '../../../service/motorcycles.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 
+const kmMaintenance = (id = 'maint-1', name = 'Aceite') => ({
+  id,
+  motorcycleId: 'moto-1',
+  name,
+  trackingType: 'Km' as const,
+  isEnabled: true,
+  isSystem: false,
+});
+
+const timeMaintenance = (id = 'maint-2', name = 'Refrigerante') => ({
+  id,
+  motorcycleId: 'moto-1',
+  name,
+  trackingType: 'Time' as const,
+  isEnabled: true,
+  isSystem: false,
+});
+
 describe('RegisterMaintenanceRecordComponent', () => {
   let component: RegisterMaintenanceRecordComponent;
   let maintenanceServiceMock: any;
   let motorcyclesServiceMock: any;
   let routerMock: any;
   let routeParamMap$: Subject<any>;
+  let routeSnapshot: any;
   let swalMock: any;
   let httpErrorMock: any;
 
   beforeEach(() => {
     routeParamMap$ = new Subject<any>();
+    routeSnapshot = { queryParamMap: convertToParamMap({}) };
     maintenanceServiceMock = {
-      getUserMaintenanceByMotorcycle: vi.fn(),
-      getMaintenanceRecordsByMotorcycle: vi.fn(),
+      getUserMaintenanceByMotorcycle: vi.fn(() => of([])),
+      getMaintenanceRecordsByMotorcycle: vi.fn(() => of([])),
       registerMaintenanceRecord: vi.fn(),
     };
-    motorcyclesServiceMock = {
-      getCurrentKm: vi.fn(),
-    };
-    routerMock = {
-      navigate: vi.fn(),
-    };
+    motorcyclesServiceMock = { getCurrentKm: vi.fn(() => of({ km: 2300 })) };
+    routerMock = { navigate: vi.fn() };
     swalMock = {
       error: vi.fn(),
-      warning: vi.fn(),
+      warning: vi.fn().mockResolvedValue(true),
       success: vi.fn().mockResolvedValue(true),
     };
     httpErrorMock = {
@@ -42,12 +58,19 @@ describe('RegisterMaintenanceRecordComponent', () => {
       ),
     };
 
-    // The component uses inject(), so it must be created inside an injection context.
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         { provide: FormBuilder, useValue: new FormBuilder() },
-        { provide: ActivatedRoute, useValue: { paramMap: routeParamMap$.asObservable() } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: routeParamMap$.asObservable(),
+            get snapshot() {
+              return routeSnapshot;
+            },
+          },
+        },
         { provide: Router, useValue: routerMock },
         { provide: MaintenanceService, useValue: maintenanceServiceMock },
         { provide: MotorcyclesService, useValue: motorcyclesServiceMock },
@@ -58,6 +81,9 @@ describe('RegisterMaintenanceRecordComponent', () => {
     component = TestBed.runInInjectionContext(() => new RegisterMaintenanceRecordComponent());
   });
 
+  const select = (id: string) => component.toggleSelection(id, { target: { checked: true } } as any);
+  const today = () => new Date().toISOString().split('T')[0];
+
   it('should redirect to home when no motorcycle id is present', () => {
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({}));
@@ -65,81 +91,62 @@ describe('RegisterMaintenanceRecordComponent', () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/home']);
   });
 
-  it('should load current km and user maintenances for the motorcycle', () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
-    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([]));
+  it('should load current km and the user maintenances', () => {
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([kmMaintenance()]));
 
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
 
     expect(component.motorcycleId()).toBe('moto-1');
     expect(motorcyclesServiceMock.getCurrentKm).toHaveBeenCalledWith('moto-1');
-    expect(maintenanceServiceMock.getUserMaintenanceByMotorcycle).toHaveBeenCalledWith('moto-1');
     expect(component.currentKm()).toBe(2300);
+    expect(component.maintenances().length).toBe(1);
   });
 
-  it('should update the performed km control when a Km-based maintenance is selected', () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
-    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
-      of([
-        {
-          id: 'maint-1',
-          motorcycleId: 'moto-1',
-          name: 'Aceite',
-          trackingType: 'Km',
-          isEnabled: true,
-          isSystem: false,
-        },
-      ]),
-    );
-    maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(of([]));
-
+  it('requires the km field once a km-tracked maintenance is selected', () => {
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([kmMaintenance()]));
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
-    component.form.get('userMaintenanceId')?.setValue('maint-1');
 
-    expect(component.selectedMaintenance()?.id).toBe('maint-1');
+    expect(component.anyKmSelected()).toBe(false);
+
+    select('maint-1');
+
+    expect(component.anyKmSelected()).toBe(true);
     expect(component.form.get('performedKm')?.value).toBe(2300);
+    expect(component.form.get('performedKm')?.hasError('required')).toBe(false);
   });
 
-  it('should clear performed km for time-based maintenance', () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
-    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
-      of([
-        {
-          id: 'maint-2',
-          motorcycleId: 'moto-1',
-          name: 'Revision',
-          trackingType: 'Time',
-          isEnabled: true,
-          isSystem: false,
-        },
-      ]),
-    );
-    maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(of([]));
-
+  it('clears the km field when only time-tracked maintenances are selected', () => {
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([timeMaintenance()]));
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
-    component.form.get('userMaintenanceId')?.setValue('maint-2');
 
+    select('maint-2');
+
+    expect(component.anyKmSelected()).toBe(false);
     expect(component.form.get('performedKm')?.value).toBeNull();
   });
 
-  it('should warn when the performed date is in the future', () => {
-    component.motorcycleId.set('moto-1');
-    component.selectedMaintenance.set({
-      id: 'maint-1',
-      motorcycleId: 'moto-1',
-      name: 'Aceite',
-      trackingType: 'Km',
-      isEnabled: true,
-      isSystem: false,
-    });
-    component.form.patchValue({
-      userMaintenanceId: 'maint-1',
-      performedAt: '2999-01-01',
-      performedKm: 2000,
-    });
+  it('warns when nothing is selected', () => {
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
+
+    component.onSubmit();
+
+    expect(swalMock.warning).toHaveBeenCalledWith(
+      'Error',
+      'Selecciona al menos un mantenimiento.',
+    );
+    expect(maintenanceServiceMock.registerMaintenanceRecord).not.toHaveBeenCalled();
+  });
+
+  it('warns when the date is in the future', () => {
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([timeMaintenance()]));
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
+    select('maint-2');
+    component.form.patchValue({ performedAt: '2999-01-01' });
 
     component.onSubmit();
 
@@ -150,36 +157,15 @@ describe('RegisterMaintenanceRecordComponent', () => {
     expect(maintenanceServiceMock.registerMaintenanceRecord).not.toHaveBeenCalled();
   });
 
-  it('should warn when the performed km is lower than the last record', () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
-    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
-      of([
-        {
-          id: 'maint-1',
-          motorcycleId: 'moto-1',
-          name: 'Aceite',
-          trackingType: 'Km',
-          isEnabled: true,
-          isSystem: false,
-        },
-      ]),
-    );
+  it('warns when the shared km is lower than a selected item last record', () => {
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([kmMaintenance()]));
     maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(
-      of([
-        {
-          userMaintenanceId: 'maint-1',
-          performedKm: 2200,
-        },
-      ]),
+      of([{ userMaintenanceId: 'maint-1', performedKm: 3000 }]),
     );
-
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
-    component.form.get('userMaintenanceId')?.setValue('maint-1');
-    component.form.patchValue({
-      performedAt: new Date().toISOString().split('T')[0],
-      performedKm: 2100,
-    });
+    select('maint-1');
+    component.form.patchValue({ performedAt: today(), performedKm: 2100 });
 
     component.onSubmit();
 
@@ -187,37 +173,25 @@ describe('RegisterMaintenanceRecordComponent', () => {
       'Error',
       'No puedes agregar mantenimiento anterior al ultimo',
     );
+    expect(maintenanceServiceMock.registerMaintenanceRecord).not.toHaveBeenCalled();
   });
 
-  it('should register a maintenance record and navigate to the summary page', async () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
+  it('registers every selected maintenance with the shared date and km, then navigates', async () => {
     maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
-      of([
-        {
-          id: 'maint-1',
-          motorcycleId: 'moto-1',
-          name: 'Aceite',
-          trackingType: 'Km',
-          isEnabled: true,
-          isSystem: false,
-        },
-      ]),
+      of([kmMaintenance('maint-1', 'Aceite'), kmMaintenance('maint-2', 'Filtro')]),
     );
-    maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(of([]));
     maintenanceServiceMock.registerMaintenanceRecord.mockReturnValue(of({ id: 'record-1' }));
-
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
-    component.form.get('userMaintenanceId')?.setValue('maint-1');
-    component.form.patchValue({
-      performedAt: new Date().toISOString().split('T')[0],
-      performedKm: 2300,
-    });
+    select('maint-1');
+    select('maint-2');
+    component.form.patchValue({ performedAt: today(), performedKm: 2300 });
 
     component.onSubmit();
     await Promise.resolve();
     await Promise.resolve();
 
+    expect(maintenanceServiceMock.registerMaintenanceRecord).toHaveBeenCalledTimes(2);
     expect(maintenanceServiceMock.registerMaintenanceRecord).toHaveBeenCalledWith({
       motorcycleId: 'moto-1',
       userMaintenanceId: 'maint-1',
@@ -230,70 +204,90 @@ describe('RegisterMaintenanceRecordComponent', () => {
     });
   });
 
-  it('should include the cost when the user enters one', async () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
+  it('sends performedKm null for time-tracked items and includes per-item cost', async () => {
     maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
-      of([
-        {
-          id: 'maint-1',
-          motorcycleId: 'moto-1',
-          name: 'Aceite',
-          trackingType: 'Km',
-          isEnabled: true,
-          isSystem: false,
-        },
-      ]),
+      of([kmMaintenance('maint-1'), timeMaintenance('maint-2')]),
     );
-    maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(of([]));
     maintenanceServiceMock.registerMaintenanceRecord.mockReturnValue(of({ id: 'record-1' }));
-
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
-    component.form.get('userMaintenanceId')?.setValue('maint-1');
-    component.form.patchValue({
-      performedAt: new Date().toISOString().split('T')[0],
-      performedKm: 2300,
-      cost: 55.5,
-    });
+    select('maint-1');
+    select('maint-2');
+    component.setCost('maint-2', { target: { value: '55.5' } } as any);
+    component.form.patchValue({ performedAt: today(), performedKm: 2300 });
 
     component.onSubmit();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(maintenanceServiceMock.registerMaintenanceRecord).toHaveBeenCalledWith(
-      expect.objectContaining({ cost: 55.5 }),
+      expect.objectContaining({ userMaintenanceId: 'maint-2', performedKm: null, cost: 55.5 }),
     );
   });
 
-  it('should surface backend errors when registering a maintenance record', () => {
-    motorcyclesServiceMock.getCurrentKm.mockReturnValue(of({ km: 2300 }));
+  it('reports a partial failure without losing the successful ones', async () => {
     maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(
-      of([
-        {
-          id: 'maint-1',
-          motorcycleId: 'moto-1',
-          name: 'Aceite',
-          trackingType: 'Km',
-          isEnabled: true,
-          isSystem: false,
-        },
-      ]),
+      of([kmMaintenance('maint-1', 'Aceite'), kmMaintenance('maint-2', 'Filtro')]),
     );
-    maintenanceServiceMock.getMaintenanceRecordsByMotorcycle.mockReturnValue(of([]));
+    maintenanceServiceMock.registerMaintenanceRecord.mockImplementation((payload: any) =>
+      payload.userMaintenanceId === 'maint-2'
+        ? throwError(() => ({ error: { error: 'boom' } }))
+        : of({ id: 'record-1' }),
+    );
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
+    select('maint-1');
+    select('maint-2');
+    component.form.patchValue({ performedAt: today(), performedKm: 2300 });
+
+    component.onSubmit();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(swalMock.warning).toHaveBeenCalledWith(
+      'Registro parcial',
+      'No se pudieron registrar: Filtro. El resto sí se guardó.',
+    );
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/motorcycles/summary'], {
+      queryParams: { motorcycleId: 'moto-1' },
+    });
+  });
+
+  it('surfaces the backend error when nothing could be registered', () => {
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([kmMaintenance()]));
     maintenanceServiceMock.registerMaintenanceRecord.mockReturnValue(
       throwError(() => ({ error: { error: 'No se pudo registrar el mantenimiento.' } })),
     );
-
     component.ngOnInit();
     routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
-    component.form.get('userMaintenanceId')?.setValue('maint-1');
-    component.form.patchValue({
-      performedAt: new Date().toISOString().split('T')[0],
-      performedKm: 2300,
-    });
+    select('maint-1');
+    component.form.patchValue({ performedAt: today(), performedKm: 2300 });
 
     component.onSubmit();
 
     expect(swalMock.error).toHaveBeenCalledWith('Error', 'No se pudo registrar el mantenimiento.');
+  });
+
+  it('preselects the maintenance passed through the URL', () => {
+    routeSnapshot = { queryParamMap: convertToParamMap({ userMaintenanceId: 'maint-1' }) };
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([kmMaintenance()]));
+
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
+
+    expect(component.selectedIds()).toEqual(['maint-1']);
+    expect(component.anyKmSelected()).toBe(true);
+    expect(component.form.get('performedKm')?.value).toBe(2300);
+  });
+
+  it('ignores an unknown maintenance id in the URL', () => {
+    routeSnapshot = { queryParamMap: convertToParamMap({ userMaintenanceId: 'nope' }) };
+    maintenanceServiceMock.getUserMaintenanceByMotorcycle.mockReturnValue(of([kmMaintenance()]));
+
+    component.ngOnInit();
+    routeParamMap$.next(convertToParamMap({ motorcycleId: 'moto-1' }));
+
+    expect(component.selectedIds()).toEqual([]);
   });
 });
