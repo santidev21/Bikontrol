@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/santidev21/Bikontrol/compare/v0.2.0...v0.2.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **home:** hide empty state while motorcycles are loading ([#79](https://github.com/santidev21/Bikontrol/issues/79)) ([98f15bb](https://github.com/santidev21/Bikontrol/commit/98f15bb1d7a617efba8f50c2ba836ed043e7008e))
+
 ## [0.2.0](https://github.com/santidev21/Bikontrol/compare/v0.1.0...v0.2.0) (2026-10-06)
 
 
