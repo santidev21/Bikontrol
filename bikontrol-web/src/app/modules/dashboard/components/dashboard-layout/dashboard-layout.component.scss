@@ -1,0 +1,16 @@
+main {
+  /* Reserve room for the fixed top nav (5rem) and bottom nav (4rem), plus the
+     notch / home indicator so content is never hidden behind either. */
+  padding-top: calc(5rem + var(--safe-area-top, 0px));
+  padding-bottom: calc(4rem + var(--safe-area-bottom, 0px));
+}
+
+main.demo {
+  /* Extra room for the fixed demo banner. */
+  padding-top: calc(7rem + var(--safe-area-top, 0px));
+}
+
+.demo-banner {
+  /* Sit below the top nav, accounting for the status bar / notch. */
+  top: calc(4rem + var(--safe-area-top, 0px));
+}
