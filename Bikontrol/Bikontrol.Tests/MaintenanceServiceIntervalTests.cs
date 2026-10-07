@@ -321,7 +321,25 @@ public class MaintenanceServiceIntervalTests
                 PerformedAt = DateTime.UtcNow,
                 PerformedKm = 4000
             }));
-        Assert.Equal("No puedes agregar mantenimiento anterior al ultimo", ex.Message);
+        Assert.Equal("El kilometraje no puede ser menor al del registro anterior de este mantenimiento.", ex.Message);
+    }
+
+    [Fact]
+    public async Task Register_KmAboveNextRecord_ShouldThrowValidation()
+    {
+        // Registro con fecha anterior pero km mayor que un registro posterior:
+        // rompería la monotonía, así que debe rechazarse.
+        var next = Record(performedKm: 4000, performedAt: DateTime.UtcNow.AddDays(-10));
+        var ctx = RegisterContext(KmMaintenance(kmInterval: 5000), lastRecord: next, currentKm: 8000);
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => ctx.Service.RegisterMaintenanceRecordAsync(
+            new CreateMaintenanceRecordRequest
+            {
+                MotorcycleId = ctx.MotorcycleId,
+                UserMaintenanceId = ctx.MaintenanceId,
+                PerformedAt = DateTime.UtcNow.AddDays(-20),
+                PerformedKm = 6000
+            }));
+        Assert.Equal("El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.", ex.Message);
     }
 
     [Fact]
@@ -554,7 +572,11 @@ public class MaintenanceServiceIntervalTests
 
         var lastRecords = new Dictionary<Guid, MotorcycleMaintenanceRecord?>();
         if (lastRecord is not null)
+        {
+            lastRecord.UserMaintenanceId = maintenance.Id;
+            lastRecord.MotorcycleId = motorcycleId;
             lastRecords[maintenance.Id] = lastRecord;
+        }
 
         var service = CreateService(userId, motorcycleId,
             new List<UserMaintenance> { maintenance },
@@ -581,7 +603,11 @@ public class MaintenanceServiceIntervalTests
 
         var lastRecords = new Dictionary<Guid, MotorcycleMaintenanceRecord?>();
         if (lastRecord is not null)
+        {
+            lastRecord.UserMaintenanceId = maintenance.Id;
+            lastRecord.MotorcycleId = motorcycleId;
             lastRecords[maintenance.Id] = lastRecord;
+        }
 
         var service = CreateService(userId, motorcycleId,
             new List<UserMaintenance> { maintenance },
@@ -741,7 +767,10 @@ public class MaintenanceServiceIntervalTests
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
-            Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
+            Task.FromResult(_lastByMaintenance.Values
+                .Where(r => r is not null)
+                .Cast<MotorcycleMaintenanceRecord>()
+                .AsEnumerable());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) =>
