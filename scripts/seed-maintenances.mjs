@@ -52,9 +52,12 @@ import { readFileSync } from 'node:fs';
 let usedRefreshToken = false;
 
 const CONFIG = {
-  apiUrl: (process.env.API_URL || 'https://bikontrol.santidev21.tech/api').replace(/\/+$/, ''),
-  token: (process.env.BIKONTROL_TOKEN || '').trim().replace(/^["']+/, '').replace(/["']+$/, ''),
-  refreshToken: (process.env.BIKONTROL_REFRESH_TOKEN || '').trim().replace(/^["']+/, '').replace(/["']+$/, ''),
+  apiUrl: (process.env.API_URL || 'https://bikontrol.santidev21.tech/api').replace(/\/$/, ''),
+  token: (process.env.BIKONTROL_TOKEN || '').trim().replace(/^["']/, '').replace(/["']$/, ''),
+  refreshToken: (process.env.BIKONTROL_REFRESH_TOKEN || '')
+    .trim()
+    .replace(/^["']/, '')
+    .replace(/["']$/, ''),
   email: process.env.BIKONTROL_EMAIL || '',
   password: process.env.BIKONTROL_PASSWORD || '',
   motorcycleId: process.env.MOTORCYCLE_ID || '',
@@ -488,7 +491,9 @@ async function applyPlan(plan) {
 // ---------------------------------------------------------------------------
 
 function log(message) {
-  console.log(message);
+  // Every line goes through sanitizeForLog: server-controlled text can contain
+  // control characters that would otherwise forge extra log lines.
+  console.log(sanitizeForLog(message));
 }
 
 async function main() {
