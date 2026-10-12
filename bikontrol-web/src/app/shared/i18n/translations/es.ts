@@ -18,6 +18,7 @@ export const es: Record<string, string> = {
   'common.help': 'Ayuda',
   'common.terms': 'Términos',
   'common.privacy': 'Privacidad',
+  'common.loading': 'Cargando…',
 
   // Landing
   'landing.help': 'Ayuda',

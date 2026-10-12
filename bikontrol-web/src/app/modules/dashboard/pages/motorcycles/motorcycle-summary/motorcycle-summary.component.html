@@ -45,10 +45,16 @@
           </button>
         }
       </div>
-      <p class="mt-2 flex items-center text-gray-600 text-sm">
-        <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
-        {{ currentKm() }} km
-      </p>
+      @if (isCurrentKmLoading()) {
+        <div class="mt-2" aria-hidden="true">
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-7 w-28"></div>
+        </div>
+      } @else {
+        <p class="mt-2 flex items-center text-gray-600 text-sm">
+          <img src="/icons/route.svg" class="w-5 h-5 mr-1 text-primary" alt="route icon" />
+          {{ currentKm() }} km
+        </p>
+      }
       @if (!isDemo()) {
         <button class="rollback-km-link" (click)="rollbackLastKm()" [disabled]="isRollingBackKm()">
           {{ 'summary.rollbackHint' | t }}
@@ -84,7 +90,13 @@
           {{ 'summary.registerMaintenance' | t }}
         </button>
       }
-      @if (upcomingMaintenances().length > 0) {
+      @if (isUpcomingLoading()) {
+        <div class="maintenance-grid mt-4" aria-hidden="true">
+          @for (placeholder of [1, 2]; track placeholder) {
+            <div class="animate-pulse rounded-xl bg-gray-300/60 h-52"></div>
+          }
+        </div>
+      } @else if (upcomingMaintenances().length > 0) {
         <div class="maintenance-grid mt-4">
           @for (maintenance of upcomingMaintenances(); track maintenance) {
             <div class="maintenance-tile">
@@ -171,7 +183,13 @@
     @defer (on viewport) {
       <div class="maintenance-section mt-6">
         <h2 class="text-center">{{ 'summary.records' | t }}</h2>
-        @if (maintenanceRecords().length > 0) {
+        @if (isRecordsLoading()) {
+          <div aria-hidden="true">
+            @for (placeholder of [1, 2]; track placeholder) {
+              <div class="animate-pulse rounded-xl bg-gray-300/60 h-28 my-3"></div>
+            }
+          </div>
+        } @else if (maintenanceRecords().length > 0) {
           <div>
             @for (record of maintenanceRecords(); track record) {
               <div class="bg-gray-800 rounded-xl shadow-md p-4 my-3">

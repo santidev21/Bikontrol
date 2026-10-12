@@ -31,6 +31,8 @@ export class LoginComponent implements AfterViewInit {
   loginForm: FormGroup;
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly loginLoading = signal(false);
+  readonly googleLoading = signal(false);
   readonly demoLoading = signal(false);
   readonly canResendConfirmation = signal(false);
   readonly resendLoading = signal(false);
@@ -78,9 +80,11 @@ export class LoginComponent implements AfterViewInit {
       password: this.loginForm.value.password,
     };
 
+    this.loginLoading.set(true);
     this.authService.login(payload.email, payload.password).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
+        this.loginLoading.set(false);
         this.errorMessage.set(this.httpError.message(error));
         // 403 on login means the email still needs to be confirmed.
         this.canResendConfirmation.set(error?.status === 403);
@@ -154,9 +158,11 @@ export class LoginComponent implements AfterViewInit {
       return;
     }
 
+    this.googleLoading.set(true);
     this.authService.googleLogin(response.credential).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (error) => {
+        this.googleLoading.set(false);
         this.errorMessage.set(this.httpError.message(error));
       },
     });

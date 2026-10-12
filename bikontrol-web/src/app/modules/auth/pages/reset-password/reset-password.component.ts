@@ -19,10 +19,11 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 import { isInvalid as formIsInvalid } from '../../../../shared/utils/form.utils';
 import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../shared/i18n/i18n.service';
+import { SpinnerComponent } from '../../../../shared/components/spinner/spinner.component';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [FormsModule, ReactiveFormsModule, RouterModule, TranslatePipe],
+  imports: [FormsModule, ReactiveFormsModule, RouterModule, TranslatePipe, SpinnerComponent],
   templateUrl: './reset-password.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './reset-password.component.scss',
@@ -40,6 +41,7 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly linkInvalid = signal(false);
+  readonly isSubmitting = signal(false);
 
   private token: string | null = null;
   private email: string | null = null;
@@ -82,14 +84,17 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
 
     if (this.form.invalid || this.linkInvalid()) return;
 
+    this.isSubmitting.set(true);
     this.authService
       .resetPassword(this.email!, this.token!, this.form.value.newPassword)
       .subscribe({
         next: () => {
+          this.isSubmitting.set(false);
           this.successMessage.set(this.i18n.t('auth.reset.success'));
           this.redirectTimer = setTimeout(() => this.router.navigate(['/login']), 2000);
         },
         error: (error) => {
+          this.isSubmitting.set(false);
           this.errorMessage.set(this.httpError.message(error));
         },
       });

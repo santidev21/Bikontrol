@@ -18,10 +18,11 @@ import { AuthService } from '../../../auth/services/auth.service';
 
 import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../shared/i18n/i18n.service';
+import { SpinnerComponent } from '../../../../shared/components/spinner/spinner.component';
 
 @Component({
   selector: 'app-motorcycle-card',
-  imports: [TranslatePipe],
+  imports: [SpinnerComponent, TranslatePipe],
   templateUrl: './motorcycle-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './motorcycle-card.component.scss',
@@ -38,6 +39,7 @@ export class MotorcycleCardComponent implements OnInit {
   @Output() deleted = new EventEmitter<void>();
   readonly menuOpen = signal(false);
   readonly currentKm = signal<number | null>(null);
+  readonly isDeleting = signal(false);
 
   get isDemo(): boolean {
     return this.authService.isDemo();
@@ -68,6 +70,9 @@ export class MotorcycleCardComponent implements OnInit {
   }
 
   deleteMotorcycle() {
+    if (this.isDeleting()) return;
+    this.isDeleting.set(true);
+
     this.motorcyclesService.deleteMotorcycle(this.motorcycle.id!).subscribe({
       next: () => {
         this.swal
@@ -75,13 +80,16 @@ export class MotorcycleCardComponent implements OnInit {
           .then(() => this.deleted.emit());
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.swal.error('Error', this.httpError.message(err, this.i18n.t('motoCard.deleteError')));
       },
+      complete: () => this.isDeleting.set(false),
     });
   }
 
   confirmDelete(event: Event) {
     event.stopPropagation();
+    if (this.isDeleting()) return;
 
     this.swal
       .confirm(

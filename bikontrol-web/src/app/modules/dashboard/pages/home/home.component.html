@@ -17,6 +17,14 @@
     </div>
   }
 
+  @if (motorcycles.isLoading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-hidden="true">
+      <div class="animate-pulse rounded-xl bg-gray-300/60 h-28"></div>
+      <div class="animate-pulse rounded-xl bg-gray-300/60 h-28"></div>
+      <div class="animate-pulse rounded-xl bg-gray-300/60 h-28"></div>
+    </div>
+  }
+
   @if (motorcycles.value().length > 0) {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       @for (moto of motorcycles.value(); track moto.id) {

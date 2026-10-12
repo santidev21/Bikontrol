@@ -49,8 +49,11 @@
     <button
       type="submit"
       [disabled]="isSubmitting()"
-      class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors"
+      class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
     >
+      @if (isSubmitting()) {
+        <app-spinner size="sm"></app-spinner>
+      }
       {{
         (isSubmitting() ? 'maintForm.saving' : isEditMode() ? 'maintForm.update' : 'maintForm.save')
           | t

@@ -6,6 +6,7 @@ import { HttpErrorService } from '../../../shared/services/http-error.service';
 import { I18nService } from '../../../shared/i18n/i18n.service';
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../../shared/i18n/language-switcher.component';
+import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
 
 /**
  * Public marketing landing (root path for guests). Value proposition, how it
@@ -15,7 +16,7 @@ import { LanguageSwitcherComponent } from '../../../shared/i18n/language-switche
  */
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, TranslatePipe, LanguageSwitcherComponent],
+  imports: [RouterLink, SpinnerComponent, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './landing.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './landing.component.scss',

@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, tap, throwError } from 'rxjs';
 import { environment } from '@env/environment';
+import { SKIP_LOADING } from '../../../shared/interceptors/loading.interceptor';
 import {
   ForgotPasswordResponse,
   LoginResponse,
@@ -81,10 +82,17 @@ export class AuthService {
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
     }
-    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
-      tap((response) => this.storeSession(response)),
-      map(() => true),
-    );
+    return this.http
+      .post<LoginResponse>(
+        `${this.apiUrl}/refresh`,
+        { refreshToken },
+        // Silent refresh: it must not raise the global loading overlay.
+        { context: new HttpContext().set(SKIP_LOADING, true) },
+      )
+      .pipe(
+        tap((response) => this.storeSession(response)),
+        map(() => true),
+      );
   }
 
   logout(): void {

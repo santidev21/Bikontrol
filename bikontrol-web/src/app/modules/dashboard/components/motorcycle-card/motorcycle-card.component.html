@@ -72,7 +72,8 @@
           </button>
           <button
             (click)="confirmDelete($event)"
-            class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-lg"
+            [disabled]="isDeleting()"
+            class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -89,6 +90,9 @@
               />
             </svg>
             <span>{{ 'motoCard.delete' | t }}</span>
+            @if (isDeleting()) {
+              <app-spinner size="sm"></app-spinner>
+            }
           </button>
         </div>
       }

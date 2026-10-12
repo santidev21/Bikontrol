@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { UpdateService } from './shared/services/update.service';
+import { LoadingOverlayComponent } from './shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, LoadingOverlayComponent],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.component.scss',

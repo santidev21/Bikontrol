@@ -20,10 +20,11 @@ import { FollowMaintenanceModalComponent } from '../follow-maintenance-modal/fol
 
 import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../shared/i18n/i18n.service';
+import { SpinnerComponent } from '../../../../shared/components/spinner/spinner.component';
 
 @Component({
   selector: 'app-maintenance-info-card',
-  imports: [IntervalFormatPipe, FollowMaintenanceModalComponent, TranslatePipe],
+  imports: [SpinnerComponent, IntervalFormatPipe, FollowMaintenanceModalComponent, TranslatePipe],
   templateUrl: './maintenance-info-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './maintenance-info-card.component.scss',
@@ -43,6 +44,7 @@ export class MaintenanceInfoCardComponent {
 
   readonly menuOpen = signal(false);
   readonly followModalOpen = signal(false);
+  readonly isDeleting = signal(false);
 
   get isDemo(): boolean {
     return this.authService.isDemo();
@@ -86,6 +88,9 @@ export class MaintenanceInfoCardComponent {
   }
 
   deleteMaintenance() {
+    if (this.isDeleting()) return;
+    this.isDeleting.set(true);
+
     this.maintenanceService.deleteMaintenance(this.maintenance.id).subscribe({
       next: () => {
         this.swal
@@ -93,13 +98,16 @@ export class MaintenanceInfoCardComponent {
           .then(() => this.refresh.emit());
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.swal.error('Error', this.httpError.message(err, this.i18n.t('infoCard.deleteError')));
       },
+      complete: () => this.isDeleting.set(false),
     });
   }
 
   confirmDelete(event: Event) {
     event.stopPropagation();
+    if (this.isDeleting()) return;
 
     this.swal
       .confirm(

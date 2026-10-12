@@ -1,0 +1,8 @@
+<span
+  class="spinner"
+  [class.spinner--sm]="size() === 'sm'"
+  [class.spinner--lg]="size() === 'lg'"
+  [attr.role]="label() ? 'status' : null"
+  [attr.aria-label]="label() ?? null"
+  [attr.aria-hidden]="label() ? null : 'true'"
+></span>

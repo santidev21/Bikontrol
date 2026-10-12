@@ -26,8 +26,11 @@
         <button
           type="submit"
           [disabled]="isFollowing()"
-          class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+          class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
+          @if (isFollowing()) {
+            <app-spinner size="sm"></app-spinner>
+          }
           {{ (isFollowing() ? 'follow.submitting' : 'follow.submit') | t }}
         </button>
       </div>

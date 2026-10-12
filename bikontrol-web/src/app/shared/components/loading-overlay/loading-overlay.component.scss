@@ -1,0 +1,29 @@
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  /* Below SweetAlert2 (z-index 1060) so success/error dialogs stay on top. */
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(0 0 0 / 35%);
+  backdrop-filter: blur(2px);
+}
+
+.loading-overlay__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.75rem;
+  border-radius: 0.75rem;
+  background-color: var(--color-text-light, #fff);
+  box-shadow: 0 10px 25px rgb(0 0 0 / 15%);
+  color: var(--color-primary, #003559);
+}
+
+.loading-overlay__text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary, #003559);
+}

@@ -12,6 +12,7 @@ import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { hasError as formHasError } from '../../../../shared/utils/form.utils';
 import { IntervalFormatPipe } from '../../pipes/interval-format.pipe';
+import { SpinnerComponent } from '../../../../shared/components/spinner/spinner.component';
 
 // Sensible starter set, pre-selected so a new user can finish in one tap. Names
 // mirror the seeded predefined maintenance types; unknown names are simply not
@@ -31,7 +32,7 @@ const RECOMMENDED_DEFAULTS = [
  */
 @Component({
   selector: 'app-onboarding',
-  imports: [ReactiveFormsModule, IntervalFormatPipe],
+  imports: [ReactiveFormsModule, SpinnerComponent, IntervalFormatPipe],
   templateUrl: './onboarding.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './onboarding.component.scss',

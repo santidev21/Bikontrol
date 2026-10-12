@@ -11,3 +11,4 @@ Detail specs for Bikontrol. Start with [AGENTS.md](../../AGENTS.md) for the proj
 - [help.md](help.md) — public Help/FAQ page (how-to + FAQ)
 - [landing.md](landing.md) — public root landing page (value prop + CTAs)
 - [i18n.md](i18n.md) — runtime internationalization (Spanish default, English, switcher)
+- [loading.md](loading.md) — global + per-surface loading feedback (spinner, skeletons)

@@ -12,8 +12,10 @@ with a small Km interval → record it → advance the odometer → see it overd
 ## Run locally
 
 The stack must serve the app with a **same-origin** `/api` (the production CSP
-allows only `connect-src 'self'`). The `docker-compose.e2e.yml` override does
-that, plus disables email confirmation so the suite can register without a mailbox.
+allows only `connect-src 'self'`). The `docker-compose.local.yml` override does
+that (it builds the web with `API_URL=/api` and proxies `/api/` via
+`docker/nginx.local.conf`), and `docker-compose.e2e.yml` only adds the E2E port
+plus disables email confirmation so the suite can register without a mailbox.
 
 ```bash
 # From the repo root, with an .env that has the DB/JWT values:

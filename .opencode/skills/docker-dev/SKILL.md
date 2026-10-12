@@ -23,6 +23,12 @@ Local ports (loopback only):
 - Web: `127.0.0.1:4200`
 - DB: `127.0.0.1:5434`
 
+The web is built same-origin (`API_URL=/api`) and its nginx (`docker/nginx.local.conf`)
+proxies `/api/` to the API container. This satisfies the production CSP
+(`connect-src 'self'`) — a cross-origin call to `:8080` would be blocked by the
+browser. Mounting that nginx config and building with `/api` is what
+`docker-compose.local.yml` does; don't switch back to `http://localhost:8080/api`.
+
 Services (`docker-compose.yml`): `db` (PostgreSQL 16) → `api` (.NET 8, waits for healthy DB) → `web` (Angular via nginx). DB lives on `bikontrol-internal-net` only — never on the shared network.
 
 Rules:
