@@ -160,8 +160,11 @@ namespace Bikontrol.Infrastructure.Services
             if (entity.UserId != _currentUser.UserId)
                 throw new ForbiddenAccessException("No tienes permisos para borrar esta motocicleta.");
 
-            await _motorcycleRepository.SoftDeleteAsync(id);
-            await _motorcycleRepository.SaveChangesAsync();
+            await _transactions.ExecuteInTransactionAsync(async () =>
+            {
+                await _motorcycleRepository.SoftDeleteAsync(id);
+                await _motorcycleRepository.SaveChangesAsync();
+            });
         }
 
         private static void EnsureValidImage(string? image)

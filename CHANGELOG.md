@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/santidev21/Bikontrol/compare/v0.3.0...v0.3.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **maintenance:** cascade soft-delete and enforce monotonic km ([#86](https://github.com/santidev21/Bikontrol/issues/86)) ([9ae00e3](https://github.com/santidev21/Bikontrol/commit/9ae00e38f7b51c4a2728cfd28fddd103ace26ae1))
+
 ## [0.3.0](https://github.com/santidev21/Bikontrol/compare/v0.2.1...v0.3.0) (2026-10-07)
 
 

@@ -109,8 +109,11 @@ namespace Bikontrol.Infrastructure.Services
             if (entity.UserId != _current.UserId)
                 throw new ForbiddenAccessException("No tienes permisos para borrar este mantenimiento.");
 
-            await _userRepo.SoftDeleteAsync(id);
-            await _userRepo.SaveChangesAsync();
+            await _transactions.ExecuteInTransactionAsync(async () =>
+            {
+                await _userRepo.SoftDeleteAsync(id);
+                await _userRepo.SaveChangesAsync();
+            });
         }
 
         public async Task<MaintenanceDTO> FollowDefaultAsync(Guid motorcycleId, Guid defaultId, int? kmInterval, int? timeIntervalWeeks, string trackingType)
@@ -189,11 +192,32 @@ namespace Bikontrol.Infrastructure.Services
             if (maintenance.TrackingType == "Km" && !request.PerformedKm.HasValue)
                 throw new ValidationException("Debes ingresar kilometraje para este mantenimiento.");
 
-            var lastMaintenanceRecord = await _recordRepository.GetLastByUserMaintenanceIdAsync(maintenance.Id);
+            // Monotonic km: a record must not be lower than the one before it nor
+            // higher than the one after it (by PerformedAt), otherwise the history
+            // becomes inconsistent (integrity audit check 5). Compare against the
+            // neighbours around the new date, not just the latest record, so a
+            // backdated insert cannot slip past.
             if (request.PerformedKm.HasValue)
             {
-                if (lastMaintenanceRecord?.PerformedKm is int lastKm && request.PerformedKm.Value < lastKm)
-                    throw new ValidationException("No puedes agregar mantenimiento anterior al ultimo");
+                var siblings = (await _recordRepository.GetByMotorcycleIdAsync(maintenance.MotorcycleId))
+                    .Where(r => r.UserMaintenanceId == maintenance.Id && r.PerformedKm.HasValue)
+                    .ToList();
+
+                var previous = siblings
+                    .Where(r => r.PerformedAt <= request.PerformedAt)
+                    .OrderByDescending(r => r.PerformedAt)
+                    .ThenByDescending(r => r.CreatedAt)
+                    .FirstOrDefault();
+                if (previous is not null && request.PerformedKm.Value < previous.PerformedKm!.Value)
+                    throw new ValidationException("El kilometraje no puede ser menor al del registro anterior de este mantenimiento.");
+
+                var next = siblings
+                    .Where(r => r.PerformedAt > request.PerformedAt)
+                    .OrderBy(r => r.PerformedAt)
+                    .ThenBy(r => r.CreatedAt)
+                    .FirstOrDefault();
+                if (next is not null && request.PerformedKm.Value > next.PerformedKm!.Value)
+                    throw new ValidationException("El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.");
             }
 
             var record = new MotorcycleMaintenanceRecord

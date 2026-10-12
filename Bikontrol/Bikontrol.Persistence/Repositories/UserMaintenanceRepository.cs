@@ -61,10 +61,18 @@ namespace Bikontrol.Persistence.Repositories
             var entity = await _context.UserMaintenances
                 .FirstOrDefaultAsync(umt => umt.Id == id);
 
-            if (entity is not null)
-            {
-                entity.IsEnabled = false;
-            }
+            if (entity is null)
+                return;
+
+            // A disabled maintenance must not keep records (integrity audit check
+            // 8), so remove them (their attachments cascade via the FK) before
+            // disabling, on the same connection so the caller's transaction keeps
+            // the whole operation atomic.
+            await _context.MotorcycleMaintenanceRecords
+                .Where(r => r.UserMaintenanceId == id)
+                .ExecuteDeleteAsync();
+
+            entity.IsEnabled = false;
         }
 
         public async Task<UserMaintenance?> GetByBaseIdAsync(Guid userId, Guid motorcycleId, Guid baseId)

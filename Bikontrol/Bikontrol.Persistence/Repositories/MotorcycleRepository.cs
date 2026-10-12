@@ -45,10 +45,23 @@ namespace Bikontrol.Persistence.Repositories
         public async Task SoftDeleteAsync(Guid id)
         {
             var entity = await _context.Motorcycles.FirstOrDefaultAsync(m => m.Id == id);
-            if (entity is not null)
-            {
-                entity.IsEnabled = false;
-            }
+            if (entity is null)
+                return;
+
+            // Soft-deleting a motorcycle would leave its maintenance records
+            // pointing at a disabled parent, which the integrity audit rejects
+            // (checks 5 & 8). Remove the now-unreachable records (their
+            // attachments cascade via the FK) and disable the motorcycle's
+            // maintenances, on the same connection so the caller's transaction
+            // keeps the whole operation atomic.
+            await _context.MotorcycleMaintenanceRecords
+                .Where(r => r.MotorcycleId == id)
+                .ExecuteDeleteAsync();
+            await _context.UserMaintenances
+                .Where(um => um.MotorcycleId == id && um.IsEnabled)
+                .ExecuteUpdateAsync(s => s.SetProperty(um => um.IsEnabled, false));
+
+            entity.IsEnabled = false;
         }
 
         public async Task SaveChangesAsync()
