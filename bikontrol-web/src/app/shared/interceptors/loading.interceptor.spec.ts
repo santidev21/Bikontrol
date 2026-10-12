@@ -1,9 +1,4 @@
-import {
-  HttpClient,
-  HttpContext,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
+import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { LoadingService } from '../services/loading.service';
@@ -59,9 +54,7 @@ describe('loadingInterceptor', () => {
   });
 
   it('ignores writes flagged with SKIP_LOADING', () => {
-    http
-      .post('/api/thing', {}, { context: new HttpContext().set(SKIP_LOADING, true) })
-      .subscribe();
+    http.post('/api/thing', {}, { context: new HttpContext().set(SKIP_LOADING, true) }).subscribe();
 
     expect(loading.pendingCount()).toBe(0);
 
