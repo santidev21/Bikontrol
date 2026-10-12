@@ -15,6 +15,14 @@
   <div class="mt-6">
     <p class="text-gray-400 mb-4 text-center">{{ 'maint.mine' | t }}</p>
 
+    @if (isUserMaintenanceLoading()) {
+      <div aria-hidden="true">
+        @for (placeholder of [1, 2]; track placeholder) {
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-24 mb-2"></div>
+        }
+      </div>
+    }
+
     @for (item of userMaintenance(); track item) {
       <app-maintenance-info-card
         [maintenance]="item"
@@ -31,6 +39,14 @@
 
   <div>
     <p class="text-gray-400 mb-4 text-center">{{ 'maint.defaults' | t }}</p>
+
+    @if (isDefaultsLoading()) {
+      <div aria-hidden="true">
+        @for (placeholder of [1, 2, 3]; track placeholder) {
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-24 mb-2"></div>
+        }
+      </div>
+    }
 
     @for (item of defaultMaintenance(); track item) {
       <app-maintenance-info-card

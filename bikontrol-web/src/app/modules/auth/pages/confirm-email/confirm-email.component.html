@@ -5,7 +5,10 @@
     <h1 class="text-2xl font-bold mb-6 text-primary">{{ 'auth.confirm.title' | t }}</h1>
 
     @if (loading()) {
-      <p class="text-sm text-textdark mb-6">{{ 'auth.confirm.loading' | t }}</p>
+      <div class="flex items-center justify-center gap-2 mb-6 text-primary">
+        <app-spinner size="sm"></app-spinner>
+        <p class="text-sm text-textdark">{{ 'auth.confirm.loading' | t }}</p>
+      </div>
     } @else if (success()) {
       <small class="text-green-600 text-xs block mb-6 font-bold">{{ successMessage() }}</small>
     } @else {

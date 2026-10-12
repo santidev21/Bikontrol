@@ -24,6 +24,7 @@ export class RegisterComponent {
   registerForm: FormGroup;
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
   readonly confirmationSent = signal(false);
   readonly resendMessage = signal<string | null>(null);
   readonly resendLoading = signal(false);
@@ -67,17 +68,20 @@ export class RegisterComponent {
       password: this.registerForm.value.password,
     };
 
+    this.isSubmitting.set(true);
     this.authService.register(payload).subscribe({
       next: (response) => {
         if (response.emailConfirmationRequired) {
           // No session until the email is confirmed: show the "check inbox" screen.
           this.registeredEmail = response.email;
           this.confirmationSent.set(true);
+          this.isSubmitting.set(false);
           return;
         }
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
+        this.isSubmitting.set(false);
         this.errorMessage.set(this.httpError.message(error));
       },
     });

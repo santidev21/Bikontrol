@@ -69,6 +69,10 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   private readonly upcomingRes = this.maintenanceService.getUpcomingResource(this.motorcycleId);
   private readonly recordsRes = this.maintenanceService.getRecordsResource(this.motorcycleId);
 
+  readonly isCurrentKmLoading = computed(() => this.currentKmRes.isLoading());
+  readonly isUpcomingLoading = computed(() => this.upcomingRes.isLoading());
+  readonly isRecordsLoading = computed(() => this.recordsRes.isLoading());
+
   private redirectTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {

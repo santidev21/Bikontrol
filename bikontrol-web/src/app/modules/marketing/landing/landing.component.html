@@ -44,8 +44,11 @@
           type="button"
           (click)="onDemoLogin()"
           [disabled]="demoLoading()"
-          class="px-5 py-3 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
+          class="px-5 py-3 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
+          @if (demoLoading()) {
+            <app-spinner size="sm"></app-spinner>
+          }
           {{ (demoLoading() ? 'landing.cta.demoLoading' : 'landing.cta.demo') | t }}
         </button>
       }

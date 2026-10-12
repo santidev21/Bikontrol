@@ -16,10 +16,11 @@ import { HttpErrorService } from '../../../../shared/services/http-error.service
 
 import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../shared/i18n/i18n.service';
+import { SpinnerComponent } from '../../../../shared/components/spinner/spinner.component';
 
 @Component({
   selector: 'app-follow-maintenance-modal',
-  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent, TranslatePipe],
+  imports: [ReactiveFormsModule, SpinnerComponent, MonitoringTypeSelectorComponent, TranslatePipe],
   templateUrl: './follow-maintenance-modal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -37,6 +38,7 @@ export class FollowMaintenanceModalComponent implements OnInit {
   private readonly httpError = inject(HttpErrorService);
   private readonly i18n = inject(I18nService);
 
+  /** In-flight state of the follow request (`onConfirm`); drives the confirm button. */
   readonly isFollowing = signal(false);
   followForm: FormGroup;
 

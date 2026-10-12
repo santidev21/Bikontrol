@@ -16,6 +16,7 @@ import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { ImageService } from '../../../../../shared/services/image.service';
 import { hasError as formHasError } from '../../../../../shared/utils/form.utils';
+import { SpinnerComponent } from '../../../../../shared/components/spinner/spinner.component';
 
 const PLACEHOLDER_IMAGE = '/assets/images/defaults/motorcycle-placeholder.webp';
 
@@ -24,7 +25,7 @@ import { I18nService } from '../../../../../shared/i18n/i18n.service';
 
 @Component({
   selector: 'app-save-motorcycle',
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, SpinnerComponent, TranslatePipe],
   templateUrl: './save-motorcycle.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './save-motorcycle.component.scss',

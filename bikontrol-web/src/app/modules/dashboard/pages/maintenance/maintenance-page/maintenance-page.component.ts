@@ -47,6 +47,8 @@ export class MaintenancePageComponent implements OnInit {
   readonly defaultMaintenance = computed(() =>
     this.defaultsRes.hasValue() ? this.defaultsRes.value()! : [],
   );
+  readonly isUserMaintenanceLoading = computed(() => this.userRes.isLoading());
+  readonly isDefaultsLoading = computed(() => this.defaultsRes.isLoading());
 
   constructor() {
     effect(() => {

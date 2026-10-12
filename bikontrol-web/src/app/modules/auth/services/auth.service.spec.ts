@@ -153,9 +153,12 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     expect(ok).toBe(true);
     expect(localStorage.getItem('token')).toBe('new-token');
     expect(localStorage.getItem('refreshToken')).toBe('new-refresh');
-    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/refresh`, {
-      refreshToken: 'old-refresh',
-    });
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/refresh`,
+      { refreshToken: 'old-refresh' },
+      // The refresh is flagged to stay out of the global loading overlay.
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
   });
 
   it('refreshSession should error when no refresh token is stored', async () => {

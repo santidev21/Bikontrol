@@ -21,10 +21,11 @@ import { HttpErrorService } from '../../../../../shared/services/http-error.serv
 
 import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../../shared/i18n/i18n.service';
+import { SpinnerComponent } from '../../../../../shared/components/spinner/spinner.component';
 
 @Component({
   selector: 'app-register-maintenance-record',
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, SpinnerComponent, TranslatePipe],
   templateUrl: './register-maintenance-record.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register-maintenance-record.component.scss',

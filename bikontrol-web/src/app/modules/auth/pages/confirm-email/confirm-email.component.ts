@@ -4,10 +4,11 @@ import { AuthService } from '../../services/auth.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../shared/i18n/i18n.service';
+import { SpinnerComponent } from '../../../../shared/components/spinner/spinner.component';
 
 @Component({
   selector: 'app-confirm-email',
-  imports: [RouterModule, TranslatePipe],
+  imports: [RouterModule, TranslatePipe, SpinnerComponent],
   templateUrl: './confirm-email.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './confirm-email.component.scss',

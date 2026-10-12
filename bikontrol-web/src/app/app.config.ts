@@ -6,12 +6,17 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './shared/interceptors/auth.interceptor';
 import { refreshInterceptor } from './shared/interceptors/refresh.interceptor';
+import { loadingInterceptor } from './shared/interceptors/loading.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideHttpClient(withFetch(), withInterceptors([refreshInterceptor, authInterceptor])),
+    provideHttpClient(
+      withFetch(),
+      // loading runs first so the spinner stays up across a token-refresh retry.
+      withInterceptors([loadingInterceptor, refreshInterceptor, authInterceptor]),
+    ),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',

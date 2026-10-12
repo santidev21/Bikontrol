@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { hasError as formHasError } from '../../../../../shared/utils/form.utils';
+import { SpinnerComponent } from '../../../../../shared/components/spinner/spinner.component';
 
 import { SaveMaintenanceDTO } from '../../../interfaces/maintenance.interface';
 import { MonitoringTypeSelectorComponent } from '../components/monitoring-type-selector/monitoring-type-selector.component';
@@ -22,7 +23,7 @@ import { I18nService } from '../../../../../shared/i18n/i18n.service';
 
 @Component({
   selector: 'app-save-maintenance',
-  imports: [ReactiveFormsModule, MonitoringTypeSelectorComponent, TranslatePipe],
+  imports: [ReactiveFormsModule, SpinnerComponent, MonitoringTypeSelectorComponent, TranslatePipe],
   templateUrl: './save-maintenance.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './save-maintenance.component.scss',

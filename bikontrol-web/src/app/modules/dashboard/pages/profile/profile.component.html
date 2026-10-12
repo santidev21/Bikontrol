@@ -2,7 +2,23 @@
   <h1 class="profile-title">{{ 'profile.title' | t }}</h1>
 
   @if (isLoading()) {
-    <p class="text-gray-400 text-center my-4">{{ 'profile.loading' | t }}</p>
+    <div aria-hidden="true">
+      <div class="profile-header bg-gray-800 rounded-xl shadow-md p-4">
+        <div class="animate-pulse rounded-xl bg-gray-300/60 w-16 h-16"></div>
+        <div class="profile-identity">
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-5 w-40"></div>
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-4 w-52 mt-2"></div>
+        </div>
+      </div>
+      <div class="profile-card">
+        @for (placeholder of [1, 2, 3]; track placeholder) {
+          <div class="profile-row">
+            <div class="animate-pulse rounded-xl bg-gray-300/60 h-4 w-24"></div>
+            <div class="animate-pulse rounded-xl bg-gray-300/60 h-4 w-32"></div>
+          </div>
+        }
+      </div>
+    </div>
   }
 
   @if (!isLoading() && profile(); as p) {

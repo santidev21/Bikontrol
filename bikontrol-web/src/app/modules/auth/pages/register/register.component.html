@@ -13,8 +13,11 @@
         type="button"
         (click)="onResendConfirmation()"
         [disabled]="resendLoading()"
-        class="w-full py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
+        class="w-full inline-flex items-center justify-center gap-2 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
       >
+        @if (resendLoading()) {
+          <app-spinner size="sm"></app-spinner>
+        }
         {{ (resendLoading() ? 'auth.login.resendLoading' : 'auth.login.resend') | t }}
       </button>
 
@@ -124,9 +127,12 @@
 
         <button
           type="submit"
-          [disabled]="registerForm.invalid"
-          class="w-full py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
+          [disabled]="isSubmitting() || registerForm.invalid"
+          class="w-full inline-flex items-center justify-center gap-2 py-2 bg-primary text-textlight rounded-lg hover:bg-accent transition-colors disabled:bg-accent disabled:cursor-not-allowed"
         >
+          @if (isSubmitting()) {
+            <app-spinner size="sm"></app-spinner>
+          }
           {{ 'auth.register.submit' | t }}
         </button>
 

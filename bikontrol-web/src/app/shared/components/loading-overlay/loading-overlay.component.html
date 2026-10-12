@@ -1,0 +1,8 @@
+@if (isLoading()) {
+  <div class="loading-overlay" role="status" aria-live="polite" aria-busy="true">
+    <div class="loading-overlay__panel">
+      <app-spinner size="lg"></app-spinner>
+      <p class="loading-overlay__text">{{ 'common.loading' | t }}</p>
+    </div>
+  </div>
+}
