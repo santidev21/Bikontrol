@@ -4,18 +4,13 @@
 #
 # Differences from the local override:
 # - The web is published on 127.0.0.1:4300 so it never clashes with a dev web on :4200.
-# - The web is built with a same-origin `API_URL=/api` and serves an nginx config
-#   that proxies /api/ to the API, mirroring the production gateway. This keeps the
-#   app same-origin so the strict `connect-src 'self'` CSP allows the API calls.
 # - The API is told to skip email confirmation, so the E2E suite can register and
 #   log in without a mailbox.
+#
+# The same-origin `/api` (API_URL=/api + the nginx.local.conf proxy) already comes
+# from docker-compose.local.yml, which this file is always combined with.
 services:
   web:
-    build:
-      args:
-        API_URL: /api
-    volumes:
-      - ./docker/nginx.e2e.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "127.0.0.1:4300:8080"
 
