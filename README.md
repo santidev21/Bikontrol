@@ -27,6 +27,7 @@ a demo.
 - **Exportable maintenance book** — download a motorcycle's full service history as a **PDF** (shareable when selling or with a mechanic) or **CSV** (open in a spreadsheet).
 - **Reminders** — a daily engine flags maintenance that is overdue or close (≤20 % of its life), deduped so it never nags, and delivers **one digest email per user** plus **Web Push** to installed devices; surfacing what is due (`GET /api/reminders/due`) and turning reminders/notifications on or off from Perfil.
 - **Statistics** — fleet km, maintenance health, km per bike, records by type, 6-month activity.
+- **Fuel, cost and consumption** — log fuel-ups (litres, price, odometer) and see km/l consumption, fuel cost per km and total cost of ownership (fuel + maintenance); set a monthly/annual maintenance budget and get flagged when you overspend. A sharp drop in consumption is surfaced as an early sign of a mechanical problem.
 - **Profile** — edit your name, change your password, see your app version.
 - **Sign in your way** — email + password or "Sign in with Google".
 
@@ -256,9 +257,6 @@ capture them). Once added, they are referenced here:
 
 Ideas for where the product goes next, not committed work — no order or dates implied.
 
-- **Fuel, cost and consumption** — log fuel-ups (litres, price, odometer) and derive km/l consumption,
-  cost per km, total cost of ownership and a monthly/annual maintenance budget with overspend alerts;
-  a drop in consumption doubles as an early sign of a mechanical problem.
 - **Motorcycle status** — a lifecycle state per bike (active / in repair / sold / retired) plus archiving,
   so a bike can leave the garage without losing its history.
 - **Motorcycle templates** — model-based catalogs that preload a recommended maintenance plan (intervals

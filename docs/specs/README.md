@@ -7,6 +7,7 @@ Detail specs for Bikontrol. Start with [AGENTS.md](../../AGENTS.md) for the proj
 - [auth.md](auth.md) — JWT, per-clone secret bootstrap
 - [database.md](database.md) — PostgreSQL, EF Core, Persistence migrations
 - [reminders.md](reminders.md) — maintenance reminder engine (due rules, daily job, dedupe, preferences)
+- [fuel.md](fuel.md) — fuel-ups, consumption (km/l), cost of ownership and maintenance budgets
 - [legal.md](legal.md) — public Terms/Privacy pages (templates pending legal review)
 - [help.md](help.md) — public Help/FAQ page (how-to + FAQ)
 - [landing.md](landing.md) — public root landing page (value prop + CTAs)

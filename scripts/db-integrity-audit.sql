@@ -106,3 +106,27 @@ SELECT '12. Propiedad cruzada' AS check_name, u."Id", u."UserId" AS maint_user,
 FROM "UserMaintenanceTypes" u
 JOIN "Motorcycles" m ON m."Id" = u."MotorcycleId"
 WHERE u."UserId" <> m."UserId";
+
+-- 13. Cargas de combustible con valores fuera de rango (debe coincidir con las
+-- CHECK constraints CK_FuelUps_*)
+SELECT '13. Carga inválida' AS check_name, "Id", "MotorcycleId",
+       "OdometerKm", "Litres", "TotalCost"
+FROM "FuelUps"
+WHERE "OdometerKm" < 0 OR "Litres" <= 0 OR "TotalCost" < 0;
+
+-- 14. Cargas con fecha futura
+SELECT '14. FueledAt futura' AS check_name, "Id", "MotorcycleId", "FueledAt"
+FROM "FuelUps"
+WHERE "FueledAt" > now();
+
+-- 15. Cargas que apuntan a motos deshabilitadas (soft-delete)
+SELECT '15. Carga sobre soft-delete' AS check_name, f."Id", f."MotorcycleId"
+FROM "FuelUps" f
+LEFT JOIN "Motorcycles" m ON m."Id" = f."MotorcycleId"
+WHERE m."Id" IS NULL OR NOT m."IsEnabled";
+
+-- 16. Presupuestos de mantenimiento negativos
+SELECT '16. Presupuesto negativo' AS check_name, "Id", "Email",
+       "MonthlyMaintenanceBudget", "AnnualMaintenanceBudget"
+FROM users
+WHERE "MonthlyMaintenanceBudget" < 0 OR "AnnualMaintenanceBudget" < 0;

@@ -50,15 +50,24 @@
 - `POST /api/reminders/push/unsubscribe` (`{ endpoint }`)
 
 ## Statistics (read-only aggregation, demo allowed)
-- `GET /api/statistics/summary` (includes cost aggregates: `totalCost`, `costPerKm`, `costByMotorcycle`, `costByYear` and per-month `cost`)
+- `GET /api/statistics/summary` (includes cost aggregates: `totalCost`, `costPerKm`, `costByMotorcycle`, `costByYear` and per-month `cost`; fuel/cost-of-ownership: `totalFuelCost`, `totalCostOfOwnership`, `fuelCostPerKm`, `averageKmPerLitre`, `hasConsumptionDrop`; and `budget` — monthly/annual maintenance budget vs spend with `isMonthlyOverBudget`/`isAnnualOverBudget`)
+
+## Fuel-ups (refuelling log + consumption)
+- `POST /api/fuel-ups` (`{ motorcycleId, fueledAt, odometerKm, litres, totalCost, isFullTank, station?, notes? }`; advances the odometer when higher)
+- `GET /api/fuel-ups/motorcycle/{motorcycleId}` (newest first)
+- `GET /api/fuel-ups/{id}`
+- `PUT /api/fuel-ups/{id}` (same body)
+- `DELETE /api/fuel-ups/{id}`
+- `GET /api/fuel-ups/motorcycle/{motorcycleId}/consumption` (full-to-full km/l segments, fuel cost/km, total cost of ownership, consumption-drop flag)
 
 ## Users (profile)
 - `GET /api/users/me`
 - `PUT /api/users/me` (`{ fullName }`)
 - `POST /api/users/me/password` (`{ currentPassword, newPassword }`; 400 for Google-only accounts)
 - `PUT /api/users/me/reminders` (`{ enabled }`)
+- `PUT /api/users/me/budget` (`{ monthlyMaintenanceBudget?, annualMaintenanceBudget? }`; `null` disables a budget)
 - `GET /api/users/me/activity` (the current user's audit trail, newest first; `?limit` 1–200, default 50)
-- `GET /api/users/me/export` (everything the current user owns as one JSON document: profile, motorcycles, maintenances, maintenance records and attachments; "download my data")
+- `GET /api/users/me/export` (everything the current user owns as one JSON document: profile, motorcycles, maintenances, maintenance records, attachments and fuel-ups; "download my data")
 - `POST /api/users/me/delete` (`{ confirmation: "ELIMINAR", password? }`; irreversible: purges owned data and anonymizes the account — see [ADR 003](../adr/003-account-deletion.md))
 
 ## Contract snapshots (client sync)
