@@ -33,12 +33,15 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(u => u.MonthlyMaintenanceBudget).HasPrecision(12, 2);
             builder.Property(u => u.AnnualMaintenanceBudget).HasPrecision(12, 2);
 
-            // Concurrencia optimista con xmin (columna de sistema de Postgres).
-            // Se usa el API específico de Npgsql porque IsRowVersion() estándar
-            // crearía una columna física "xmin" que choca con la del sistema.
-#pragma warning disable CS0618 // UseXminAsConcurrencyToken es obsoleto pero mapea la columna real del sistema
-            builder.UseXminAsConcurrencyToken();
-#pragma warning restore CS0618
+            // Optimistic concurrency via xmin (Postgres system column).
+            // Npgsql 9 removed UseXminAsConcurrencyToken(); mapping the shadow
+            // property explicitly keeps xmin bound to the system column instead
+            // of creating a physical "xmin" column.
+            builder.Property<uint>("xmin")
+                .HasColumnType("xid")
+                .HasColumnName("xmin")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
         }
     }
 }

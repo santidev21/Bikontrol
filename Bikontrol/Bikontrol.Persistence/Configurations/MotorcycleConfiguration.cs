@@ -19,13 +19,16 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(m => m.Plate).IsRequired().HasMaxLength(20);
             builder.Property(m => m.Image).HasDefaultValue("default.png");
 
-            // Concurrencia optimista con xmin (columna de sistema de Postgres):
-            // dos escrituras simultáneas sobre la misma moto no se pisan en silencio.
-            // Se usa el API específico de Npgsql porque IsRowVersion() estándar
-            // crearía una columna física "xmin" que choca con la del sistema.
-#pragma warning disable CS0618 // UseXminAsConcurrencyToken es obsoleto pero mapea la columna real del sistema
-            builder.UseXminAsConcurrencyToken();
-#pragma warning restore CS0618
+            // Optimistic concurrency via xmin (Postgres system column): two
+            // simultaneous writes to the same motorcycle are not silently lost.
+            // Npgsql 9 removed UseXminAsConcurrencyToken(); mapping the shadow
+            // property explicitly keeps xmin bound to the system column instead
+            // of creating a physical "xmin" column.
+            builder.Property<uint>("xmin")
+                .HasColumnType("xid")
+                .HasColumnName("xmin")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
 
             builder.HasOne(m => m.User)
                    .WithMany(u => u.Motorcycles)
