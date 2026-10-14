@@ -74,6 +74,12 @@ export class StatisticsComponent {
     Math.max(0, ...(this.summaryData()?.costByYear.map((c) => c.cost) ?? [])),
   );
 
+  /** True when any of the configured budgets is exceeded. */
+  readonly budgetOver = computed(() => {
+    const budget = this.summaryData()?.budget;
+    return !!budget && (budget.isMonthlyOverBudget || budget.isAnnualOverBudget);
+  });
+
   constructor() {
     effect(() => {
       const error = this.summary.error();
@@ -93,6 +99,12 @@ export class StatisticsComponent {
   barWidth(value: number, max: number): number {
     if (max <= 0 || value <= 0) return 0;
     return Math.round((value / max) * 100);
+  }
+
+  /** Fill (%) of a budget bar: spend relative to the limit, capped at 100. */
+  budgetPercent(spend: number, budget?: number | null): number {
+    if (budget == null || budget <= 0 || spend <= 0) return 0;
+    return Math.min(100, Math.round((spend / budget) * 100));
   }
 
   healthColor(bucket: string): string {

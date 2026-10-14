@@ -1,0 +1,306 @@
+<div class="p-4">
+  <h1 class="fuel-title">{{ 'fuel.title' | t }}</h1>
+
+  @if (hasConsumptionDrop()) {
+    <div
+      class="rounded-2xl p-3 mb-4 text-sm bg-red-50 border border-red-200 text-red-800"
+      role="alert"
+    >
+      <strong class="block font-bold mb-1">{{ 'fuel.dropTitle' | t }}</strong>
+      <p>
+        {{
+          'fuel.dropText'
+            | t
+              : {
+                  latest: (consumption()?.latestKmPerLitre | number: '1.2-2') ?? '—',
+                  baseline: (consumption()?.baselineKmPerLitre | number: '1.2-2') ?? '—',
+                }
+        }}
+      </p>
+    </div>
+  }
+
+  @if (budgetOver()) {
+    <div
+      class="rounded-2xl p-3 mb-4 text-sm bg-amber-50 border border-amber-200 text-amber-800"
+      role="alert"
+    >
+      <strong class="block font-bold mb-1">{{ 'fuel.budgetOverTitle' | t }}</strong>
+      <p>{{ budgetOverMessage() }}</p>
+    </div>
+  }
+
+  @if (isConsumptionLoading()) {
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3" aria-hidden="true">
+      @for (placeholder of [1, 2, 3, 4, 5]; track placeholder) {
+        <div class="rounded-2xl p-3.5 bg-gray-800 flex flex-col items-center">
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-6 w-14"></div>
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-3 w-20 mt-2"></div>
+        </div>
+      }
+    </div>
+  } @else if (consumption(); as c) {
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="rounded-2xl p-3.5 bg-gray-800 text-white flex flex-col items-center">
+        <span class="text-xl font-bold text-center">
+          {{ c.averageKmPerLitre != null ? (c.averageKmPerLitre | number: '1.2-2') : '—' }}
+        </span>
+        <span class="text-xs opacity-80 text-center">{{ 'fuel.avgConsumption' | t }}</span>
+      </div>
+      <div class="rounded-2xl p-3.5 bg-gray-800 text-white flex flex-col items-center">
+        <span class="text-xl font-bold text-center">
+          {{ c.fuelCostPerKm != null ? (c.fuelCostPerKm | number: '1.2-4') : '—' }}
+        </span>
+        <span class="text-xs opacity-80 text-center">{{ 'fuel.fuelCostPerKm' | t }}</span>
+      </div>
+      <div class="rounded-2xl p-3.5 bg-gray-800 text-white flex flex-col items-center">
+        <span class="text-xl font-bold text-center">{{
+          c.totalCostOfOwnership | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+        }}</span>
+        <span class="text-xs opacity-80 text-center">{{ 'fuel.totalCostOfOwnership' | t }}</span>
+      </div>
+      <div class="rounded-2xl p-3.5 bg-gray-800 text-white flex flex-col items-center">
+        <span class="text-xl font-bold text-center">{{
+          c.totalFuelCost | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+        }}</span>
+        <span class="text-xs opacity-80 text-center">{{ 'fuel.totalFuelCost' | t }}</span>
+      </div>
+      <div class="rounded-2xl p-3.5 bg-gray-800 text-white flex flex-col items-center">
+        <span class="text-xl font-bold text-center">{{ c.totalDistanceKm }} km</span>
+        <span class="text-xs opacity-80 text-center">{{ 'fuel.totalDistance' | t }}</span>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <h2 class="font-bold text-center">{{ 'fuel.trend' | t }}</h2>
+      <div class="bg-gray-800 border border-gray-700 rounded-2xl p-3.5 mt-3">
+        @if (hasTrend()) {
+          <div class="trend-bars">
+            @for (point of points(); track point.odometerKm) {
+              <div class="trend-col">
+                <span class="trend-value">{{
+                  point.kmPerLitre != null ? (point.kmPerLitre | number: '1.1-1') : '—'
+                }}</span>
+                <div class="trend-track">
+                  <div
+                    class="trend-fill"
+                    [style.height.%]="barWidth(point.kmPerLitre, maxKmPerLitre())"
+                  ></div>
+                </div>
+                <span class="trend-name">{{ point.fueledAt | date: 'dd/MM' }}</span>
+              </div>
+            }
+          </div>
+          <p class="mt-2 text-[11px] text-gray-400 text-center">{{ 'fuel.trendHint' | t }}</p>
+        } @else {
+          <p class="text-gray-400 text-center my-3">{{ 'fuel.trendEmpty' | t }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (!isDemo()) {
+    <div class="mt-6">
+      <h2 class="font-bold text-center">
+        {{ (isEditing() ? 'fuel.editTitle' : 'fuel.addTitle') | t }}
+      </h2>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="bg-gray-800 border border-gray-700 rounded-2xl p-3.5 mt-3"
+      >
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm text-gray-300 mb-1" for="fuel-date">{{
+              'fuel.date' | t
+            }}</label>
+            <input
+              id="fuel-date"
+              type="date"
+              formControlName="fueledAt"
+              class="field-input"
+              [class.field-input--error]="isInvalid('fueledAt')"
+            />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1" for="fuel-odometer">{{
+              'fuel.odometer' | t
+            }}</label>
+            <input
+              id="fuel-odometer"
+              type="number"
+              min="0"
+              inputmode="numeric"
+              formControlName="odometerKm"
+              class="field-input"
+              [class.field-input--error]="isInvalid('odometerKm')"
+            />
+            @if (hasError('odometerKm', 'required')) {
+              <p class="mt-1 text-xs text-red-400">{{ 'common.required' | t }}</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1" for="fuel-litres">{{
+              'fuel.litres' | t
+            }}</label>
+            <input
+              id="fuel-litres"
+              type="number"
+              min="0.01"
+              step="0.01"
+              inputmode="decimal"
+              formControlName="litres"
+              class="field-input"
+              [class.field-input--error]="isInvalid('litres')"
+            />
+            @if (hasError('litres', 'required')) {
+              <p class="mt-1 text-xs text-red-400">{{ 'common.required' | t }}</p>
+            } @else if (hasError('litres', 'min')) {
+              <p class="mt-1 text-xs text-red-400">{{ 'fuel.litresMin' | t }}</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1" for="fuel-cost">{{
+              'fuel.totalCost' | t
+            }}</label>
+            <input
+              id="fuel-cost"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              formControlName="totalCost"
+              class="field-input"
+              [class.field-input--error]="isInvalid('totalCost')"
+            />
+            @if (hasError('totalCost', 'required')) {
+              <p class="mt-1 text-xs text-red-400">{{ 'common.required' | t }}</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1" for="fuel-station">{{
+              'fuel.station' | t
+            }}</label>
+            <input
+              id="fuel-station"
+              type="text"
+              maxlength="120"
+              formControlName="station"
+              class="field-input"
+            />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1" for="fuel-notes">{{
+              'fuel.notes' | t
+            }}</label>
+            <input
+              id="fuel-notes"
+              type="text"
+              maxlength="500"
+              formControlName="notes"
+              class="field-input"
+            />
+          </div>
+        </div>
+
+        <label class="toggle-row" for="fuel-full-tank">
+          <input
+            id="fuel-full-tank"
+            type="checkbox"
+            formControlName="isFullTank"
+            class="toggle-input"
+          />
+          <span>
+            {{ 'fuel.fullTank' | t }}
+            <small class="block text-[11px] text-gray-400">{{ 'fuel.fullTankHint' | t }}</small>
+          </span>
+        </label>
+
+        <div class="form-actions">
+          @if (isEditing()) {
+            <button type="button" class="btn btn--ghost" (click)="cancelEdit()">
+              {{ 'fuel.cancel' | t }}
+            </button>
+          }
+          <button type="submit" class="btn btn--primary" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <app-spinner size="sm"></app-spinner>
+            }
+            {{ (isSubmitting() ? 'fuel.submitting' : 'fuel.submit') | t }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <div class="mt-6">
+    <h2 class="font-bold text-center">{{ 'fuel.log' | t }}</h2>
+
+    @if (isListLoading()) {
+      <div aria-hidden="true">
+        @for (placeholder of [1, 2, 3]; track placeholder) {
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-20 mb-2 mt-3"></div>
+        }
+      </div>
+    } @else if (fuelUps().length > 0) {
+      @for (fuelUp of fuelUps(); track fuelUp.id) {
+        <div class="log-item" [class.log-item--editing]="editingId() === fuelUp.id">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-gray-100 text-sm">{{
+                fuelUp.fueledAt | date: 'yyyy-MM-dd'
+              }}</span>
+              <span
+                class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                [class.badge--full]="fuelUp.isFullTank"
+                [class.badge--partial]="!fuelUp.isFullTank"
+              >
+                {{ (fuelUp.isFullTank ? 'fuel.fullTankBadge' : 'fuel.partialBadge') | t }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-2.5 mt-1.5 text-xs text-gray-300">
+              <span>{{ fuelUp.odometerKm }} km</span>
+              <span>{{ fuelUp.litres | number: '1.2-2' }} L</span>
+              <span>{{ fuelUp.totalCost | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</span>
+              <span>{{ fuelUp.pricePerLitre | number: '1.2-2' }} / L</span>
+            </div>
+            @if (fuelUp.station) {
+              <p class="mt-1 text-xs text-gray-400">{{ fuelUp.station }}</p>
+            }
+            @if (fuelUp.notes) {
+              <p class="mt-1 text-xs text-gray-400">{{ fuelUp.notes }}</p>
+            }
+          </div>
+          @if (!isDemo()) {
+            <div class="flex flex-col gap-1.5">
+              <button
+                type="button"
+                class="btn btn--ghost"
+                [attr.aria-label]="'fuel.edit' | t"
+                (click)="startEdit(fuelUp)"
+              >
+                {{ 'fuel.edit' | t }}
+              </button>
+              <button
+                type="button"
+                class="btn btn--danger"
+                [disabled]="deletingId() === fuelUp.id"
+                [attr.aria-label]="'fuel.delete' | t"
+                (click)="confirmDelete(fuelUp)"
+              >
+                {{ 'fuel.delete' | t }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      <p class="text-gray-400 text-center my-3">{{ 'fuel.empty' | t }}</p>
+      <p class="mt-2 text-[11px] text-gray-400 text-center">{{ 'fuel.emptyHint' | t }}</p>
+    }
+
+    <button type="button" class="btn btn--ghost back-btn" (click)="goToSummary()">
+      {{ 'fuel.backToSummary' | t }}
+    </button>
+  </div>
+</div>

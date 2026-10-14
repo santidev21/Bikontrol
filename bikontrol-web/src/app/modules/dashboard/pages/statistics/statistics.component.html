@@ -53,7 +53,49 @@
             </span>
             <span class="kpi-label">{{ 'stats.costPerKm' | t }}</span>
           </div>
+          <div class="kpi-card bg-gray-800">
+            <span class="kpi-value">{{
+              s.totalFuelCost | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+            }}</span>
+            <span class="kpi-label">{{ 'stats.fuelCost' | t }}</span>
+          </div>
+          <div class="kpi-card bg-gray-800">
+            <span class="kpi-value">{{
+              s.totalCostOfOwnership | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+            }}</span>
+            <span class="kpi-label">{{ 'stats.costOfOwnership' | t }}</span>
+          </div>
+          <div class="kpi-card bg-gray-800">
+            <span class="kpi-value">
+              {{ s.fuelCostPerKm != null ? (s.fuelCostPerKm | number: '1.2-4') : '—' }}
+            </span>
+            <span class="kpi-label">{{ 'stats.fuelCostPerKm' | t }}</span>
+          </div>
+          <div class="kpi-card bg-gray-800">
+            <span class="kpi-value">
+              {{ s.averageKmPerLitre != null ? (s.averageKmPerLitre | number: '1.2-2') : '—' }}
+            </span>
+            <span class="kpi-label">{{ 'stats.avgConsumption' | t }}</span>
+          </div>
         </div>
+        @if (s.hasConsumptionDrop) {
+          <div
+            class="rounded-2xl p-3 mt-4 text-sm bg-red-50 border border-red-200 text-red-800"
+            role="alert"
+          >
+            <strong class="block font-bold mb-1">{{ 'stats.consumptionDropTitle' | t }}</strong>
+            <p>{{ 'stats.consumptionDropText' | t }}</p>
+          </div>
+        }
+        @if (budgetOver()) {
+          <div
+            class="rounded-2xl p-3 mt-4 text-sm bg-amber-50 border border-amber-200 text-amber-800"
+            role="alert"
+          >
+            <strong class="block font-bold mb-1">{{ 'stats.budgetOverTitle' | t }}</strong>
+            <p>{{ 'stats.budgetOverText' | t }}</p>
+          </div>
+        }
         @defer (on viewport) {
           <div class="stats-section">
             <h2 class="text-center">{{ 'stats.health' | t }}</h2>
@@ -155,6 +197,65 @@
               </div>
             </div>
           }
+          <div class="stats-section">
+            <h2 class="text-center">{{ 'stats.budget' | t }}</h2>
+            <div class="stat-card">
+              <div class="bar-row">
+                <span class="bar-name">{{ 'stats.budgetMonthly' | t }}</span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [style.width.%]="budgetPercent(s.budget.monthlySpend, s.budget.monthlyBudget)"
+                    [style.background]="s.budget.isMonthlyOverBudget ? '#ef4444' : '#0ea5e9'"
+                  ></div>
+                </div>
+                <span class="bar-count">{{
+                  s.budget.monthlySpend | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                }}</span>
+              </div>
+              <p class="flex justify-between gap-2 -mt-0.5 mb-2.5 text-[11px] text-gray-500">
+                <span class="font-semibold">{{ 'stats.budgetLimit' | t }}</span>
+                @if (s.budget.monthlyBudget != null) {
+                  <span
+                    [class.text-red-600]="s.budget.isMonthlyOverBudget"
+                    [class.font-bold]="s.budget.isMonthlyOverBudget"
+                    >{{
+                      s.budget.monthlyBudget | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}</span
+                  >
+                } @else {
+                  <span>{{ 'stats.budgetNoLimit' | t }}</span>
+                }
+              </p>
+
+              <div class="bar-row">
+                <span class="bar-name">{{ 'stats.budgetAnnual' | t }}</span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [style.width.%]="budgetPercent(s.budget.annualSpend, s.budget.annualBudget)"
+                    [style.background]="s.budget.isAnnualOverBudget ? '#ef4444' : '#6366f1'"
+                  ></div>
+                </div>
+                <span class="bar-count">{{
+                  s.budget.annualSpend | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                }}</span>
+              </div>
+              <p class="flex justify-between gap-2 -mt-0.5 mb-2.5 text-[11px] text-gray-500">
+                <span class="font-semibold">{{ 'stats.budgetLimit' | t }}</span>
+                @if (s.budget.annualBudget != null) {
+                  <span
+                    [class.text-red-600]="s.budget.isAnnualOverBudget"
+                    [class.font-bold]="s.budget.isAnnualOverBudget"
+                    >{{ s.budget.annualBudget | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</span
+                  >
+                } @else {
+                  <span>{{ 'stats.budgetNoLimit' | t }}</span>
+                }
+              </p>
+            </div>
+            <p class="tile-last">{{ 'stats.budgetHint' | t }}</p>
+          </div>
           <div class="stats-section">
             <h2 class="text-center">{{ 'stats.activity' | t }}</h2>
             <div class="stat-card">

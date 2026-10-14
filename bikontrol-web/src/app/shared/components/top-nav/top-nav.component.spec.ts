@@ -48,6 +48,19 @@ describe('TopNavComponent (class)', () => {
     expect(component.showBackButton).toBe(true);
   });
 
+  it('should show back button on the fuel log route', () => {
+    component.currentUrl.set('/dashboard/motorcycles/abc/fuel');
+    expect(component.showBackButton).toBe(true);
+  });
+
+  it('should navigate to summary when goBack from the fuel log', () => {
+    component.currentUrl.set('/dashboard/motorcycles/abc/fuel');
+    component.goBack();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/motorcycles/summary'], {
+      queryParams: { motorcycleId: 'abc' },
+    });
+  });
+
   it('should navigate to home when goBack from summary route', () => {
     component.currentUrl.set('/dashboard/motorcycles/summary?motorcycleId=abc');
     component.goBack();

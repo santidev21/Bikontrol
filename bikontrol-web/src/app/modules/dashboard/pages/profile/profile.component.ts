@@ -12,6 +12,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { I18nService } from '../../../../shared/i18n/i18n.service';
 import { UserService } from '../../service/user.service';
+import { UpdateBudgetRequest } from '../../interfaces/profile.interface';
 import { SwalService } from '../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -65,6 +66,12 @@ export class ProfileComponent {
   readonly deletePassword = signal('');
   readonly isDeleting = signal(false);
 
+  /** Maintenance budget inputs (`null` means "no budget"). */
+  readonly monthlyBudget = signal<number | null>(null);
+  readonly annualBudget = signal<number | null>(null);
+  readonly isSavingBudget = signal(false);
+  private budgetInitialized = false;
+
   readonly isDemo = computed(() => this.authService.isDemo());
   readonly canChangePassword = computed(() => !!this.profile()?.hasPassword && !this.isDemo());
   readonly initials = computed(() => {
@@ -83,6 +90,54 @@ export class ProfileComponent {
           this.httpError.message(error, this.i18n.t('profile.loadError')),
         );
       }
+    });
+
+    effect(() => {
+      const current = this.profile();
+      if (current && !this.budgetInitialized) {
+        this.monthlyBudget.set(current.monthlyMaintenanceBudget ?? null);
+        this.annualBudget.set(current.annualMaintenanceBudget ?? null);
+        this.budgetInitialized = true;
+      }
+    });
+  }
+
+  /** Validates a budget input: `null` means "no budget", `undefined` means invalid. */
+  private parseBudget(value: number | null): number | null | undefined {
+    if (value === null || value === undefined) return null;
+    if (!Number.isFinite(value) || value < 0) return undefined;
+    return value;
+  }
+
+  saveBudget(): void {
+    if (this.isDemo() || this.isSavingBudget()) return;
+
+    const monthly = this.parseBudget(this.monthlyBudget());
+    const annual = this.parseBudget(this.annualBudget());
+    if (monthly === undefined || annual === undefined) {
+      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.budgetInvalid'));
+      return;
+    }
+
+    const request: UpdateBudgetRequest = {
+      monthlyMaintenanceBudget: monthly,
+      annualMaintenanceBudget: annual,
+    };
+
+    this.isSavingBudget.set(true);
+    this.userService.updateBudget(request).subscribe({
+      next: (data) => {
+        this.isSavingBudget.set(false);
+        this.profileRes.set(data);
+        this.swal.success(this.i18n.t('common.success'), this.i18n.t('profile.budgetSaved'));
+      },
+      error: (err) => {
+        this.isSavingBudget.set(false);
+        this.swal.error(
+          this.i18n.t('common.error'),
+          this.httpError.message(err, this.i18n.t('profile.budgetError')),
+        );
+      },
     });
   }
 

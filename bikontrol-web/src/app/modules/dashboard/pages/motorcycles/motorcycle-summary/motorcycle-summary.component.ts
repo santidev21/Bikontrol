@@ -20,6 +20,7 @@ import {
 } from '../../../interfaces/maintenance.interface';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
+import { FuelUpsService } from '../../../service/fuel-ups.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { HttpErrorService } from '../../../../../shared/services/http-error.service';
 import { ImageService } from '../../../../../shared/services/image.service';
@@ -40,6 +41,7 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly motorcyclesService = inject(MotorcyclesService);
+  private readonly fuelUpsService = inject(FuelUpsService);
   private readonly swal = inject(SwalService);
   private readonly httpError = inject(HttpErrorService);
   private readonly i18n = inject(I18nService);
@@ -68,10 +70,17 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   private readonly currentKmRes = this.motorcyclesService.getCurrentKmResource(this.motorcycleId);
   private readonly upcomingRes = this.maintenanceService.getUpcomingResource(this.motorcycleId);
   private readonly recordsRes = this.maintenanceService.getRecordsResource(this.motorcycleId);
+  private readonly consumptionRes = this.fuelUpsService.getConsumptionResource(this.motorcycleId);
 
   readonly isCurrentKmLoading = computed(() => this.currentKmRes.isLoading());
   readonly isUpcomingLoading = computed(() => this.upcomingRes.isLoading());
   readonly isRecordsLoading = computed(() => this.recordsRes.isLoading());
+
+  /** Fuel/cost summary, loaded lazily once the motorcycle id is known. */
+  readonly consumption = computed(() =>
+    this.consumptionRes.hasValue() ? this.consumptionRes.value() : undefined,
+  );
+  readonly isConsumptionLoading = computed(() => this.consumptionRes.isLoading());
 
   private redirectTimer?: ReturnType<typeof setTimeout>;
 
@@ -264,6 +273,13 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
     if (!id) return;
 
     this.router.navigate(['/dashboard/motorcycles', id, 'maintenance']);
+  }
+
+  goToFuelLog(): void {
+    const id = this.motorcycleId();
+    if (!id) return;
+
+    this.router.navigate(['/dashboard/motorcycles', id, 'fuel']);
   }
 
   exportMaintenanceBook(format: 'pdf' | 'csv'): void {

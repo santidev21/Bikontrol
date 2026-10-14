@@ -52,13 +52,14 @@ export class TopNavComponent implements OnDestroy, OnInit {
       url.includes('/dashboard/motorcycles/add') ||
       url.includes('/dashboard/motorcycles/summary') ||
       /\/dashboard\/motorcycles\/[^/]+\/maintenance/.test(url) ||
-      /\/dashboard\/motorcycles\/[^/]+\/register-maintenance/.test(url)
+      /\/dashboard\/motorcycles\/[^/]+\/register-maintenance/.test(url) ||
+      /\/dashboard\/motorcycles\/[^/]+\/fuel/.test(url)
     );
   }
 
   goBack(): void {
     const registerOrMaintenance = this.currentUrl().match(
-      /\/dashboard\/motorcycles\/([^/]+)\/(maintenance|register-maintenance)/,
+      /\/dashboard\/motorcycles\/([^/]+)\/(maintenance|register-maintenance|fuel)/,
     );
     if (registerOrMaintenance?.[1]) {
       this.router.navigate(['/dashboard/motorcycles/summary'], {

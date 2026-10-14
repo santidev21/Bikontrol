@@ -123,6 +123,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'motorcycles/:motorcycleId/fuel',
+        loadComponent: () =>
+          import('./modules/dashboard/pages/fuel/fuel-page/fuel-page.component').then(
+            (c) => c.FuelPageComponent,
+          ),
+      },
+      {
         path: 'motorcycles/:motorcycleId/maintenance/add',
         loadComponent: () =>
           import('./modules/dashboard/pages/maintenance/save-maintenance/save-maintenance.component').then(

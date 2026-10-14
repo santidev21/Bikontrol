@@ -1,7 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { Subject, of, throwError } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { UpdateService } from '../../../../shared/services/update.service';
 import { HttpErrorService } from '../../../../shared/services/http-error.service';
@@ -45,11 +46,18 @@ describe('ProfileComponent', () => {
       updateProfile: vi.fn(),
       changePassword: vi.fn(),
       updateReminders: vi.fn(),
+      updateBudget: vi.fn(),
       exportMyData: vi.fn(),
       deleteAccount: vi.fn(),
     };
     authServiceMock = { isDemo: vi.fn().mockReturnValue(false), logout: vi.fn() };
-    routerMock = { navigate: vi.fn() };
+    routerMock = {
+      navigate: vi.fn(),
+      url: '/dashboard/profile',
+      events: new Subject<any>(),
+      createUrlTree: vi.fn(() => ({})),
+      serializeUrl: vi.fn(() => '/'),
+    };
     swalMock = {
       error: vi.fn(),
       success: vi.fn().mockReturnValue(Promise.resolve({})),
@@ -62,6 +70,13 @@ describe('ProfileComponent', () => {
         { provide: UserService, useValue: userServiceMock },
         { provide: AuthService, useValue: authServiceMock },
         { provide: Router, useValue: routerMock },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: { get: () => null }, paramMap: { get: () => null } },
+            params: of({}),
+          },
+        },
         { provide: SwalService, useValue: swalMock },
         {
           provide: HttpErrorService,
@@ -231,6 +246,82 @@ describe('ProfileComponent', () => {
     component.toggleReminders();
 
     expect(userServiceMock.updateReminders).not.toHaveBeenCalled();
+  });
+
+  it('prefills the budget inputs from the profile', () => {
+    userServiceMock.getMeResource.mockReturnValue(
+      fakeResource({
+        ...profileMock,
+        monthlyMaintenanceBudget: 200000,
+        annualMaintenanceBudget: 2400000,
+      }),
+    );
+
+    const fixture = create();
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    expect(component.monthlyBudget()).toBe(200000);
+    expect(component.annualBudget()).toBe(2400000);
+  });
+
+  it('saves the maintenance budget', () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    const updated = {
+      ...profileMock,
+      monthlyMaintenanceBudget: 200000,
+      annualMaintenanceBudget: null,
+    };
+    userServiceMock.updateBudget.mockReturnValue(of(updated));
+    const component = create().componentInstance;
+
+    component.monthlyBudget.set(200000);
+    component.annualBudget.set(null);
+    component.saveBudget();
+
+    expect(userServiceMock.updateBudget).toHaveBeenCalledWith({
+      monthlyMaintenanceBudget: 200000,
+      annualMaintenanceBudget: null,
+    });
+    expect(component.profile()).toEqual(updated);
+    expect(component.isSavingBudget()).toBe(false);
+    expect(swalMock.success).toHaveBeenCalled();
+  });
+
+  it('rejects negative budgets without calling the service', () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    const component = create().componentInstance;
+
+    component.monthlyBudget.set(-1);
+    component.saveBudget();
+
+    expect(userServiceMock.updateBudget).not.toHaveBeenCalled();
+    expect(swalMock.error).toHaveBeenCalledWith(
+      '¡Error!',
+      'Los presupuestos deben ser números mayores o iguales a cero.',
+    );
+  });
+
+  it('surfaces an error when the budget update fails', () => {
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    userServiceMock.updateBudget.mockReturnValue(throwError(() => ({ message: 'boom' })));
+    const component = create().componentInstance;
+
+    component.monthlyBudget.set(1000);
+    component.saveBudget();
+
+    expect(swalMock.error).toHaveBeenCalledWith('Error', 'boom');
+  });
+
+  it('does not save the budget for demo users', () => {
+    authServiceMock.isDemo.mockReturnValue(true);
+    userServiceMock.getMeResource.mockReturnValue(fakeResource(profileMock));
+    const component = create().componentInstance;
+
+    component.monthlyBudget.set(1000);
+    component.saveBudget();
+
+    expect(userServiceMock.updateBudget).not.toHaveBeenCalled();
   });
 
   it('logs out and navigates to login', () => {
