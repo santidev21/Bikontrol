@@ -29,7 +29,7 @@ proxies `/api/` to the API container. This satisfies the production CSP
 browser. Mounting that nginx config and building with `/api` is what
 `docker-compose.local.yml` does; don't switch back to `http://localhost:8080/api`.
 
-Services (`docker-compose.yml`): `db` (PostgreSQL 16) → `api` (.NET 9, waits for healthy DB) → `web` (Angular via nginx). DB lives on `bikontrol-internal-net` only — never on the shared network.
+Services (`docker-compose.yml`): `db` (PostgreSQL 16) → `api` (.NET 10, waits for healthy DB) → `web` (Angular via nginx). DB lives on `bikontrol-internal-net` only — never on the shared network.
 
 Rules:
 - Manual (no-Docker) dev uses `npm run dev` (DB `:5434` + UI `:4201` + API `:5202` HTTP / `:7179` HTTPS) or single-side runners (`dev:ui`, `dev:api`).

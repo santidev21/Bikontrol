@@ -57,7 +57,7 @@ Read-only audit. Report findings with severity and `path:line` evidence. Never l
 - Dependency versions pinned; run a vulnerabilities check when deps change.
 
 ## Dependencies
-- AutoMapper stays pinned to `12.0.1` (v15+ needs a license and breaks the net8.0 JWT stack) — an upgrade is a security/business risk, flag it.
+- AutoMapper stays pinned to `12.0.1` (v15+ needs a license and pulls `Microsoft.IdentityModel` 8.x dependencies that conflict with the JWT stack) — an upgrade is a security/business risk, flag it.
 - Check `npm audit` / `dotnet list package --vulnerable` when dependencies change.
 
 ## Output format
