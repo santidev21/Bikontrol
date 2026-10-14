@@ -57,6 +57,52 @@
     "newPassword": "string",
     "token": "string"
   },
+  "Bikontrol.Application.DTOs.Fuel.FuelConsumptionDTO": {
+    "averageKmPerLitre": "number?",
+    "baselineKmPerLitre": "number?",
+    "costPerKm": "number?",
+    "fuelCostPerKm": "number?",
+    "isConsumptionDrop": "bool",
+    "latestKmPerLitre": "number?",
+    "motorcycleId": "guid",
+    "points": "List\u003CFuelConsumptionPointDTO\u003E",
+    "totalCostOfOwnership": "number",
+    "totalDistanceKm": "integer",
+    "totalFuelCost": "number",
+    "totalLitres": "number",
+    "totalMaintenanceCost": "number"
+  },
+  "Bikontrol.Application.DTOs.Fuel.FuelConsumptionPointDTO": {
+    "cost": "number",
+    "distanceKm": "integer",
+    "fueledAt": "datetime",
+    "kmPerLitre": "number?",
+    "litres": "number",
+    "odometerKm": "integer"
+  },
+  "Bikontrol.Application.DTOs.Fuel.FuelUpDTO": {
+    "createdAt": "datetime",
+    "fueledAt": "datetime",
+    "id": "guid",
+    "isFullTank": "bool",
+    "litres": "number",
+    "motorcycleId": "guid",
+    "notes": "string",
+    "odometerKm": "integer",
+    "pricePerLitre": "number",
+    "station": "string",
+    "totalCost": "number"
+  },
+  "Bikontrol.Application.DTOs.Fuel.SaveFuelUpRequest": {
+    "fueledAt": "datetime",
+    "isFullTank": "bool",
+    "litres": "number",
+    "motorcycleId": "guid",
+    "notes": "string",
+    "odometerKm": "integer",
+    "station": "string",
+    "totalCost": "number"
+  },
   "Bikontrol.Application.DTOs.Maintenance.AddAttachmentRequest": {
     "dataUrl": "string",
     "fileName": "string"
@@ -204,6 +250,14 @@
   "Bikontrol.Application.DTOs.Reminders.UnregisterPushSubscriptionRequest": {
     "endpoint": "string"
   },
+  "Bikontrol.Application.DTOs.Statistics.BudgetStatusDTO": {
+    "annualBudget": "number?",
+    "annualSpend": "number",
+    "isAnnualOverBudget": "bool",
+    "isMonthlyOverBudget": "bool",
+    "monthlyBudget": "number?",
+    "monthlySpend": "number"
+  },
   "Bikontrol.Application.DTOs.Statistics.HealthBucketDTO": {
     "bucket": "string",
     "count": "integer"
@@ -229,10 +283,14 @@
     "name": "string"
   },
   "Bikontrol.Application.DTOs.Statistics.StatisticsSummaryDTO": {
+    "averageKmPerLitre": "number?",
+    "budget": "BudgetStatusDTO",
     "costByMotorcycle": "List\u003CMotorcycleCostStatDTO\u003E",
     "costByYear": "List\u003CYearlyCostDTO\u003E",
     "costPerKm": "number?",
     "dueSoonCount": "integer",
+    "fuelCostPerKm": "number?",
+    "hasConsumptionDrop": "bool",
     "health": "List\u003CHealthBucketDTO\u003E",
     "kmByMotorcycle": "List\u003CMotorcycleKmStatDTO\u003E",
     "last6Months": "List\u003CMonthlyActivityDTO\u003E",
@@ -240,6 +298,8 @@
     "overdueCount": "integer",
     "recordsByType": "List\u003CMaintenanceCountStatDTO\u003E",
     "totalCost": "number",
+    "totalCostOfOwnership": "number",
+    "totalFuelCost": "number",
     "totalKm": "integer",
     "totalMaintenanceRecords": "integer",
     "totalMotorcycles": "integer"
@@ -257,13 +317,19 @@
     "password": "string"
   },
   "Bikontrol.Application.DTOs.Users.ProfileDTO": {
+    "annualMaintenanceBudget": "number?",
     "createdAt": "datetime",
     "email": "string",
     "fullName": "string",
     "hasPassword": "bool",
     "id": "guid",
+    "monthlyMaintenanceBudget": "number?",
     "remindersEnabled": "bool",
     "role": "string"
+  },
+  "Bikontrol.Application.DTOs.Users.UpdateBudgetRequest": {
+    "annualMaintenanceBudget": "number?",
+    "monthlyMaintenanceBudget": "number?"
   },
   "Bikontrol.Application.DTOs.Users.UpdateProfileRequest": {
     "fullName": "string"
@@ -274,6 +340,7 @@
   "Bikontrol.Application.DTOs.Users.UserDataExportDTO": {
     "attachments": "List\u003CMaintenanceAttachmentDTO\u003E",
     "exportedAt": "datetime",
+    "fuelUps": "List\u003CFuelUpDTO\u003E",
     "maintenanceRecords": "List\u003CMaintenanceRecordDTO\u003E",
     "maintenances": "List\u003CMaintenanceDTO\u003E",
     "motorcycles": "List\u003CMotorcycleDTO\u003E",

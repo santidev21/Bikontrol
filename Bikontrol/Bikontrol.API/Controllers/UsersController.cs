@@ -49,6 +49,13 @@ namespace Bikontrol.API.Controllers
             return Ok(result);
         }
 
+        [HttpPut("me/budget")]
+        public async Task<IActionResult> UpdateBudget([FromBody] UpdateBudgetRequest request)
+        {
+            var result = await _userService.UpdateBudgetAsync(request);
+            return Ok(result);
+        }
+
         [HttpGet("me/activity")]
         public async Task<IActionResult> GetMyActivity([FromQuery] int limit = 50)
         {

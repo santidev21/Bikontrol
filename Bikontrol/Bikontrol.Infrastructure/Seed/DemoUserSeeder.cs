@@ -55,6 +55,25 @@ namespace Bikontrol.Infrastructure.Seed
             await context.MotorcycleKmHistories.AddRangeAsync(histories);
             await context.SaveChangesAsync();
 
+            // Fuel-ups: a full-to-full history so the demo consumption and cost
+            // stats look real (including one partial fill, which the calculator
+            // rolls into the next full tank).
+            var fuelUps = new List<Domain.Entities.FuelUp>
+            {
+                new() { MotorcycleId = moto1.Id, FueledAt = now.AddDays(-30), OdometerKm = 7000, Litres = 4.0m, TotalCost = 8.00m },
+                new() { MotorcycleId = moto1.Id, FueledAt = now.AddDays(-22), OdometerKm = 7400, Litres = 4.1m, TotalCost = 8.20m },
+                new() { MotorcycleId = moto1.Id, FueledAt = now.AddDays(-14), OdometerKm = 7800, Litres = 2.0m, TotalCost = 4.00m, IsFullTank = false },
+                new() { MotorcycleId = moto1.Id, FueledAt = now.AddDays(-12), OdometerKm = 8000, Litres = 2.2m, TotalCost = 4.40m },
+                new() { MotorcycleId = moto1.Id, FueledAt = now.AddDays(-2), OdometerKm = 8500, Litres = 4.2m, TotalCost = 8.40m },
+                new() { MotorcycleId = moto2.Id, FueledAt = now.AddDays(-40), OdometerKm = 12000, Litres = 5.0m, TotalCost = 10.00m },
+                new() { MotorcycleId = moto2.Id, FueledAt = now.AddDays(-30), OdometerKm = 12500, Litres = 5.2m, TotalCost = 10.40m },
+                new() { MotorcycleId = moto2.Id, FueledAt = now.AddDays(-20), OdometerKm = 13000, Litres = 5.1m, TotalCost = 10.20m },
+                new() { MotorcycleId = moto2.Id, FueledAt = now.AddDays(-10), OdometerKm = 13500, Litres = 5.3m, TotalCost = 10.60m },
+                new() { MotorcycleId = moto2.Id, FueledAt = now.AddDays(-1), OdometerKm = 14200, Litres = 5.0m, TotalCost = 10.00m },
+            };
+            await context.FuelUps.AddRangeAsync(fuelUps);
+            await context.SaveChangesAsync();
+
             if (defaults.Count > 0)
             {
                 // User maintenances for demo: follow a few defaults per moto

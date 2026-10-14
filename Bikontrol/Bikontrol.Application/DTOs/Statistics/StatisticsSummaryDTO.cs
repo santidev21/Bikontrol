@@ -18,6 +18,24 @@ namespace Bikontrol.Application.DTOs.Statistics
         /// <summary>Fleet-average cost per km; null when total km is 0.</summary>
         public decimal? CostPerKm { get; set; }
 
+        /// <summary>Sum of all recorded fuel-up costs.</summary>
+        public decimal TotalFuelCost { get; set; }
+
+        /// <summary>Total cost of ownership: fuel + maintenance.</summary>
+        public decimal TotalCostOfOwnership { get; set; }
+
+        /// <summary>Fleet-average fuel cost per km; null when total km is 0.</summary>
+        public decimal? FuelCostPerKm { get; set; }
+
+        /// <summary>Fleet-average consumption (km/l, full-to-full); null without data.</summary>
+        public decimal? AverageKmPerLitre { get; set; }
+
+        /// <summary>True when any motorcycle shows a sharp consumption drop.</summary>
+        public bool HasConsumptionDrop { get; set; }
+
+        /// <summary>Maintenance budget vs spend, with overspend flags.</summary>
+        public BudgetStatusDTO Budget { get; set; } = new();
+
         public List<HealthBucketDTO> Health { get; set; } = new();
         public List<MotorcycleKmStatDTO> KmByMotorcycle { get; set; } = new();
         public List<MaintenanceCountStatDTO> RecordsByType { get; set; } = new();
@@ -70,5 +88,19 @@ namespace Bikontrol.Application.DTOs.Statistics
     {
         public int Year { get; set; }
         public decimal Cost { get; set; }
+    }
+
+    /// <summary>
+    /// Maintenance budget (monthly/annual) compared with the spend recorded in
+    /// the current period. Budgets are optional; <c>null</c> disables the check.
+    /// </summary>
+    public class BudgetStatusDTO
+    {
+        public decimal? MonthlyBudget { get; set; }
+        public decimal? AnnualBudget { get; set; }
+        public decimal MonthlySpend { get; set; }
+        public decimal AnnualSpend { get; set; }
+        public bool IsMonthlyOverBudget { get; set; }
+        public bool IsAnnualOverBudget { get; set; }
     }
 }

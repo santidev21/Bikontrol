@@ -1,4 +1,5 @@
 using AutoMapper;
+using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.DTOs.Users;
@@ -22,6 +23,7 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IUserMaintenanceRepository _userMaintenanceRepository;
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
         private readonly IMaintenanceRecordAttachmentRepository _attachmentRepository;
+        private readonly IFuelUpRepository _fuelUpRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IKmHistoryService _kmHistoryService;
         private readonly IPasswordHasher<User> _passwordHasher;
@@ -35,6 +37,7 @@ namespace Bikontrol.Infrastructure.Services
             IUserMaintenanceRepository userMaintenanceRepository,
             IMotorcycleMaintenanceRecordRepository recordRepository,
             IMaintenanceRecordAttachmentRepository attachmentRepository,
+            IFuelUpRepository fuelUpRepository,
             IAccountRepository accountRepository,
             IKmHistoryService kmHistoryService,
             IPasswordHasher<User> passwordHasher,
@@ -47,6 +50,7 @@ namespace Bikontrol.Infrastructure.Services
             _userMaintenanceRepository = userMaintenanceRepository;
             _recordRepository = recordRepository;
             _attachmentRepository = attachmentRepository;
+            _fuelUpRepository = fuelUpRepository;
             _accountRepository = accountRepository;
             _kmHistoryService = kmHistoryService;
             _passwordHasher = passwordHasher;
@@ -71,6 +75,10 @@ namespace Bikontrol.Infrastructure.Services
             var attachments = records.Count == 0
                 ? new List<MaintenanceRecordAttachment>()
                 : (await _attachmentRepository.GetByRecordIdsAsync(records.Select(r => r.Id))).ToList();
+
+            var fuelUps = motorcycleIds.Count == 0
+                ? new List<FuelUp>()
+                : (await _fuelUpRepository.GetByMotorcycleIdsAsync(motorcycleIds)).ToList();
 
             var currentKms = motorcycleIds.Count == 0
                 ? new Dictionary<Guid, int>()
@@ -101,6 +109,7 @@ namespace Bikontrol.Infrastructure.Services
                 Maintenances = _mapper.Map<List<MaintenanceDTO>>(maintenances),
                 MaintenanceRecords = recordDtos,
                 Attachments = _mapper.Map<List<MaintenanceAttachmentDTO>>(attachments),
+                FuelUps = _mapper.Map<List<FuelUpDTO>>(fuelUps),
             };
         }
 

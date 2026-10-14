@@ -88,9 +88,22 @@ public sealed class AccountDeletionIntegrationTests
         });
         attachResponse.EnsureSuccessStatusCode();
 
+        // A fuel-up is owned data too (purged on deletion, present in the export).
+        var fuelUpResponse = await client.PostAsJsonAsync("/api/fuel-ups", new
+        {
+            motorcycleId = moto.Id,
+            fueledAt = DateTime.UtcNow,
+            odometerKm = 1000,
+            litres = 4m,
+            totalCost = 8m,
+            isFullTank = true
+        });
+        fuelUpResponse.EnsureSuccessStatusCode();
+
         // The export must have data before deletion, so the post-delete emptiness is meaningful.
         var export = await client.GetFromJsonAsync<ExportResponse>("/api/users/me/export");
         Assert.Single(export!.Motorcycles);
+        Assert.Single(export.FuelUps);
 
         // --- Delete the account --------------------------------------------------
         var delete = await client.PostAsJsonAsync("/api/users/me/delete", new { confirmation = "ELIMINAR", password });
@@ -111,6 +124,7 @@ public sealed class AccountDeletionIntegrationTests
         Assert.False(await db.UserMaintenances.AnyAsync(m => m.UserId == userId));
         Assert.False(await db.MotorcycleMaintenanceRecords.AnyAsync(r => r.MotorcycleId == moto.Id));
         Assert.False(await db.MaintenanceRecordAttachments.AnyAsync(a => a.MotorcycleMaintenanceRecordId == record.Id));
+        Assert.False(await db.FuelUps.AnyAsync(f => f.MotorcycleId == moto.Id));
         Assert.False(await db.RefreshTokens.AnyAsync(t => t.UserId == userId));
 
         var user = await db.Users.FirstAsync(u => u.Id == userId);
@@ -130,5 +144,7 @@ public sealed class AccountDeletionIntegrationTests
 
     private sealed record RecordResponse(Guid Id);
 
-    private sealed record ExportResponse(List<MotorcycleResponse> Motorcycles);
+    private sealed record ExportResponse(List<MotorcycleResponse> Motorcycles, List<FuelUpResponse> FuelUps);
+
+    private sealed record FuelUpResponse(Guid Id);
 }

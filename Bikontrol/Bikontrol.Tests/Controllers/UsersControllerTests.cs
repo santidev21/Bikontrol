@@ -119,6 +119,7 @@ public class UsersControllerTests
             return Task.CompletedTask;
         }
         public Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request) => Task.FromResult(Profile);
+        public Task<ProfileDTO> UpdateBudgetAsync(UpdateBudgetRequest request) => Task.FromResult(Profile);
     }
 
     private sealed class FakeAuditLogService : IAuditLogService

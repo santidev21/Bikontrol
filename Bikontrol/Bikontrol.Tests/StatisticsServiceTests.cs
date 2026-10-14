@@ -1,5 +1,7 @@
+using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
+using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure.Services;
 
@@ -57,7 +59,9 @@ public class StatisticsServiceTests
 
         var service = new StatisticsService(
             new FakeMotorcycleService(motorcycles),
-            new FakeMaintenanceService(upcoming, records));
+            new FakeMaintenanceService(upcoming, records),
+            new FakeFuelUpService(),
+            new FakeUserService());
 
         var result = await service.GetSummaryAsync();
 
@@ -114,7 +118,9 @@ public class StatisticsServiceTests
 
         var service = new StatisticsService(
             new FakeMotorcycleService(motorcycles),
-            new FakeMaintenanceService(new(), records));
+            new FakeMaintenanceService(new(), records),
+            new FakeFuelUpService(),
+            new FakeUserService());
 
         var result = await service.GetSummaryAsync();
 
@@ -129,7 +135,9 @@ public class StatisticsServiceTests
     {
         var service = new StatisticsService(
             new FakeMotorcycleService(new List<MotorcycleDTO>()),
-            new FakeMaintenanceService(new(), new()));
+            new FakeMaintenanceService(new(), new()),
+            new FakeFuelUpService(),
+            new FakeUserService());
 
         var result = await service.GetSummaryAsync();
 
@@ -143,6 +151,49 @@ public class StatisticsServiceTests
         Assert.Equal(6, result.Last6Months.Count);
         Assert.All(result.Last6Months, m => Assert.Equal(0, m.Count));
         Assert.All(result.Health, h => Assert.Equal(0, h.Count));
+    }
+
+    [Fact]
+    public async Task GetSummaryAsync_ShouldAggregateFuelAndBudget()
+    {
+        var motoId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var thisMonth = new DateTime(now.Year, now.Month, 1).AddDays(3);
+        var motorcycles = new List<MotorcycleDTO> { new() { Id = motoId, Name = "Moto", Nickname = "M", Km = 1000 } };
+        var records = new Dictionary<Guid, List<MaintenanceRecordDTO>>
+        {
+            [motoId] = new() { new() { MotorcycleId = motoId, MaintenanceName = "Aceite", PerformedAt = thisMonth, Cost = 120m } }
+        };
+        var consumption = new Dictionary<Guid, FuelConsumptionDTO>
+        {
+            [motoId] = new()
+            {
+                MotorcycleId = motoId,
+                TotalFuelCost = 80m,
+                TotalMaintenanceCost = 120m,
+                TotalCostOfOwnership = 200m,
+                Points = new() { new() { DistanceKm = 400, Litres = 10m, KmPerLitre = 40m } }
+            }
+        };
+        var profile = new ProfileDTO { MonthlyMaintenanceBudget = 100m, AnnualMaintenanceBudget = 1000m };
+
+        var service = new StatisticsService(
+            new FakeMotorcycleService(motorcycles),
+            new FakeMaintenanceService(new(), records),
+            new FakeFuelUpService(consumption),
+            new FakeUserService(profile));
+
+        var result = await service.GetSummaryAsync();
+
+        Assert.Equal(80m, result.TotalFuelCost);
+        Assert.Equal(200m, result.TotalCostOfOwnership);
+        Assert.Equal(40m, result.AverageKmPerLitre);
+        Assert.Equal(0.08m, result.FuelCostPerKm); // 80 / 1000
+        Assert.Equal(100m, result.Budget.MonthlyBudget);
+        Assert.Equal(120m, result.Budget.MonthlySpend);
+        Assert.True(result.Budget.IsMonthlyOverBudget);  // 120 > 100
+        Assert.False(result.Budget.IsAnnualOverBudget);  // 120 <= 1000
+        Assert.False(result.HasConsumptionDrop);
     }
 
     private sealed class FakeMotorcycleService : IMotorcycleService
@@ -199,5 +250,39 @@ public class StatisticsServiceTests
                 result[id] = _records.TryGetValue(id, out var r) ? r : new List<MaintenanceRecordDTO>();
             return Task.FromResult<IReadOnlyDictionary<Guid, IReadOnlyList<MaintenanceRecordDTO>>>(result);
         }
+    }
+
+    private sealed class FakeFuelUpService : IFuelUpService
+    {
+        private readonly Dictionary<Guid, FuelConsumptionDTO> _consumption;
+        public FakeFuelUpService(Dictionary<Guid, FuelConsumptionDTO>? consumption = null) =>
+            _consumption = consumption ?? new Dictionary<Guid, FuelConsumptionDTO>();
+
+        public Task<IReadOnlyDictionary<Guid, FuelConsumptionDTO>> GetConsumptionByMotorcyclesAsync(IEnumerable<Guid> motorcycleIds)
+        {
+            var result = new Dictionary<Guid, FuelConsumptionDTO>();
+            foreach (var id in motorcycleIds)
+                result[id] = _consumption.TryGetValue(id, out var c) ? c : new FuelConsumptionDTO { MotorcycleId = id };
+            return Task.FromResult<IReadOnlyDictionary<Guid, FuelConsumptionDTO>>(result);
+        }
+
+        public Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId) => Task.FromResult(Enumerable.Empty<FuelUpDTO>());
+        public Task<FuelUpDTO?> GetByIdAsync(Guid id) => Task.FromResult<FuelUpDTO?>(null);
+        public Task<FuelUpDTO> CreateAsync(SaveFuelUpRequest request) => throw new NotImplementedException();
+        public Task<FuelUpDTO> UpdateAsync(Guid id, SaveFuelUpRequest request) => throw new NotImplementedException();
+        public Task DeleteAsync(Guid id) => Task.CompletedTask;
+        public Task<FuelConsumptionDTO> GetConsumptionAsync(Guid motorcycleId) => throw new NotImplementedException();
+    }
+
+    private sealed class FakeUserService : IUserService
+    {
+        private readonly ProfileDTO _profile;
+        public FakeUserService(ProfileDTO? profile = null) => _profile = profile ?? new ProfileDTO();
+
+        public Task<ProfileDTO> GetMeAsync() => Task.FromResult(_profile);
+        public Task<ProfileDTO> UpdateProfileAsync(UpdateProfileRequest request) => Task.FromResult(_profile);
+        public Task ChangePasswordAsync(ChangePasswordRequest request) => Task.CompletedTask;
+        public Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request) => Task.FromResult(_profile);
+        public Task<ProfileDTO> UpdateBudgetAsync(UpdateBudgetRequest request) => Task.FromResult(_profile);
     }
 }

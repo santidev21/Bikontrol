@@ -63,6 +63,61 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.FuelUp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FueledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsFullTank")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<decimal>("Litres")
+                        .HasPrecision(8, 3)
+                        .HasColumnType("numeric(8,3)");
+
+                    b.Property<Guid>("MotorcycleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("OdometerKm")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Station")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotorcycleId", "FueledAt");
+
+                    b.HasIndex("MotorcycleId", "OdometerKm");
+
+                    b.ToTable("FuelUps", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_FuelUps_Litres_Positive", "\"Litres\" > 0");
+
+                            t.HasCheckConstraint("CK_FuelUps_OdometerKm_NonNegative", "\"OdometerKm\" >= 0");
+
+                            t.HasCheckConstraint("CK_FuelUps_TotalCost_NonNegative", "\"TotalCost\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.Maintenance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -712,6 +767,10 @@ namespace Bikontrol.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
 
+                    b.Property<decimal?>("AnnualMaintenanceBudget")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<string>("AuthProvider")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -741,6 +800,10 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("MonthlyMaintenanceBudget")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -777,6 +840,17 @@ namespace Bikontrol.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("Bikontrol.Domain.Entities.FuelUp", b =>
+                {
+                    b.HasOne("Bikontrol.Domain.Entities.Motorcycle", "Motorcycle")
+                        .WithMany("FuelUps")
+                        .HasForeignKey("MotorcycleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Motorcycle");
                 });
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.MaintenanceRecordAttachment", b =>
@@ -905,6 +979,8 @@ namespace Bikontrol.Persistence.Migrations
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.Motorcycle", b =>
                 {
+                    b.Navigation("FuelUps");
+
                     b.Navigation("KmHistory");
 
                     b.Navigation("MaintenanceRecords");

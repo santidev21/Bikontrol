@@ -30,6 +30,8 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(u => u.LockoutEnd);
             builder.Property(u => u.AuthProvider).HasMaxLength(30);
             builder.Property(u => u.RemindersEnabled).IsRequired().HasDefaultValue(true);
+            builder.Property(u => u.MonthlyMaintenanceBudget).HasPrecision(12, 2);
+            builder.Property(u => u.AnnualMaintenanceBudget).HasPrecision(12, 2);
 
             // Concurrencia optimista con xmin (columna de sistema de Postgres).
             // Se usa el API específico de Npgsql porque IsRowVersion() estándar
