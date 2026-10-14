@@ -1,6 +1,6 @@
 # Bikontrol
 
-![.NET](https://img.shields.io/badge/.NET-9-purple)
+![.NET](https://img.shields.io/badge/.NET-10-purple)
 ![Angular](https://img.shields.io/badge/Angular-22-red)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![PWA](https://img.shields.io/badge/PWA-service%20worker-purple)
@@ -54,7 +54,7 @@ Built to be sold, not just shown:
 | Layer | Choice |
 | --- | --- |
 | Frontend | Angular 22, SCSS, Tailwind CSS, PWA (service worker), Vitest |
-| Backend | .NET 9, Clean Architecture (API/Application/Domain/Infrastructure/Persistence/Shared), EF Core, xUnit |
+| Backend | .NET 10, Clean Architecture (API/Application/Domain/Infrastructure/Persistence/Shared), EF Core, xUnit |
 | Database | PostgreSQL 16 (EF Core migrations) |
 | Auth | JWT + refresh tokens, Google OAuth (ID-token flow) |
 | Infra | Docker Compose, nginx gateway (TLS/HSTS/CSP), GitHub Actions → VPS |
@@ -99,7 +99,7 @@ The database (PostgreSQL 16) **always runs in Docker** — loopback-only (`127.0
 ### Prerequisites
 
 - Node.js 20+
-- .NET 9 SDK
+- .NET 10 SDK
 - Docker Desktop (running)
 
 ### 1. Environment setup
@@ -187,7 +187,7 @@ Native `dotnet run` takes the DB credentials and JWT key from `.env`, so they al
 | `npm run dev` → API auth fails against Docker Postgres | `.env` `POSTGRES_PASSWORD` / `Jwt__Key` still `CHANGE_ME` | Fill `.env` (the root scripts inject it into the API) |
 
 #### Known dependency notes
-- `AutoMapper` is pinned to `12.0.1`. Versions `>= 15` require a paid license and pull .NET 9/10 + `Microsoft.IdentityModel` 8.x dependencies that conflict with the net8.0 JWT stack. The upstream advisory `GHSA-rvv3-g6hj-g44x` (DoS via deep recursive object graphs) does not apply here: Bikontrol only maps flat, fixed-shape DTOs with no recursive/self-referencing graphs reachable from user input. The advisory is suppressed in `Bikontrol/Directory.Build.props` with that rationale.
+- `AutoMapper` is pinned to `12.0.1`. Versions `>= 15` require a paid license and pull `Microsoft.IdentityModel` 8.x dependencies that conflict with the JWT stack. The upstream advisory `GHSA-rvv3-g6hj-g44x` (DoS via deep recursive object graphs) does not apply here: Bikontrol only maps flat, fixed-shape DTOs with no recursive/self-referencing graphs reachable from user input. The advisory is suppressed in `Bikontrol/Directory.Build.props` with that rationale.
 
 ---
 
