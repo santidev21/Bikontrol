@@ -79,6 +79,16 @@ namespace Bikontrol.Infrastructure.Services
             return ToProfile(user);
         }
 
+        public async Task<ProfileDTO> UpdateBudgetAsync(UpdateBudgetRequest request)
+        {
+            EnsureCanWrite();
+            var user = await GetCurrentUserAsync();
+            user.SetMaintenanceBudget(request.MonthlyMaintenanceBudget, request.AnnualMaintenanceBudget);
+            await _userRepository.UpdateAsync(user);
+            await _userRepository.SaveChangesAsync();
+            return ToProfile(user);
+        }
+
         private async Task<User> GetCurrentUserAsync()
         {
             var user = await _userRepository.GetByIdAsync(_current.UserId);

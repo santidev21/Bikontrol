@@ -1,12 +1,13 @@
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
+using Bikontrol.Application.DTOs.Fuel;
 
 namespace Bikontrol.Application.DTOs.Users
 {
     /// <summary>
     /// Full export of the current user's data ("download my data", GDPR-style).
-    /// Structured JSON: profile plus every motorcycle, maintenance, record and
-    /// attachment the user owns.
+    /// Structured JSON: profile plus every motorcycle, maintenance, record,
+    /// attachment and fuel-up the user owns.
     /// </summary>
     public class UserDataExportDTO
     {
@@ -21,5 +22,7 @@ namespace Bikontrol.Application.DTOs.Users
         public List<MaintenanceRecordDTO> MaintenanceRecords { get; set; } = new();
 
         public List<MaintenanceAttachmentDTO> Attachments { get; set; } = new();
+
+        public List<FuelUpDTO> FuelUps { get; set; } = new();
     }
 }

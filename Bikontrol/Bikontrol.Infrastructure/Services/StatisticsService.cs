@@ -19,11 +19,19 @@ namespace Bikontrol.Infrastructure.Services
 
         private readonly IMotorcycleService _motorcycles;
         private readonly IMaintenanceService _maintenances;
+        private readonly IFuelUpService _fuelUps;
+        private readonly IUserService _users;
 
-        public StatisticsService(IMotorcycleService motorcycles, IMaintenanceService maintenances)
+        public StatisticsService(
+            IMotorcycleService motorcycles,
+            IMaintenanceService maintenances,
+            IFuelUpService fuelUps,
+            IUserService users)
         {
             _motorcycles = motorcycles;
             _maintenances = maintenances;
+            _fuelUps = fuelUps;
+            _users = users;
         }
 
         public async Task<StatisticsSummaryDTO> GetSummaryAsync()
@@ -152,6 +160,40 @@ namespace Bikontrol.Infrastructure.Services
                     Cost = inMonth.Sum(r => r.Cost ?? 0m)
                 });
             }
+
+            // Fuel-up metrics: consumption, fuel cost and total cost of ownership,
+            // plus the early sign of a mechanical problem (a sharp consumption drop).
+            var consumptionByMotorcycle = await _fuelUps.GetConsumptionByMotorcyclesAsync(motorcycleIds);
+            summary.TotalFuelCost = consumptionByMotorcycle.Values.Sum(c => c.TotalFuelCost);
+            summary.TotalCostOfOwnership = consumptionByMotorcycle.Values.Sum(c => c.TotalCostOfOwnership);
+            summary.FuelCostPerKm = summary.TotalKm > 0
+                ? Math.Round(summary.TotalFuelCost / summary.TotalKm, 4)
+                : null;
+            summary.HasConsumptionDrop = consumptionByMotorcycle.Values.Any(c => c.IsConsumptionDrop);
+
+            var segmentDistance = consumptionByMotorcycle.Values.SelectMany(c => c.Points).Sum(p => p.DistanceKm);
+            var segmentLitres = consumptionByMotorcycle.Values.SelectMany(c => c.Points).Sum(p => p.Litres);
+            summary.AverageKmPerLitre = segmentDistance > 0 && segmentLitres > 0
+                ? Math.Round(segmentDistance / segmentLitres, 2)
+                : null;
+
+            // Maintenance budget vs the spend recorded in the current month/year.
+            var profile = await _users.GetMeAsync();
+            var monthlySpend = allRecords
+                .Where(r => r.PerformedAt.Year == now.Year && r.PerformedAt.Month == now.Month)
+                .Sum(r => r.Cost ?? 0m);
+            var annualSpend = allRecords
+                .Where(r => r.PerformedAt.Year == now.Year)
+                .Sum(r => r.Cost ?? 0m);
+            summary.Budget = new BudgetStatusDTO
+            {
+                MonthlyBudget = profile.MonthlyMaintenanceBudget,
+                AnnualBudget = profile.AnnualMaintenanceBudget,
+                MonthlySpend = monthlySpend,
+                AnnualSpend = annualSpend,
+                IsMonthlyOverBudget = profile.MonthlyMaintenanceBudget is { } mb && monthlySpend > mb,
+                IsAnnualOverBudget = profile.AnnualMaintenanceBudget is { } ab && annualSpend > ab
+            };
 
             return summary;
         }

@@ -9,6 +9,7 @@ import { ImageService } from '../../../../../shared/services/image.service';
 import { SwalService } from '../../../../../shared/services/swal.service';
 import { MaintenanceService } from '../../../service/maintenance.service';
 import { MotorcyclesService } from '../../../service/motorcycles.service';
+import { FuelUpsService } from '../../../service/fuel-ups.service';
 import { MotorcycleSummaryComponent } from './motorcycle-summary.component';
 
 function fakeResource<T>(initial?: T) {
@@ -26,6 +27,7 @@ function fakeResource<T>(initial?: T) {
 describe('MotorcycleSummaryComponent', () => {
   let motorcyclesServiceMock: any;
   let maintenanceServiceMock: any;
+  let fuelUpsServiceMock: any;
   let swalMock: any;
   let routerMock: any;
 
@@ -36,6 +38,9 @@ describe('MotorcycleSummaryComponent', () => {
       addKmHistory: vi.fn(() => of(undefined)),
       rollbackLastKm: vi.fn(() => of(undefined)),
       downloadMaintenanceBook: vi.fn(() => of(new Blob(['x']))),
+    };
+    fuelUpsServiceMock = {
+      getConsumptionResource: vi.fn(() => fakeResource()),
     };
     maintenanceServiceMock = {
       getUpcomingResource: vi.fn(() => fakeResource()),
@@ -64,6 +69,7 @@ describe('MotorcycleSummaryComponent', () => {
       providers: [
         { provide: MotorcyclesService, useValue: motorcyclesServiceMock },
         { provide: MaintenanceService, useValue: maintenanceServiceMock },
+        { provide: FuelUpsService, useValue: fuelUpsServiceMock },
         { provide: SwalService, useValue: swalMock },
         {
           provide: HttpErrorService,
@@ -213,5 +219,34 @@ describe('MotorcycleSummaryComponent', () => {
 
     component.closeViewer();
     expect(component.viewerImage()).toBeNull();
+  });
+
+  it('navigates to the fuel log of the motorcycle', () => {
+    const component = create();
+    component.motorcycle.set({ id: 'm1' } as Motorcycle);
+
+    component.goToFuelLog();
+
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard/motorcycles', 'm1', 'fuel']);
+  });
+
+  it('does not navigate to the fuel log without a motorcycle id', () => {
+    const component = create();
+
+    component.goToFuelLog();
+
+    expect(routerMock.navigate).not.toHaveBeenCalled();
+  });
+
+  it('exposes the fuel consumption of the motorcycle', () => {
+    fuelUpsServiceMock.getConsumptionResource.mockReturnValue(
+      fakeResource({ motorcycleId: 'm1', averageKmPerLitre: 42.5, isConsumptionDrop: true }),
+    );
+
+    const component = create();
+
+    expect(component.consumption()?.averageKmPerLitre).toBe(42.5);
+    expect(component.consumption()?.isConsumptionDrop).toBe(true);
+    expect(component.isConsumptionLoading()).toBe(false);
   });
 });

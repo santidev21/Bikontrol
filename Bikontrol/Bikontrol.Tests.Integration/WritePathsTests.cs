@@ -237,6 +237,49 @@ public sealed class WritePathsTests
         Assert.Contains(summary!.CostByMotorcycle, c => c.MotorcycleId == moto.Id && c.Cost >= 55.50m);
     }
 
+    [RequiresDockerFact]
+    public async Task LogFuelUp_ShouldPersistAdvanceOdometerAndFeedConsumption()
+    {
+        var client = await AuthenticatedClientAsync();
+        var moto = await CreateMotorcycleAsync(client, km: 1000);
+
+        var first = await LogFuelUpAsync(client, moto.Id, odometerKm: 1200, litres: 4m, cost: 8m);
+        Assert.Equal(2m, first.PricePerLitre); // 8 / 4
+
+        var second = await LogFuelUpAsync(client, moto.Id, odometerKm: 1400, litres: 4m, cost: 8m);
+
+        // A fuel-up is an odometer checkpoint: the km history must advance.
+        var current = await client.GetFromJsonAsync<CurrentKmResponse>($"/api/motorcycles/{moto.Id}/km/current");
+        Assert.Equal(1400, current!.Km);
+
+        var list = await client.GetFromJsonAsync<List<FuelUpResponse>>($"/api/fuel-ups/motorcycle/{moto.Id}");
+        Assert.Equal(2, list!.Count);
+
+        var consumption = await client.GetFromJsonAsync<ConsumptionResponse>($"/api/fuel-ups/motorcycle/{moto.Id}/consumption");
+        Assert.Equal(50m, consumption!.AverageKmPerLitre); // 200 km / 4 L
+        Assert.Equal(16m, consumption.TotalFuelCost);
+
+        // The fuel cost also feeds the fleet statistics.
+        var summary = await client.GetFromJsonAsync<FuelStatisticsResponse>("/api/statistics/summary");
+        Assert.True(summary!.TotalFuelCost >= 16m);
+    }
+
+    private static async Task<FuelUpResponse> LogFuelUpAsync(
+        HttpClient client, Guid motorcycleId, int odometerKm, decimal litres, decimal cost)
+    {
+        var response = await client.PostAsJsonAsync("/api/fuel-ups", new
+        {
+            motorcycleId,
+            fueledAt = DateTime.UtcNow,
+            odometerKm,
+            litres,
+            totalCost = cost,
+            isFullTank = true
+        });
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<FuelUpResponse>())!;
+    }
+
     private static async Task<MaintenanceResponse> CreateMaintenanceAsync(HttpClient client, Guid motorcycleId)
     {
         var response = await client.PostAsJsonAsync("/api/maintenances/mine", new
@@ -344,4 +387,10 @@ public sealed class WritePathsTests
     private sealed record MotorcycleCost(Guid MotorcycleId, string Name, decimal Cost, decimal? CostPerKm);
 
     private sealed record StatisticsResponse(decimal TotalCost, decimal? CostPerKm, List<MotorcycleCost> CostByMotorcycle);
+
+    private sealed record FuelUpResponse(Guid Id, int OdometerKm, decimal Litres, decimal TotalCost, decimal PricePerLitre);
+
+    private sealed record ConsumptionResponse(decimal? AverageKmPerLitre, decimal TotalFuelCost);
+
+    private sealed record FuelStatisticsResponse(decimal TotalFuelCost, decimal TotalCostOfOwnership, decimal? AverageKmPerLitre);
 }

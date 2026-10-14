@@ -126,6 +126,67 @@
           {{ (isExporting() ? 'profile.exporting' : 'profile.downloadData') | t }}
         </button>
       </div>
+      <div class="profile-card mt-4">
+        <h3 class="font-semibold text-primary mb-1">{{ 'profile.budgetTitle' | t }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ 'profile.budgetText' | t }}</p>
+        @if (isDemo()) {
+          <div class="profile-row">
+            <span class="row-label">{{ 'profile.monthlyBudget' | t }}</span>
+            <span class="row-value">{{
+              p.monthlyMaintenanceBudget != null
+                ? (p.monthlyMaintenanceBudget | currency: 'COP' : 'symbol-narrow' : '1.0-0')
+                : ('profile.budgetNone' | t)
+            }}</span>
+          </div>
+          <div class="profile-row">
+            <span class="row-label">{{ 'profile.annualBudget' | t }}</span>
+            <span class="row-value">{{
+              p.annualMaintenanceBudget != null
+                ? (p.annualMaintenanceBudget | currency: 'COP' : 'symbol-narrow' : '1.0-0')
+                : ('profile.budgetNone' | t)
+            }}</span>
+          </div>
+        } @else {
+          <div class="budget-grid">
+            <label class="budget-field" for="profile-monthly-budget">
+              <span class="budget-label">{{ 'profile.monthlyBudget' | t }}</span>
+              <input
+                id="profile-monthly-budget"
+                type="number"
+                min="0"
+                step="1000"
+                inputmode="decimal"
+                class="budget-input"
+                [ngModel]="monthlyBudget()"
+                (ngModelChange)="monthlyBudget.set($event)"
+                [placeholder]="'profile.budgetNone' | t"
+              />
+            </label>
+            <label class="budget-field" for="profile-annual-budget">
+              <span class="budget-label">{{ 'profile.annualBudget' | t }}</span>
+              <input
+                id="profile-annual-budget"
+                type="number"
+                min="0"
+                step="1000"
+                inputmode="decimal"
+                class="budget-input"
+                [ngModel]="annualBudget()"
+                (ngModelChange)="annualBudget.set($event)"
+                [placeholder]="'profile.budgetNone' | t"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            (click)="saveBudget()"
+            [disabled]="isSavingBudget()"
+            class="w-full mt-3 py-2 border border-accent text-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
+          >
+            {{ (isSavingBudget() ? 'profile.budgetSaving' : 'profile.budgetSave') | t }}
+          </button>
+        }
+      </div>
       @if (!isDemo()) {
         <div class="profile-card mt-4 !border-red-200">
           <h3 class="font-semibold text-red-600 mb-1">{{ 'profile.dangerTitle' | t }}</h3>

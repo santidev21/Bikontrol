@@ -18,11 +18,27 @@ namespace Bikontrol.Application.DTOs.Users
 
         /// <summary>Preferencia de recordatorios de mantenimiento (email/push).</summary>
         public bool RemindersEnabled { get; set; }
+
+        /// <summary>Presupuesto mensual de mantenimiento (opcional).</summary>
+        public decimal? MonthlyMaintenanceBudget { get; set; }
+
+        /// <summary>Presupuesto anual de mantenimiento (opcional).</summary>
+        public decimal? AnnualMaintenanceBudget { get; set; }
     }
 
     public class UpdateRemindersRequest
     {
         public bool Enabled { get; set; }
+    }
+
+    /// <summary>Presupuestos de mantenimiento del usuario (null desactiva el presupuesto).</summary>
+    public class UpdateBudgetRequest
+    {
+        [Range(0, 100_000_000, ErrorMessage = "El presupuesto mensual debe estar entre 0 y 100,000,000.")]
+        public decimal? MonthlyMaintenanceBudget { get; set; }
+
+        [Range(0, 100_000_000, ErrorMessage = "El presupuesto anual debe estar entre 0 y 100,000,000.")]
+        public decimal? AnnualMaintenanceBudget { get; set; }
     }
 
     public class UpdateProfileRequest

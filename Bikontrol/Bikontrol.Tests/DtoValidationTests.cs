@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Bikontrol.Application.DTOs.Auth;
+using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.DTOs.Users;
@@ -174,5 +175,71 @@ public class DtoValidationTests
         });
 
         Assert.Contains(errors, e => e.MemberNames.Contains(nameof(CreateMaintenanceRecordRequest.PerformedKm)));
+    }
+
+    [Fact]
+    public void SaveFuelUpRequest_Valid_Passes()
+    {
+        var errors = Validate(new SaveFuelUpRequest
+        {
+            MotorcycleId = Guid.NewGuid(),
+            FueledAt = DateTime.UtcNow,
+            OdometerKm = 1200,
+            Litres = 4.5m,
+            TotalCost = 9m
+        });
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void SaveFuelUpRequest_ZeroLitres_Fails()
+    {
+        var errors = Validate(new SaveFuelUpRequest
+        {
+            MotorcycleId = Guid.NewGuid(),
+            FueledAt = DateTime.UtcNow,
+            Litres = 0m,
+            TotalCost = 0m
+        });
+
+        Assert.Contains(errors, e => e.MemberNames.Contains(nameof(SaveFuelUpRequest.Litres)));
+    }
+
+    [Fact]
+    public void SaveFuelUpRequest_NegativeCost_Fails()
+    {
+        var errors = Validate(new SaveFuelUpRequest
+        {
+            MotorcycleId = Guid.NewGuid(),
+            FueledAt = DateTime.UtcNow,
+            Litres = 4m,
+            TotalCost = -1m
+        });
+
+        Assert.Contains(errors, e => e.MemberNames.Contains(nameof(SaveFuelUpRequest.TotalCost)));
+    }
+
+    [Fact]
+    public void SaveFuelUpRequest_StationTooLong_Fails()
+    {
+        var errors = Validate(new SaveFuelUpRequest
+        {
+            MotorcycleId = Guid.NewGuid(),
+            FueledAt = DateTime.UtcNow,
+            Litres = 4m,
+            TotalCost = 8m,
+            Station = new string('a', 121)
+        });
+
+        Assert.Contains(errors, e => e.MemberNames.Contains(nameof(SaveFuelUpRequest.Station)));
+    }
+
+    [Fact]
+    public void UpdateBudgetRequest_NegativeMonthly_Fails()
+    {
+        var errors = Validate(new UpdateBudgetRequest { MonthlyMaintenanceBudget = -1m });
+
+        Assert.Contains(errors, e => e.MemberNames.Contains(nameof(UpdateBudgetRequest.MonthlyMaintenanceBudget)));
     }
 }

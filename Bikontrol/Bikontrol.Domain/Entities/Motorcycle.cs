@@ -26,6 +26,7 @@ namespace Bikontrol.Domain.Entities
         public ICollection<MotorcycleKmHistory> KmHistory { get; set; } = new List<MotorcycleKmHistory>();
         public ICollection<UserMaintenance> UserMaintenances { get; set; } = new List<UserMaintenance>();
         public ICollection<MotorcycleMaintenanceRecord> MaintenanceRecords { get; set; } = new List<MotorcycleMaintenanceRecord>();
+        public ICollection<FuelUp> FuelUps { get; set; } = new List<FuelUp>();
 
         protected Motorcycle() { }
 

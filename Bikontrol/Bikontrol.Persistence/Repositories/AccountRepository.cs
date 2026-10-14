@@ -39,6 +39,9 @@ namespace Bikontrol.Persistence.Repositories
             await _context.MotorcycleMaintenanceRecords
                 .Where(r => recordIds.Contains(r.Id))
                 .ExecuteDeleteAsync(cancellationToken);
+            await _context.FuelUps
+                .Where(f => motorcycleIds.Contains(f.MotorcycleId))
+                .ExecuteDeleteAsync(cancellationToken);
             await _context.UserMaintenances
                 .Where(m => m.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken);

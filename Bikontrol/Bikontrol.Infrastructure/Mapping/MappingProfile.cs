@@ -2,6 +2,7 @@
 using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
+using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence.Entities;
@@ -32,6 +33,8 @@ namespace Bikontrol.Infrastructure.Mapping
                 .ForMember(dest => dest.LockoutEnd, opt => opt.Ignore())
                 .ForMember(dest => dest.RemindersEnabled, opt => opt.Ignore())
                 .ForMember(dest => dest.AuthProvider, opt => opt.Ignore())
+                .ForMember(dest => dest.MonthlyMaintenanceBudget, opt => opt.Ignore())
+                .ForMember(dest => dest.AnnualMaintenanceBudget, opt => opt.Ignore())
                 .ForMember(dest => dest.Motorcycles, opt => opt.Ignore());
             CreateMap<User, RegisterResponse>()
                 .ForMember(dest => dest.Token, opt => opt.Ignore())
@@ -56,7 +59,8 @@ namespace Bikontrol.Infrastructure.Mapping
                 .ForMember(dest => dest.User, opt => opt.Ignore())
                 .ForMember(dest => dest.KmHistory, opt => opt.Ignore())
                 .ForMember(dest => dest.UserMaintenances, opt => opt.Ignore())
-                .ForMember(dest => dest.MaintenanceRecords, opt => opt.Ignore());
+                .ForMember(dest => dest.MaintenanceRecords, opt => opt.Ignore())
+                .ForMember(dest => dest.FuelUps, opt => opt.Ignore());
             // Km sale de MotorcycleKmHistory, no del agregado Motorcycle:
             // se resuelve en MotorcycleService, no en el mapper.
             CreateMap<Motorcycle, MotorcycleDTO>()
@@ -98,6 +102,9 @@ namespace Bikontrol.Infrastructure.Mapping
 
             CreateMap<MotorcycleMaintenanceRecord, MaintenanceRecordDTO>()
                 .ForMember(dest => dest.MaintenanceName, opt => opt.MapFrom(src => src.UserMaintenance.Name));
+
+            // Fuel-ups: PricePerLitre is derived on the entity.
+            CreateMap<FuelUp, FuelUpDTO>();
         }
     }
 }

@@ -29,6 +29,19 @@ const summaryMock: any = {
   last6Months: [{ yearMonth: '2026-09', count: 2, cost: 120 }],
   totalCost: 120,
   costPerKm: 0.006,
+  totalFuelCost: 300000,
+  totalCostOfOwnership: 420000,
+  fuelCostPerKm: 0.09,
+  averageKmPerLitre: 41.5,
+  hasConsumptionDrop: true,
+  budget: {
+    monthlyBudget: 100000,
+    annualBudget: 1000000,
+    monthlySpend: 120000,
+    annualSpend: 300000,
+    isMonthlyOverBudget: true,
+    isAnnualOverBudget: false,
+  },
   costByMotorcycle: [
     { motorcycleId: 'm1', name: 'Negra', cost: 120, costPerKm: 0.015 },
     { motorcycleId: 'm2', name: 'Roja', cost: 0, costPerKm: null },
@@ -125,5 +138,50 @@ describe('StatisticsComponent', () => {
     expect(component.monthLabel('2026-09')).toBe('sep');
     expect(component.monthLabel('2026-01')).toBe('ene');
     expect(component.monthLabel('invalid')).toBe('invalid');
+  });
+
+  it('flags an overspend when a budget is exceeded', async () => {
+    const fixture = create();
+    fixture.detectChanges();
+
+    httpMock.expectOne((r) => r.url.endsWith('/statistics/summary')).flush(summaryMock);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.budgetOver()).toBe(true);
+  });
+
+  it('does not flag an overspend without a budget', () => {
+    const component = create().componentInstance;
+
+    expect(component.budgetOver()).toBe(false);
+  });
+
+  it('does not flag an overspend when both budgets are respected', async () => {
+    const fixture = create();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne((r) => r.url.endsWith('/statistics/summary'))
+      .flush({
+        ...summaryMock,
+        budget: {
+          ...summaryMock.budget,
+          monthlySpend: 10000,
+          isMonthlyOverBudget: false,
+        },
+      });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.budgetOver()).toBe(false);
+  });
+
+  it('computes budget fill percentages capped at 100', () => {
+    const component = create().componentInstance;
+
+    expect(component.budgetPercent(50000, 100000)).toBe(50);
+    expect(component.budgetPercent(150000, 100000)).toBe(100);
+    expect(component.budgetPercent(1000, null)).toBe(0);
+    expect(component.budgetPercent(0, 100000)).toBe(0);
+    expect(component.budgetPercent(1000, 0)).toBe(0);
   });
 });

@@ -79,6 +79,49 @@
         {{ 'summary.exportCsv' | t }}
       </button>
     </div>
+    <div class="bg-gray-800 rounded-xl shadow-md p-4 my-2 text-gray-200">
+      <div class="flex items-center justify-between gap-2">
+        <span class="font-semibold">{{ 'fuel.cardTitle' | t }}</span>
+        @if (consumption()?.isConsumptionDrop) {
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-900 text-red-200">
+            {{ 'fuel.cardDrop' | t }}
+          </span>
+        }
+      </div>
+      @if (isConsumptionLoading()) {
+        <div class="mt-2" aria-hidden="true">
+          <div class="animate-pulse rounded-xl bg-gray-300/60 h-6 w-40"></div>
+        </div>
+      } @else if (consumption()?.averageKmPerLitre != null) {
+        <div class="flex flex-wrap gap-3 mt-2 text-sm text-gray-300">
+          <span>
+            {{ 'fuel.cardAvg' | t }}:
+            <strong class="text-white"
+              >{{ consumption()!.averageKmPerLitre | number: '1.2-2' }} km/l</strong
+            >
+          </span>
+          <span>
+            {{ 'fuel.cardCostPerKm' | t }}:
+            <strong class="text-white">
+              {{
+                consumption()!.costPerKm != null
+                  ? (consumption()!.costPerKm | number: '1.2-4')
+                  : '—'
+              }}
+            </strong>
+          </span>
+        </div>
+      } @else {
+        <p class="mt-2 text-sm text-gray-400">{{ 'fuel.cardEmpty' | t }}</p>
+      }
+      <button
+        type="button"
+        class="mt-2 text-xs text-blue-300 underline bg-transparent border-0 p-0 cursor-pointer"
+        (click)="goToFuelLog()"
+      >
+        {{ 'fuel.viewLog' | t }}
+      </button>
+    </div>
     <div class="maintenance-section">
       <h2 class="text-center">{{ 'summary.upcoming' | t }}</h2>
       @if (!isDemo()) {

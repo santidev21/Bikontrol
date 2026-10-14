@@ -2,8 +2,8 @@
   "stryker-config": {
     "project": "Bikontrol/Bikontrol.Application/Bikontrol.Application.csproj",
     "test-projects": ["Bikontrol/Bikontrol.Tests/Bikontrol.Tests.csproj"],
-    "mutate": ["Services/MaintenanceScheduleCalculator.cs"],
-    "test-case-filter": "FullyQualifiedName~MaintenanceService|FullyQualifiedName~ReminderService|FullyQualifiedName~MaintenanceScheduleCalculator",
+    "mutate": ["Services/MaintenanceScheduleCalculator.cs", "Services/FuelConsumptionCalculator.cs"],
+    "test-case-filter": "FullyQualifiedName~MaintenanceService|FullyQualifiedName~ReminderService|FullyQualifiedName~MaintenanceScheduleCalculator|FullyQualifiedName~FuelConsumptionCalculator",
     "thresholds": {
       "high": 90,
       "low": 80,

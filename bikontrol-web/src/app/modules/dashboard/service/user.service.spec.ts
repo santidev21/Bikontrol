@@ -72,6 +72,30 @@ describe('UserService (unit, mocked HttpClient)', () => {
     });
   });
 
+  it('should update the maintenance budget', async () => {
+    const mock: any = {
+      id: '1',
+      email: 'a@b.c',
+      fullName: 'Santi',
+      role: 'User',
+      createdAt: '2026-01-01',
+      hasPassword: true,
+      monthlyMaintenanceBudget: 200000,
+      annualMaintenanceBudget: null,
+    };
+    mockHttp.put.mockReturnValue(of(mock));
+
+    const res = await firstValueFrom(
+      service.updateBudget({ monthlyMaintenanceBudget: 200000, annualMaintenanceBudget: null }),
+    );
+
+    expect(res).toEqual(mock);
+    expect(mockHttp.put).toHaveBeenCalledWith(`${service['apiUrl']}/me/budget`, {
+      monthlyMaintenanceBudget: 200000,
+      annualMaintenanceBudget: null,
+    });
+  });
+
   it('should download the user data export', async () => {
     const mock: any = {
       exportedAt: '2026-01-01T00:00:00Z',

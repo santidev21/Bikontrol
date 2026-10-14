@@ -1,5 +1,6 @@
 import { Maintenance, MaintenanceAttachment, MaintenanceRecord } from './maintenance.interface';
 import { Motorcycle } from './motorcycle.interface';
+import { FuelUp } from './fuel-up.interface';
 
 export interface Profile {
   id: string;
@@ -9,10 +10,17 @@ export interface Profile {
   createdAt: string;
   hasPassword: boolean;
   remindersEnabled: boolean;
+  monthlyMaintenanceBudget?: number | null;
+  annualMaintenanceBudget?: number | null;
 }
 
 export interface UpdateProfileRequest {
   fullName: string;
+}
+
+export interface UpdateBudgetRequest {
+  monthlyMaintenanceBudget?: number | null;
+  annualMaintenanceBudget?: number | null;
 }
 
 export interface ChangePasswordRequest {
@@ -31,4 +39,5 @@ export interface UserDataExport {
   maintenances: Maintenance[];
   maintenanceRecords: MaintenanceRecord[];
   attachments: MaintenanceAttachment[];
+  fuelUps: FuelUp[];
 }

@@ -34,6 +34,7 @@ namespace Bikontrol.Persistence
         public DbSet<UserMaintenance> UserMaintenances { get; set; } = default!;
         public DbSet<MotorcycleKmHistory> MotorcycleKmHistories { get; set; }
         public DbSet<MotorcycleMaintenanceRecord> MotorcycleMaintenanceRecords { get; set; } = default!;
+        public DbSet<FuelUp> FuelUps { get; set; } = default!;
         public DbSet<ReminderLog> ReminderLogs { get; set; } = default!;
         public DbSet<PushSubscription> PushSubscriptions { get; set; } = default!;
         public DbSet<MaintenanceRecordAttachment> MaintenanceRecordAttachments { get; set; } = default!;
@@ -51,6 +52,7 @@ namespace Bikontrol.Persistence
             typeof(MotorcycleMaintenanceRecord),
             typeof(MotorcycleKmHistory),
             typeof(MaintenanceRecordAttachment),
+            typeof(FuelUp),
             typeof(User)
         };
 

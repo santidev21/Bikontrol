@@ -32,6 +32,16 @@ export interface YearlyCost {
   cost: number;
 }
 
+/** Monthly/annual maintenance budget vs. actual spend for the current user. */
+export interface BudgetStatus {
+  monthlyBudget?: number | null;
+  annualBudget?: number | null;
+  monthlySpend: number;
+  annualSpend: number;
+  isMonthlyOverBudget: boolean;
+  isAnnualOverBudget: boolean;
+}
+
 export interface StatisticsSummary {
   totalMotorcycles: number;
   totalKm: number;
@@ -41,6 +51,12 @@ export interface StatisticsSummary {
   lastActivityAt?: string | null;
   totalCost: number;
   costPerKm?: number | null;
+  totalFuelCost: number;
+  totalCostOfOwnership: number;
+  fuelCostPerKm?: number | null;
+  averageKmPerLitre?: number | null;
+  hasConsumptionDrop: boolean;
+  budget: BudgetStatus;
   health: HealthBucket[];
   kmByMotorcycle: MotorcycleKmStat[];
   recordsByType: MaintenanceCountStat[];

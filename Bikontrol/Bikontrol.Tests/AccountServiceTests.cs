@@ -207,6 +207,7 @@ public class AccountServiceTests
             new FakeUserMaintenanceRepository(maintenances ?? Array.Empty<UserMaintenance>()),
             new FakeRecordRepository(records ?? Array.Empty<MotorcycleMaintenanceRecord>()),
             new FakeAttachmentRepository(attachments ?? Array.Empty<MaintenanceRecordAttachment>()),
+            new FakeFuelUpRepository(),
             accountRepository ?? new FakeAccountRepository(),
             new FakeKmHistoryService(currentKms ?? new Dictionary<Guid, int>()),
             new FakePasswordHasher(),
@@ -256,6 +257,19 @@ public class AccountServiceTests
         public Task<Motorcycle> AddAsync(Motorcycle motorcycle) => Task.FromResult(motorcycle);
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
         public Task SoftDeleteAsync(Guid id) => Task.CompletedTask;
+        public Task SaveChangesAsync() => Task.CompletedTask;
+    }
+
+    private sealed class FakeFuelUpRepository : IFuelUpRepository
+    {
+        public Task<FuelUp> AddAsync(FuelUp entity) => Task.FromResult(entity);
+        public Task<FuelUp?> GetByIdAsync(Guid id) => Task.FromResult<FuelUp?>(null);
+        public Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+            Task.FromResult<IReadOnlyList<FuelUp>>(Array.Empty<FuelUp>());
+        public Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
+            Task.FromResult<IReadOnlyList<FuelUp>>(Array.Empty<FuelUp>());
+        public Task UpdateAsync(FuelUp entity) => Task.CompletedTask;
+        public void Remove(FuelUp entity) { }
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

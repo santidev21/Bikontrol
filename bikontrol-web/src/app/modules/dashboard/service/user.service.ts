@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { Profile, UserDataExport } from '../interfaces/profile.interface';
+import { Profile, UpdateBudgetRequest, UserDataExport } from '../interfaces/profile.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -34,6 +34,14 @@ export class UserService {
 
   updateReminders(enabled: boolean): Observable<Profile> {
     return this.http.put<Profile>(`${this.apiUrl}/me/reminders`, { enabled });
+  }
+
+  /**
+   * Sets the optional monthly/annual maintenance budget. `null` (or omitted)
+   * disables that budget.
+   */
+  updateBudget(budget: UpdateBudgetRequest): Observable<Profile> {
+    return this.http.put<Profile>(`${this.apiUrl}/me/budget`, budget);
   }
 
   /** Downloads everything the current user owns as one JSON document. */

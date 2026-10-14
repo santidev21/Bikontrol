@@ -20,6 +20,12 @@
 ## Audit log
 
 - `audit_logs` (append-only) records who changed what: `UserId` (null for background jobs), `EntityName`, `EntityId`, `Action` (`Created`/`Updated`/`Deleted`), `Changes` (jsonb diff, sensitive columns redacted) and `CreatedAt`.
-- Written automatically by `AppDbContext.SaveChangesAsync` for user-facing entities (`User`, `Motorcycle`, `UserMaintenance`, `MotorcycleMaintenanceRecord`, `MotorcycleKmHistory`, `MaintenanceRecordAttachment`); infrastructure tables (tokens, push subscriptions, reminder logs) are intentionally excluded.
+- Written automatically by `AppDbContext.SaveChangesAsync` for user-facing entities (`User`, `Motorcycle`, `UserMaintenance`, `MotorcycleMaintenanceRecord`, `MotorcycleKmHistory`, `MaintenanceRecordAttachment`, `FuelUp`); infrastructure tables (tokens, push subscriptions, reminder logs) are intentionally excluded.
 - Read through `GET /api/users/me/activity`.
 - Attachments: `maintenance_record_attachments` stores resized image data URLs (JPEG/PNG/WebP, ≤1 MB decoded), cascade-deleted with their maintenance record.
+
+## Fuel-ups and budgets
+
+- `FuelUps` stores one row per refuelling (`MotorcycleId`, `FueledAt`, `OdometerKm`, `Litres numeric(8,3)`, `TotalCost numeric(12,2)`, `IsFullTank`, `Station`, `Notes`); `PricePerLitre` is derived in code and never stored. CHECK constraints: `CK_FuelUps_OdometerKm_NonNegative`, `CK_FuelUps_Litres_Positive`, `CK_FuelUps_TotalCost_NonNegative`. Indexes on `(MotorcycleId, FueledAt)` and `(MotorcycleId, OdometerKm)`.
+- A fuel-up advances the motorcycle km history in the same transaction when its odometer is above the current reading (a backdated entry below the odometer does not move it and never fails).
+- `users.MonthlyMaintenanceBudget` / `users.AnnualMaintenanceBudget` (nullable `numeric(12,2)`) hold the optional maintenance budgets; `null` disables a budget. They are reset on account anonymization and returned by `GET /api/users/me`.

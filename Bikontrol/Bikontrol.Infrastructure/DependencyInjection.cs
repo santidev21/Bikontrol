@@ -29,6 +29,7 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<IMotorcycleService, MotorcycleService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IMaintenanceService, MaintenanceService>();
+            services.AddScoped<IFuelUpService, FuelUpService>();
             services.AddScoped<IKmHistoryService, KmHistoryService>();
             services.AddScoped<IStatisticsService, StatisticsService>();
             services.AddScoped<IUserService, UserService>();

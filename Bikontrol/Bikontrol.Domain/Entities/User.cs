@@ -46,6 +46,16 @@ namespace Bikontrol.Persistence.Entities
         /// "Google" = creada vía Google (sin contraseña usable).
         /// </summary>
         public string? AuthProvider { get; private set; }
+
+        /// <summary>
+        /// Presupuesto mensual de mantenimiento (opcional). Cuando está definido y
+        /// el gasto del mes lo supera, las estadísticas marcan sobregasto.
+        /// </summary>
+        public decimal? MonthlyMaintenanceBudget { get; private set; }
+
+        /// <summary>Presupuesto anual de mantenimiento (opcional).</summary>
+        public decimal? AnnualMaintenanceBudget { get; private set; }
+
         public IList<Motorcycle> Motorcycles { get; set; } = new List<Motorcycle>();
 
         private User() { }
@@ -150,6 +160,22 @@ namespace Bikontrol.Persistence.Entities
             AuthProvider = string.IsNullOrWhiteSpace(provider) ? null : provider;
         }
 
+        /// <summary>
+        /// Define los presupuestos de mantenimiento (mensual/anual). Un valor null
+        /// desactiva ese presupuesto; un valor negativo es inválido.
+        /// </summary>
+        public void SetMaintenanceBudget(decimal? monthly, decimal? annual)
+        {
+            if (monthly is < 0)
+                throw new ValidationException("El presupuesto mensual no puede ser negativo.");
+
+            if (annual is < 0)
+                throw new ValidationException("El presupuesto anual no puede ser negativo.");
+
+            MonthlyMaintenanceBudget = monthly;
+            AnnualMaintenanceBudget = annual;
+        }
+
         public void UpdateFullName(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
@@ -184,6 +210,8 @@ namespace Bikontrol.Persistence.Entities
             AccessFailedCount = 0;
             LockoutEnd = null;
             RemindersEnabled = false;
+            MonthlyMaintenanceBudget = null;
+            AnnualMaintenanceBudget = null;
         }
     }
 }
