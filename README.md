@@ -252,6 +252,28 @@ capture them). Once added, they are referenced here:
 
 ---
 
+## Future improvements
+
+Ideas for where the product goes next, not committed work — no order or dates implied.
+
+- **Fuel, cost and consumption** — log fuel-ups (litres, price, odometer) and derive km/l consumption,
+  cost per km, total cost of ownership and a monthly/annual maintenance budget with overspend alerts;
+  a drop in consumption doubles as an early sign of a mechanical problem.
+- **Motorcycle status** — a lifecycle state per bike (active / in repair / sold / retired) plus archiving,
+  so a bike can leave the garage without losing its history.
+- **Motorcycle templates** — model-based catalogs that preload a recommended maintenance plan (intervals
+  and types) for a given bike, so a new motorcycle starts useful instead of empty.
+- **Better reminders** — snooze or postpone ("remind me in 500 km"), a weekly digest instead of immediate
+  alerts, mark-as-done from the notification itself, and more channels (WhatsApp/Telegram).
+- **Document expiry** — track mandatory paperwork (SOAT, technical inspection, insurance, taxes) with its
+  due date, attachment and alerts, reusing the existing reminder engine.
+- **Offline mode** — make the PWA offline-first: log rides and maintenance with no signal and sync when
+  the connection comes back.
+- **Demo Pro** — a richer demo/sandbox tenant that showcases the full product (statistics, export,
+  reminders) without touching real user data.
+
+---
+
 ## To Do
 
 - [x] Add Google OAuth authentication.
