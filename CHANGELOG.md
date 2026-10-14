@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/santidev21/Bikontrol/compare/v0.3.1...v0.4.0) (2026-10-14)
+
+
+### Features
+
+* **web:** loading feedback for every request ([#89](https://github.com/santidev21/Bikontrol/issues/89)) ([1d3c105](https://github.com/santidev21/Bikontrol/commit/1d3c1051deedb0ae162006fac466223de275ed72))
+
 ## [0.3.1](https://github.com/santidev21/Bikontrol/compare/v0.3.0...v0.3.1) (2026-10-07)
 
 
