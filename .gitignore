@@ -104,3 +104,7 @@ backups/
 
 # Mutation testing output (Stryker.NET)
 StrykerOutput/
+
+# Editor / language-server artifacts (never commit these)
+*.lscache
+*.csproj.Backup.tmp
