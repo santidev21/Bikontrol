@@ -196,6 +196,27 @@ public class StatisticsServiceTests
         Assert.False(result.HasConsumptionDrop);
     }
 
+    [Fact]
+    public async Task GetSummaryAsync_FlagsConsumptionDrop()
+    {
+        var motoId = Guid.NewGuid();
+        var motorcycles = new List<MotorcycleDTO> { new() { Id = motoId, Name = "Moto", Nickname = "M", Km = 1000 } };
+        var consumption = new Dictionary<Guid, FuelConsumptionDTO>
+        {
+            [motoId] = new() { MotorcycleId = motoId, IsConsumptionDrop = true }
+        };
+
+        var service = new StatisticsService(
+            new FakeMotorcycleService(motorcycles),
+            new FakeMaintenanceService(new(), new()),
+            new FakeFuelUpService(consumption),
+            new FakeUserService());
+
+        var result = await service.GetSummaryAsync();
+
+        Assert.True(result.HasConsumptionDrop);
+    }
+
     private sealed class FakeMotorcycleService : IMotorcycleService
     {
         private readonly List<MotorcycleDTO> _motorcycles;
