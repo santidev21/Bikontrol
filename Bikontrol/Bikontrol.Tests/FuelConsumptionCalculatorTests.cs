@@ -48,7 +48,23 @@ public class FuelConsumptionCalculatorTests
         var point = Assert.Single(result.Points);
         Assert.Equal(300, point.DistanceKm);
         Assert.Equal(5m, point.Litres);
+        Assert.Equal(10m, point.Cost); // 4 + 6 across the partial and the full tank
         Assert.Equal(60m, point.KmPerLitre);
+    }
+
+    [Fact]
+    public void Calculate_FullTankWithZeroLitres_IsSkipped()
+    {
+        var fuelUps = new[]
+        {
+            Fill(1000, 5m, 10m),                   // baseline
+            Fill(1200, 0m, 0m, dayOffset: 1)       // full tank but no fuel: not a segment
+        };
+
+        var result = FuelConsumptionCalculator.Calculate(Guid.NewGuid(), fuelUps, 0m);
+
+        Assert.Empty(result.Points);
+        Assert.Null(result.AverageKmPerLitre);
     }
 
     [Fact]
@@ -114,13 +130,13 @@ public class FuelConsumptionCalculatorTests
     [Fact]
     public void Calculate_SharpDrop_FlagsPossibleMechanicalProblem()
     {
+        // Exactly the minimum number of segments (latest + two baseline).
         var fuelUps = new[]
         {
             Fill(0, 10m, 20m),                 // baseline
             Fill(400, 10m, 20m, dayOffset: 1), // 40 km/l
             Fill(800, 10m, 20m, dayOffset: 2), // 40 km/l
-            Fill(1200, 10m, 20m, dayOffset: 3),// 40 km/l
-            Fill(1500, 12m, 24m, dayOffset: 4) // 25 km/l -> drop
+            Fill(1100, 12m, 24m, dayOffset: 3) // 25 km/l -> drop
         };
 
         var result = FuelConsumptionCalculator.Calculate(Guid.NewGuid(), fuelUps, 0m);
@@ -128,6 +144,45 @@ public class FuelConsumptionCalculatorTests
         Assert.True(result.IsConsumptionDrop);
         Assert.Equal(25m, result.LatestKmPerLitre);
         Assert.Equal(40m, result.BaselineKmPerLitre);
+    }
+
+    [Fact]
+    public void Calculate_DifferingBaseline_UsesTheAverage()
+    {
+        // Segments 50, 40, 30 then 25. The baseline is the average (40), not the
+        // minimum (30): 25 < 40 * 0.8 flags a drop, 25 < 30 * 0.8 does not.
+        var fuelUps = new[]
+        {
+            Fill(0, 10m, 20m),
+            Fill(200, 4m, 8m, dayOffset: 1),   // 50 km/l
+            Fill(600, 10m, 20m, dayOffset: 2), // 40 km/l
+            Fill(900, 10m, 20m, dayOffset: 3), // 30 km/l
+            Fill(1200, 12m, 24m, dayOffset: 4) // 25 km/l
+        };
+
+        var result = FuelConsumptionCalculator.Calculate(Guid.NewGuid(), fuelUps, 0m);
+
+        Assert.Equal(40m, result.BaselineKmPerLitre);
+        Assert.True(result.IsConsumptionDrop);
+    }
+
+    [Fact]
+    public void Calculate_LatestExactlyAtThreshold_DoesNotFlagDrop()
+    {
+        // 32 km/l is exactly 20% below the 40 km/l baseline: a drop needs to be
+        // strictly below the threshold.
+        var fuelUps = new[]
+        {
+            Fill(0, 10m, 20m),
+            Fill(400, 10m, 20m, dayOffset: 1), // 40 km/l
+            Fill(800, 10m, 20m, dayOffset: 2), // 40 km/l
+            Fill(960, 5m, 10m, dayOffset: 3)   // 32 km/l
+        };
+
+        var result = FuelConsumptionCalculator.Calculate(Guid.NewGuid(), fuelUps, 0m);
+
+        Assert.Equal(32m, result.LatestKmPerLitre);
+        Assert.False(result.IsConsumptionDrop);
     }
 
     [Fact]

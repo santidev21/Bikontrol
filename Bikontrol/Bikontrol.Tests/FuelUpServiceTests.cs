@@ -150,6 +150,21 @@ public class FuelUpServiceTests
     }
 
     [Fact]
+    public async Task UpdateAsync_HigherOdometer_AdvancesKmHistory()
+    {
+        var userId = Guid.NewGuid();
+        var moto = MotorcycleFor(userId);
+        var existing = new FuelUp { Id = Guid.NewGuid(), MotorcycleId = moto.Id, OdometerKm = 1000, Litres = 3m, TotalCost = 6m };
+        var repo = new FakeFuelUpRepository(new[] { existing });
+        var kmHistory = new FakeKmHistoryService { CurrentKm = 1000 };
+        var service = CreateService(userId, repo, new FakeMotorcycleRepository(new[] { moto }), kmHistory: kmHistory);
+
+        await service.UpdateAsync(existing.Id, Request(moto.Id, odometerKm: 1500));
+
+        Assert.Equal(1500, kmHistory.LastAddedKm);
+    }
+
+    [Fact]
     public async Task DeleteAsync_RemovesEntity()
     {
         var userId = Guid.NewGuid();

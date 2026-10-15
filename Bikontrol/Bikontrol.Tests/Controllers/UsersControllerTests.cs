@@ -64,6 +64,21 @@ public class UsersControllerTests
     }
 
     [Fact]
+    public async Task UpdateBudget_ShouldForwardRequestAndReturnOk()
+    {
+        var profile = new ProfileDTO { Id = Guid.NewGuid(), MonthlyMaintenanceBudget = 100m };
+        var service = new FakeUserService { Profile = profile };
+        var controller = new UsersController(service, new FakeAuditLogService(), new FakeAccountService());
+        var request = new UpdateBudgetRequest { MonthlyMaintenanceBudget = 100m, AnnualMaintenanceBudget = 1000m };
+
+        var result = await controller.UpdateBudget(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(profile, ok.Value);
+        Assert.Same(request, service.LastBudgetRequest);
+    }
+
+    [Fact]
     public async Task ExportMyData_ShouldReturnOkWithExport()
     {
         var export = new UserDataExportDTO { ExportedAt = DateTime.UtcNow, Profile = new ProfileDTO { Email = "a@b.c" } };
@@ -106,6 +121,7 @@ public class UsersControllerTests
         public ProfileDTO Profile { get; set; } = new();
         public UpdateProfileRequest? LastUpdateRequest { get; private set; }
         public ChangePasswordRequest? LastPasswordRequest { get; private set; }
+        public UpdateBudgetRequest? LastBudgetRequest { get; private set; }
 
         public Task<ProfileDTO> GetMeAsync() => Task.FromResult(Profile);
         public Task<ProfileDTO> UpdateProfileAsync(UpdateProfileRequest request)
@@ -119,7 +135,11 @@ public class UsersControllerTests
             return Task.CompletedTask;
         }
         public Task<ProfileDTO> UpdateRemindersAsync(UpdateRemindersRequest request) => Task.FromResult(Profile);
-        public Task<ProfileDTO> UpdateBudgetAsync(UpdateBudgetRequest request) => Task.FromResult(Profile);
+        public Task<ProfileDTO> UpdateBudgetAsync(UpdateBudgetRequest request)
+        {
+            LastBudgetRequest = request;
+            return Task.FromResult(Profile);
+        }
     }
 
     private sealed class FakeAuditLogService : IAuditLogService

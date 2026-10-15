@@ -4,10 +4,14 @@ End-to-end tests that drive the real stack (nginx + API + PostgreSQL) through a
 browser. They complement the unit and integration suites by covering the wiring
 those cannot see (routing, guards, the actual UI contract).
 
-## Critical flow
+## Specs
 
-`tests/critical-flow.spec.ts`: register → add motorcycle → create a maintenance
-with a small Km interval → record it → advance the odometer → see it overdue.
+- `tests/critical-flow.spec.ts`: register → add motorcycle → create a maintenance
+  with a small Km interval → record it → advance the odometer → see it overdue.
+- `tests/fuel.spec.ts`: register → add motorcycle → log two full tanks → the log
+  derives consumption (km/l), logged distance and the odometer advance.
+- `tests/onboarding.spec.ts`, `tests/account-deletion.spec.ts`, `tests/landing.spec.ts`:
+  guided onboarding, self-service account deletion and the public landing page.
 
 ## Run locally
 

@@ -107,6 +107,11 @@ FROM "UserMaintenanceTypes" u
 JOIN "Motorcycles" m ON m."Id" = u."MotorcycleId"
 WHERE u."UserId" <> m."UserId";
 
+-- 13-16. Fuel-ups y presupuestos. Estas tablas/columnas llegan con la migración
+-- AddFuelUps, y esta auditoría se corre ANTES de aplicarla: se saltan mientras no
+-- existan (si no, el script fallaría con "relation does not exist").
+SELECT to_regclass('"FuelUps"') IS NOT NULL AS fuelups_exists \gset
+\if :fuelups_exists
 -- 13. Cargas de combustible con valores fuera de rango (debe coincidir con las
 -- CHECK constraints CK_FuelUps_*)
 SELECT '13. Carga inválida' AS check_name, "Id", "MotorcycleId",
@@ -124,9 +129,16 @@ SELECT '15. Carga sobre soft-delete' AS check_name, f."Id", f."MotorcycleId"
 FROM "FuelUps" f
 LEFT JOIN "Motorcycles" m ON m."Id" = f."MotorcycleId"
 WHERE m."Id" IS NULL OR NOT m."IsEnabled";
+\endif
 
+SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'MonthlyMaintenanceBudget'
+) AS budget_columns_exist \gset
+\if :budget_columns_exist
 -- 16. Presupuestos de mantenimiento negativos
 SELECT '16. Presupuesto negativo' AS check_name, "Id", "Email",
        "MonthlyMaintenanceBudget", "AnnualMaintenanceBudget"
 FROM users
 WHERE "MonthlyMaintenanceBudget" < 0 OR "AnnualMaintenanceBudget" < 0;
+\endif
