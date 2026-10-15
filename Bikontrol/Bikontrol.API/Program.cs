@@ -326,7 +326,7 @@ if (demoEnabled)
     catch (Exception ex)
     {
         var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
-        logger.LogWarning(ex, "Demo seeding failed: {Message}", ex.Message);
+        LogDemoSeedingFailed(logger, ex, ex.Message);
     }
 }
 
@@ -335,6 +335,13 @@ app.Run();
 // Exposed so the integration test project can boot the app with WebApplicationFactory<Program>.
 public partial class Program
 {
+    [LoggerMessage(Level = Microsoft.Extensions.Logging.LogLevel.Warning,
+        Message = "Demo seeding failed: {Message}")]
+    private static partial void LogDemoSeedingFailed(
+        Microsoft.Extensions.Logging.ILogger logger,
+        Exception exception,
+        string message);
+
     /// <summary>
     /// Bounds the readiness probe: without a short timeout a hung database would
     /// make <c>/ready</c> hang until the probe's own deadline. Only used by the
