@@ -3,7 +3,7 @@ name: backend-test
 description: Build and run the Bikontrol .NET backend tests. Use when running backend tests, dotnet build, dotnet test, Bikontrol.Tests, or checking backend coverage.
 ---
 
-# Backend tests (.NET 9)
+# Backend tests (.NET 10)
 
 Solution: `Bikontrol/Bikontrol.sln`. Tests use xUnit. Prefer the root scripts (CI parity layer), from the repo root:
 

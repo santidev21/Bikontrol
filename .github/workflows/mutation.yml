@@ -46,13 +46,12 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Install Stryker.NET
-        # Pinned: dotnet-stryker 5.x targets net10.0 and cannot be installed on
-        # the .NET 9 SDK (DotnetToolSettings.xml not found). 4.16.0 is the latest
-        # net8.0-based tool and mutates the net9.0 projects under this SDK.
-        run: dotnet tool install --global dotnet-stryker --version 4.16.0
+        # Pinned: keep the tool line in step with the SDK line. 5.0.0 ships a
+        # net10.0 tool, matching the .NET 10 SDK used by this workflow.
+        run: dotnet tool install --global dotnet-stryker --version 5.0.0
 
       - name: Restore
         run: dotnet restore Bikontrol/Bikontrol.sln
