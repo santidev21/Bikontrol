@@ -1,12 +1,13 @@
 ﻿using Bikontrol.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 
 namespace Bikontrol.API.Middleware
 {
-    public class ExceptionHandlingMiddleware
+    public partial class ExceptionHandlingMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionHandlingMiddleware> _logger;
@@ -44,7 +45,7 @@ namespace Bikontrol.API.Middleware
             {
                 // La respuesta ya empezó a enviarse: no se puede reescribir el
                 // status/body sin romper el stream, así que solo se registra.
-                logger.LogWarning(exception, "Exception after response started [{RequestId}]: {Message}", requestId, exception.Message);
+                LogAfterResponseStarted(logger, exception, requestId, exception.Message);
                 return;
             }
 
@@ -76,13 +77,13 @@ namespace Bikontrol.API.Middleware
                 case DbUpdateConcurrencyException:
                     statusCode = HttpStatusCode.Conflict;
                     message = "Los datos cambiaron mientras los editabas. Recarga e inténtalo de nuevo.";
-                    logger.LogWarning(exception, "Concurrency conflict [{RequestId}]: {Message}", requestId, exception.Message);
+                    LogConcurrencyConflict(logger, exception, requestId, exception.Message);
                     break;
 
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     message = "Error inesperado en el servidor.";
-                    logger.LogError(exception, "Unhandled exception [{RequestId}]: {Message}", requestId, exception.Message);
+                    LogUnhandledException(logger, exception, requestId, exception.Message);
                     break;
             }
 
@@ -94,5 +95,17 @@ namespace Bikontrol.API.Middleware
 
             await context.Response.WriteAsync(json, context.RequestAborted);
         }
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Exception after response started [{RequestId}]: {Message}")]
+        private static partial void LogAfterResponseStarted(ILogger logger, Exception exception, string requestId, string message);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Concurrency conflict [{RequestId}]: {Message}")]
+        private static partial void LogConcurrencyConflict(ILogger logger, Exception exception, string requestId, string message);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Unhandled exception [{RequestId}]: {Message}")]
+        private static partial void LogUnhandledException(ILogger logger, Exception exception, string requestId, string message);
     }
 }
