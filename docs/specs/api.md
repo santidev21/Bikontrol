@@ -77,8 +77,9 @@ The API and the Angular client are kept in sync by committed snapshots, guarded 
 
 - `docs/api/openapi.json` — the OpenAPI document (routes, parameters, request bodies and
   validation), generated with the same configuration the app serves
-  (`SwaggerExtensions.AddBikontrolSwagger`). Because controllers return `IActionResult`,
-  Swashbuckle cannot infer response types, so responses are covered by the file below.
+  (`OpenApiExtensions.AddBikontrolOpenApi`, native OpenAPI 3.1). Because controllers return
+  `IActionResult`, the generator cannot infer response types, so responses are covered by the
+  file below.
 - `docs/api/dto-contract.json` — the JSON shape (property names, types, required/optional) of
   every DTO in `Bikontrol.Application` and `Bikontrol.API`, including responses and nested objects.
 
