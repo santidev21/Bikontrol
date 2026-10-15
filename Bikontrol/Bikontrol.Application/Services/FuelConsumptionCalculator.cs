@@ -97,9 +97,11 @@ namespace Bikontrol.Application.Services
                 segmentCost = 0m;
             }
 
+            // Every recorded point has litres > 0 (and distance > 0), so the total
+            // litres alone tells us whether an average can be computed.
             var segmentDistance = result.Points.Sum(p => p.DistanceKm);
             var segmentLitresTotal = result.Points.Sum(p => p.Litres);
-            if (segmentDistance > 0 && segmentLitresTotal > 0)
+            if (segmentLitresTotal > 0)
                 result.AverageKmPerLitre = Math.Round(segmentDistance / segmentLitresTotal, 2);
 
             result.FuelCostPerKm = result.TotalDistanceKm > 0

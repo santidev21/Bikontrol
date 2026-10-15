@@ -1,0 +1,15 @@
+{
+  "stryker-config": {
+    "project": "Bikontrol/Bikontrol.Application/Bikontrol.Application.csproj",
+    "test-projects": ["Bikontrol/Bikontrol.Tests/Bikontrol.Tests.csproj"],
+    "mutate": ["Services/FuelConsumptionCalculator.cs"],
+    "test-case-filter": "FullyQualifiedName~FuelConsumptionCalculator",
+    "thresholds": {
+      "high": 95,
+      "low": 90,
+      "break": 88
+    },
+    "reporters": ["progress", "html", "json"],
+    "concurrency": 4
+  }
+}

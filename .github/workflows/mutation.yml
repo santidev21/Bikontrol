@@ -1,10 +1,12 @@
 name: Mutation testing
 
-# Stryker.NET on the two pieces of maintenance logic that matter most:
+# Stryker.NET on the pieces of logic that matter most:
 # - MaintenanceScheduleCalculator (Application): the shared countdown behind the
 #   dashboard and the reminders, tested with in-memory fakes.
+# - FuelConsumptionCalculator (Application): consumption (km/l), cost per km and
+#   the consumption-drop signal.
 # - MaintenanceService (Infrastructure): the CRUD/ownership/record write paths.
-# Both run without PostgreSQL, so the jobs are fast.
+# All run without PostgreSQL, so the jobs are fast.
 #
 # Runs when the mutated code, its tests or the configs change; weekly on a
 # schedule; and on demand. Each job fails when its mutation score drops below the
@@ -14,10 +16,13 @@ on:
     branches: [main]
     paths:
       - 'Bikontrol/Bikontrol.Application/Services/MaintenanceScheduleCalculator.cs'
+      - 'Bikontrol/Bikontrol.Application/Services/FuelConsumptionCalculator.cs'
       - 'Bikontrol/Bikontrol.Infrastructure/Services/MaintenanceService.cs'
       - 'Bikontrol/Bikontrol.Tests/MaintenanceService*'
       - 'Bikontrol/Bikontrol.Tests/ReminderServiceTests.cs'
+      - 'Bikontrol/Bikontrol.Tests/FuelConsumptionCalculatorTests.cs'
       - 'stryker-config.json'
+      - 'stryker-fuel-consumption.json'
       - 'stryker-maintenance-service.json'
       - '.github/workflows/mutation.yml'
   schedule:
@@ -37,6 +42,8 @@ jobs:
         target:
           - name: MaintenanceScheduleCalculator
             config: stryker-config.json
+          - name: FuelConsumptionCalculator
+            config: stryker-fuel-consumption.json
           - name: MaintenanceService
             config: stryker-maintenance-service.json
     steps:
