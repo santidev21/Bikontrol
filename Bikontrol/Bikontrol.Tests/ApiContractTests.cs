@@ -4,12 +4,11 @@ using System.Text.Json.Serialization;
 using Bikontrol.API.Controllers;
 using Bikontrol.API.Extensions;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi.Writers;
-using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.OpenApi;
 
 namespace Bikontrol.Tests;
 
@@ -21,14 +20,13 @@ namespace Bikontrol.Tests;
 ///
 /// <list type="bullet">
 /// <item><c>docs/api/openapi.json</c> — the OpenAPI document: routes, parameters,
-/// request bodies and validation. Built with the same Swagger + JSON
-/// configuration the app serves (via
-/// <see cref="SwaggerExtensions.AddBikontrolSwagger"/>).</item>
+/// request bodies and validation. Built with the same OpenAPI registration the
+/// app serves (via <see cref="OpenApiExtensions.AddBikontrolOpenApi"/>).</item>
 /// <item><c>docs/api/dto-contract.json</c> — the JSON shape (property names,
 /// types, required/optional) of every DTO. Controllers return
-/// <c>IActionResult</c>, so Swashbuckle cannot infer response types; this
-/// reflection snapshot covers responses too and uses the verbatim JSON property
-/// names, which the camelCased Swagger document cannot distinguish.</item>
+/// <c>IActionResult</c>, so the OpenAPI generator cannot infer response types;
+/// this reflection snapshot covers responses too and uses the verbatim JSON
+/// property names, which the camelCased OpenAPI document cannot distinguish.</item>
 /// </list>
 ///
 /// Refresh both with <c>npm run api:contract:update</c> and review the diff.
@@ -38,8 +36,8 @@ public class ApiContractTests
     private const string UpdateEnvironmentVariable = "UPDATE_API_CONTRACT";
 
     [Fact]
-    public void OpenApiDocument_ShouldMatchCommittedSnapshot() =>
-        AssertSnapshot("openapi.json", GenerateCanonicalDocument());
+    public async Task OpenApiDocument_ShouldMatchCommittedSnapshot() =>
+        AssertSnapshot("openapi.json", await GenerateCanonicalDocumentAsync());
 
     [Fact]
     public void DtoShapes_ShouldMatchCommittedSnapshot() =>
@@ -79,15 +77,16 @@ public class ApiContractTests
     /// Builds the OpenAPI v1 document and serializes it as canonical JSON so the
     /// snapshot is stable regardless of route/schema discovery order. The
     /// service collection mirrors the API's MVC and JSON pipeline so the
-    /// generated shape matches what the app actually serves; the Swagger
-    /// registration itself is shared with the running app.
+    /// generated shape matches what the app actually serves; the OpenAPI
+    /// registration itself is shared with the running app, and the native
+    /// generator is read back through <see cref="IOpenApiDocumentProvider"/>.
     /// </summary>
-    private static string GenerateCanonicalDocument()
+    private static async Task<string> GenerateCanonicalDocumentAsync()
     {
         var services = new ServiceCollection();
         services.AddLogging();
 
-        // Swashbuckle's API explorer resolves a host environment and the entry
+        // The native OpenAPI generator resolves a host environment and the entry
         // assembly for application parts; minimal stubs are enough (no requests
         // are served, no files are read) as long as ApplicationName points at a
         // loadable assembly.
@@ -107,13 +106,16 @@ public class ApiContractTests
             })
             .AddApplicationPart(typeof(AuthController).Assembly);
 
-        services.AddBikontrolSwagger();
+        services.AddBikontrolOpenApi();
 
-        using var provider = services.BuildServiceProvider();
-        var document = provider.GetRequiredService<ISwaggerProvider>().GetSwagger("v1");
+        await using var provider = services.BuildServiceProvider();
+        // AddOpenApi registers the document provider as a keyed singleton named
+        // after the document.
+        var documentProvider = provider.GetRequiredKeyedService<IOpenApiDocumentProvider>("v1");
+        var document = await documentProvider.GetOpenApiDocumentAsync();
 
         using var writer = new StringWriter();
-        document.SerializeAsV3(new OpenApiJsonWriter(writer));
+        document.SerializeAsV31(new OpenApiJsonWriter(writer));
 
         return Canonicalize(writer.ToString());
     }
@@ -121,7 +123,7 @@ public class ApiContractTests
     /// <summary>
     /// Reflects every DTO and records its JSON member names and value types, so a
     /// renamed/added/removed property or a type change is caught even when
-    /// Swashbuckle does not expose the DTO (responses, nested objects).
+    /// the OpenAPI generator does not expose the DTO (responses, nested objects).
     /// </summary>
     private static string GenerateCanonicalDtoContract()
     {
@@ -267,7 +269,7 @@ public class ApiContractTests
         return Path.Combine(repositoryRoot, "docs", "api");
     }
 
-    /// <summary>Minimal host environment so Swashbuckle can read API metadata.</summary>
+    /// <summary>Minimal host environment so the OpenAPI generator can read API metadata.</summary>
     private sealed class StubHostEnvironment : IWebHostEnvironment
     {
         public StubHostEnvironment(string applicationName) => ApplicationName = applicationName;

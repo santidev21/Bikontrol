@@ -47,7 +47,7 @@ Read-only audit. Report findings with severity and `path:line` evidence. Never l
 - HTTPS enforced in production; HSTS on.
 - Security headers present (CSP, X-Content-Type-Options, X-Frame-Options/frame-ancestors, Referrer-Policy).
 - Request body size limits and pagination to prevent abuse.
-- No verbose `/health`/`/swagger` exposure in production.
+- No verbose `/health`/`/scalar` (or `/openapi`) exposure in production.
 
 ## Frontend
 - XSS: no `[innerHTML]`, `bypassSecurityTrustHtml/Url/ResourceUrl` on user-controlled data.

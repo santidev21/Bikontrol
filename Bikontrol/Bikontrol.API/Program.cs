@@ -21,6 +21,7 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
 using System.Text;
@@ -188,9 +189,9 @@ builder.Services.AddRateLimiter(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
-// OpenAPI/Swagger lives in one place so the API contract test generates the
-// exact same document that Swagger UI serves (see docs/api/openapi.json).
-builder.Services.AddBikontrolSwagger();
+// OpenAPI lives in one place so the API contract test generates the exact same
+// document that the /openapi/v1.json endpoint serves (see docs/api/openapi.json).
+builder.Services.AddBikontrolOpenApi();
 
 // PostgreSQL connection
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -246,8 +247,8 @@ app.UseForwardedHeaders();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 // Structured request logging: one line per request with method, path, status and
