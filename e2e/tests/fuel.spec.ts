@@ -61,11 +61,11 @@ test('fuel-up log → consumption and cost metrics', async ({ page }) => {
 
   // Two rows in the log; the odometer also advanced the motorcycle km.
   await expect(page.getByText('Registros de combustible')).toBeVisible();
-  await expect(page.getByText('1400 km')).toBeVisible();
+  await expect(page.getByText('1400 km', { exact: true })).toBeVisible();
 
   // 200 km over 4 L → 50 km/l, and 200 km of logged distance.
-  await expect(page.getByText('50.00')).toBeVisible();
-  await expect(page.getByText('200 km')).toBeVisible();
+  await expect(page.getByText('50.00', { exact: true })).toBeVisible();
+  await expect(page.getByText('200 km', { exact: true })).toBeVisible();
 });
 
 async function logFuelUp(
