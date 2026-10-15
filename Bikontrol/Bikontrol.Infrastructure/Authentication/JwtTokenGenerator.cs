@@ -1,12 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Bikontrol.Infrastructure.Authentication
 {
@@ -42,15 +39,19 @@ namespace Bikontrol.Infrastructure.Authentication
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddSeconds(ExpiresInSeconds),
-                signingCredentials: creds
-            );
+            // JsonWebTokenHandler is the recommended, faster handler (the legacy
+            // JwtSecurityTokenHandler is on the way out). The claim names are
+            // unchanged, so validation (MapInboundClaims=false) is unaffected.
+            var descriptor = new SecurityTokenDescriptor
+            {
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"],
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddSeconds(ExpiresInSeconds),
+                SigningCredentials = creds
+            };
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JsonWebTokenHandler().CreateToken(descriptor);
         }
     }
 }
