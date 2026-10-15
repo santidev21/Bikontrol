@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/santidev21/Bikontrol/compare/v0.4.0...v0.5.0) (2026-10-15)
+
+
+### Features
+
+* **fuel:** fuel-ups, consumption, cost of ownership and maintenance budgets ([#92](https://github.com/santidev21/Bikontrol/issues/92)) ([5c200f0](https://github.com/santidev21/Bikontrol/commit/5c200f03118a562b741acb921b5ec00e70f52209))
+
+
+### Performance Improvements
+
+* **auth:** generate JWTs with JsonWebTokenHandler ([#97](https://github.com/santidev21/Bikontrol/issues/97)) ([174d93d](https://github.com/santidev21/Bikontrol/commit/174d93d79467e78532cc383cce742bff4f9f979d))
+* **logging:** adopt source-generated LoggerMessage in the API layer ([#100](https://github.com/santidev21/Bikontrol/issues/100)) ([6a9a0f5](https://github.com/santidev21/Bikontrol/commit/6a9a0f56d16de3c3bea8ae0b3770e9e2139bb4da))
+
 ## [0.4.0](https://github.com/santidev21/Bikontrol/compare/v0.3.1...v0.4.0) (2026-10-14)
 
 
