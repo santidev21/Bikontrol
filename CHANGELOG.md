@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/santidev21/Bikontrol/compare/v0.5.0...v0.5.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **fuel:** guard integrity checks pre-migration and add flow coverage ([#101](https://github.com/santidev21/Bikontrol/issues/101)) ([342ce06](https://github.com/santidev21/Bikontrol/commit/342ce065fdb0f9a086a3e7b66bb207c84d95b8dc))
+
 ## [0.5.0](https://github.com/santidev21/Bikontrol/compare/v0.4.0...v0.5.0) (2026-10-15)
 
 
