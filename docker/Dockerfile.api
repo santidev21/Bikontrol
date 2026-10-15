@@ -1,5 +1,5 @@
-# Bikontrol API (.NET 8) — build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Bikontrol API (.NET 9) — build stage
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 COPY Bikontrol/ ./
@@ -7,7 +7,7 @@ RUN dotnet restore "Bikontrol.API/Bikontrol.API.csproj"
 RUN dotnet publish "Bikontrol.API/Bikontrol.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
 # curl is used by the container healthcheck.
@@ -29,7 +29,7 @@ COPY --from=build /app/publish .
 # user so a named volume mounted at /app/logs inherits the right permissions.
 RUN mkdir -p /app/logs && chown $APP_UID:$APP_UID /app/logs
 
-# Run as the non-root user defined by the .NET 8 image (APP_UID=1654).
+# Run as the non-root user defined by the .NET image (APP_UID=1654).
 USER $APP_UID
 
 ENTRYPOINT ["dotnet", "Bikontrol.API.dll"]

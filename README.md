@@ -1,6 +1,6 @@
 # Bikontrol
 
-![.NET](https://img.shields.io/badge/.NET-8-purple)
+![.NET](https://img.shields.io/badge/.NET-9-purple)
 ![Angular](https://img.shields.io/badge/Angular-22-red)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![PWA](https://img.shields.io/badge/PWA-service%20worker-purple)
@@ -54,7 +54,7 @@ Built to be sold, not just shown:
 | Layer | Choice |
 | --- | --- |
 | Frontend | Angular 22, SCSS, Tailwind CSS, PWA (service worker), Vitest |
-| Backend | .NET 8, Clean Architecture (API/Application/Domain/Infrastructure/Persistence/Shared), EF Core, xUnit |
+| Backend | .NET 9, Clean Architecture (API/Application/Domain/Infrastructure/Persistence/Shared), EF Core, xUnit |
 | Database | PostgreSQL 16 (EF Core migrations) |
 | Auth | JWT + refresh tokens, Google OAuth (ID-token flow) |
 | Infra | Docker Compose, nginx gateway (TLS/HSTS/CSP), GitHub Actions → VPS |
@@ -99,7 +99,7 @@ The database (PostgreSQL 16) **always runs in Docker** — loopback-only (`127.0
 ### Prerequisites
 
 - Node.js 20+
-- .NET 8 SDK
+- .NET 9 SDK
 - Docker Desktop (running)
 
 ### 1. Environment setup
