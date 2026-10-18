@@ -82,9 +82,9 @@ public sealed class AuthorizationIntegrationTests
         register.EnsureSuccessStatusCode();
 
         var payload = new { email, password = "Secret123!" };
-        // Register already spends one auth request; wait for the per-IP window
-        // (10/min) to reset so the 6 login calls below are not rate limited.
-        await Task.Delay(TimeSpan.FromSeconds(61));
+        // Register (1) + the 6 login calls below fit the per-IP auth budget
+        // (10/min): every test gets its own partition via X-Test-Client-Ip,
+        // so no shared-window workaround is needed.
 
         // Default limit is 5 failed attempts.
         for (var attempt = 0; attempt < 5; attempt++)
@@ -137,6 +137,9 @@ public sealed class AuthorizationIntegrationTests
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();
+        // Its own rate-limit partition (TestServer leaves the client IP null,
+        // so every headerless request would share the "unknown" budget).
+        client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
         var email = $"user-{Guid.NewGuid():N}@bikontrol.test";
         var response = await client.PostAsJsonAsync("/api/auth/register", new
         {

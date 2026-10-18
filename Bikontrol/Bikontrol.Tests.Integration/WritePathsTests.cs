@@ -329,6 +329,10 @@ public sealed class WritePathsTests
             if (_cachedToken is null)
             {
                 var client = _factory.CreateClient();
+                // Each registration gets its own rate-limit partition: without
+                // this every test shares the "unknown" IP budget and a warm-DB
+                // run trips the 10/min auth limit with 429s.
+                client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
                 var email = $"user-{Guid.NewGuid():N}@bikontrol.test";
                 var response = await client.PostAsJsonAsync("/api/auth/register", new
                 {
