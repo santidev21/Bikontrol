@@ -134,6 +134,22 @@ public sealed class AuthorizationIntegrationTests
         Assert.Empty(due!);
     }
 
+    [RequiresDockerFact]
+    public async Task Refresh_ShouldRotateThroughTheHttpOnlyCookie()
+    {
+        // Registration issues the refresh token as an HttpOnly cookie; the
+        // client handler's cookie container carries it to /api/auth/*.
+        var client = await RegisterClientAsync();
+
+        var refresh = await client.PostAsJsonAsync("/api/auth/refresh", new { });
+        refresh.EnsureSuccessStatusCode();
+        var session = await refresh.Content.ReadFromJsonAsync<AuthResponse>();
+
+        Assert.False(string.IsNullOrWhiteSpace(session!.Token));
+        // The body stays clean: the rotated token rides the Set-Cookie header.
+        Assert.Equal(string.Empty, session.RefreshToken);
+    }
+
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();

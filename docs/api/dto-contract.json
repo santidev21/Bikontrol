@@ -30,6 +30,9 @@
     "role": "string",
     "token": "string"
   },
+  "Bikontrol.Application.DTOs.Auth.LogoutRequest": {
+    "refreshToken": "string"
+  },
   "Bikontrol.Application.DTOs.Auth.RefreshTokenRequest": {
     "refreshToken": "string"
   },

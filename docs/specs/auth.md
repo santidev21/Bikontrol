@@ -1,7 +1,7 @@
 # Auth
 
 - Authentication uses JWT and password hashing.
-- Login, register and Google login store the JWT in `localStorage` along with a `refreshToken`.
+- Login, register and Google login store the **access token** in `localStorage`. The **refresh token** rides an HttpOnly cookie (`bikontrol_rt`, `SameSite=Strict`, `Path=/api/auth`, `Secure` outside Development/Testing): script-injected JS can never read it, and it is only ever sent to the auth endpoints. The body `refreshToken` field stays for scripts/tooling but is always empty in browser flows.
 - `auth.interceptor.ts` adds `Authorization: Bearer <token>` automatically.
 - `refresh.interceptor.ts` transparently renews the session: on a `401` it calls `POST /api/auth/refresh` once and retries the original request. Concurrent `401`s share a single in-flight refresh (`shareReplay`); auth URLs (`/auth/`) never trigger a refresh. If the refresh fails it clears the session and redirects to `/login`.
 - Role claim: JWTs carry `role` (`User`/`Demo`). The API sets `MapInboundClaims = false` with `RoleClaimType = "role"` so the claim is not remapped, and `CurrentUserService` accepts both `role` and `ClaimTypes.Role` (older mapped tokens). Demo write guards depend on this — do not change claim handling without updating the service and its tests.

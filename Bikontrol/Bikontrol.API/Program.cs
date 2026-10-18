@@ -143,6 +143,10 @@ builder.Services.AddCors(options =>
             }
             policy.AllowAnyHeader();
             policy.AllowAnyMethod();
+            // The refresh-token cookie needs the CORS handshake in development
+            // (frontend :4201 -> API :7179 are different origins). Production is
+            // same-origin and needs none of this, but AllowCredentials is inert there.
+            policy.AllowCredentials();
         });
 });
 

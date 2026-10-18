@@ -198,6 +198,10 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<LoginResponse> RefreshAsync(RefreshTokenRequest request)
         {
+            // Cookie flow: an absent token means the session is simply gone.
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+
             var tokenHash = HashToken(request.RefreshToken);
             var stored = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
             if (stored?.User == null || !stored.IsActive)
@@ -218,6 +222,21 @@ namespace Bikontrol.Infrastructure.Services
             }
 
             return BuildLoginResponse(stored.User, newRefreshToken);
+        }
+
+        public async Task LogoutAsync(string? refreshToken)
+        {
+            // Best-effort: logout must never fail the user, and an unknown or
+            // already-dead token is simply nothing to revoke.
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return;
+
+            var stored = await _refreshTokenRepository.GetByTokenHashAsync(HashToken(refreshToken));
+            if (stored is { IsActive: true })
+            {
+                stored.Revoke();
+                await _refreshTokenRepository.SaveChangesAsync();
+            }
         }
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
