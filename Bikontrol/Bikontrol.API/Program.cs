@@ -26,7 +26,7 @@ using Serilog;
 using Serilog.Events;
 using System.Text;
 using System.Threading.RateLimiting;
-using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
+using IPNetwork = System.Net.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -160,12 +160,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         ? configuredNetworks
         : new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.1/32", "::1/128", "fc00::/7" };
 
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
     foreach (var cidr in networks)
     {
         if (IPNetwork.TryParse(cidr, out var network))
-            options.KnownNetworks.Add(network);
+            options.KnownIPNetworks.Add(network);
     }
 });
 
@@ -203,7 +203,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // /ready fail fast instead of hanging the probe.
 builder.Services.AddHealthChecks()
     .AddNpgSql(
-        BuildHealthCheckConnectionString(builder.Configuration.GetConnectionString("DefaultConnection")),
+        BuildHealthCheckConnectionString(builder.Configuration.GetConnectionString("DefaultConnection"))
+            ?? throw new InvalidOperationException(
+                "ConnectionStrings:DefaultConnection is missing. Set it via environment variables or appsettings."),
         name: "postgresql",
         tags: new[] { "ready" });
 
@@ -305,7 +307,7 @@ if (migrateOnly || runMigrationsOnStartup)
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
         if (migrateOnly)
         {
             Log.Information("Migrations applied (--migrate); exiting without starting the server.");
@@ -330,7 +332,7 @@ if (demoEnabled)
     }
 }
 
-app.Run();
+await app.RunAsync();
 
 // Exposed so the integration test project can boot the app with WebApplicationFactory<Program>.
 public partial class Program
