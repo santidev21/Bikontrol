@@ -2,7 +2,7 @@ using AutoMapper;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using System;

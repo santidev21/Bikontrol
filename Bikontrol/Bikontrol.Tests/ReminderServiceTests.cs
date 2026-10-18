@@ -4,7 +4,6 @@ using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Microsoft.Extensions.Configuration;
 
 namespace Bikontrol.Tests;

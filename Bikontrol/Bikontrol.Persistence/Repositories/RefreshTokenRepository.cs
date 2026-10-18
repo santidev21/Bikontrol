@@ -1,5 +1,5 @@
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

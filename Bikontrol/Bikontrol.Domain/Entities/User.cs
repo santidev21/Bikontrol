@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Persistence.Entities
+namespace Bikontrol.Domain.Entities
 {
     public class User
     {

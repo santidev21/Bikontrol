@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -52,7 +52,7 @@ namespace Bikontrol.Persistence.Repositories
             // Only real accounts with reminders on; the read-only demo tenant has
             // no real inbox, so it is excluded.
             return await _context.Users
-                .Where(u => u.RemindersEnabled && u.Role != Persistence.Entities.UserRole.Demo)
+                .Where(u => u.RemindersEnabled && u.Role != Domain.Entities.UserRole.Demo)
                 .ToListAsync();
         }
 

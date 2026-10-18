@@ -8,7 +8,7 @@ using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Seed;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;

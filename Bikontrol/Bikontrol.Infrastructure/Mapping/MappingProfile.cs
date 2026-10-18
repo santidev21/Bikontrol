@@ -5,7 +5,6 @@ using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Persistence.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

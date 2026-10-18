@@ -6,7 +6,6 @@ using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;

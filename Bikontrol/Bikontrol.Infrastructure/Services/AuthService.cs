@@ -6,7 +6,7 @@ using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Shared.Exceptions;
 using Bikontrol.Persistence;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

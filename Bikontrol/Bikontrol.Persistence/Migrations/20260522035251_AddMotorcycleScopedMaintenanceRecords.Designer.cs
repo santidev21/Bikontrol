@@ -478,7 +478,7 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("UserMaintenanceTypes", (string)null);
                 });
 
-            modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>
+            modelBuilder.Entity("Bikontrol.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -511,7 +511,7 @@ namespace Bikontrol.Persistence.Migrations
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.Motorcycle", b =>
                 {
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
                         .WithMany("Motorcycles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -563,7 +563,7 @@ namespace Bikontrol.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -595,7 +595,7 @@ namespace Bikontrol.Persistence.Migrations
                     b.Navigation("MaintenanceRecords");
                 });
 
-            modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>
+            modelBuilder.Entity("Bikontrol.Domain.Entities.User", b =>
                 {
                     b.Navigation("Motorcycles");
                 });

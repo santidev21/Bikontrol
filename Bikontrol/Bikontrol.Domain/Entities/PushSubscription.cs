@@ -1,4 +1,4 @@
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using System;
 
 namespace Bikontrol.Domain.Entities

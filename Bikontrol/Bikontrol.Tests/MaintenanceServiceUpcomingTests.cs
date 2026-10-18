@@ -197,14 +197,14 @@ public class MaintenanceServiceUpcomingTests
 
     private sealed class FakeCurrentUserService : ICurrentUserService
     {
-        public FakeCurrentUserService(Guid userId, string role = Persistence.Entities.UserRole.User)
+        public FakeCurrentUserService(Guid userId, string role = Domain.Entities.UserRole.User)
         {
             UserId = userId;
             Role = role;
         }
         public Guid UserId { get; }
         public string Role { get; }
-        public bool IsDemo => Role == Persistence.Entities.UserRole.Demo;
+        public bool IsDemo => Role == Domain.Entities.UserRole.Demo;
     }
 
     private static Motorcycle CreateMotorcycle(Guid motorcycleId, Guid userId)
