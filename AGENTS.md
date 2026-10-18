@@ -7,10 +7,11 @@ Motorcycle tracking and maintenance app:
 - Angular 22 frontend (SCSS, Tailwind CSS, PWA service worker; Vitest tests) — views: onboarding (`/dashboard/onboarding`), home, motorcycle summary, maintenance catalog, statistics (`/dashboard/statistics`), profile (`/dashboard/profile`)
 - .NET 10 backend with Clean Architecture (API, Application, Domain, Infrastructure, Persistence, Shared)
 - PostgreSQL 16 via EF Core (DB always in Docker, loopback-only `:5434` locally; migrations in Persistence, applied via root `db:migrate`)
-- JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, per-user salt password hashing, password recovery via SMTP email, soft deletes
+- JWT authentication (login/register/Google OAuth), sliding sessions with refresh tokens, PBKDF2 (Identity v3) password hashing with a configurable work factor (`PasswordHashing:Iterations`, default 600k), anti-enumeration register (existing emails answer like fresh ones — no 409), password recovery via SMTP email, soft deletes
 - Read-only statistics aggregation (`GET /api/statistics/summary`); profile endpoints (`GET/PUT /api/users/me`, `POST /api/users/me/password`); multi-step writes run in transactions (`ITransactionManager`); optimistic concurrency via Postgres `xmin`; CHECK constraints on km/intervals
 - Fuel log and cost tracking: fuel-ups (`/api/fuel-ups`, `Litres`/`TotalCost`/odometer, advances the km history) derive km/l consumption, fuel cost per km, total cost of ownership and a per-user monthly/annual maintenance budget with overspend flags; a sharp consumption drop flags a possible mechanical problem (see [docs/specs/fuel.md](docs/specs/fuel.md))
 - Maintenance reminders: a daily background job flags due/overdue items (shared countdown with the dashboard, deduped) and delivers them by digest email + Web Push; `GET /api/reminders/due`, push subscribe endpoints and `PUT /api/users/me/reminders` (see [docs/specs/reminders.md](docs/specs/reminders.md) and [ADR 001](docs/adr/001-web-push.md)).
+- Data retention: a second daily job (`RetentionBackgroundService`, 04:00 UTC) bulk-purges dead refresh tokens (default 30 days after expiry/revocation) and old reminder logs (default 90 days); audit logs are kept forever unless `Retention:AuditLogDays` is positive (see [docs/specs/database.md](docs/specs/database.md)).
 - Root `package.json` orchestrates local dev (`dev`, `dev:ui/dev:api`, `db:*`, `docker:dev` scripts)
 
 ## Product Direction
