@@ -200,6 +200,9 @@ public class UserServiceTests
             return Task.FromResult(active.Count);
         }
 
+        public Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
+
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

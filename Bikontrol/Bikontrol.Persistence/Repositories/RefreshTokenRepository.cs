@@ -42,6 +42,13 @@ namespace Bikontrol.Persistence.Repositories
             return active.Count;
         }
 
+        public async Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
+        {
+            return await _context.RefreshTokens
+                .Where(t => t.ExpiresAt < cutoffUtc || (t.RevokedAt != null && t.RevokedAt < cutoffUtc))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

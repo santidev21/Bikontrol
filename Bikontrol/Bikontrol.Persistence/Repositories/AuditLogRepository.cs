@@ -16,10 +16,18 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<IReadOnlyList<AuditLog>> GetByUserIdAsync(Guid userId, int limit)
         {
             return await _context.AuditLogs
+                .AsNoTracking()
                 .Where(a => a.UserId == userId)
                 .OrderByDescending(a => a.Id)
                 .Take(limit)
                 .ToListAsync();
+        }
+
+        public async Task<int> DeleteOlderThanAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
+        {
+            return await _context.AuditLogs
+                .Where(a => a.CreatedAt < cutoffUtc)
+                .ExecuteDeleteAsync(cancellationToken);
         }
 
         public async Task SaveChangesAsync()

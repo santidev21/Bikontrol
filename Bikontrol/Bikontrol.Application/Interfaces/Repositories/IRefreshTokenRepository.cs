@@ -19,6 +19,13 @@ namespace Bikontrol.Application.Interfaces.Repositories
         /// </summary>
         Task<int> RevokeAllForUserAsync(Guid userId);
 
+        /// <summary>
+        /// Bulk-deletes tokens that expired or were revoked before the cutoff
+        /// (retention purge; bypasses the change tracker and the audit trail).
+        /// Returns how many rows were deleted.
+        /// </summary>
+        Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default);
+
         Task SaveChangesAsync();
     }
 }

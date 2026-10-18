@@ -78,6 +78,18 @@ services:
       Reminders__PushEnabled: ${Reminders__PushEnabled:-true}
       Reminders__DailyHourUtc: ${Reminders__DailyHourUtc:-8}
       Reminders__DedupeDays: ${Reminders__DedupeDays:-3}
+      # Data retention (daily bulk purge at 04:00 UTC): dead refresh tokens
+      # and old reminder logs; audit logs stay forever unless given a
+      # positive Retention__AuditLogDays.
+      Retention__Enabled: ${Retention__Enabled:-true}
+      Retention__DailyHourUtc: ${Retention__DailyHourUtc:-4}
+      Retention__RefreshTokenDays: ${Retention__RefreshTokenDays:-30}
+      Retention__ReminderLogDays: ${Retention__ReminderLogDays:-90}
+      Retention__AuditLogDays: ${Retention__AuditLogDays:-0}
+      # Password hashing work factor (PBKDF2-HMAC-SHA256 iterations; OWASP
+      # guidance is 600k). Hashes embed their own iteration count, so changing
+      # this never invalidates existing passwords.
+      PasswordHashing__Iterations: ${PasswordHashing__Iterations:-600000}
       # Web Push (VAPID). Empty keys = push is a no-op.
       WebPush__PublicKey: ${WebPush__PublicKey:-}
       WebPush__PrivateKey: ${WebPush__PrivateKey:-}

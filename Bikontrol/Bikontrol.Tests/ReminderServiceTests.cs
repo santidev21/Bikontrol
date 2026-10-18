@@ -382,6 +382,8 @@ public class ReminderServiceTests
             }
             return Task.CompletedTask;
         }
+        public Task<int> DeleteOlderThanAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

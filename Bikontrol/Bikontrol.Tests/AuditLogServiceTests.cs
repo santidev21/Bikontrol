@@ -68,6 +68,9 @@ public class AuditLogServiceTests
             return Task.FromResult(Entries);
         }
 
+        public Task<int> DeleteOlderThanAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
+
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 }

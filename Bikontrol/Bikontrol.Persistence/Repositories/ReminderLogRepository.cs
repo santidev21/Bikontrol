@@ -46,9 +46,12 @@ namespace Bikontrol.Persistence.Repositories
 
         public async Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel)
         {
+            // Read-only: MarkDeliveredAsync re-loads its own tracked copies, so
+            // these never need identity resolution.
             return await _context.ReminderLogs
                 .Include(r => r.User)
                 .Include(r => r.UserMaintenance)
+                .AsNoTracking()
                 .Where(r => r.Channel == channel)
                 .OrderBy(r => r.CreatedAt)
                 .ToListAsync();
@@ -69,6 +72,13 @@ namespace Bikontrol.Persistence.Repositories
                 log.Channel = channel;
                 log.DeliveredAt = deliveredAt;
             }
+        }
+
+        public async Task<int> DeleteOlderThanAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
+        {
+            return await _context.ReminderLogs
+                .Where(r => r.CreatedAt < cutoffUtc)
+                .ExecuteDeleteAsync(cancellationToken);
         }
 
         public async Task SaveChangesAsync()
