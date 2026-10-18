@@ -17,7 +17,8 @@
 | `POST` | `/register` | Creates a user. With email confirmation required (default) it returns **no session** and emails a confirmation link; otherwise it returns access + refresh tokens. **Anti-enumeration**: an already-registered address answers exactly like a fresh one (no `409`) — the real owner gets an email (a re-confirmation link if the account is unconfirmed, an "account exists" note if confirmed) and the response carries a random Id / the requested name / `User` role, so nothing from the existing account leaks. |
 | `POST` | `/login` | Email + password, returns access + refresh token. Returns `429` while the account is locked out. |
 | `POST` | `/google` | Body `{ idToken }`. Validates a Google ID token (`Google__ClientId`), creates the user if missing, returns Bikontrol tokens. |
-| `POST` | `/refresh` | Body `{ refreshToken }`. Single-use rotation: concurrent replays conflict and return `401` (expired session). |
+| `POST` | `/refresh` | Rotates the refresh token (single use: concurrent replays conflict and return `401`). The token comes from the HttpOnly cookie; a body `{ refreshToken }` works as a fallback for scripts. |
+| `POST` | `/logout` | Best-effort revocation of the presented refresh token (cookie or body) and clears the cookie. Always `200`. |
 | `POST` | `/forgot-password` | Body `{ email }`. Emails a reset link (always `200` to avoid leaking account existence). |
 | `POST` | `/reset-password` | Body `{ email, token, newPassword }`. Validates the hashed, time-limited token and updates the password. |
 | `POST` | `/confirm-email` | Body `{ email, token }`. Validates the hashed, time-limited confirmation token and marks the email confirmed. Idempotent. |
@@ -49,8 +50,10 @@
 
 ## Sessions (refresh tokens)
 
-- Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days).
+- Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days, which is also the cookie `Max-Age`).
+- Transport: the refresh token is delivered in a `Set-Cookie` header (`HttpOnly`, `SameSite=Strict`, `Path=/api/auth`, `Secure` outside dev/testing) and the JSON body always carries an empty `refreshToken`. Auth requests use `withCredentials` and the CORS policy has `AllowCredentials` (needed in development; inert same-origin in production).
 - Refresh tokens are stored in the `refresh_tokens` table (SHA-256 hash only) and are revoked/rotated on every use. `RevokedAt` is a concurrency token, so two simultaneous refreshes with the same token cannot both mint replacements.
+- `POST /api/auth/logout` revokes the presented token (cookie or body fallback) and clears the cookie — best-effort, always `200`.
 - Changing the password (`POST /api/users/me/password`) or resetting it (`POST /api/auth/reset-password`) revokes **all** active refresh tokens for the user, so any stolen session dies with the password change.
 - Google-only accounts get a random password hash; they can adopt a password through the recovery flow.
 
