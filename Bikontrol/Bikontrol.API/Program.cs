@@ -173,10 +173,17 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     }
 });
 
-// Rate limiting (auth endpoints). Partitioned per client IP: the previous
-// single fixed window throttled the whole application to 10 auth requests/min.
+// Rate limiting (auth endpoints). Two independent fixed windows, partitioned
+// per client IP: a burst window (10/min) and a sustained ceiling (per hour).
+// A burst window alone still accepts a steady 10/min trickle that survives
+// across rolling windows; the hourly ceiling closes that. The previous single
+// fixed window throttled the whole application to 10 auth requests/min.
 builder.Services.AddRateLimiter(options =>
 {
+    var authPerHour = int.TryParse(builder.Configuration["RateLimiting:AuthPerHour"], out var perHour) && perHour > 0
+        ? perHour
+        : 60;
+
     options.AddPolicy("auth", httpContext =>
     {
         var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -184,6 +191,18 @@ builder.Services.AddRateLimiter(options =>
         {
             PermitLimit = 10,
             Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+    options.AddPolicy("auth-sustained", httpContext =>
+    {
+        // The "s:" prefix keeps this policy's partitions independent of the
+        // burst policy's, which uses the bare IP as its key.
+        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter($"s:{clientIp}", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = authPerHour,
+            Window = TimeSpan.FromHours(1),
             QueueLimit = 0
         });
     });

@@ -78,6 +78,9 @@ services:
       Reminders__PushEnabled: ${Reminders__PushEnabled:-true}
       Reminders__DailyHourUtc: ${Reminders__DailyHourUtc:-8}
       Reminders__DedupeDays: ${Reminders__DedupeDays:-3}
+      # Rate limiting: auth burst is 10/min per client IP (hardcoded policy);
+      # the sustained ceiling per hour is tunable.
+      RateLimiting__AuthPerHour: ${RateLimiting__AuthPerHour:-60}
       # Data retention (daily bulk purge at 04:00 UTC): dead refresh tokens
       # and old reminder logs; audit logs stay forever unless given a
       # positive Retention__AuditLogDays.

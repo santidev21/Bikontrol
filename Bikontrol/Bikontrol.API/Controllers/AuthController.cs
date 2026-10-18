@@ -26,6 +26,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var result = await _authService.RegisterAsync(request);
@@ -33,6 +34,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> Login([FromBody] LoginRequest dto)
         {
             var result = await _authService.LoginAsync(dto);
@@ -40,6 +42,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("google")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
         {
             var result = await _authService.GoogleLoginAsync(request);
@@ -47,6 +50,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("refresh")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
             // Browser flow: the refresh token rides the HttpOnly cookie. Scripts
@@ -57,6 +61,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("forgot-password")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
             await _authService.ForgotPasswordAsync(request);
@@ -64,6 +69,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("reset-password")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             await _authService.ResetPasswordAsync(request);
@@ -71,6 +77,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("confirm-email")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
         {
             await _authService.ConfirmEmailAsync(request);
@@ -78,6 +85,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("resend-confirmation")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationRequest request)
         {
             await _authService.ResendConfirmationAsync(request);
@@ -85,6 +93,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("demo")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> DemoLogin()
         {
             var result = await _authService.DemoLoginAsync();
@@ -92,6 +101,7 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpPost("logout")]
+        [EnableRateLimiting("auth-sustained")]
         public async Task<IActionResult> Logout([FromBody] LogoutRequest? request)
         {
             // Best-effort revocation of the presented token, then the cookie is
