@@ -53,8 +53,29 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
         {
-            if (await _userRepository.ExistsByEmailAsync(request.Email))
-                throw new AuthException("El usuario ya existe.", 409);
+            var existing = await _userRepository.GetByEmailAsync(request.Email);
+            if (existing is not null)
+            {
+                // Anti-enumeration: an already-registered address must be
+                // indistinguishable from a fresh one. Same response shape, an
+                // email goes to the real owner, and nothing from the existing
+                // account leaks back. Caveat: with EmailConfirmation:Required
+                // disabled the fresh path issues a session immediately, so an
+                // existing address can only be answered with
+                // EmailConfirmationRequired=true — keep the default in prod.
+                if (existing.IsEmailConfirmed)
+                {
+                    await SendAccountExistsEmailAsync(existing);
+                }
+                else
+                {
+                    // Still unconfirmed: they cannot log in yet, so resend the
+                    // confirmation link instead of an "account exists" note.
+                    await ResendConfirmationAsync(new ResendConfirmationRequest { Email = request.Email });
+                }
+
+                return BuildGenericRegisterResponse(request);
+            }
 
             var user = _mapper.Map<User>(request);
             user.SetPasswordHash(_passwordHasher.HashPassword(null!, request.Password));
@@ -353,6 +374,36 @@ namespace Bikontrol.Infrastructure.Services
             return int.TryParse(_configuration["Lockout:Minutes"], out var minutes) && minutes > 0
                 ? TimeSpan.FromMinutes(minutes)
                 : TimeSpan.FromMinutes(15);
+        }
+
+        /// <summary>
+        /// Response for an email that is already registered: identical in shape
+        /// to a fresh registration's confirmation-required response, with a
+        /// random Id, the requested (not the stored) name and a User role, so
+        /// the two are not distinguishable.
+        /// </summary>
+        private static RegisterResponse BuildGenericRegisterResponse(RegisterRequest request)
+        {
+            return new RegisterResponse
+            {
+                Id = Guid.NewGuid(),
+                Email = User.NormalizeEmail(request.Email),
+                FullName = request.FullName,
+                Role = UserRole.User,
+                CreatedAt = DateTime.UtcNow,
+                EmailConfirmationRequired = true
+            };
+        }
+
+        private async Task SendAccountExistsEmailAsync(User user)
+        {
+            var body =
+                $"Hola {user.FullName},\n\n" +
+                "Recibimos un intento de registro con tu correo en Bikontrol, pero ya existe una cuenta con esta dirección.\n\n" +
+                "Si fuiste vos, iniciá sesión con tu contraseña (o restablecela si no la recordás).\n" +
+                "Si no fuiste vos, ignorá este correo: nadie pudo acceder a tu cuenta.\n";
+
+            await _emailSender.SendAsync(user.Email, "Ya tenés una cuenta en Bikontrol", body);
         }
 
         private async Task SendConfirmationEmailAsync(User user, string token)
