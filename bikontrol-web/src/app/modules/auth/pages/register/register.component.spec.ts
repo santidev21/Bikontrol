@@ -50,8 +50,8 @@ describe('RegisterComponent', () => {
     component.registerForm.patchValue({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
-      confirmPassword: 'secret2',
+      password: 'secret12',
+      confirmPassword: 'secret22',
     });
 
     expect(component.registerForm.errors?.['passwordMismatch']).toBe(true);
@@ -69,8 +69,8 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
-      confirmPassword: 'secret1',
+      password: 'secret12',
+      confirmPassword: 'secret12',
     });
 
     component.onSubmit();
@@ -78,7 +78,7 @@ describe('RegisterComponent', () => {
     expect(authServiceMock.register).toHaveBeenCalledWith({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
+      password: 'secret12',
     });
     expect(routerMock.navigate).toHaveBeenCalledWith(['/dashboard']);
     expect(component.errorMessage()).toBeNull();
@@ -91,8 +91,8 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
-      confirmPassword: 'secret1',
+      password: 'secret12',
+      confirmPassword: 'secret12',
     });
 
     component.onSubmit();
@@ -109,8 +109,8 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
-      confirmPassword: 'secret1',
+      password: 'secret12',
+      confirmPassword: 'secret12',
     });
 
     component.onSubmit();
@@ -127,8 +127,8 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
-      confirmPassword: 'secret1',
+      password: 'secret12',
+      confirmPassword: 'secret12',
     });
     component.onSubmit();
 
@@ -143,8 +143,8 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       fullName: 'Juan Perez',
       email: 'user@example.com',
-      password: 'secret1',
-      confirmPassword: 'secret1',
+      password: 'secret12',
+      confirmPassword: 'secret12',
     });
 
     component.onSubmit();

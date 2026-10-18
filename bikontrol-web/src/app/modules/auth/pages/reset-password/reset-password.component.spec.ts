@@ -71,7 +71,7 @@ describe('ResetPasswordComponent', () => {
   });
 
   it('should not submit when passwords do not match', () => {
-    component.form.setValue({ newPassword: '123456', confirmPassword: '654321' });
+    component.form.setValue({ newPassword: '12345678', confirmPassword: '87654321' });
     component.onSubmit();
 
     expect(authServiceMock.resetPassword).not.toHaveBeenCalled();
@@ -80,14 +80,14 @@ describe('ResetPasswordComponent', () => {
   it('should call resetPassword and redirect to login on success', () => {
     vi.useFakeTimers();
     authServiceMock.resetPassword.mockReturnValue(of({ message: 'Contraseña actualizada.' }));
-    component.form.setValue({ newPassword: '123456', confirmPassword: '123456' });
+    component.form.setValue({ newPassword: '12345678', confirmPassword: '12345678' });
 
     component.onSubmit();
 
     expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
       'user@example.com',
       'token-abc',
-      '123456',
+      '12345678',
     );
     expect(component.successMessage()).toBe('Contraseña actualizada. Ya puedes iniciar sesión.');
     vi.runAllTimers();
@@ -99,7 +99,7 @@ describe('ResetPasswordComponent', () => {
     authServiceMock.resetPassword.mockReturnValue(
       throwError(() => ({ error: { error: 'Enlace expirado.' } })),
     );
-    component.form.setValue({ newPassword: '123456', confirmPassword: '123456' });
+    component.form.setValue({ newPassword: '12345678', confirmPassword: '12345678' });
 
     component.onSubmit();
 

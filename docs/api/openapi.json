@@ -1449,7 +1449,7 @@
           },
           "newPassword": {
             "maxLength": 128,
-            "minLength": 6,
+            "minLength": 8,
             "type": "string"
           }
         }
@@ -1655,7 +1655,7 @@
           },
           "password": {
             "maxLength": 128,
-            "minLength": 6,
+            "minLength": 8,
             "type": "string"
           },
           "fullName": {
@@ -1690,7 +1690,7 @@
           },
           "newPassword": {
             "maxLength": 128,
-            "minLength": 6,
+            "minLength": 8,
             "type": "string"
           }
         }

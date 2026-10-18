@@ -250,6 +250,11 @@
   "Bikontrol.Application.DTOs.Reminders.UnregisterPushSubscriptionRequest": {
     "endpoint": "string"
   },
+  "Bikontrol.Application.DTOs.Retention.RetentionRunResult": {
+    "auditLogsDeleted": "integer",
+    "refreshTokensDeleted": "integer",
+    "reminderLogsDeleted": "integer"
+  },
   "Bikontrol.Application.DTOs.Statistics.BudgetStatusDTO": {
     "annualBudget": "number?",
     "annualSpend": "number",
