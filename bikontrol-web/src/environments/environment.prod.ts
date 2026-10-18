@@ -7,5 +7,5 @@ export const environment = {
   demoEnabled: false,
   // Etiqueta legible de la versión que se muestra en Perfil.
   // Súbela solo en releases con cambios visibles para el usuario (no en cada commit).
-  appVersion: '0.1.0',
+  appVersion: '0.5.0',
 };
