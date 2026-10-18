@@ -1,11 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 import { HttpErrorService } from './http-error.service';
 
 describe('HttpErrorService', () => {
   let service: HttpErrorService;
 
   beforeEach(() => {
-    service = new HttpErrorService();
+    TestBed.resetTestingModule();
+    service = TestBed.inject(HttpErrorService);
   });
 
   it('should prefer the backend-provided message when present', () => {
@@ -13,6 +15,22 @@ describe('HttpErrorService', () => {
       'El correo o contraseña son inválidos.',
     );
     expect(service.message({ error: { message: 'Otro mensaje.' } })).toBe('Otro mensaje.');
+  });
+
+  it('should translate known backend error codes in the user language', () => {
+    // The envelope carries a stable machine code (invalid_credentials); the
+    // catalog translation wins over the hardcoded Spanish server message.
+    expect(
+      service.message({
+        error: { code: 'invalid_credentials', error: 'El correo o contraseña son inválidos.' },
+      }),
+    ).toBe('Correo o contraseña inválidos.');
+  });
+
+  it('should keep the server message for codes without a catalog entry', () => {
+    expect(service.message({ error: { code: 'validation', error: 'Un Mensaje Específico.' } })).toBe(
+      'Un Mensaje Específico.',
+    );
   });
 
   it('should return a friendly message for connection problems (status 0)', () => {

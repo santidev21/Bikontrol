@@ -10,10 +10,17 @@ namespace Bikontrol.Shared.Exceptions
     {
         public int StatusCode { get; }
 
-        public AuthException(string message, int statusCode = 401)
+        /// <summary>
+        /// Stable machine code the frontend can translate (null falls back to
+        /// "auth_error" in the error envelope).
+        /// </summary>
+        public string? Code { get; }
+
+        public AuthException(string message, int statusCode = 401, string? code = null)
             : base(message)
         {
             StatusCode = statusCode;
+            Code = code;
         }
     }
 }

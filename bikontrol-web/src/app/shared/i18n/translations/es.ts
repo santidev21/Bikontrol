@@ -13,6 +13,8 @@ export const es: Record<string, string> = {
   'common.passwordRequired': 'La contraseña es obligatoria.',
   'common.passwordMin': 'Debe tener al menos 6 caracteres.',
   'auth.passwordMin': 'La contraseña debe tener al menos 8 caracteres.',
+  'errors.invalid_credentials': 'Correo o contraseña inválidos.',
+  'errors.session_expired': 'Tu sesión expiró. Iniciá sesión de nuevo.',
   'common.confirmRequired': 'Debes confirmar la contraseña.',
   'common.passwordMismatch': 'Las contraseñas no coinciden.',
   'common.backToLogin': 'Volver al inicio de sesión',

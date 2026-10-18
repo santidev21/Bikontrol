@@ -37,6 +37,24 @@ public class ExceptionHandlingMiddlewareTests
         context.Response.Body.Position = 0;
         using var doc = await JsonDocument.ParseAsync(context.Response.Body);
         Assert.Equal("Bloqueada", doc.RootElement.GetProperty("error").GetString());
+        // The envelope carries a stable machine code alongside the message.
+        Assert.Equal("auth_error", doc.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WhenAuthExceptionHasCode_ShouldEchoTheCode()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => throw new AuthException("El correo o contraseña son inválidos.", 401, "invalid_credentials"),
+            NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        context.Response.Body.Position = 0;
+        using var doc = await JsonDocument.ParseAsync(context.Response.Body);
+        Assert.Equal("invalid_credentials", doc.RootElement.GetProperty("code").GetString());
     }
 
     [Fact]
@@ -55,6 +73,7 @@ public class ExceptionHandlingMiddlewareTests
         using var doc = await JsonDocument.ParseAsync(context.Response.Body);
         // The message must not leak internals.
         Assert.Equal("Error inesperado en el servidor.", doc.RootElement.GetProperty("error").GetString());
+        Assert.Equal("server_error", doc.RootElement.GetProperty("code").GetString());
     }
 
     [Fact]

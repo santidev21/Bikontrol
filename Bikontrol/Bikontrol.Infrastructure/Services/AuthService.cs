@@ -113,7 +113,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null)
-                throw new AuthException("El correo o contraseña son inválidos.");
+                throw new AuthException("El correo o contraseña son inválidos.", 401, "invalid_credentials");
 
             // Never run the hasher while locked out, so a locked account cannot
             // be used to keep guessing (and cannot spend more CPU).
@@ -131,7 +131,7 @@ namespace Bikontrol.Infrastructure.Services
                     await _userRepository.SaveChangesAsync();
                 }
 
-                throw new AuthException("El correo o contraseña son inválidos.");
+                throw new AuthException("El correo o contraseña son inválidos.", 401, "invalid_credentials");
             }
 
             if (IsEmailConfirmationRequired() && !user.IsEmailConfirmed)
@@ -200,12 +200,12 @@ namespace Bikontrol.Infrastructure.Services
         {
             // Cookie flow: an absent token means the session is simply gone.
             if (string.IsNullOrWhiteSpace(request.RefreshToken))
-                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
 
             var tokenHash = HashToken(request.RefreshToken);
             var stored = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
             if (stored?.User == null || !stored.IsActive)
-                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
 
             stored.Revoke();
             var newRefreshToken = await IssueRefreshTokenAsync(stored.UserId);
@@ -218,7 +218,7 @@ namespace Bikontrol.Infrastructure.Services
                 // Another concurrent refresh already rotated this token.
                 // Report it as an expired session so the client logs out cleanly
                 // instead of surfacing a 409 conflict.
-                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
             }
 
             return BuildLoginResponse(stored.User, newRefreshToken);

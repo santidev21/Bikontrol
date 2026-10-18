@@ -51,38 +51,45 @@ namespace Bikontrol.API.Middleware
 
             HttpStatusCode statusCode;
             string message;
+            string code;
 
             switch (exception)
             {
                 case AuthException authEx:
                     statusCode = (HttpStatusCode)authEx.StatusCode;
                     message = authEx.Message;
+                    code = authEx.Code ?? "auth_error";
                     break;
 
                 case NotFoundException:
                     statusCode = HttpStatusCode.NotFound;
                     message = exception.Message;
+                    code = "not_found";
                     break;
 
                 case ForbiddenAccessException:
                     statusCode = HttpStatusCode.Forbidden;
                     message = exception.Message;
+                    code = "forbidden";
                     break;
 
                 case ValidationException:
                     statusCode = HttpStatusCode.BadRequest;
                     message = exception.Message;
+                    code = "validation";
                     break;
 
                 case DbUpdateConcurrencyException:
                     statusCode = HttpStatusCode.Conflict;
                     message = "Los datos cambiaron mientras los editabas. Recarga e inténtalo de nuevo.";
+                    code = "conflict";
                     LogConcurrencyConflict(logger, exception, requestId, exception.Message);
                     break;
 
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     message = "Error inesperado en el servidor.";
+                    code = "server_error";
                     LogUnhandledException(logger, exception, requestId, exception.Message);
                     break;
             }
@@ -90,7 +97,10 @@ namespace Bikontrol.API.Middleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)statusCode;
 
-            var response = new { error = message };
+            // The code is the machine-stable part of the envelope: the frontend
+            // can translate known codes instead of showing the hardcoded
+            // (Spanish) message, which is what unlocks non-Spanish UIs.
+            var response = new { error = message, code };
             var json = JsonSerializer.Serialize(response);
 
             await context.Response.WriteAsync(json, context.RequestAborted);

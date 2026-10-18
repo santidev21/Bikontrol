@@ -13,6 +13,8 @@ export const en: Record<string, string> = {
   'common.passwordRequired': 'Password is required.',
   'common.passwordMin': 'Must be at least 6 characters.',
   'auth.passwordMin': 'The password must be at least 8 characters.',
+  'errors.invalid_credentials': 'Invalid email or password.',
+  'errors.session_expired': 'Your session expired. Please log in again.',
   'common.confirmRequired': 'Please confirm the password.',
   'common.passwordMismatch': 'Passwords do not match.',
   'common.backToLogin': 'Back to sign in',
