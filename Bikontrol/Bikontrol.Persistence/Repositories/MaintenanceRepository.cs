@@ -17,6 +17,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<IEnumerable<Maintenance>> GetAllAsync()
         {
             return await _context.DefaultMaintenances
+                .AsNoTracking()
                 .Where(mt => mt.IsEnabled)
                 .ToListAsync();
         }
@@ -24,6 +25,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<IEnumerable<Maintenance>> GetAllForUserAsync(Guid userId)
         {
             return await _context.DefaultMaintenances
+                .AsNoTracking()
                 .Where(mt => mt.IsEnabled &&
                     !_context.UserMaintenances
                         .Any(umt => umt.UserId == userId && umt.IsEnabled && umt.BaseTypeId == mt.Id))
@@ -33,6 +35,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<Maintenance?> GetByIdAsync(Guid id)
         {
             return await _context.DefaultMaintenances
+                .AsNoTracking()
                 .FirstOrDefaultAsync(mt => mt.Id == id && mt.IsEnabled);
         }
     }

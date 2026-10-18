@@ -30,6 +30,7 @@ namespace Bikontrol.Persistence.Repositories
         {
             return await _context.MotorcycleMaintenanceRecords
                 .Include(x => x.UserMaintenance)
+                .AsNoTracking()
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.PerformedAt)
                 .ThenByDescending(x => x.CreatedAt)
@@ -44,6 +45,7 @@ namespace Bikontrol.Persistence.Repositories
 
             return await _context.MotorcycleMaintenanceRecords
                 .Include(x => x.UserMaintenance)
+                .AsNoTracking()
                 .Where(x => ids.Contains(x.MotorcycleId))
                 .OrderByDescending(x => x.PerformedAt)
                 .ThenByDescending(x => x.CreatedAt)
@@ -53,6 +55,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId)
         {
             return await _context.MotorcycleMaintenanceRecords
+                .AsNoTracking()
                 .Where(x => x.UserMaintenanceId == userMaintenanceId)
                 .OrderByDescending(x => x.PerformedAt)
                 .ThenByDescending(x => x.CreatedAt)
@@ -66,6 +69,7 @@ namespace Bikontrol.Persistence.Repositories
                 return new Dictionary<Guid, MotorcycleMaintenanceRecord>();
 
             var rows = await _context.MotorcycleMaintenanceRecords
+                .AsNoTracking()
                 .Where(x => ids.Contains(x.UserMaintenanceId))
                 .ToListAsync();
 

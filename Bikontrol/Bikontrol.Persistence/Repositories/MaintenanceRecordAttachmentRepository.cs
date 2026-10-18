@@ -21,6 +21,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<IReadOnlyList<MaintenanceRecordAttachment>> GetByRecordIdAsync(Guid recordId)
         {
             return await _context.MaintenanceRecordAttachments
+                .AsNoTracking()
                 .Where(a => a.MotorcycleMaintenanceRecordId == recordId)
                 .OrderBy(a => a.CreatedAt)
                 .ToListAsync();

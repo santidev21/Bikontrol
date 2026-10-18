@@ -39,6 +39,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<MotorcycleKmHistory?> GetFirstByMotorcycleIdAsync(Guid motorcycleId)
         {
             return await _context.MotorcycleKmHistories
+                .AsNoTracking()
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderBy(x => x.RecordedAt)
                 .ThenBy(x => x.Id)
@@ -48,6 +49,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<List<MotorcycleKmHistory>> GetByMotorcycleIdAsync(Guid motorcycleId)
         {
             return await _context.MotorcycleKmHistories
+                .AsNoTracking()
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.RecordedAt)
                 .ThenByDescending(x => x.Id)

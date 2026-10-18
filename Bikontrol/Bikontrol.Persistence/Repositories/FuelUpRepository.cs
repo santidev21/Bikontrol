@@ -27,6 +27,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdAsync(Guid motorcycleId)
         {
             return await _context.FuelUps
+                .AsNoTracking()
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.FueledAt)
                 .ThenByDescending(x => x.CreatedAt)
@@ -40,6 +41,7 @@ namespace Bikontrol.Persistence.Repositories
                 return new List<FuelUp>();
 
             return await _context.FuelUps
+                .AsNoTracking()
                 .Where(x => ids.Contains(x.MotorcycleId))
                 .OrderBy(x => x.MotorcycleId)
                 .ThenBy(x => x.OdometerKm)

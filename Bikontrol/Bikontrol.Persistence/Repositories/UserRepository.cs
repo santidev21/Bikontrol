@@ -52,6 +52,7 @@ namespace Bikontrol.Persistence.Repositories
             // Only real accounts with reminders on; the read-only demo tenant has
             // no real inbox, so it is excluded.
             return await _context.Users
+                .AsNoTracking()
                 .Where(u => u.RemindersEnabled && u.Role != Domain.Entities.UserRole.Demo)
                 .ToListAsync();
         }
