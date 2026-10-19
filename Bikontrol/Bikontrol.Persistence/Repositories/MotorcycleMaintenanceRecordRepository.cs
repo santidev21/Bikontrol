@@ -26,15 +26,19 @@ namespace Bikontrol.Persistence.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId)
+        public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null)
         {
-            return await _context.MotorcycleMaintenanceRecords
+            var query = _context.MotorcycleMaintenanceRecords
                 .Include(x => x.UserMaintenance)
                 .AsNoTracking()
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.PerformedAt)
-                .ThenByDescending(x => x.CreatedAt)
-                .ToListAsync();
+                .ThenByDescending(x => x.CreatedAt);
+
+            if (limit.HasValue)
+                query = (IOrderedQueryable<MotorcycleMaintenanceRecord>)query.Take(limit.Value);
+
+            return await query.ToListAsync();
         }
 
         public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)

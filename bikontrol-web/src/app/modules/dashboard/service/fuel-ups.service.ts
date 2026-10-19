@@ -38,14 +38,20 @@ export class FuelUpsService {
 
   /**
    * Reactive read of a motorcycle's fuel-ups (newest first). Loads automatically
-   * when the id signal has a value (and reloads when it changes).
+   * when the id signal has a value (and reloads when it changes). `limit`
+   * paginates the read (limited by the API; undefined = full history).
    */
   getByMotorcycleResource(
     motorcycleId: Signal<string | undefined>,
+    limit?: Signal<number | undefined>,
   ): HttpResourceRef<FuelUp[] | undefined> {
     return httpResource<FuelUp[]>(() => {
       const id = motorcycleId();
-      return id ? `${this.apiUrl}/motorcycle/${id}` : undefined;
+      if (!id) return undefined;
+      const pageSize = limit?.();
+      return pageSize
+        ? `${this.apiUrl}/motorcycle/${id}?limit=${pageSize}`
+        : `${this.apiUrl}/motorcycle/${id}`;
     });
   }
 

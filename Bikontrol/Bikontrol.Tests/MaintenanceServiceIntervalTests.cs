@@ -759,7 +759,7 @@ public class MaintenanceServiceIntervalTests
             => _lastByMaintenance = lastByMaintenance;
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(_lastByMaintenance.Values
                 .Where(r => r is not null)
                 .Cast<MotorcycleMaintenanceRecord>()

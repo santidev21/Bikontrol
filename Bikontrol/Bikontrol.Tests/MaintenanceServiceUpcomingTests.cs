@@ -263,7 +263,7 @@ public class MaintenanceServiceUpcomingTests
     {
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());

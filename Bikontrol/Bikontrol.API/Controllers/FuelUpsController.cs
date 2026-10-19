@@ -1,5 +1,6 @@
 using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,9 +23,9 @@ namespace Bikontrol.API.Controllers
         }
 
         [HttpGet("motorcycle/{motorcycleId:guid}")]
-        public async Task<IActionResult> GetByMotorcycle(Guid motorcycleId)
+        public async Task<IActionResult> GetByMotorcycle(Guid motorcycleId, [FromQuery] int? limit)
         {
-            return Ok(await _service.GetByMotorcycleAsync(motorcycleId));
+            return Ok(await _service.GetByMotorcycleAsync(motorcycleId, ListLimits.Clamp(limit)));
         }
 
         [HttpGet("{id:guid}")]

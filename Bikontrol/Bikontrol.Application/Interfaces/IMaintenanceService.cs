@@ -15,7 +15,7 @@ public interface IMaintenanceService
     Task<MaintenanceDTO> FollowDefaultAsync(Guid motorcycleId, Guid defaultId, int? KmInterval, int? TimeIntervalWeeks, string TrackingType);
     Task UpdateAsync(Guid id, SaveMaintenanceDTO dto);
     Task<MaintenanceRecordDTO> RegisterMaintenanceRecordAsync(CreateMaintenanceRecordRequest request);
-    Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId);
+    Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId, int? limit = null);
     Task<IEnumerable<UpcomingMaintenanceDTO>> GetUpcomingByMotorcycleAsync(Guid motorcycleId);
 
     /// <summary>Próximos mantenimientos de varias motos en una sola pasada (evita N+1).</summary>

@@ -353,6 +353,43 @@ public sealed class WritePathsTests
         return _cachedToken!;
     }
 
+    [RequiresDockerFact]
+    public async Task FuelUpHistory_ShouldRespectTheLimitQuery()
+    {
+        var client = await AuthenticatedClientAsync();
+        var motorcycle = await CreateMotorcycleAsync(client, 500);
+
+        for (var km = 100; km <= 400; km += 100)
+        {
+            var response = await client.PostAsJsonAsync("/api/fuel-ups", new
+            {
+                motorcycleId = motorcycle.Id,
+                fueledAt = DateTime.UtcNow,
+                odometerKm = km,
+                litres = 4m,
+                totalCost = 8m,
+                isFullTank = true
+            });
+            response.EnsureSuccessStatusCode();
+        }
+
+        // Explicit smaller page: only the 3 newest, still newest-first.
+        var page = await client.GetFromJsonAsync<List<FuelUpResponse>>(
+            $"/api/fuel-ups/motorcycle/{motorcycle.Id}?limit=3");
+        Assert.Equal(3, page!.Count);
+        Assert.Equal(400, page[0].OdometerKm);
+
+        // No limit parameter: the full history (backwards compatibility).
+        var full = await client.GetFromJsonAsync<List<FuelUpResponse>>(
+            $"/api/fuel-ups/motorcycle/{motorcycle.Id}");
+        Assert.Equal(4, full!.Count);
+
+        // Over the ceiling: clamped, never more than the server-side MaxLimit.
+        var clamped = await client.GetFromJsonAsync<List<FuelUpResponse>>(
+            $"/api/fuel-ups/motorcycle/{motorcycle.Id}?limit=999999");
+        Assert.Equal(4, clamped!.Count);
+    }
+
     private static async Task<MotorcycleResponse> CreateMotorcycleAsync(HttpClient client, int km)
     {
         var payload = new

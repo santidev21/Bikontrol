@@ -260,10 +260,10 @@ namespace Bikontrol.Infrastructure.Services
             });
         }
 
-        public async Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId)
+        public async Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId, int? limit = null)
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
-            var records = await _recordRepository.GetByMotorcycleIdAsync(motorcycleId);
+            var records = await _recordRepository.GetByMotorcycleIdAsync(motorcycleId, limit);
             return records.ToMaintenanceRecordDTOs();
         }
 

@@ -652,7 +652,7 @@ public class MaintenanceServiceCrudTests
 
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) { Items.Add(entity); return Task.FromResult(entity); }
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(Items.Where(x => x.MotorcycleId == motorcycleId).AsEnumerable());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
         {

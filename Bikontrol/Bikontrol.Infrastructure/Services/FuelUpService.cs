@@ -33,10 +33,10 @@ namespace Bikontrol.Infrastructure.Services
             _transactions = transactions;
         }
 
-        public async Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId)
+        public async Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId, int? limit = null)
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
-            var fuelUps = await _repo.GetByMotorcycleIdAsync(motorcycleId);
+            var fuelUps = await _repo.GetByMotorcycleIdAsync(motorcycleId, limit);
             return fuelUps.ToFuelUpDTOs();
         }
 

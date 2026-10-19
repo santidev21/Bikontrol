@@ -37,7 +37,7 @@
 - `PUT /api/maintenances/{id}`
 - `DELETE /api/maintenances/mine/{id}`
 - `POST /api/maintenances/records` (optional `cost`, ≥ 0; feeds cost statistics)
-- `GET /api/maintenances/motorcycle/{motorcycleId}/records`
+- `GET /api/maintenances/motorcycle/{motorcycleId}/records` (newest first; optional `?limit` 1–500 to page the history, default = full history — values over the ceiling clamp)
 - `GET /api/maintenances/motorcycle/{motorcycleId}/upcoming`
 - `GET /api/maintenances/records/{recordId}/attachments` (photos/documents of a record)
 - `POST /api/maintenances/records/{recordId}/attachments` (`{ dataUrl, fileName }`; JPEG/PNG/WebP data URL, ≤1 MB decoded)
@@ -54,7 +54,7 @@
 
 ## Fuel-ups (refuelling log + consumption)
 - `POST /api/fuel-ups` (`{ motorcycleId, fueledAt, odometerKm, litres, totalCost, isFullTank, station?, notes? }`; advances the odometer when higher)
-- `GET /api/fuel-ups/motorcycle/{motorcycleId}` (newest first)
+- `GET /api/fuel-ups/motorcycle/{motorcycleId}` (newest first; optional `?limit` 1–500 to page the log, default = full history — values over the ceiling clamp)
 - `GET /api/fuel-ups/{id}`
 - `PUT /api/fuel-ups/{id}` (same body)
 - `DELETE /api/fuel-ups/{id}`

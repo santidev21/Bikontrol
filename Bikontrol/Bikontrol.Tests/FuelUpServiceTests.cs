@@ -221,7 +221,7 @@ public class FuelUpServiceTests
         }
 
         public Task<FuelUp?> GetByIdAsync(Guid id) => Task.FromResult(_items.FirstOrDefault(x => x.Id == id));
-        public Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult<IReadOnlyList<FuelUp>>(_items.Where(x => x.MotorcycleId == motorcycleId).ToList());
         public Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
         {
@@ -258,7 +258,7 @@ public class FuelUpServiceTests
         public FakeRecordRepository(IEnumerable<MotorcycleMaintenanceRecord>? items = null) => _items = items?.ToList() ?? new List<MotorcycleMaintenanceRecord>();
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult(_items.FirstOrDefault(r => r.Id == id));
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(_items.Where(r => r.MotorcycleId == motorcycleId).AsEnumerable());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
         {

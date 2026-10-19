@@ -59,7 +59,15 @@ export class FuelPageComponent implements OnInit {
 
   form: FormGroup;
 
-  private readonly listRes = this.fuelUpsService.getByMotorcycleResource(this.motorcycleId);
+  /** Progressive history: first page here, older entries revealed on demand. */
+  private static readonly PageSize = 100;
+  private static readonly MaxLimit = 500; // mirrors ListLimits.MaxLimit in the API
+  readonly listLimit = signal<number | undefined>(FuelPageComponent.PageSize);
+
+  private readonly listRes = this.fuelUpsService.getByMotorcycleResource(
+    this.motorcycleId,
+    this.listLimit,
+  );
   private readonly consumptionRes = this.fuelUpsService.getConsumptionResource(this.motorcycleId);
   /** Best-effort read of the budget status; the banner is optional, never blocking. */
   private readonly summaryRes = this.statisticsService.getSummaryResource();
@@ -69,6 +77,18 @@ export class FuelPageComponent implements OnInit {
     this.consumptionRes.hasValue() ? this.consumptionRes.value() : undefined,
   );
   readonly isListLoading = computed(() => this.listRes.isLoading());
+  readonly canLoadMore = computed(
+    () =>
+      this.listLimit() !== undefined &&
+      (this.listRes.value()?.length ?? 0) >= FuelPageComponent.PageSize,
+  );
+
+  loadMore(): void {
+    const next = (this.listLimit() ?? 0) + FuelPageComponent.PageSize;
+    // Past the ceiling: drop the limit and read the full history (the API is
+    // still capped server-side, so no request can exceed it).
+    this.listLimit.set(next > FuelPageComponent.MaxLimit ? undefined : next);
+  }
   readonly isConsumptionLoading = computed(() => this.consumptionRes.isLoading());
 
   readonly isDemo = computed(() => this.authService.isDemo());

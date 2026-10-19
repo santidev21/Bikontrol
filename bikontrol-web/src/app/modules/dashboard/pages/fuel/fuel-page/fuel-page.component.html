@@ -294,6 +294,11 @@
           }
         </div>
       }
+      @if (canLoadMore()) {
+        <button type="button" class="btn btn--ghost mx-auto mt-2" (click)="loadMore()">
+          {{ 'common.loadMore' | t }}
+        </button>
+      }
     } @else {
       <p class="text-gray-400 text-center my-3">{{ 'fuel.empty' | t }}</p>
       <p class="mt-2 text-[11px] text-gray-400 text-center">{{ 'fuel.emptyHint' | t }}</p>

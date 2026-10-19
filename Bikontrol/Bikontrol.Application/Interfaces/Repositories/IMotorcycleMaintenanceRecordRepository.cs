@@ -6,7 +6,7 @@ namespace Bikontrol.Application.Interfaces.Repositories
     {
         Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity);
         Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id);
-        Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId);
+        Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null);
 
         /// <summary>Registros de varias motos en una sola consulta (evita N+1).</summary>
         Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds);
