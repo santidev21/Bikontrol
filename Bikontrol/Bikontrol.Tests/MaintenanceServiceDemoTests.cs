@@ -16,6 +16,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.CreateUserMaintenanceAsync(new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Test", Description = "Desc", KmInterval = 5000 }));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -24,6 +25,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.FollowDefaultAsync(Guid.NewGuid(), Guid.NewGuid(), 1000, 0, "Km"));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -32,6 +34,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RegisterMaintenanceRecordAsync(new CreateMaintenanceRecordRequest { MotorcycleId = Guid.NewGuid(), UserMaintenanceId = Guid.NewGuid(), PerformedAt = DateTime.UtcNow, PerformedKm = 100 }));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -40,6 +43,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.DeleteUserMaintenanceAsync(Guid.NewGuid()));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     private MaintenanceService CreateService(bool isDemo)

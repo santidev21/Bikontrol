@@ -84,6 +84,7 @@ public class MaintenanceServiceCrudTests
 
         var ex = await Assert.ThrowsAsync<NotFoundException>(() => service.GetByIdAsync(Guid.NewGuid()));
         Assert.Equal("Mantenimiento no encontrado.", ex.Message);
+        Assert.Equal("maintenance_not_found", ex.Code);
     }
 
     [Fact]
@@ -95,6 +96,7 @@ public class MaintenanceServiceCrudTests
 
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.GetByIdAsync(other.Id));
         Assert.Equal("No tienes permisos para ver este mantenimiento.", ex.Message);
+        Assert.Equal("maintenance_no_access", ex.Code);
     }
 
     [Fact]
@@ -171,6 +173,7 @@ public class MaintenanceServiceCrudTests
         }));
 
         Assert.Equal("El tipo de seguimiento debe ser 'Km' o 'Time'.", ex.Message);
+        Assert.Equal("tracking_type_invalid", ex.Code);
     }
 
     [Fact]
@@ -198,6 +201,7 @@ public class MaintenanceServiceCrudTests
 
         var ex = await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteUserMaintenanceAsync(Guid.NewGuid()));
         Assert.Equal("Mantenimiento no encontrado.", ex.Message);
+        Assert.Equal("maintenance_not_found", ex.Code);
     }
 
     [Fact]
@@ -209,6 +213,7 @@ public class MaintenanceServiceCrudTests
 
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.DeleteUserMaintenanceAsync(other.Id));
         Assert.Equal("No tienes permisos para borrar este mantenimiento.", ex.Message);
+        Assert.Equal("maintenance_no_access", ex.Code);
     }
 
     [Fact]
@@ -237,6 +242,7 @@ public class MaintenanceServiceCrudTests
         var ex = await Assert.ThrowsAsync<NotFoundException>(() => service.FollowDefaultAsync(
             motorcycleId, Guid.NewGuid(), 1000, 0, "Km"));
         Assert.Equal("No se encontró el mantenimiento predeterminado.", ex.Message);
+        Assert.Equal("default_maintenance_not_found", ex.Code);
     }
 
     [Fact]
@@ -261,6 +267,7 @@ public class MaintenanceServiceCrudTests
         var ex = await Assert.ThrowsAsync<ValidationException>(() => service.FollowDefaultAsync(
             motorcycleId, defaultId, 1000, 0, "Km"));
         Assert.Equal("Ya estás siguiendo este mantenimiento.", ex.Message);
+        Assert.Equal("already_following", ex.Code);
     }
 
     [Fact]
@@ -352,6 +359,7 @@ public class MaintenanceServiceCrudTests
             KmInterval = 1000
         }));
         Assert.Equal("Mantenimiento no encontrado.", ex.Message);
+        Assert.Equal("maintenance_not_found", ex.Code);
     }
 
     [Fact]
@@ -369,6 +377,7 @@ public class MaintenanceServiceCrudTests
             KmInterval = 1000
         }));
         Assert.Equal("No tienes permisos para editar este mantenimiento.", ex.Message);
+        Assert.Equal("maintenance_no_access", ex.Code);
     }
 
     [Fact]
@@ -427,6 +436,7 @@ public class MaintenanceServiceCrudTests
             KmInterval = 1000
         }));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -444,6 +454,7 @@ public class MaintenanceServiceCrudTests
             KmInterval = 0
         }));
         Assert.Equal("Debes indicar un intervalo de kilometraje mayor a cero.", ex.Message);
+        Assert.Equal("km_interval_required", ex.Code);
     }
 
     // ---------- Records listing ----------
@@ -533,6 +544,7 @@ public class MaintenanceServiceCrudTests
 
         var ex = await Assert.ThrowsAsync<NotFoundException>(() => service.GetUpcomingByMotorcycleAsync(Guid.NewGuid()));
         Assert.Equal("Motocicleta no encontrada.", ex.Message);
+        Assert.Equal("motorcycle_not_found", ex.Code);
     }
 
     [Fact]
@@ -544,6 +556,7 @@ public class MaintenanceServiceCrudTests
 
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.GetUpcomingByMotorcycleAsync(motorcycleId));
         Assert.Equal("No tienes permisos para esta motocicleta.", ex.Message);
+        Assert.Equal("motorcycle_no_access", ex.Code);
     }
 
     // ---------- Helpers ----------

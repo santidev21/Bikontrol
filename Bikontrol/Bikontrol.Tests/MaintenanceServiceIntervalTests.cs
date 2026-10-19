@@ -287,6 +287,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 100
             }));
         Assert.Equal("No puedes agregar mantenimientos posteriores al dia de hoy", ex.Message);
+        Assert.Equal("maintenance_future_date", ex.Code);
     }
 
     [Fact]
@@ -302,6 +303,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = null
             }));
         Assert.Equal("Debes ingresar kilometraje para este mantenimiento.", ex.Message);
+        Assert.Equal("km_required", ex.Code);
     }
 
     [Fact]
@@ -318,6 +320,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 4000
             }));
         Assert.Equal("El kilometraje no puede ser menor al del registro anterior de este mantenimiento.", ex.Message);
+        Assert.Equal("km_below_previous", ex.Code);
     }
 
     [Fact]
@@ -336,6 +339,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 6000
             }));
         Assert.Equal("El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.", ex.Message);
+        Assert.Equal("km_above_next", ex.Code);
     }
 
     [Fact]
@@ -470,6 +474,7 @@ public class MaintenanceServiceIntervalTests
                 KmInterval = 0
             }));
         Assert.Equal("Debes indicar un intervalo de kilometraje mayor a cero.", ex.Message);
+        Assert.Equal("km_interval_required", ex.Code);
     }
 
     [Fact]
@@ -485,6 +490,7 @@ public class MaintenanceServiceIntervalTests
                 TimeIntervalWeeks = null
             }));
         Assert.Equal("Debes indicar un intervalo de tiempo mayor a cero.", ex.Message);
+        Assert.Equal("time_interval_required", ex.Code);
     }
 
     [Fact]
@@ -508,6 +514,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 100
             }));
         Assert.Equal("Mantenimiento no encontrado.", ex.Message);
+        Assert.Equal("maintenance_not_found", ex.Code);
     }
 
     [Fact]
@@ -537,6 +544,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 1500
             }));
         Assert.Equal("No tienes permisos para registrar este mantenimiento.", ex.Message);
+        Assert.Equal("maintenance_no_access", ex.Code);
     }
 
     [Fact]
@@ -552,6 +560,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 100
             }));
         Assert.Equal("El mantenimiento no pertenece a la motocicleta seleccionada.", ex.Message);
+        Assert.Equal("maintenance_not_on_motorcycle", ex.Code);
     }
 
     // ---------- Helpers ----------

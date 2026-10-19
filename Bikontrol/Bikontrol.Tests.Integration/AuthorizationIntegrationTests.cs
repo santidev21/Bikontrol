@@ -137,11 +137,26 @@ public sealed class AuthorizationIntegrationTests
     [RequiresDockerFact]
     public async Task Refresh_ShouldRotateThroughTheHttpOnlyCookie()
     {
-        // Registration issues the refresh token as an HttpOnly cookie; the
-        // client handler's cookie container carries it to /api/auth/*.
-        var client = await RegisterClientAsync();
+        // Server contract: registration issues the token as an HttpOnly cookie
+        // and /refresh accepts it back from that cookie. The client handler
+        // would not resend a Secure cookie over plain HTTP, so the test echoes
+        // the Set-Cookie header itself - exactly what the browser does on https.
+        var client = _factory.CreateClient();
+        var email = $"refresh-{Guid.NewGuid():N}@bikontrol.test";
+        var register = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            email,
+            password = "Secret123!",
+            fullName = "Refresh Cookie"
+        });
+        register.EnsureSuccessStatusCode();
+        var setCookie = register.Headers.GetValues("Set-Cookie").First(v => v.StartsWith("bikontrol_rt="));
 
-        var refresh = await client.PostAsJsonAsync("/api/auth/refresh", new { });
+        var refreshClient = _factory.CreateClient();
+        refreshClient.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
+        refreshClient.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", setCookie);
+
+        var refresh = await refreshClient.PostAsJsonAsync("/api/auth/refresh", new { });
         refresh.EnsureSuccessStatusCode();
         var session = await refresh.Content.ReadFromJsonAsync<AuthResponse>();
 
