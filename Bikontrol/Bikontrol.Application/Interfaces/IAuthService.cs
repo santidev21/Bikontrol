@@ -18,5 +18,11 @@ namespace Bikontrol.Application.Interfaces
         Task ConfirmEmailAsync(ConfirmEmailRequest request);
         Task ResendConfirmationAsync(ResendConfirmationRequest request);
         Task<LoginResponse> DemoLoginAsync();
+
+        /// <summary>
+        /// Best-effort revocation of the presented refresh token (logout). A
+        /// missing or unknown token is a no-op: logout never fails the user.
+        /// </summary>
+        Task LogoutAsync(string? refreshToken);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Bikontrol.Application.Interfaces;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

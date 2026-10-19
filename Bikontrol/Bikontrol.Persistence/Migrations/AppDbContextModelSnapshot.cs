@@ -17,7 +17,7 @@ namespace Bikontrol.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.31")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -609,6 +609,40 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("push_subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("refresh_tokens", (string)null);
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.ReminderLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -661,102 +695,7 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("reminder_logs", (string)null);
                 });
 
-            modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("BaseTypeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<int?>("KmInterval")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("MotorcycleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<int?>("TimeIntervalWeeks")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TrackingType")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("Km");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BaseTypeId");
-
-                    b.HasIndex("MotorcycleId");
-
-                    b.HasIndex("UserId", "MotorcycleId", "Name");
-
-                    b.ToTable("UserMaintenanceTypes", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_UserMaintenanceTypes_PositiveInterval", "(\"TrackingType\" = 'Km' AND \"KmInterval\" IS NOT NULL AND \"KmInterval\" > 0) OR (\"TrackingType\" = 'Time' AND \"TimeIntervalWeeks\" IS NOT NULL AND \"TimeIntervalWeeks\" > 0)");
-                        });
-                });
-
-            modelBuilder.Entity("Bikontrol.Persistence.Entities.RefreshToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("RevokedAt")
-                        .IsConcurrencyToken()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("refresh_tokens", (string)null);
-                });
-
-            modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>
+            modelBuilder.Entity("Bikontrol.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -842,6 +781,67 @@ namespace Bikontrol.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BaseTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int?>("KmInterval")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MotorcycleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int?>("TimeIntervalWeeks")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TrackingType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("Km");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BaseTypeId");
+
+                    b.HasIndex("MotorcycleId");
+
+                    b.HasIndex("UserId", "MotorcycleId", "Name");
+
+                    b.ToTable("UserMaintenanceTypes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserMaintenanceTypes_PositiveInterval", "(\"TrackingType\" = 'Km' AND \"KmInterval\" IS NOT NULL AND \"KmInterval\" > 0) OR (\"TrackingType\" = 'Time' AND \"TimeIntervalWeeks\" IS NOT NULL AND \"TimeIntervalWeeks\" > 0)");
+                        });
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.FuelUp", b =>
                 {
                     b.HasOne("Bikontrol.Domain.Entities.Motorcycle", "Motorcycle")
@@ -866,7 +866,7 @@ namespace Bikontrol.Persistence.Migrations
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.Motorcycle", b =>
                 {
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
                         .WithMany("Motorcycles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -907,7 +907,18 @@ namespace Bikontrol.Persistence.Migrations
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.PushSubscription", b =>
                 {
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Bikontrol.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -918,7 +929,7 @@ namespace Bikontrol.Persistence.Migrations
 
             modelBuilder.Entity("Bikontrol.Domain.Entities.ReminderLog", b =>
                 {
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -948,7 +959,7 @@ namespace Bikontrol.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
+                    b.HasOne("Bikontrol.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -957,17 +968,6 @@ namespace Bikontrol.Persistence.Migrations
                     b.Navigation("BaseType");
 
                     b.Navigation("Motorcycle");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Bikontrol.Persistence.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("Bikontrol.Persistence.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -993,14 +993,14 @@ namespace Bikontrol.Persistence.Migrations
                     b.Navigation("Attachments");
                 });
 
+            modelBuilder.Entity("Bikontrol.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Motorcycles");
+                });
+
             modelBuilder.Entity("Bikontrol.Domain.Entities.UserMaintenance", b =>
                 {
                     b.Navigation("MaintenanceRecords");
-                });
-
-            modelBuilder.Entity("Bikontrol.Persistence.Entities.User", b =>
-                {
-                    b.Navigation("Motorcycles");
                 });
 #pragma warning restore 612, 618
         }

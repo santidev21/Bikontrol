@@ -1,9 +1,9 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Infrastructure.Services
@@ -15,7 +15,6 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleRepository _motorcycleRepository;
         private readonly IKmHistoryService _kmHistoryService;
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
         private readonly ITransactionManager _transactions;
 
@@ -25,7 +24,6 @@ namespace Bikontrol.Infrastructure.Services
             IMotorcycleRepository motorcycleRepository,
             IKmHistoryService kmHistoryService,
             IMotorcycleMaintenanceRecordRepository recordRepository,
-            IMapper mapper,
             ICurrentUserService current,
             ITransactionManager transactions)
         {
@@ -34,7 +32,6 @@ namespace Bikontrol.Infrastructure.Services
             _motorcycleRepository = motorcycleRepository;
             _kmHistoryService = kmHistoryService;
             _recordRepository = recordRepository;
-            _mapper = mapper;
             _current = current;
             _transactions = transactions;
         }
@@ -42,48 +39,48 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<IEnumerable<MaintenanceDTO>> GetDefaultsAsync()
         {
             var list = await _repo.GetAllForUserAsync(_current.UserId);
-            return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+            return list.ToMaintenanceDTOs();
         }
 
         public async Task<IEnumerable<MaintenanceDTO>> GetUserMaintenanceAsync()
         {
             var list = await _userRepo.GetByUserIdAsync(_current.UserId);
-            return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+            return list.ToMaintenanceDTOs();
         }
 
         public async Task<IEnumerable<MaintenanceDTO>> GetUserMaintenanceByMotorcycleAsync(Guid motorcycleId)
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
             var list = await _userRepo.GetByUserIdAndMotorcycleIdAsync(_current.UserId, motorcycleId);
-            return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+            return list.ToMaintenanceDTOs();
         }
 
         public async Task<MaintenanceDTO?> GetByIdAsync(Guid id)
         {
             var maintenance = await _userRepo.GetByIdAsync(id);
-            if (maintenance is null) throw new NotFoundException("Mantenimiento no encontrado.");
+            if (maintenance is null) throw new NotFoundException("Mantenimiento no encontrado.", "maintenance_not_found");
             if (maintenance.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para ver este mantenimiento.");
+                throw new ForbiddenAccessException("No tienes permisos para ver este mantenimiento.", "maintenance_no_access");
 
-            return _mapper.Map<MaintenanceDTO>(maintenance);
+            return maintenance.ToMaintenanceDTO();
         }
 
         private void EnsureCanWrite()
         {
             if (_current.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
 
         private static void EnsureValidInterval(string trackingType, int? kmInterval, int? timeIntervalWeeks)
         {
             if (trackingType != "Km" && trackingType != "Time")
-                throw new ValidationException("El tipo de seguimiento debe ser 'Km' o 'Time'.");
+                throw new ValidationException("El tipo de seguimiento debe ser 'Km' o 'Time'.", "tracking_type_invalid");
 
             if (trackingType == "Km" && (!kmInterval.HasValue || kmInterval.Value <= 0))
-                throw new ValidationException("Debes indicar un intervalo de kilometraje mayor a cero.");
+                throw new ValidationException("Debes indicar un intervalo de kilometraje mayor a cero.", "km_interval_required");
 
             if (trackingType == "Time" && (!timeIntervalWeeks.HasValue || timeIntervalWeeks.Value <= 0))
-                throw new ValidationException("Debes indicar un intervalo de tiempo mayor a cero.");
+                throw new ValidationException("Debes indicar un intervalo de tiempo mayor a cero.", "time_interval_required");
         }
 
         public async Task<MaintenanceDTO> CreateUserMaintenanceAsync(SaveMaintenanceDTO dto)
@@ -92,22 +89,29 @@ namespace Bikontrol.Infrastructure.Services
             EnsureValidInterval(dto.TrackingType, dto.KmInterval, dto.TimeIntervalWeeks);
             await EnsureMotorcycleOwnershipAsync(dto.MotorcycleId);
 
-            var entity = _mapper.Map<UserMaintenance>(dto);
-            entity.UserId = _current.UserId;
-            entity.MotorcycleId = dto.MotorcycleId;
+            var entity = new UserMaintenance
+            {
+                UserId = _current.UserId,
+                MotorcycleId = dto.MotorcycleId,
+                Name = dto.Name,
+                Description = dto.Description,
+                KmInterval = dto.KmInterval,
+                TimeIntervalWeeks = dto.TimeIntervalWeeks,
+                TrackingType = dto.TrackingType
+            };
 
             var created = await _userRepo.AddAsync(entity);
             await _userRepo.SaveChangesAsync();
-            return _mapper.Map<MaintenanceDTO>(created);
+            return created.ToMaintenanceDTO();
         }
 
         public async Task DeleteUserMaintenanceAsync(Guid id)
         {
             EnsureCanWrite();
             var entity = await _userRepo.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.");
+            if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.", "maintenance_not_found");
             if (entity.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para borrar este mantenimiento.");
+                throw new ForbiddenAccessException("No tienes permisos para borrar este mantenimiento.", "maintenance_no_access");
 
             await _transactions.ExecuteInTransactionAsync(async () =>
             {
@@ -124,19 +128,19 @@ namespace Bikontrol.Infrastructure.Services
 
             var defaultEntity = await _repo.GetByIdAsync(defaultId);
             if (defaultEntity == null)
-                throw new NotFoundException("No se encontró el mantenimiento predeterminado.");
+                throw new NotFoundException("No se encontró el mantenimiento predeterminado.", "default_maintenance_not_found");
 
             var existing = await _userRepo.GetByBaseIdAsync(_current.UserId, motorcycleId, defaultId);
             if (existing != null)
             {
-                if (existing.IsEnabled) throw new ValidationException("Ya estás siguiendo este mantenimiento.");
+                if (existing.IsEnabled) throw new ValidationException("Ya estás siguiendo este mantenimiento.", "already_following");
                 existing.IsEnabled = true;
                 existing.KmInterval = kmInterval;
                 existing.TimeIntervalWeeks = timeIntervalWeeks;
                 existing.TrackingType = trackingType;
                 await _userRepo.UpdateAsync(existing);
                 await _userRepo.SaveChangesAsync();
-                return _mapper.Map<MaintenanceDTO>(existing);
+                return existing.ToMaintenanceDTO();
             }
 
             var entity = new UserMaintenance
@@ -154,7 +158,7 @@ namespace Bikontrol.Infrastructure.Services
 
             var created = await _userRepo.AddAsync(entity);
             await _userRepo.SaveChangesAsync();
-            return _mapper.Map<MaintenanceDTO>(created);
+            return created.ToMaintenanceDTO();
         }
 
         public async Task UpdateAsync(Guid id, SaveMaintenanceDTO dto)
@@ -162,13 +166,17 @@ namespace Bikontrol.Infrastructure.Services
             EnsureCanWrite();
             EnsureValidInterval(dto.TrackingType, dto.KmInterval, dto.TimeIntervalWeeks);
             var entity = await _userRepo.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.");
+            if (entity is null) throw new NotFoundException("Mantenimiento no encontrado.", "maintenance_not_found");
             if (entity.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar este mantenimiento.");
+                throw new ForbiddenAccessException("No tienes permisos para editar este mantenimiento.", "maintenance_no_access");
 
             await EnsureMotorcycleOwnershipAsync(dto.MotorcycleId);
 
-            _mapper.Map(dto, entity);
+            entity.Name = dto.Name;
+            entity.Description = dto.Description;
+            entity.KmInterval = dto.KmInterval;
+            entity.TimeIntervalWeeks = dto.TimeIntervalWeeks;
+            entity.TrackingType = dto.TrackingType;
             entity.MotorcycleId = dto.MotorcycleId;
             await _userRepo.UpdateAsync(entity);
             await _userRepo.SaveChangesAsync();
@@ -178,19 +186,19 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             if (request.PerformedAt.Date > DateTime.UtcNow.Date)
-                throw new ValidationException("No puedes agregar mantenimientos posteriores al dia de hoy");
+                throw new ValidationException("No puedes agregar mantenimientos posteriores al dia de hoy", "maintenance_future_date");
 
             var maintenance = await _userRepo.GetByIdAsync(request.UserMaintenanceId);
-            if (maintenance is null) throw new NotFoundException("Mantenimiento no encontrado.");
+            if (maintenance is null) throw new NotFoundException("Mantenimiento no encontrado.", "maintenance_not_found");
             if (maintenance.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para registrar este mantenimiento.");
+                throw new ForbiddenAccessException("No tienes permisos para registrar este mantenimiento.", "maintenance_no_access");
             if (maintenance.MotorcycleId != request.MotorcycleId)
-                throw new ValidationException("El mantenimiento no pertenece a la motocicleta seleccionada.");
+                throw new ValidationException("El mantenimiento no pertenece a la motocicleta seleccionada.", "maintenance_not_on_motorcycle");
 
             await EnsureMotorcycleOwnershipAsync(request.MotorcycleId);
 
             if (maintenance.TrackingType == "Km" && !request.PerformedKm.HasValue)
-                throw new ValidationException("Debes ingresar kilometraje para este mantenimiento.");
+                throw new ValidationException("Debes ingresar kilometraje para este mantenimiento.", "km_required");
 
             // Monotonic km: a record must not be lower than the one before it nor
             // higher than the one after it (by PerformedAt), otherwise the history
@@ -209,7 +217,7 @@ namespace Bikontrol.Infrastructure.Services
                     .ThenByDescending(r => r.CreatedAt)
                     .FirstOrDefault();
                 if (previous is not null && request.PerformedKm.Value < previous.PerformedKm!.Value)
-                    throw new ValidationException("El kilometraje no puede ser menor al del registro anterior de este mantenimiento.");
+                    throw new ValidationException("El kilometraje no puede ser menor al del registro anterior de este mantenimiento.", "km_below_previous");
 
                 var next = siblings
                     .Where(r => r.PerformedAt > request.PerformedAt)
@@ -217,7 +225,7 @@ namespace Bikontrol.Infrastructure.Services
                     .ThenBy(r => r.CreatedAt)
                     .FirstOrDefault();
                 if (next is not null && request.PerformedKm.Value > next.PerformedKm!.Value)
-                    throw new ValidationException("El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.");
+                    throw new ValidationException("El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.", "km_above_next");
             }
 
             var record = new MotorcycleMaintenanceRecord
@@ -246,17 +254,17 @@ namespace Bikontrol.Infrastructure.Services
                         await _kmHistoryService.AddKmAsync(request.MotorcycleId, request.PerformedKm.Value);
                 }
 
-                var dto = _mapper.Map<MaintenanceRecordDTO>(created);
+                var dto = created.ToMaintenanceRecordDTO();
                 dto.MaintenanceName = maintenance.Name;
                 return dto;
             });
         }
 
-        public async Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId)
+        public async Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId, int? limit = null)
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
-            var records = await _recordRepository.GetByMotorcycleIdAsync(motorcycleId);
-            return _mapper.Map<IEnumerable<MaintenanceRecordDTO>>(records);
+            var records = await _recordRepository.GetByMotorcycleIdAsync(motorcycleId, limit);
+            return records.ToMaintenanceRecordDTOs();
         }
 
         public async Task<IEnumerable<UpcomingMaintenanceDTO>> GetUpcomingByMotorcycleAsync(Guid motorcycleId)
@@ -326,7 +334,7 @@ namespace Bikontrol.Infrastructure.Services
 
             await EnsureMotorcyclesOwnershipAsync(ids);
 
-            var mapped = _mapper.Map<List<MaintenanceRecordDTO>>(await _recordRepository.GetByMotorcycleIdsAsync(ids));
+            var mapped = (await _recordRepository.GetByMotorcycleIdsAsync(ids)).ToMaintenanceRecordDTOs();
             foreach (var id in ids)
             {
                 result[id] = mapped.Where(r => r.MotorcycleId == id).ToList();
@@ -342,9 +350,9 @@ namespace Bikontrol.Infrastructure.Services
         private async Task EnsureMotorcycleOwnershipAsync(Guid motorcycleId)
         {
             var motorcycle = await _motorcycleRepository.GetByIdAsync(motorcycleId);
-            if (motorcycle is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (motorcycle is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (motorcycle.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.", "motorcycle_no_access");
         }
 
         private async Task EnsureMotorcyclesOwnershipAsync(IReadOnlyCollection<Guid> motorcycleIds)
@@ -354,7 +362,7 @@ namespace Bikontrol.Infrastructure.Services
                 .ToHashSet();
 
             if (motorcycleIds.Any(id => !owned.Contains(id)))
-                throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.");
+                throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.", "motorcycles_no_access");
         }
     }
 }

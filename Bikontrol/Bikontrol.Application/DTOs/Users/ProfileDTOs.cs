@@ -55,7 +55,7 @@ namespace Bikontrol.Application.DTOs.Users
         public string CurrentPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La nueva contraseña es obligatoria.")]
-        [MinLength(6, ErrorMessage = "La nueva contraseña debe tener al menos 6 caracteres.")]
+        [MinLength(8, ErrorMessage = "La nueva contraseña debe tener al menos 8 caracteres.")]
         [MaxLength(128, ErrorMessage = "La contraseña no puede superar los 128 caracteres.")]
         public string NewPassword { get; set; } = string.Empty;
     }

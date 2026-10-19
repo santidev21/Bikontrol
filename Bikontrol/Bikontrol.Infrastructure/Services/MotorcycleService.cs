@@ -1,9 +1,9 @@
-﻿using AutoMapper;
-using Bikontrol.Application.DTOs.Motorcycle;
+﻿using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -18,18 +18,16 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleRepository _motorcycleRepository;
         private readonly IKmHistoryRepository _kmHistoryRepository;
         private readonly IKmHistoryService _kmHistoryService;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUser;
         private readonly ITransactionManager _transactions;
 
         public MotorcycleService(IMotorcycleRepository motorcycleRepository, IKmHistoryRepository kmHistoryRepository,
-            IKmHistoryService kmHistoryService, IMapper mapper, ICurrentUserService currentUser,
+            IKmHistoryService kmHistoryService, ICurrentUserService currentUser,
             ITransactionManager transactions)
         {
             _motorcycleRepository = motorcycleRepository;
             _kmHistoryRepository = kmHistoryRepository;
             _kmHistoryService = kmHistoryService;
-            _mapper = mapper;
             _currentUser = currentUser;
             _transactions = transactions;
         }
@@ -37,15 +35,17 @@ namespace Bikontrol.Infrastructure.Services
         private void EnsureCanWrite()
         {
             if (_currentUser.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
 
         public async Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto)
         {
             EnsureCanWrite();
             EnsureValidImage(dto.Image);
-            var entity = _mapper.Map<Motorcycle>(dto);
-            entity.UserId = _currentUser.UserId;
+            var entity = new Motorcycle(dto.Name, dto.Brand, dto.Year, dto.Nickname, dto.Displacement, dto.Plate, _currentUser.UserId)
+            {
+                Image = dto.Image ?? "default.png"
+            };
             entity.Validate();
 
             // Moto + km inicial en una sola transacción: antes eran dos
@@ -60,7 +60,7 @@ namespace Bikontrol.Infrastructure.Services
                 };
                 await _kmHistoryRepository.AddAsync(kmHistory);
                 await _kmHistoryRepository.SaveChangesAsync();
-                var createdDto = _mapper.Map<MotorcycleDTO>(created);
+                var createdDto = created.ToMotorcycleDTO();
                 createdDto.Km = kmHistory.Km;
                 return createdDto;
             });
@@ -71,12 +71,12 @@ namespace Bikontrol.Infrastructure.Services
             var entity = await _motorcycleRepository.GetByIdAsync(id);
 
             if (entity is null)
-                throw new NotFoundException("Motocicleta no encontrada.");
+                throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
 
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes acceso a esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes acceso a esta motocicleta.", "motorcycle_no_access");
 
-            var dto = _mapper.Map<MotorcycleDTO>(entity);
+            var dto = entity.ToMotorcycleDTO();
             dto.Km = await GetCurrentKmOrDefaultAsync(entity.Id);
             return dto;
         }
@@ -84,7 +84,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<IList<MotorcycleDTO>> GetByCurrentUserAsync()
         {
             var motorcycles = (await _motorcycleRepository.GetByUserIdAsync(_currentUser.UserId)).ToList();
-            var dtos = _mapper.Map<IList<MotorcycleDTO>>(motorcycles);
+            var dtos = motorcycles.ToMotorcycleDTOs();
 
             var kmByMotorcycle = await _kmHistoryRepository.GetLatestKmByMotorcycleIdsAsync(
                 motorcycles.Select(m => m.Id));
@@ -106,9 +106,9 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<int> GetCurrentKmAsync(Guid id)
         {
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para ver esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para ver esta motocicleta.", "motorcycle_no_access");
 
             return await _kmHistoryService.GetCurrentKmAsync(id);
         }
@@ -117,9 +117,9 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.", "motorcycle_no_access");
 
             await _kmHistoryService.AddKmAsync(id, km);
         }
@@ -128,9 +128,9 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.", "motorcycle_no_access");
 
             await _kmHistoryService.RollbackLastKmAsync(id, newKm);
         }
@@ -140,12 +140,18 @@ namespace Bikontrol.Infrastructure.Services
             EnsureCanWrite();
             EnsureValidImage(dto.Image);
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
 
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.", "motorcycle_no_access");
 
-            _mapper.Map(dto, entity);
+            entity.Name = dto.Name;
+            entity.Brand = dto.Brand;
+            entity.Year = dto.Year;
+            entity.Nickname = dto.Nickname;
+            entity.Image = dto.Image ?? "default.png";
+            entity.Displacement = dto.Displacement;
+            entity.Plate = dto.Plate;
             entity.Validate();
             await _motorcycleRepository.UpdateAsync(entity);
             await _motorcycleRepository.SaveChangesAsync();
@@ -155,10 +161,10 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
 
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para borrar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para borrar esta motocicleta.", "motorcycle_no_access");
 
             await _transactions.ExecuteInTransactionAsync(async () =>
             {
@@ -181,7 +187,7 @@ namespace Bikontrol.Infrastructure.Services
                 : image.StartsWith(webpPrefix, StringComparison.Ordinal) ? webpPrefix
                 : null;
             if (prefix is null)
-                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.");
+                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.", "image_invalid_format");
 
             var payload = image[prefix.Length..];
             byte[] bytes;
@@ -191,14 +197,14 @@ namespace Bikontrol.Infrastructure.Services
             }
             catch (FormatException)
             {
-                throw new ValidationException("La imagen no es válida.");
+                throw new ValidationException("La imagen no es válida.", "image_invalid");
             }
 
             // ~1 MB decoded; the DTO length cap (1.4M chars) alone still allows
             // oversized payloads past client-side resizing.
             const int maxDecodedBytes = 1_048_576;
             if (bytes.Length == 0 || bytes.Length > maxDecodedBytes)
-                throw new ValidationException("La imagen es demasiado grande.");
+                throw new ValidationException("La imagen es demasiado grande.", "image_too_large");
         }
     }
 }

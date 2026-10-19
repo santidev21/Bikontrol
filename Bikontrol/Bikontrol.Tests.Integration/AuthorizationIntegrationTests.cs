@@ -82,9 +82,9 @@ public sealed class AuthorizationIntegrationTests
         register.EnsureSuccessStatusCode();
 
         var payload = new { email, password = "Secret123!" };
-        // Register already spends one auth request; wait for the per-IP window
-        // (10/min) to reset so the 6 login calls below are not rate limited.
-        await Task.Delay(TimeSpan.FromSeconds(61));
+        // Register (1) + the 6 login calls below fit the per-IP auth budget
+        // (10/min): every test gets its own partition via X-Test-Client-Ip,
+        // so no shared-window workaround is needed.
 
         // Default limit is 5 failed attempts.
         for (var attempt = 0; attempt < 5; attempt++)
@@ -134,9 +134,43 @@ public sealed class AuthorizationIntegrationTests
         Assert.Empty(due!);
     }
 
+    [RequiresDockerFact]
+    public async Task Refresh_ShouldRotateThroughTheHttpOnlyCookie()
+    {
+        // Server contract: registration issues the token as an HttpOnly cookie
+        // and /refresh accepts it back from that cookie. The client handler
+        // would not resend a Secure cookie over plain HTTP, so the test echoes
+        // the Set-Cookie header itself - exactly what the browser does on https.
+        var client = _factory.CreateClient();
+        var email = $"refresh-{Guid.NewGuid():N}@bikontrol.test";
+        var register = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            email,
+            password = "Secret123!",
+            fullName = "Refresh Cookie"
+        });
+        register.EnsureSuccessStatusCode();
+        var setCookie = register.Headers.GetValues("Set-Cookie").First(v => v.StartsWith("bikontrol_rt="));
+
+        var refreshClient = _factory.CreateClient();
+        refreshClient.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
+        refreshClient.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", setCookie);
+
+        var refresh = await refreshClient.PostAsJsonAsync("/api/auth/refresh", new { });
+        refresh.EnsureSuccessStatusCode();
+        var session = await refresh.Content.ReadFromJsonAsync<AuthResponse>();
+
+        Assert.False(string.IsNullOrWhiteSpace(session!.Token));
+        // The body stays clean: the rotated token rides the Set-Cookie header.
+        Assert.Equal(string.Empty, session.RefreshToken);
+    }
+
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();
+        // Its own rate-limit partition (TestServer leaves the client IP null,
+        // so every headerless request would share the "unknown" budget).
+        client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
         var email = $"user-{Guid.NewGuid():N}@bikontrol.test";
         var response = await client.PostAsJsonAsync("/api/auth/register", new
         {

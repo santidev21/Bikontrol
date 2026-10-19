@@ -4,7 +4,6 @@ using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Email;
-using Bikontrol.Persistence.Entities;
 using Microsoft.Extensions.Configuration;
 using System.Text;
 

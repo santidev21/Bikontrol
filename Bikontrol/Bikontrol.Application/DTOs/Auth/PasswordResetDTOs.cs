@@ -24,7 +24,7 @@ namespace Bikontrol.Application.DTOs.Auth
         public string Token { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria.")]
-        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres.")]
+        [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres.")]
         [MaxLength(128, ErrorMessage = "La contraseña no puede superar los 128 caracteres.")]
         public string NewPassword { get; set; } = string.Empty;
     }

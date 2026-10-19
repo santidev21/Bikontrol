@@ -1,23 +1,24 @@
 # Auth
 
 - Authentication uses JWT and password hashing.
-- Login, register and Google login store the JWT in `localStorage` along with a `refreshToken`.
+- Login, register and Google login store the **access token** in `localStorage`. The **refresh token** rides an HttpOnly cookie (`bikontrol_rt`, `SameSite=Strict`, `Path=/api/auth`, `Secure` outside Development/Testing): script-injected JS can never read it, and it is only ever sent to the auth endpoints. The body `refreshToken` field stays for scripts/tooling but is always empty in browser flows.
 - `auth.interceptor.ts` adds `Authorization: Bearer <token>` automatically.
 - `refresh.interceptor.ts` transparently renews the session: on a `401` it calls `POST /api/auth/refresh` once and retries the original request. Concurrent `401`s share a single in-flight refresh (`shareReplay`); auth URLs (`/auth/`) never trigger a refresh. If the refresh fails it clears the session and redirects to `/login`.
 - Role claim: JWTs carry `role` (`User`/`Demo`). The API sets `MapInboundClaims = false` with `RoleClaimType = "role"` so the claim is not remapped, and `CurrentUserService` accepts both `role` and `ClaimTypes.Role` (older mapped tokens). Demo write guards depend on this — do not change claim handling without updating the service and its tests.
 - Route guards: `authGuard` protects the whole `/dashboard` branch (redirects to `/login` when unauthenticated), `guestGuard` keeps authenticated users out of `/login` and `/register`.
 - UI errors should be surfaced to the user, not logged with `console.error`.
 - Per-clone signing secret: generate with `openssl rand -base64 48` and put it in `Jwt:Key` inside `Bikontrol/Bikontrol.API/appsettings.Development.json` (never committed); production uses `Jwt__Key` env.
-- Password hashing with a per-user salt.
+- Password hashing: PBKDF2-HMAC-SHA256 (Identity's v3 format) with a random 128-bit salt per hash and a configurable work factor (`PasswordHashing:Iterations`, env `PasswordHashing__Iterations`, default 600k per OWASP guidance; Identity's stock default was 100k). The iteration count is embedded in every hash, so hashes minted with older factors keep verifying — no migration. New passwords require **8+ characters** (registration, reset and change; login accepts shorter legacy passwords).
 
 ## Endpoints (`api/auth`)
 
 | Method | Route | Notes |
 |---|---|---|
-| `POST` | `/register` | Creates a user. With email confirmation required (default) it returns **no session** and emails a confirmation link; otherwise it returns access + refresh tokens. |
+| `POST` | `/register` | Creates a user. With email confirmation required (default) it returns **no session** and emails a confirmation link; otherwise it returns access + refresh tokens. **Anti-enumeration**: an already-registered address answers exactly like a fresh one (no `409`) — the real owner gets an email (a re-confirmation link if the account is unconfirmed, an "account exists" note if confirmed) and the response carries a random Id / the requested name / `User` role, so nothing from the existing account leaks. |
 | `POST` | `/login` | Email + password, returns access + refresh token. Returns `429` while the account is locked out. |
 | `POST` | `/google` | Body `{ idToken }`. Validates a Google ID token (`Google__ClientId`), creates the user if missing, returns Bikontrol tokens. |
-| `POST` | `/refresh` | Body `{ refreshToken }`. Single-use rotation: concurrent replays conflict and return `401` (expired session). |
+| `POST` | `/refresh` | Rotates the refresh token (single use: concurrent replays conflict and return `401`). The token comes from the HttpOnly cookie; a body `{ refreshToken }` works as a fallback for scripts. |
+| `POST` | `/logout` | Best-effort revocation of the presented refresh token (cookie or body) and clears the cookie. Always `200`. |
 | `POST` | `/forgot-password` | Body `{ email }`. Emails a reset link (always `200` to avoid leaking account existence). |
 | `POST` | `/reset-password` | Body `{ email, token, newPassword }`. Validates the hashed, time-limited token and updates the password. |
 | `POST` | `/confirm-email` | Body `{ email, token }`. Validates the hashed, time-limited confirmation token and marks the email confirmed. Idempotent. |
@@ -49,8 +50,10 @@
 
 ## Sessions (refresh tokens)
 
-- Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days).
+- Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days, which is also the cookie `Max-Age`).
+- Transport: the refresh token is delivered in a `Set-Cookie` header (`HttpOnly`, `SameSite=Strict`, `Secure` always, `Path=/api/auth`; browsers accept Secure cookies on `http://localhost`, so plain-HTTP local development keeps working) and the JSON body always carries an empty `refreshToken`. Auth requests use `withCredentials` and the CORS policy has `AllowCredentials` (needed in development; inert same-origin in production).
 - Refresh tokens are stored in the `refresh_tokens` table (SHA-256 hash only) and are revoked/rotated on every use. `RevokedAt` is a concurrency token, so two simultaneous refreshes with the same token cannot both mint replacements.
+- `POST /api/auth/logout` revokes the presented token (cookie or body fallback) and clears the cookie — best-effort, always `200`.
 - Changing the password (`POST /api/users/me/password`) or resetting it (`POST /api/auth/reset-password`) revokes **all** active refresh tokens for the user, so any stolen session dies with the password change.
 - Google-only accounts get a random password hash; they can adopt a password through the recovery flow.
 

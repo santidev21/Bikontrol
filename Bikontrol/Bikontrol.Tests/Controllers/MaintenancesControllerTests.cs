@@ -154,7 +154,7 @@ public class MaintenancesControllerTests
         var controller = new MaintenancesController(service, new FakeAttachmentService());
         var motorcycleId = Guid.NewGuid();
 
-        var result = await controller.GetMotorcycleRecords(motorcycleId);
+        var result = await controller.GetMotorcycleRecords(motorcycleId, limit: null);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         Assert.Same(records, ok.Value);
@@ -307,7 +307,7 @@ public class MaintenancesControllerTests
             return Task.FromResult(CreatedRecord);
         }
 
-        public Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId)
+        public Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId, int? limit = null)
         {
             LastRecordsMotorcycleId = motorcycleId;
             return Task.FromResult(Records);

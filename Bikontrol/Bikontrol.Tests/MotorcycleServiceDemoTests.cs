@@ -1,19 +1,15 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;
 
 public class MotorcycleServiceDemoTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     [Fact]
     public async Task CreateAsync_WhenDemo_ShouldThrowForbidden()
     {
@@ -64,7 +60,6 @@ public class MotorcycleServiceDemoTests
             new FakeMotorcycleRepository(motorcycle),
             new FakeKmHistoryRepository(),
             new FakeKmHistoryService(),
-            _mapper,
             current,
             new FakeTransactionManager());
     }

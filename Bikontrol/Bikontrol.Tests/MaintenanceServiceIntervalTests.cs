@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -16,9 +15,6 @@ namespace Bikontrol.Tests;
 /// </summary>
 public class MaintenanceServiceIntervalTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     // ---------- Km ----------
 
     [Fact]
@@ -291,6 +287,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 100
             }));
         Assert.Equal("No puedes agregar mantenimientos posteriores al dia de hoy", ex.Message);
+        Assert.Equal("maintenance_future_date", ex.Code);
     }
 
     [Fact]
@@ -306,6 +303,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = null
             }));
         Assert.Equal("Debes ingresar kilometraje para este mantenimiento.", ex.Message);
+        Assert.Equal("km_required", ex.Code);
     }
 
     [Fact]
@@ -322,6 +320,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 4000
             }));
         Assert.Equal("El kilometraje no puede ser menor al del registro anterior de este mantenimiento.", ex.Message);
+        Assert.Equal("km_below_previous", ex.Code);
     }
 
     [Fact]
@@ -340,6 +339,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 6000
             }));
         Assert.Equal("El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.", ex.Message);
+        Assert.Equal("km_above_next", ex.Code);
     }
 
     [Fact]
@@ -430,7 +430,6 @@ public class MaintenanceServiceIntervalTests
             new FakeMotorcycleRepository(foreignMotorcycle),
             new FakeKmHistoryService(currentKm: 1000),
             new FakeRecordRepository(new()),
-            Mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -475,6 +474,7 @@ public class MaintenanceServiceIntervalTests
                 KmInterval = 0
             }));
         Assert.Equal("Debes indicar un intervalo de kilometraje mayor a cero.", ex.Message);
+        Assert.Equal("km_interval_required", ex.Code);
     }
 
     [Fact]
@@ -490,6 +490,7 @@ public class MaintenanceServiceIntervalTests
                 TimeIntervalWeeks = null
             }));
         Assert.Equal("Debes indicar un intervalo de tiempo mayor a cero.", ex.Message);
+        Assert.Equal("time_interval_required", ex.Code);
     }
 
     [Fact]
@@ -513,6 +514,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 100
             }));
         Assert.Equal("Mantenimiento no encontrado.", ex.Message);
+        Assert.Equal("maintenance_not_found", ex.Code);
     }
 
     [Fact]
@@ -530,7 +532,6 @@ public class MaintenanceServiceIntervalTests
             new FakeMotorcycleRepository(new Motorcycle("Moto", "Brand", 2024, "N", 150, "ABC123", userId) { Id = motorcycleId }),
             new FakeKmHistoryService(currentKm: 1000),
             new FakeRecordRepository(new()),
-            Mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -543,6 +544,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 1500
             }));
         Assert.Equal("No tienes permisos para registrar este mantenimiento.", ex.Message);
+        Assert.Equal("maintenance_no_access", ex.Code);
     }
 
     [Fact]
@@ -558,6 +560,7 @@ public class MaintenanceServiceIntervalTests
                 PerformedKm = 100
             }));
         Assert.Equal("El mantenimiento no pertenece a la motocicleta seleccionada.", ex.Message);
+        Assert.Equal("maintenance_not_on_motorcycle", ex.Code);
     }
 
     // ---------- Helpers ----------
@@ -643,7 +646,6 @@ public class MaintenanceServiceIntervalTests
             new FakeMotorcycleRepository(motorcycle),
             kmService ?? new FakeKmHistoryService(currentKm, initialDate),
             new FakeRecordRepository(lastRecords),
-            Mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
     }
@@ -685,14 +687,14 @@ public class MaintenanceServiceIntervalTests
 
     private sealed class FakeCurrentUserService : ICurrentUserService
     {
-        public FakeCurrentUserService(Guid userId, string role = Persistence.Entities.UserRole.User)
+        public FakeCurrentUserService(Guid userId, string role = Domain.Entities.UserRole.User)
         {
             UserId = userId;
             Role = role;
         }
         public Guid UserId { get; }
         public string Role { get; }
-        public bool IsDemo => Role == Persistence.Entities.UserRole.Demo;
+        public bool IsDemo => Role == Domain.Entities.UserRole.Demo;
     }
 
     private sealed class FakeMaintenanceRepository : IMaintenanceRepository
@@ -766,7 +768,7 @@ public class MaintenanceServiceIntervalTests
             => _lastByMaintenance = lastByMaintenance;
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(_lastByMaintenance.Values
                 .Where(r => r is not null)
                 .Cast<MotorcycleMaintenanceRecord>()

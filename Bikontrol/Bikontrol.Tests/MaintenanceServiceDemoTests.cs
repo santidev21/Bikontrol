@@ -1,25 +1,22 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;
 
 public class MaintenanceServiceDemoTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     [Fact]
     public async Task CreateUserMaintenanceAsync_WhenDemo_ShouldThrowForbidden()
     {
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.CreateUserMaintenanceAsync(new SaveMaintenanceDTO { MotorcycleId = Guid.NewGuid(), Name = "Test", Description = "Desc", KmInterval = 5000 }));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -28,6 +25,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.FollowDefaultAsync(Guid.NewGuid(), Guid.NewGuid(), 1000, 0, "Km"));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -36,6 +34,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RegisterMaintenanceRecordAsync(new CreateMaintenanceRecordRequest { MotorcycleId = Guid.NewGuid(), UserMaintenanceId = Guid.NewGuid(), PerformedAt = DateTime.UtcNow, PerformedKm = 100 }));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     [Fact]
@@ -44,6 +43,7 @@ public class MaintenanceServiceDemoTests
         var service = CreateService(isDemo: true);
         var ex = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.DeleteUserMaintenanceAsync(Guid.NewGuid()));
         Assert.Equal("El usuario demo solo puede visualizar información.", ex.Message);
+        Assert.Equal("demo_read_only", ex.Code);
     }
 
     private MaintenanceService CreateService(bool isDemo)
@@ -58,7 +58,6 @@ public class MaintenanceServiceDemoTests
             new FakeMotorcycleRepository(moto),
             new FakeKmHistoryService(),
             new FakeRecordRepository(),
-            _mapper,
             current,
             new FakeTransactionManager());
     }
@@ -128,7 +127,7 @@ public class MaintenanceServiceDemoTests
     {
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds) => Task.FromResult(new Dictionary<Guid, MotorcycleMaintenanceRecord>());

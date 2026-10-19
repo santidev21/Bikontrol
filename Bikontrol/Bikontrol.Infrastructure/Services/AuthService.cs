@@ -1,12 +1,12 @@
-﻿using AutoMapper;
-using Bikontrol.Application.DTOs.Auth;
+﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Shared.Exceptions;
 using Bikontrol.Persistence;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +30,6 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly JwtTokenGenerator _jwtTokenGenerator;
         private readonly IEmailSender _emailSender;
-        private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
 
         public AuthService(
@@ -39,7 +38,6 @@ namespace Bikontrol.Infrastructure.Services
             IPasswordHasher<User> passwordHasher,
             JwtTokenGenerator jwtTokenGenerator,
             IEmailSender emailSender,
-            IMapper mapper,
             IConfiguration configuration)
         {
             _userRepository = userRepository;
@@ -47,20 +45,40 @@ namespace Bikontrol.Infrastructure.Services
             _passwordHasher = passwordHasher;
             _jwtTokenGenerator = jwtTokenGenerator;
             _emailSender = emailSender;
-            _mapper = mapper;
             _configuration = configuration;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
         {
-            if (await _userRepository.ExistsByEmailAsync(request.Email))
-                throw new AuthException("El usuario ya existe.", 409);
+            var existing = await _userRepository.GetByEmailAsync(request.Email);
+            if (existing is not null)
+            {
+                // Anti-enumeration: an already-registered address must be
+                // indistinguishable from a fresh one. Same response shape, an
+                // email goes to the real owner, and nothing from the existing
+                // account leaks back. Caveat: with EmailConfirmation:Required
+                // disabled the fresh path issues a session immediately, so an
+                // existing address can only be answered with
+                // EmailConfirmationRequired=true — keep the default in prod.
+                if (existing.IsEmailConfirmed)
+                {
+                    await SendAccountExistsEmailAsync(existing);
+                }
+                else
+                {
+                    // Still unconfirmed: they cannot log in yet, so resend the
+                    // confirmation link instead of an "account exists" note.
+                    await ResendConfirmationAsync(new ResendConfirmationRequest { Email = request.Email });
+                }
 
-            var user = _mapper.Map<User>(request);
+                return BuildGenericRegisterResponse(request);
+            }
+
+            var user = new User(request.Email, request.FullName, string.Empty);
             user.SetPasswordHash(_passwordHasher.HashPassword(null!, request.Password));
 
             await _userRepository.AddAsync(user);
-            var response = _mapper.Map<RegisterResponse>(user);
+            var response = user.ToRegisterResponse();
 
             if (IsEmailConfirmationRequired())
             {
@@ -92,14 +110,15 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null)
-                throw new AuthException("El correo o contraseña son inválidos.");
+                throw new AuthException("El correo o contraseña son inválidos.", 401, "invalid_credentials");
 
             // Never run the hasher while locked out, so a locked account cannot
             // be used to keep guessing (and cannot spend more CPU).
             if (IsLockoutEnabled() && user.IsLockedOut)
                 throw new AuthException(
                     "La cuenta está temporalmente bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.",
-                    429);
+                    429,
+                    "account_locked");
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result != PasswordVerificationResult.Success)
@@ -110,13 +129,14 @@ namespace Bikontrol.Infrastructure.Services
                     await _userRepository.SaveChangesAsync();
                 }
 
-                throw new AuthException("El correo o contraseña son inválidos.");
+                throw new AuthException("El correo o contraseña son inválidos.", 401, "invalid_credentials");
             }
 
             if (IsEmailConfirmationRequired() && !user.IsEmailConfirmed)
                 throw new AuthException(
                     "Debes confirmar tu correo antes de iniciar sesión. Revisá tu bandeja o pedí un nuevo enlace.",
-                    403);
+                    403,
+                    "email_unconfirmed");
 
             // Successful login clears any previous failed-attempt counter.
             user.ResetAccessFailed();
@@ -130,7 +150,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             var clientId = _configuration["Google:ClientId"];
             if (string.IsNullOrWhiteSpace(clientId))
-                throw new AuthException("El inicio de sesión con Google no está configurado.", 503);
+                throw new AuthException("El inicio de sesión con Google no está configurado.", 503, "google_not_configured");
 
             GoogleJsonWebSignature.Payload payload;
             try
@@ -144,11 +164,11 @@ namespace Bikontrol.Infrastructure.Services
             }
             catch (InvalidJwtException)
             {
-                throw new AuthException("El token de Google no es válido.");
+                throw new AuthException("El token de Google no es válido.", 401, "google_invalid_token");
             }
 
             if (payload.EmailVerified != true)
-                throw new AuthException("La cuenta de Google debe tener el email verificado.");
+                throw new AuthException("La cuenta de Google debe tener el email verificado.", 401, "google_email_unverified");
 
             var user = await _userRepository.GetByEmailAsync(payload.Email);
             if (user == null)
@@ -177,10 +197,14 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<LoginResponse> RefreshAsync(RefreshTokenRequest request)
         {
+            // Cookie flow: an absent token means the session is simply gone.
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
+
             var tokenHash = HashToken(request.RefreshToken);
             var stored = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
             if (stored?.User == null || !stored.IsActive)
-                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
 
             stored.Revoke();
             var newRefreshToken = await IssueRefreshTokenAsync(stored.UserId);
@@ -193,10 +217,25 @@ namespace Bikontrol.Infrastructure.Services
                 // Another concurrent refresh already rotated this token.
                 // Report it as an expired session so the client logs out cleanly
                 // instead of surfacing a 409 conflict.
-                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.");
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
             }
 
             return BuildLoginResponse(stored.User, newRefreshToken);
+        }
+
+        public async Task LogoutAsync(string? refreshToken)
+        {
+            // Best-effort: logout must never fail the user, and an unknown or
+            // already-dead token is simply nothing to revoke.
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return;
+
+            var stored = await _refreshTokenRepository.GetByTokenHashAsync(HashToken(refreshToken));
+            if (stored is { IsActive: true })
+            {
+                stored.Revoke();
+                await _refreshTokenRepository.SaveChangesAsync();
+            }
         }
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
@@ -225,14 +264,14 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(request.Email);
             if (user == null || string.IsNullOrWhiteSpace(user.ResetPasswordTokenHash))
-                throw new AuthException("El enlace de recuperación no es válido o ya expiró.");
+                throw new AuthException("El enlace de recuperación no es válido o ya expiró.", 401, "reset_invalid_token");
 
             if (user.ResetPasswordTokenExpires is null || user.ResetPasswordTokenExpires < DateTime.UtcNow)
-                throw new AuthException("El enlace de recuperación expiró. Solicita uno nuevo.");
+                throw new AuthException("El enlace de recuperación expiró. Solicita uno nuevo.", 401, "reset_expired_token");
 
             var providedHash = HashToken(request.Token);
             if (!FixedTimeEquals(user.ResetPasswordTokenHash, providedHash))
-                throw new AuthException("El enlace de recuperación no es válido.");
+                throw new AuthException("El enlace de recuperación no es válido.", 401, "reset_invalid_token");
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
@@ -249,7 +288,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(request.Email);
             if (user == null)
-                throw new AuthException("El enlace de confirmación no es válido o ya expiró.");
+                throw new AuthException("El enlace de confirmación no es válido o ya expiró.", 401, "confirm_invalid_token");
 
             // Idempotent: confirming an already-confirmed account is a no-op.
             if (user.IsEmailConfirmed)
@@ -258,11 +297,11 @@ namespace Bikontrol.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(user.EmailConfirmationTokenHash)
                 || user.EmailConfirmationTokenExpires is null
                 || user.EmailConfirmationTokenExpires < DateTime.UtcNow)
-                throw new AuthException("El enlace de confirmación no es válido o ya expiró.");
+                throw new AuthException("El enlace de confirmación no es válido o ya expiró.", 401, "confirm_invalid_token");
 
             var providedHash = HashToken(request.Token);
             if (!FixedTimeEquals(user.EmailConfirmationTokenHash, providedHash))
-                throw new AuthException("El enlace de confirmación no es válido.");
+                throw new AuthException("El enlace de confirmación no es válido.", 401, "confirm_invalid_token");
 
             user.MarkEmailConfirmed();
             await _userRepository.SaveChangesAsync();
@@ -285,7 +324,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<LoginResponse> DemoLoginAsync()
         {
             if (!IsDemoEnabled())
-                throw new AuthException("El modo demo no está disponible.", 404);
+                throw new AuthException("El modo demo no está disponible.", 404, "demo_disabled");
 
             var demoEmail = _configuration["DemoUser:Email"] ?? "demo@bikontrol.com";
             var demoName = _configuration["DemoUser:FullName"] ?? "Usuario Demo";
@@ -302,7 +341,7 @@ namespace Bikontrol.Infrastructure.Services
             {
                 // The configured demo email collides with a real account.
                 // Never hand out that account through the anonymous demo endpoint.
-                throw new AuthException("El usuario demo no está disponible.", 403);
+                throw new AuthException("El usuario demo no está disponible.", 403, "demo_unavailable");
             }
 
             // The demo account is usable immediately; it is not a real inbox.
@@ -355,6 +394,36 @@ namespace Bikontrol.Infrastructure.Services
                 : TimeSpan.FromMinutes(15);
         }
 
+        /// <summary>
+        /// Response for an email that is already registered: identical in shape
+        /// to a fresh registration's confirmation-required response, with a
+        /// random Id, the requested (not the stored) name and a User role, so
+        /// the two are not distinguishable.
+        /// </summary>
+        private static RegisterResponse BuildGenericRegisterResponse(RegisterRequest request)
+        {
+            return new RegisterResponse
+            {
+                Id = Guid.NewGuid(),
+                Email = User.NormalizeEmail(request.Email),
+                FullName = request.FullName,
+                Role = UserRole.User,
+                CreatedAt = DateTime.UtcNow,
+                EmailConfirmationRequired = true
+            };
+        }
+
+        private async Task SendAccountExistsEmailAsync(User user)
+        {
+            var body =
+                $"Hola {user.FullName},\n\n" +
+                "Recibimos un intento de registro con tu correo en Bikontrol, pero ya existe una cuenta con esta dirección.\n\n" +
+                "Si fuiste vos, iniciá sesión con tu contraseña (o restablecela si no la recordás).\n" +
+                "Si no fuiste vos, ignorá este correo: nadie pudo acceder a tu cuenta.\n";
+
+            await _emailSender.SendAsync(user.Email, "Ya tenés una cuenta en Bikontrol", body);
+        }
+
         private async Task SendConfirmationEmailAsync(User user, string token)
         {
             var baseUrl = (_configuration["Frontend:BaseUrl"] ?? "http://localhost:4200").TrimEnd('/');
@@ -370,7 +439,7 @@ namespace Bikontrol.Infrastructure.Services
 
         private LoginResponse BuildLoginResponse(User user, string refreshToken)
         {
-            var response = _mapper.Map<LoginResponse>(user);
+            var response = user.ToLoginResponse();
             response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;

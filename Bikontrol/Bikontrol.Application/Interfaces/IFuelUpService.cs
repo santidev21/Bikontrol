@@ -4,7 +4,7 @@ namespace Bikontrol.Application.Interfaces
 {
     public interface IFuelUpService
     {
-        Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId);
+        Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId, int? limit = null);
 
         Task<FuelUpDTO?> GetByIdAsync(Guid id);
 

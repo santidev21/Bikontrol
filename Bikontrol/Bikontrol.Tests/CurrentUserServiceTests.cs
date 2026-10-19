@@ -1,5 +1,5 @@
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 

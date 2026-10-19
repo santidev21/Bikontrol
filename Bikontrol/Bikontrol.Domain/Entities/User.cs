@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Persistence.Entities
+namespace Bikontrol.Domain.Entities
 {
     public class User
     {
@@ -80,7 +80,7 @@ namespace Bikontrol.Persistence.Entities
         public void SetPasswordHash(string hash)
         {
             if (string.IsNullOrWhiteSpace(hash))
-                throw new ValidationException("La contraseña no puede estar vacia.");
+                throw new ValidationException("La contraseña no puede estar vacia.", "password_empty");
 
             PasswordHash = hash;
         }
@@ -167,10 +167,10 @@ namespace Bikontrol.Persistence.Entities
         public void SetMaintenanceBudget(decimal? monthly, decimal? annual)
         {
             if (monthly is < 0)
-                throw new ValidationException("El presupuesto mensual no puede ser negativo.");
+                throw new ValidationException("El presupuesto mensual no puede ser negativo.", "monthly_budget_negative");
 
             if (annual is < 0)
-                throw new ValidationException("El presupuesto anual no puede ser negativo.");
+                throw new ValidationException("El presupuesto anual no puede ser negativo.", "annual_budget_negative");
 
             MonthlyMaintenanceBudget = monthly;
             AnnualMaintenanceBudget = annual;
@@ -179,7 +179,7 @@ namespace Bikontrol.Persistence.Entities
         public void UpdateFullName(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
-                throw new ValidationException("El nombre no puede estar vacio.");
+                throw new ValidationException("El nombre no puede estar vacio.", "fullname_empty");
 
             FullName = fullName.Trim();
         }

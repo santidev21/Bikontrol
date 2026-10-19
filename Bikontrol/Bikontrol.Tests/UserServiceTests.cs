@@ -1,10 +1,9 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
@@ -12,9 +11,6 @@ namespace Bikontrol.Tests;
 
 public class UserServiceTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     [Fact]
     public async Task GetMeAsync_ShouldReturnProfileWithPasswordFlag()
     {
@@ -175,7 +171,6 @@ public class UserServiceTests
             repository,
             _refreshTokenRepository,
             new FakePasswordHasher(),
-            Mapper,
             new FakeCurrentUserService(userId, role));
     }
 
@@ -199,6 +194,9 @@ public class UserServiceTests
                 token.Revoke();
             return Task.FromResult(active.Count);
         }
+
+        public Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
 
         public Task SaveChangesAsync() => Task.CompletedTask;
     }

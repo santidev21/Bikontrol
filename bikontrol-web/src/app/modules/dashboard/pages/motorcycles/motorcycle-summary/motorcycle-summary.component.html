@@ -317,6 +317,11 @@
                 </div>
               </div>
             }
+            @if (canLoadMoreRecords()) {
+              <button type="button" class="btn btn--ghost mx-auto mt-2" (click)="loadMoreRecords()">
+                {{ 'common.loadMore' | t }}
+              </button>
+            }
           </div>
         } @else {
           <p class="text-gray-400 text-center my-4">{{ 'summary.noRecords' | t }}</p>

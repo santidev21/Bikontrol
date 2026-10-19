@@ -1,6 +1,7 @@
 ﻿using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -72,9 +73,9 @@ public class MaintenancesController : ControllerBase
     }
 
     [HttpGet("motorcycle/{motorcycleId:guid}/records")]
-    public async Task<IActionResult> GetMotorcycleRecords(Guid motorcycleId)
+    public async Task<IActionResult> GetMotorcycleRecords(Guid motorcycleId, [FromQuery] int? limit)
     {
-        var result = await _service.GetMaintenanceRecordsByMotorcycleAsync(motorcycleId);
+        var result = await _service.GetMaintenanceRecordsByMotorcycleAsync(motorcycleId, ListLimits.Clamp(limit));
         return Ok(result);
     }
 

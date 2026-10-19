@@ -1,10 +1,22 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class HttpErrorService {
+  private i18n = inject(I18nService);
+
   message(error: any, fallback = 'Error inesperado en el servidor.'): string {
+    // Backend error responses carry a stable machine code (see
+    // ExceptionHandlingMiddleware). Codes with a catalog entry are translated
+    // in the user's language; the raw server message (Spanish) stays as the
+    // fallback for everything else.
+    const code = error?.error?.code;
+    if (typeof code === 'string' && this.i18n.has(`errors.${code}`)) {
+      return this.i18n.t(`errors.${code}`);
+    }
+
     const serverMessage = error?.error?.error || error?.error?.message;
     if (typeof serverMessage === 'string' && serverMessage.trim().length > 0) {
       return serverMessage;

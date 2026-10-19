@@ -8,7 +8,7 @@ namespace Bikontrol.Application.Interfaces.Repositories
 
         Task<FuelUp?> GetByIdAsync(Guid id);
 
-        Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdAsync(Guid motorcycleId);
+        Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null);
 
         /// <summary>Cargas de varias motos en una sola consulta (evita N+1).</summary>
         Task<IReadOnlyList<FuelUp>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds);

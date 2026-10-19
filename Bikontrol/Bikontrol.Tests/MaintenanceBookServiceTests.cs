@@ -3,7 +3,6 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;
@@ -138,7 +137,7 @@ public class MaintenanceBookServiceTests
         public FakeRecordRepository(IEnumerable<MotorcycleMaintenanceRecord> records) => _records = records.ToList();
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult<IEnumerable<MotorcycleMaintenanceRecord>>(_records);
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) => Task.FromResult<IEnumerable<MotorcycleMaintenanceRecord>>(_records);
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult<IEnumerable<MotorcycleMaintenanceRecord>>(_records);
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds) => Task.FromResult(new Dictionary<Guid, MotorcycleMaintenanceRecord>());

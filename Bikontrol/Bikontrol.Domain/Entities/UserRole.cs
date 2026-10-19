@@ -1,4 +1,4 @@
-namespace Bikontrol.Persistence.Entities
+namespace Bikontrol.Domain.Entities
 {
     public static class UserRole
     {

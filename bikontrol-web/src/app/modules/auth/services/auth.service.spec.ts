@@ -11,6 +11,8 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     mockHttp = {
       post: vi.fn(),
     };
+    // Default observable so fire-and-forget calls (logout) never explode.
+    mockHttp.post.mockReturnValue(of({ message: 'ok' }));
     localStorage.clear();
     // The service uses inject(), so it must be created inside an injection context.
     TestBed.resetTestingModule();
@@ -22,39 +24,40 @@ describe('AuthService (unit, mocked HttpClient)', () => {
 
   afterEach(() => {
     vi.resetAllMocks();
+    mockHttp.post.mockReturnValue(of({ message: 'ok' }));
     localStorage.clear();
   });
 
-  it('login should call POST and store token + refresh token', async () => {
-    const mock: any = { token: 'abc123', refreshToken: 'refresh-abc' };
+  it('login should call POST with credentials and store the access token', async () => {
+    const mock: any = { token: 'abc123', refreshToken: '' };
     mockHttp.post.mockReturnValue(of(mock));
 
     const res = await firstValueFrom(service.login('a@b.com', 'pwd'));
 
     expect(res).toEqual(mock);
     expect(localStorage.getItem('token')).toBe('abc123');
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-abc');
+    // The refresh token rides the HttpOnly cookie, never localStorage.
+    expect(localStorage.getItem('refreshToken')).toBeNull();
     expect(service.isAuthenticated()).toBeTruthy();
-    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/login`, {
-      email: 'a@b.com',
-      password: 'pwd',
-    });
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/login`,
+      { email: 'a@b.com', password: 'pwd' },
+      expect.objectContaining({ withCredentials: true }),
+    );
   });
 
   it('login should overwrite an existing session', async () => {
     localStorage.setItem('token', 'old-token');
-    localStorage.setItem('refreshToken', 'old-refresh');
-    const mock: any = { token: 'new-token', refreshToken: 'new-refresh' };
+    const mock: any = { token: 'new-token', refreshToken: '' };
     mockHttp.post.mockReturnValue(of(mock));
 
     await firstValueFrom(service.login('a@b.com', 'pwd'));
 
     expect(localStorage.getItem('token')).toBe('new-token');
-    expect(localStorage.getItem('refreshToken')).toBe('new-refresh');
   });
 
-  it('register should call POST and store token + refresh token', async () => {
-    const mock: any = { token: 'reg-token', refreshToken: 'refresh-reg' };
+  it('register should call POST with credentials and store the access token', async () => {
+    const mock: any = { token: 'reg-token', refreshToken: '' };
     mockHttp.post.mockReturnValue(of(mock));
 
     const data = { fullName: 'Test User', email: 'x@y.com', password: 'pw' };
@@ -62,8 +65,12 @@ describe('AuthService (unit, mocked HttpClient)', () => {
 
     expect(res).toEqual(mock);
     expect(localStorage.getItem('token')).toBe('reg-token');
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-reg');
-    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/register`, data);
+    expect(localStorage.getItem('refreshToken')).toBeNull();
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/register`,
+      data,
+      expect.objectContaining({ withCredentials: true }),
+    );
   });
 
   it('register should not store a session when email confirmation is required', async () => {
@@ -106,17 +113,18 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     });
   });
 
-  it('googleLogin should call POST /google and store session', async () => {
-    const mock: any = { token: 'google-token', refreshToken: 'google-refresh' };
+  it('googleLogin should call POST /google and store the session', async () => {
+    const mock: any = { token: 'google-token', refreshToken: '' };
     mockHttp.post.mockReturnValue(of(mock));
 
     await firstValueFrom(service.googleLogin('id-token-123'));
 
     expect(localStorage.getItem('token')).toBe('google-token');
-    expect(localStorage.getItem('refreshToken')).toBe('google-refresh');
-    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/google`, {
-      idToken: 'id-token-123',
-    });
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/google`,
+      { idToken: 'id-token-123' },
+      expect.objectContaining({ withCredentials: true }),
+    );
   });
 
   it('forgotPassword should call POST /forgot-password', async () => {
@@ -143,37 +151,36 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     });
   });
 
-  it('refreshSession should call POST /refresh, store new tokens and emit true', async () => {
-    localStorage.setItem('refreshToken', 'old-refresh');
-    const mock: any = { token: 'new-token', refreshToken: 'new-refresh' };
+  it('refreshSession should POST /refresh with the cookie and store the new access token', async () => {
+    const mock: any = { token: 'new-token', refreshToken: '' };
     mockHttp.post.mockReturnValue(of(mock));
 
     const ok = await firstValueFrom(service.refreshSession());
 
     expect(ok).toBe(true);
     expect(localStorage.getItem('token')).toBe('new-token');
-    expect(localStorage.getItem('refreshToken')).toBe('new-refresh');
     expect(mockHttp.post).toHaveBeenCalledWith(
       `${service['apiUrl']}/refresh`,
-      { refreshToken: 'old-refresh' },
-      // The refresh is flagged to stay out of the global loading overlay.
-      expect.objectContaining({ context: expect.any(Object) }),
+      {},
+      // The refresh rides the HttpOnly cookie and stays out of the loading overlay.
+      expect.objectContaining({ withCredentials: true, context: expect.any(Object) }),
     );
   });
 
-  it('refreshSession should error when no refresh token is stored', async () => {
-    await expect(firstValueFrom(service.refreshSession())).rejects.toThrow(
-      'No refresh token available',
-    );
-    expect(mockHttp.post).not.toHaveBeenCalled();
-  });
-
-  it('logout should remove token and refresh token', () => {
+  it('logout should revoke server-side and clear the local session', () => {
+    mockHttp.post.mockReturnValue(of({ message: 'Sesión cerrada.' }));
     localStorage.setItem('token', 't');
-    localStorage.setItem('refreshToken', 'r');
+    localStorage.setItem('role', 'Demo');
+
     service.logout();
+
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/logout`,
+      {},
+      expect.objectContaining({ withCredentials: true }),
+    );
     expect(localStorage.getItem('token')).toBeNull();
-    expect(localStorage.getItem('refreshToken')).toBeNull();
+    expect(localStorage.getItem('role')).toBeNull();
   });
 
   it('getToken and isAuthenticated', () => {
@@ -191,7 +198,7 @@ describe('AuthService (unit, mocked HttpClient)', () => {
   it('demoLogin should call POST /demo and store session with Demo role', async () => {
     const mock: any = {
       token: btoa('h') + '.' + btoa(JSON.stringify({ role: 'Demo' })) + '.' + btoa('s'),
-      refreshToken: 'demo-refresh',
+      refreshToken: '',
       role: 'Demo',
     };
     mockHttp.post.mockReturnValue(of(mock));
@@ -202,7 +209,11 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     expect(localStorage.getItem('role')).toBe('Demo');
     expect(service.isDemo()).toBeTruthy();
     expect(service.getRole()).toBe('Demo');
-    expect(mockHttp.post).toHaveBeenCalledWith(`${service['apiUrl']}/demo`, {});
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      `${service['apiUrl']}/demo`,
+      {},
+      expect.objectContaining({ withCredentials: true }),
+    );
   });
 
   it('isDemo should decode role from JWT when localStorage empty', () => {
@@ -213,7 +224,7 @@ describe('AuthService (unit, mocked HttpClient)', () => {
     expect(service.getRole()).toBe('Demo');
   });
 
-  it('logout should clear role', () => {
+  it('logout should clear the stored role', () => {
     localStorage.setItem('role', 'Demo');
     service.logout();
     expect(localStorage.getItem('role')).toBeNull();

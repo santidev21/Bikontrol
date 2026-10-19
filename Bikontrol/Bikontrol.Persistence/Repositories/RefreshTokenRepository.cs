@@ -1,5 +1,5 @@
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -40,6 +40,13 @@ namespace Bikontrol.Persistence.Repositories
                 token.Revoke();
 
             return active.Count;
+        }
+
+        public async Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
+        {
+            return await _context.RefreshTokens
+                .Where(t => t.ExpiresAt < cutoffUtc || (t.RevokedAt != null && t.RevokedAt < cutoffUtc))
+                .ExecuteDeleteAsync(cancellationToken);
         }
 
         public async Task SaveChangesAsync()

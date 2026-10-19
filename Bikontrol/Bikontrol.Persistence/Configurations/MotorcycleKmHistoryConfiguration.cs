@@ -1,5 +1,5 @@
 ﻿using Bikontrol.Domain.Entities;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;

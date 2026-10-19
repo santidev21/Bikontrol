@@ -1,6 +1,5 @@
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence;
-using Bikontrol.Persistence.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

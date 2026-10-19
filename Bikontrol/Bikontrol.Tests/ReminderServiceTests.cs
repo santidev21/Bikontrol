@@ -4,7 +4,6 @@ using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Microsoft.Extensions.Configuration;
 
 namespace Bikontrol.Tests;
@@ -340,7 +339,7 @@ public class ReminderServiceTests
     {
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
@@ -383,6 +382,8 @@ public class ReminderServiceTests
             }
             return Task.CompletedTask;
         }
+        public Task<int> DeleteOlderThanAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

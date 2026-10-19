@@ -26,14 +26,19 @@ namespace Bikontrol.Persistence.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId)
+        public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null)
         {
-            return await _context.MotorcycleMaintenanceRecords
+            var query = _context.MotorcycleMaintenanceRecords
                 .Include(x => x.UserMaintenance)
+                .AsNoTracking()
                 .Where(x => x.MotorcycleId == motorcycleId)
                 .OrderByDescending(x => x.PerformedAt)
-                .ThenByDescending(x => x.CreatedAt)
-                .ToListAsync();
+                .ThenByDescending(x => x.CreatedAt);
+
+            if (limit.HasValue)
+                query = (IOrderedQueryable<MotorcycleMaintenanceRecord>)query.Take(limit.Value);
+
+            return await query.ToListAsync();
         }
 
         public async Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
@@ -44,6 +49,7 @@ namespace Bikontrol.Persistence.Repositories
 
             return await _context.MotorcycleMaintenanceRecords
                 .Include(x => x.UserMaintenance)
+                .AsNoTracking()
                 .Where(x => ids.Contains(x.MotorcycleId))
                 .OrderByDescending(x => x.PerformedAt)
                 .ThenByDescending(x => x.CreatedAt)
@@ -53,6 +59,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId)
         {
             return await _context.MotorcycleMaintenanceRecords
+                .AsNoTracking()
                 .Where(x => x.UserMaintenanceId == userMaintenanceId)
                 .OrderByDescending(x => x.PerformedAt)
                 .ThenByDescending(x => x.CreatedAt)
@@ -66,6 +73,7 @@ namespace Bikontrol.Persistence.Repositories
                 return new Dictionary<Guid, MotorcycleMaintenanceRecord>();
 
             var rows = await _context.MotorcycleMaintenanceRecords
+                .AsNoTracking()
                 .Where(x => ids.Contains(x.UserMaintenanceId))
                 .ToListAsync();
 

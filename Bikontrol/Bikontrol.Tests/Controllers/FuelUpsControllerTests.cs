@@ -15,7 +15,7 @@ public class FuelUpsControllerTests
         var controller = new FuelUpsController(service);
         var motorcycleId = Guid.NewGuid();
 
-        var result = await controller.GetByMotorcycle(motorcycleId);
+        var result = await controller.GetByMotorcycle(motorcycleId, limit: null);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         Assert.Same(list, ok.Value);
@@ -107,7 +107,7 @@ public class FuelUpsControllerTests
         public Guid LastDeletedId { get; private set; }
         public SaveFuelUpRequest? LastSaveRequest { get; private set; }
 
-        public Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId)
+        public Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId, int? limit = null)
         {
             LastMotorcycleId = motorcycleId;
             return Task.FromResult(ByMotorcycle);

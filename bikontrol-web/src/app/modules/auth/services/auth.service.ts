@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, tap, throwError } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '@env/environment';
 import { SKIP_LOADING } from '../../../shared/interceptors/loading.interceptor';
 import {
@@ -13,8 +13,17 @@ import {
 } from '../interfaces/auth.model';
 
 const TOKEN_KEY = 'token';
-const REFRESH_TOKEN_KEY = 'refreshToken';
 const ROLE_KEY = 'role';
+
+/** The refresh token rides an HttpOnly cookie: auth calls need credentials so
+ *  the browser stores and attaches it (they are cross-origin in development). */
+const CREDENTIALS = { withCredentials: true };
+
+/** Silent + credentialed: session calls must not raise the loading overlay. */
+const silentContext = () => ({
+  context: new HttpContext().set(SKIP_LOADING, true),
+  withCredentials: true,
+});
 
 @Injectable({
   providedIn: 'root',
@@ -26,12 +35,12 @@ export class AuthService {
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .post<LoginResponse>(`${this.apiUrl}/login`, { email, password }, CREDENTIALS)
       .pipe(tap((response) => this.storeSession(response)));
   }
 
   register(data: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data).pipe(
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data, CREDENTIALS).pipe(
       tap((response) => {
         // When email confirmation is required there is no session yet.
         if (response.token) {
@@ -51,13 +60,13 @@ export class AuthService {
 
   googleLogin(idToken: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/google`, { idToken })
+      .post<LoginResponse>(`${this.apiUrl}/google`, { idToken }, CREDENTIALS)
       .pipe(tap((response) => this.storeSession(response)));
   }
 
   demoLogin(): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/demo`, {})
+      .post<LoginResponse>(`${this.apiUrl}/demo`, {}, CREDENTIALS)
       .pipe(tap((response) => this.storeSession(response)));
   }
 
@@ -78,35 +87,26 @@ export class AuthService {
   }
 
   refreshSession(): Observable<boolean> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
-    }
-    return this.http
-      .post<LoginResponse>(
-        `${this.apiUrl}/refresh`,
-        { refreshToken },
-        // Silent refresh: it must not raise the global loading overlay.
-        { context: new HttpContext().set(SKIP_LOADING, true) },
-      )
-      .pipe(
-        tap((response) => this.storeSession(response)),
-        map(() => true),
-      );
+    // The refresh token rides the HttpOnly cookie; the body stays empty.
+    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, {}, silentContext()).pipe(
+      tap((response) => this.storeSession(response)),
+      map(() => true),
+    );
   }
 
   logout(): void {
+    // Best-effort revocation: the HttpOnly cookie (and the server-side token)
+    // cannot be cleared from JS, so the server does it. Fire-and-forget: the
+    // local session is dropped either way.
+    this.http.post<MessageResponse>(`${this.apiUrl}/logout`, {}, silentContext()).subscribe({
+      error: () => {},
+    });
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
   }
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
   isAuthenticated(): boolean {
@@ -130,9 +130,8 @@ export class AuthService {
     return this.getRole() === 'Demo';
   }
 
-  private storeSession(response: { token: string; refreshToken: string; role?: string }): void {
+  private storeSession(response: { token: string; role?: string }): void {
     localStorage.setItem(TOKEN_KEY, response.token);
-    localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
     const role = response.role ?? this.decodeRole(response.token) ?? 'User';
     localStorage.setItem(ROLE_KEY, role);
   }

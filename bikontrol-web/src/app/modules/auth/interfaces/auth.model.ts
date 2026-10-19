@@ -4,7 +4,9 @@ export interface AuthSession {
   fullName: string;
   role: string;
   token: string;
-  refreshToken: string;
+  // The refresh token rides an HttpOnly cookie scoped to /api/auth; the body
+  // field stays empty and exists only for script/tooling compatibility.
+  refreshToken?: string;
   expiresIn: number;
 }
 
@@ -13,7 +15,7 @@ export type LoginResponse = AuthSession;
 export interface RegisterResponse extends AuthSession {
   createdAt: string;
   // True when the account must confirm its email before logging in; in that
-  // case `token`/`refreshToken` are empty and no session is stored.
+  // case `token` is empty and no session is stored.
   emailConfirmationRequired: boolean;
 }
 

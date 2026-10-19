@@ -2,10 +2,10 @@
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
-using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -21,9 +21,21 @@ namespace Bikontrol.Infrastructure
         {
             services.AddHttpContextAccessor();
             services.AddScoped<JwtTokenGenerator>();
-            services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddScoped<IPasswordHasher<User>>(sp =>
+            {
+                // OWASP's current guidance for PBKDF2-HMAC-SHA256 is 600k
+                // iterations (Identity's v3 default is 100k). The exact value
+                // is a CPU/latency trade-off, so it stays overridable; hashes
+                // minted with older settings keep verifying because the
+                // iteration count is embedded per hash.
+                var configuration = sp.GetRequiredService<IConfiguration>();
+                var raw = configuration["PasswordHashing:Iterations"];
+                var iterations = int.TryParse(raw, out var parsed) && parsed >= ConfigurablePasswordHasher<User>.MinimumIterations
+                    ? parsed
+                    : 600_000;
+                return new ConfigurablePasswordHasher<User>(iterations);
+            });
             services.AddScoped<IEmailSender, SmtpEmailSender>();
-            services.AddAutoMapper(typeof(MappingProfile));
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IMotorcycleService, MotorcycleService>();
@@ -39,8 +51,10 @@ namespace Bikontrol.Infrastructure
             services.AddScoped<IMaintenanceBookService, MaintenanceBookService>();
             services.AddScoped<IMaintenanceAttachmentService, MaintenanceAttachmentService>();
             services.AddScoped<IAuditLogService, AuditLogService>();
+            services.AddScoped<IRetentionService, RetentionService>();
             services.AddScoped<IPushSender, Notifications.WebPushSender>();
             services.AddHostedService<BackgroundServices.ReminderBackgroundService>();
+            services.AddHostedService<BackgroundServices.RetentionBackgroundService>();
             return services;
         }
     }

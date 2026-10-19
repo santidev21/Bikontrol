@@ -26,6 +26,7 @@ namespace Bikontrol.Persistence.Repositories
         public async Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId)
         {
             return await _context.Motorcycles
+                .AsNoTracking()
                 .Where(m => m.UserId == userId && m.IsEnabled)
                 .ToListAsync();
         }

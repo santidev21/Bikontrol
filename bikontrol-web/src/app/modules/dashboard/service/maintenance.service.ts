@@ -116,15 +116,21 @@ export class MaintenanceService {
   }
 
   /**
-   * Reactive read of the maintenance records. Loads automatically when the
-   * motorcycle id signal has a value.
+   * Reactive read of the maintenance records (newest first). Loads
+   * automatically when the id signal has a value. `limit` paginates the read
+   * (limited by the API; undefined = full history).
    */
   getRecordsResource(
     motorcycleId: Signal<string | undefined>,
+    limit?: Signal<number | undefined>,
   ): HttpResourceRef<MaintenanceRecord[] | undefined> {
     return httpResource<MaintenanceRecord[]>(() => {
       const id = motorcycleId();
-      return id ? `${this.apiUrl}/motorcycle/${id}/records` : undefined;
+      if (!id) return undefined;
+      const pageSize = limit?.();
+      return pageSize
+        ? `${this.apiUrl}/motorcycle/${id}/records?limit=${pageSize}`
+        : `${this.apiUrl}/motorcycle/${id}/records`;
     });
   }
 }

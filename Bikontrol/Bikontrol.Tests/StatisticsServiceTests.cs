@@ -251,7 +251,7 @@ public class StatisticsServiceTests
         public Task<MaintenanceDTO> FollowDefaultAsync(Guid motorcycleId, Guid defaultId, int? KmInterval, int? TimeIntervalWeeks, string TrackingType) => throw new NotImplementedException();
         public Task UpdateAsync(Guid id, SaveMaintenanceDTO dto) => Task.CompletedTask;
         public Task<MaintenanceRecordDTO> RegisterMaintenanceRecordAsync(CreateMaintenanceRecordRequest request) => throw new NotImplementedException();
-        public Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MaintenanceRecordDTO>> GetMaintenanceRecordsByMotorcycleAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(_records.TryGetValue(motorcycleId, out var r) ? r.AsEnumerable() : Enumerable.Empty<MaintenanceRecordDTO>());
         public Task<IEnumerable<UpcomingMaintenanceDTO>> GetUpcomingByMotorcycleAsync(Guid motorcycleId) =>
             Task.FromResult(_upcoming.TryGetValue(motorcycleId, out var u) ? u.AsEnumerable() : Enumerable.Empty<UpcomingMaintenanceDTO>());
@@ -287,7 +287,7 @@ public class StatisticsServiceTests
             return Task.FromResult<IReadOnlyDictionary<Guid, FuelConsumptionDTO>>(result);
         }
 
-        public Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId) => Task.FromResult(Enumerable.Empty<FuelUpDTO>());
+        public Task<IEnumerable<FuelUpDTO>> GetByMotorcycleAsync(Guid motorcycleId, int? limit = null) => Task.FromResult(Enumerable.Empty<FuelUpDTO>());
         public Task<FuelUpDTO?> GetByIdAsync(Guid id) => Task.FromResult<FuelUpDTO?>(null);
         public Task<FuelUpDTO> CreateAsync(SaveFuelUpRequest request) => throw new NotImplementedException();
         public Task<FuelUpDTO> UpdateAsync(Guid id, SaveFuelUpRequest request) => throw new NotImplementedException();

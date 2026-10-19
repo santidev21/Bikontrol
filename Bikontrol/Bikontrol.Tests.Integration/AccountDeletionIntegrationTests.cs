@@ -31,6 +31,9 @@ public sealed class AccountDeletionIntegrationTests
         var email = $"delete-{Guid.NewGuid():N}@bikontrol.test";
 
         var client = _factory.CreateClient();
+        // Its own rate-limit partition (TestServer leaves the client IP null;
+        // see ClientIpStartupFilter).
+        client.DefaultRequestHeaders.Add(ClientIpStartupFilter.HeaderName, TestClientIps.Next());
         var register = await client.PostAsJsonAsync("/api/auth/register", new
         {
             email,

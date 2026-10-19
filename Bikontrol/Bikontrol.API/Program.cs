@@ -1,6 +1,6 @@
-using AutoMapper;
 using Bikontrol.API.Extensions;
 using Bikontrol.API.Middleware;
+using Bikontrol.API.RateLimiting;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure;
 using Bikontrol.Infrastructure.Authentication;
@@ -8,7 +8,7 @@ using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Seed;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Persistence;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -26,7 +26,7 @@ using Serilog;
 using Serilog.Events;
 using System.Text;
 using System.Threading.RateLimiting;
-using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
+using IPNetwork = System.Net.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +143,10 @@ builder.Services.AddCors(options =>
             }
             policy.AllowAnyHeader();
             policy.AllowAnyMethod();
+            // The refresh-token cookie needs the CORS handshake in development
+            // (frontend :4201 -> API :7179 are different origins). Production is
+            // same-origin and needs none of this, but AllowCredentials is inert there.
+            policy.AllowCredentials();
         });
 });
 
@@ -160,28 +164,45 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         ? configuredNetworks
         : new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.1/32", "::1/128", "fc00::/7" };
 
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
     foreach (var cidr in networks)
     {
         if (IPNetwork.TryParse(cidr, out var network))
-            options.KnownNetworks.Add(network);
+            options.KnownIPNetworks.Add(network);
     }
 });
 
-// Rate limiting (auth endpoints). Partitioned per client IP: the previous
-// single fixed window throttled the whole application to 10 auth requests/min.
+// Rate limiting (auth endpoints). Two independent fixed windows, partitioned
+// per client IP: a burst window (10/min) and a sustained ceiling (per hour).
+// A burst window alone still accepts a steady 10/min trickle that survives
+// across rolling windows; the hourly ceiling closes that. The previous single
+// fixed window throttled the whole application to 10 auth requests/min.
 builder.Services.AddRateLimiter(options =>
 {
+    var authPerHour = int.TryParse(builder.Configuration["RateLimiting:AuthPerHour"], out var perHour) && perHour > 0
+        ? perHour
+        : 60;
+
     options.AddPolicy("auth", httpContext =>
     {
         var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 10,
-            Window = TimeSpan.FromMinutes(1),
-            QueueLimit = 0
-        });
+        // One composite limiter per IP: burst (10/min) + sustained ceiling.
+        // A single policy, because an action-level EnableRateLimiting
+        // attribute would replace the class-level policy instead of adding.
+        return RateLimitPartition.Get(clientIp, _ => new BurstAndSustainedLimiter(
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            },
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = authPerHour,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
     });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
@@ -203,7 +224,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // /ready fail fast instead of hanging the probe.
 builder.Services.AddHealthChecks()
     .AddNpgSql(
-        BuildHealthCheckConnectionString(builder.Configuration.GetConnectionString("DefaultConnection")),
+        BuildHealthCheckConnectionString(builder.Configuration.GetConnectionString("DefaultConnection"))
+            ?? throw new InvalidOperationException(
+                "ConnectionStrings:DefaultConnection is missing. Set it via environment variables or appsettings."),
         name: "postgresql",
         tags: new[] { "ready" });
 
@@ -305,7 +328,7 @@ if (migrateOnly || runMigrationsOnStartup)
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
         if (migrateOnly)
         {
             Log.Information("Migrations applied (--migrate); exiting without starting the server.");
@@ -330,7 +353,7 @@ if (demoEnabled)
     }
 }
 
-app.Run();
+await app.RunAsync();
 
 // Exposed so the integration test project can boot the app with WebApplicationFactory<Program>.
 public partial class Program

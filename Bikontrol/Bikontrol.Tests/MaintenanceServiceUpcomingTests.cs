@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -17,8 +16,6 @@ public class MaintenanceServiceUpcomingTests
         var userId = Guid.NewGuid();
         var motorcycleId = Guid.NewGuid();
         var maintenanceId = Guid.NewGuid();
-
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         var service = new MaintenanceService(
             new FakeMaintenanceRepository(),
             new FakeUserMaintenanceRepository(new List<UserMaintenance>
@@ -37,7 +34,6 @@ public class MaintenanceServiceUpcomingTests
             new FakeMotorcycleRepository(CreateMotorcycle(motorcycleId, userId)),
             new FakeKmHistoryService(8000),
             new FakeRecordRepository(),
-            mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -64,7 +60,6 @@ public class MaintenanceServiceUpcomingTests
             new FakeMotorcycleRepository(CreateMotorcycle(motorcycleId, userId)),
             new FakeKmHistoryService(8000),
             new FakeRecordRepository(),
-            mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -81,8 +76,6 @@ public class MaintenanceServiceUpcomingTests
         var motorcycleId = Guid.NewGuid();
         var maintenanceId = Guid.NewGuid();
         var initialDate = DateTime.UtcNow.Date.AddDays(-10);
-
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         var service = new MaintenanceService(
             new FakeMaintenanceRepository(),
             new FakeUserMaintenanceRepository(new List<UserMaintenance>
@@ -101,7 +94,6 @@ public class MaintenanceServiceUpcomingTests
             new FakeMotorcycleRepository(CreateMotorcycle(motorcycleId, userId)),
             new FakeKmHistoryService(5000, initialDate),
             new FakeRecordRepository(),
-            mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -118,8 +110,6 @@ public class MaintenanceServiceUpcomingTests
         var userId = Guid.NewGuid();
         var motoA = Guid.NewGuid();
         var motoB = Guid.NewGuid();
-
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         var service = new MaintenanceService(
             new FakeMaintenanceRepository(),
             new FakeUserMaintenanceRepository(new List<UserMaintenance>
@@ -130,7 +120,6 @@ public class MaintenanceServiceUpcomingTests
             new FakeMotorcycleRepository(CreateMotorcycle(motoA, userId), CreateMotorcycle(motoB, userId)),
             new FakeKmHistoryService(500),
             new FakeRecordRepository(),
-            mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -147,15 +136,12 @@ public class MaintenanceServiceUpcomingTests
         var userId = Guid.NewGuid();
         var owned = Guid.NewGuid();
         var foreign = Guid.NewGuid();
-
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         var service = new MaintenanceService(
             new FakeMaintenanceRepository(),
             new FakeUserMaintenanceRepository(new List<UserMaintenance>()),
             new FakeMotorcycleRepository(CreateMotorcycle(owned, userId)),
             new FakeKmHistoryService(0),
             new FakeRecordRepository(),
-            mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -169,8 +155,6 @@ public class MaintenanceServiceUpcomingTests
     {
         var userId = Guid.NewGuid();
         var motoA = Guid.NewGuid();
-
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         var service = new MaintenanceService(
             new FakeMaintenanceRepository(),
             new FakeUserMaintenanceRepository(new List<UserMaintenance>
@@ -182,7 +166,6 @@ public class MaintenanceServiceUpcomingTests
             new FakeMotorcycleRepository(CreateMotorcycle(motoA, userId)),
             new FakeKmHistoryService(500),
             new FakeRecordRepository(),
-            mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -197,14 +180,14 @@ public class MaintenanceServiceUpcomingTests
 
     private sealed class FakeCurrentUserService : ICurrentUserService
     {
-        public FakeCurrentUserService(Guid userId, string role = Persistence.Entities.UserRole.User)
+        public FakeCurrentUserService(Guid userId, string role = Domain.Entities.UserRole.User)
         {
             UserId = userId;
             Role = role;
         }
         public Guid UserId { get; }
         public string Role { get; }
-        public bool IsDemo => Role == Persistence.Entities.UserRole.Demo;
+        public bool IsDemo => Role == Domain.Entities.UserRole.Demo;
     }
 
     private static Motorcycle CreateMotorcycle(Guid motorcycleId, Guid userId)
@@ -280,7 +263,7 @@ public class MaintenanceServiceUpcomingTests
     {
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) =>
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) =>
             Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());

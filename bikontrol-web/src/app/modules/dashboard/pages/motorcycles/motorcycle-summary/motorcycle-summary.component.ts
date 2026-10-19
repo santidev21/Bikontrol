@@ -52,6 +52,11 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
   readonly currentKm = signal(0);
   readonly upcomingMaintenances = signal<UpcomingMaintenance[]>([]);
   readonly maintenanceRecords = signal<MaintenanceRecord[]>([]);
+
+  /** Progressive records history: first page here, older records on demand. */
+  private static readonly RecordsPageSize = 100;
+  private static readonly RecordsMaxLimit = 500; // mirrors ListLimits.MaxLimit in the API
+  readonly recordsLimit = signal<number | undefined>(MotorcycleSummaryComponent.RecordsPageSize);
   readonly isEditKmModalOpen = signal(false);
   readonly editableKm = signal(0);
   readonly isSubmittingKm = signal(false);
@@ -69,12 +74,26 @@ export class MotorcycleSummaryComponent implements OnInit, OnDestroy {
 
   private readonly currentKmRes = this.motorcyclesService.getCurrentKmResource(this.motorcycleId);
   private readonly upcomingRes = this.maintenanceService.getUpcomingResource(this.motorcycleId);
-  private readonly recordsRes = this.maintenanceService.getRecordsResource(this.motorcycleId);
+  private readonly recordsRes = this.maintenanceService.getRecordsResource(
+    this.motorcycleId,
+    this.recordsLimit,
+  );
   private readonly consumptionRes = this.fuelUpsService.getConsumptionResource(this.motorcycleId);
 
   readonly isCurrentKmLoading = computed(() => this.currentKmRes.isLoading());
   readonly isUpcomingLoading = computed(() => this.upcomingRes.isLoading());
   readonly isRecordsLoading = computed(() => this.recordsRes.isLoading());
+  readonly canLoadMoreRecords = computed(
+    () =>
+      this.recordsLimit() !== undefined &&
+      this.maintenanceRecords().length >= MotorcycleSummaryComponent.RecordsPageSize,
+  );
+
+  loadMoreRecords(): void {
+    const next = (this.recordsLimit() ?? 0) + MotorcycleSummaryComponent.RecordsPageSize;
+    // Past the ceiling: drop the limit and read the full history.
+    this.recordsLimit.set(next > MotorcycleSummaryComponent.RecordsMaxLimit ? undefined : next);
+  }
 
   /** Fuel/cost summary, loaded lazily once the motorcycle id is known. */
   readonly consumption = computed(() =>

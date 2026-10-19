@@ -13,7 +13,7 @@ namespace Bikontrol.Infrastructure.Services
     {
         public Guid UserId { get; }
         public string Role { get; }
-        public bool IsDemo => Role == Persistence.Entities.UserRole.Demo;
+        public bool IsDemo => Role == Domain.Entities.UserRole.Demo;
 
         public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         {
@@ -29,7 +29,7 @@ namespace Bikontrol.Infrastructure.Services
             Role = user?.FindFirst("role")?.Value
                 ?? user?.FindFirst(ClaimTypes.Role)?.Value
                 ?? user?.FindFirst("roles")?.Value
-                ?? Persistence.Entities.UserRole.User;
+                ?? Domain.Entities.UserRole.User;
         }
     }
 }

@@ -196,7 +196,7 @@ export class ProfileComponent {
       return;
     }
     if (this.newPassword().length < 6) {
-      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.passwordMin6'));
+      this.swal.error(this.i18n.t('common.errorTitle'), this.i18n.t('profile.passwordMin'));
       return;
     }
     if (this.newPassword() !== this.confirmPassword()) {

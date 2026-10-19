@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -34,13 +33,11 @@ public class MaintenanceAttachmentServiceTests
         Motorcycle? moto = null,
         bool isDemo = false)
     {
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         return new MaintenanceAttachmentService(
             records ?? new FakeRecordRepository(Record()),
             attachments ?? new FakeAttachmentRepository(),
             new FakeMotorcycleRepository(moto ?? Moto()),
-            new FakeCurrentUserService(isDemo),
-            mapper);
+            new FakeCurrentUserService(isDemo));
     }
 
     [Fact]
@@ -176,7 +173,7 @@ public class MaintenanceAttachmentServiceTests
         public FakeRecordRepository(MotorcycleMaintenanceRecord? record) => _record = record;
         public Task<MotorcycleMaintenanceRecord> AddAsync(MotorcycleMaintenanceRecord entity) => Task.FromResult(entity);
         public Task<MotorcycleMaintenanceRecord?> GetByIdAsync(Guid id) => Task.FromResult(_record);
-        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
+        public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdAsync(Guid motorcycleId, int? limit = null) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<IEnumerable<MotorcycleMaintenanceRecord>> GetByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(Enumerable.Empty<MotorcycleMaintenanceRecord>());
         public Task<MotorcycleMaintenanceRecord?> GetLastByUserMaintenanceIdAsync(Guid userMaintenanceId) => Task.FromResult<MotorcycleMaintenanceRecord?>(null);
         public Task<Dictionary<Guid, MotorcycleMaintenanceRecord>> GetLastByUserMaintenanceIdsAsync(IEnumerable<Guid> userMaintenanceIds) => Task.FromResult(new Dictionary<Guid, MotorcycleMaintenanceRecord>());

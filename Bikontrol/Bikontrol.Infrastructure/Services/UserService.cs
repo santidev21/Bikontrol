@@ -1,8 +1,8 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Persistence.Entities;
+using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -15,20 +15,17 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
 
         public UserService(
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher,
-            IMapper mapper,
             ICurrentUserService current)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _passwordHasher = passwordHasher;
-            _mapper = mapper;
             _current = current;
         }
 
@@ -54,11 +51,11 @@ namespace Bikontrol.Infrastructure.Services
             var user = await GetCurrentUserAsync();
 
             if (!user.HasPassword)
-                throw new ValidationException("Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.");
+                throw new ValidationException("Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.", "google_no_password");
 
             var verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword);
             if (verification != PasswordVerificationResult.Success)
-                throw new ValidationException("La contraseña actual no es correcta.");
+                throw new ValidationException("La contraseña actual no es correcta.", "current_password_incorrect");
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
@@ -93,19 +90,19 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByIdAsync(_current.UserId);
             if (user is null)
-                throw new NotFoundException("Usuario no encontrado.");
+                throw new NotFoundException("Usuario no encontrado.", "user_not_found");
             return user;
         }
 
         private void EnsureCanWrite()
         {
             if (_current.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
 
         private ProfileDTO ToProfile(User user)
         {
-            var dto = _mapper.Map<ProfileDTO>(user);
+            var dto = user.ToProfileDTO();
             dto.HasPassword = user.HasPassword;
             return dto;
         }

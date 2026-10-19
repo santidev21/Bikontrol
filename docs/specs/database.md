@@ -5,13 +5,13 @@
 - Maintenance has default types and user-defined maintenance items.
 - Soft deletes for several entities through `IsEnabled`.
 - Local migrations: `npm run db:migration:add -- YourMigrationName`, then `npm run db:migrate`. See [db-migrations](../../.opencode/skills/db-migrations/SKILL.md).
-- Production applies pending migrations automatically at API startup (`db.Database.Migrate()` in non-Development); no manual step needed on deploy.
+- Production applies pending migrations automatically at API startup (`await db.Database.MigrateAsync()` in non-Development); no manual step needed on deploy.
 - Local Docker maps Postgres to `127.0.0.1:5434`; in production it lives on `bikontrol-internal-net` only.
 
 ## Data integrity guards
 
 - Multi-step writes are atomic via `ITransactionManager` (`Bikontrol.Persistence.TransactionManager`): maintenance record + odometer advance, motorcycle + initial km, km rollback.
-- Optimistic concurrency with the Postgres `xmin` system column on `Motorcycles`, `UserMaintenanceTypes`, `users` (Npgsql `UseXminAsConcurrencyToken`; the scaffolded `AddColumn xmin` is ignored by the Npgsql SQL generator — no physical column is created). Conflicts surface as `DbUpdateConcurrencyException` → HTTP 409.
+- Optimistic concurrency with the Postgres `xmin` system column on `Motorcycles`, `UserMaintenanceTypes`, `users` (Npgsql 9 removed `UseXminAsConcurrencyToken`, so the shadow `xmin` property is mapped explicitly to the system column — no physical column is created). Conflicts surface as `DbUpdateConcurrencyException` → HTTP 409.
 - CHECK constraints: `CK_MotorcycleKmHistories_Km_NonNegative`, `CK_MotorcycleMaintenanceRecords_PerformedKm_NonNegative`, `CK_MotorcycleMaintenanceRecords_Cost_NonNegative` (`Cost` is nullable `numeric(12,2)`), `CK_UserMaintenanceTypes_PositiveInterval` (interval > 0 for the selected `TrackingType`).
 - Service validation mirrors the constraints (positive interval per tracking type; historical maintenance records below the odometer don't move it and never fail the operation).
 - Read-only audit: `scripts/db-integrity-audit.sql` — every block must return 0 rows. Run it before any deploy/migration once real users exist.
@@ -23,6 +23,15 @@
 - Written automatically by `AppDbContext.SaveChangesAsync` for user-facing entities (`User`, `Motorcycle`, `UserMaintenance`, `MotorcycleMaintenanceRecord`, `MotorcycleKmHistory`, `MaintenanceRecordAttachment`, `FuelUp`); infrastructure tables (tokens, push subscriptions, reminder logs) are intentionally excluded.
 - Read through `GET /api/users/me/activity`.
 - Attachments: `maintenance_record_attachments` stores resized image data URLs (JPEG/PNG/WebP, ≤1 MB decoded), cascade-deleted with their maintenance record.
+
+## Data retention
+
+- `RetentionBackgroundService` (a second daily background job at `Retention:DailyHourUtc`, default 04:00 UTC — off-peak, clear of the reminder engine's 08:00) runs `RetentionService.PurgeAsync` once a day.
+- Bulk deletes through EF `ExecuteDeleteAsync` — no change tracker, no audit rows (same rationale as `AccountRepository`):
+  - `refresh_tokens`: rows that expired **or** were revoked more than `Retention:RefreshTokenDays` days ago (default 30). Rotation mints a row per session refresh, so the table would grow without bound otherwise.
+  - `reminder_logs`: rows older than `Retention:ReminderLogDays` days (default 90; the dedupe window needs 3).
+  - `audit_logs`: **never** purged by default (`Retention:AuditLogDays = 0`); set a positive value to opt into an audit retention policy.
+- Configure via `Retention__*` in `.env`/compose; `Retention:Enabled=false` stops the scheduler. A failed run is logged and retried on the next tick — the scheduler never dies.
 
 ## Fuel-ups and budgets
 

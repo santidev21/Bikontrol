@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
@@ -6,7 +5,6 @@ using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
-using Bikontrol.Persistence.Entities;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -15,14 +13,12 @@ namespace Bikontrol.Tests;
 
 public class AuthServiceTests
 {
-    private readonly IMapper _mapper;
     private readonly JwtTokenGenerator _tokenGenerator;
     private FakeRefreshTokenRepository _refreshRepository = new();
     private FakeEmailSender _emailSender = new();
 
     public AuthServiceTests()
     {
-        _mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         _tokenGenerator = new JwtTokenGenerator(BuildConfiguration());
     }
 
@@ -53,21 +49,55 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenEmailAlreadyExists_ShouldThrowAuthExceptionWith409()
+    public async Task RegisterAsync_WhenEmailAlreadyExists_ShouldNotRevealItAndEmailTheOwner()
+    {
+        var user = new User("test@bikontrol.com", "Existing User", "hashed:Secret123!");
+        user.MarkEmailConfirmed();
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository);
+
+        var response = await service.RegisterAsync(new RegisterRequest
+        {
+            Email = "test@bikontrol.com",
+            FullName = "Someone Else",
+            Password = "Secret123!"
+        });
+
+        // Indistinguishable from a fresh registration that needs confirmation:
+        // no session minted, no stored account data leaked (random Id,
+        // requested name, User role), and an email goes to the real owner.
+        Assert.True(response.EmailConfirmationRequired);
+        Assert.Equal(string.Empty, response.Token);
+        Assert.Equal(string.Empty, response.RefreshToken);
+        Assert.Equal("Someone Else", response.FullName);
+        Assert.Equal(UserRole.User, response.Role);
+        Assert.NotEqual(user.Id, response.Id);
+        Assert.Empty(repository.UsersCreated);
+        Assert.Single(_emailSender.Sent);
+        Assert.Equal("test@bikontrol.com", _emailSender.Sent[0].To);
+        Assert.Equal("Ya tenés una cuenta en Bikontrol", _emailSender.Sent[0].Subject);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WhenEmailExistsButIsUnconfirmed_ShouldResendConfirmationInstead()
     {
         var repository = new FakeUserRepository(existingUsers: [new User("test@bikontrol.com", "Existing User", "hashed:Secret123!")]);
         var service = CreateService(repository);
 
-        var exception = await Assert.ThrowsAsync<AuthException>(() => service.RegisterAsync(new RegisterRequest
+        var response = await service.RegisterAsync(new RegisterRequest
         {
             Email = "test@bikontrol.com",
-            FullName = "Test User",
+            FullName = "Someone Else",
             Password = "Secret123!"
-        }));
+        });
 
-        Assert.Equal(409, exception.StatusCode);
-        Assert.Equal("El usuario ya existe.", exception.Message);
+        // Unconfirmed accounts cannot log in, so a register probe resends the
+        // confirmation link rather than an "account exists" note.
+        Assert.True(response.EmailConfirmationRequired);
+        Assert.Equal(string.Empty, response.Token);
         Assert.Empty(repository.UsersCreated);
+        Assert.Single(_emailSender.Sent);
+        Assert.Equal("Confirmá tu correo de Bikontrol", _emailSender.Sent[0].Subject);
     }
 
     [Fact]
@@ -251,7 +281,6 @@ public class AuthServiceTests
             new FakePasswordHasher(),
             _tokenGenerator,
             new FakeEmailSender(),
-            _mapper,
             new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
@@ -560,7 +589,6 @@ public class AuthServiceTests
             new FakePasswordHasher(),
             _tokenGenerator,
             _emailSender,
-            _mapper,
             configuration ?? BuildConfiguration());
     }
 
@@ -683,6 +711,9 @@ public class AuthServiceTests
                 token.Revoke();
             return Task.FromResult(active.Count);
         }
+
+        public Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
 
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
