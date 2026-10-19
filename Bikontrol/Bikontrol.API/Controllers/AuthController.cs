@@ -1,6 +1,5 @@
 ﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
@@ -15,13 +14,11 @@ namespace Bikontrol.API.Controllers
         public const string RefreshTokenCookieName = "bikontrol_rt";
 
         private readonly IAuthService _authService;
-        private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IWebHostEnvironment environment, IConfiguration configuration)
+        public AuthController(IAuthService authService, IConfiguration configuration)
         {
             _authService = authService;
-            _environment = environment;
             _configuration = configuration;
         }
 
@@ -137,9 +134,10 @@ namespace Bikontrol.API.Controllers
             Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                // Development serves plain HTTP (:5202) and the Testing host has
-                // no TLS; everywhere else the cookie is HTTPS-only.
-                Secure = !_environment.IsDevelopment() && !_environment.IsEnvironment("Testing"),
+                // Unconditional Secure: browsers treat http://localhost as a
+                // trustworthy origin and still store Secure cookies there, so
+                // local development (plain HTTP) keeps working.
+                Secure = true,
                 SameSite = SameSiteMode.Strict,
                 Path = "/api/auth",
                 MaxAge = TimeSpan.FromDays(days)
@@ -154,6 +152,7 @@ namespace Bikontrol.API.Controllers
             {
                 Path = "/api/auth",
                 HttpOnly = true,
+                Secure = true,
                 SameSite = SameSiteMode.Strict
             });
         }

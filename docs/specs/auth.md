@@ -51,7 +51,7 @@
 ## Sessions (refresh tokens)
 
 - Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days, which is also the cookie `Max-Age`).
-- Transport: the refresh token is delivered in a `Set-Cookie` header (`HttpOnly`, `SameSite=Strict`, `Path=/api/auth`, `Secure` outside dev/testing) and the JSON body always carries an empty `refreshToken`. Auth requests use `withCredentials` and the CORS policy has `AllowCredentials` (needed in development; inert same-origin in production).
+- Transport: the refresh token is delivered in a `Set-Cookie` header (`HttpOnly`, `SameSite=Strict`, `Secure` always, `Path=/api/auth`; browsers accept Secure cookies on `http://localhost`, so plain-HTTP local development keeps working) and the JSON body always carries an empty `refreshToken`. Auth requests use `withCredentials` and the CORS policy has `AllowCredentials` (needed in development; inert same-origin in production).
 - Refresh tokens are stored in the `refresh_tokens` table (SHA-256 hash only) and are revoked/rotated on every use. `RevokedAt` is a concurrency token, so two simultaneous refreshes with the same token cannot both mint replacements.
 - `POST /api/auth/logout` revokes the presented token (cookie or body fallback) and clears the cookie — best-effort, always `200`.
 - Changing the password (`POST /api/users/me/password`) or resetting it (`POST /api/auth/reset-password`) revokes **all** active refresh tokens for the user, so any stolen session dies with the password change.

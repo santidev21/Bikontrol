@@ -1,11 +1,9 @@
 using Bikontrol.API.Controllers;
 using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
 
 namespace Bikontrol.Tests.Controllers;
 
@@ -135,11 +133,11 @@ public class AuthControllerTests
     }
 
     [Fact]
-    public async Task Login_InProduction_ShouldMarkTheCookieSecure()
+    public async Task Login_ShouldMarkTheCookieSecureUnconditionally()
     {
         var response = new LoginResponse { Id = Guid.NewGuid(), Email = "user@bikontrol.com", FullName = "Test", Token = "t", RefreshToken = "refresh-456", ExpiresIn = 900 };
         var service = new FakeAuthService { LoginResult = response };
-        var controller = CreateController(service, environmentName: "Production");
+        var controller = CreateController(service);
 
         await controller.Login(new LoginRequest { Email = "user@bikontrol.com", Password = "Secret123!" });
 
@@ -197,24 +195,14 @@ public class AuthControllerTests
         Assert.IsType<OkObjectResult>(result);
     }
 
-    private static AuthController CreateController(FakeAuthService service, string environmentName = "Development")
+    private static AuthController CreateController(FakeAuthService service)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Jwt:RefreshExpireDays"] = "30" })
             .Build();
-        var controller = new AuthController(service, new FakeWebHostEnvironment { EnvironmentName = environmentName }, configuration);
+        var controller = new AuthController(service, configuration);
         controller.ControllerContext.HttpContext = new DefaultHttpContext();
         return controller;
-    }
-
-    private sealed class FakeWebHostEnvironment : IWebHostEnvironment
-    {
-        public string ApplicationName { get; set; } = "Bikontrol.Tests";
-        public string EnvironmentName { get; set; } = "Development";
-        public string? WebRootPath { get; set; }
-        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
-        public string ContentRootPath { get; set; } = string.Empty;
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     private sealed class FakeAuthService : IAuthService
