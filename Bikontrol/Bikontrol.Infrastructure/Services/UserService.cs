@@ -1,8 +1,8 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -15,20 +15,17 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
 
         public UserService(
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher,
-            IMapper mapper,
             ICurrentUserService current)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _passwordHasher = passwordHasher;
-            _mapper = mapper;
             _current = current;
         }
 
@@ -105,7 +102,7 @@ namespace Bikontrol.Infrastructure.Services
 
         private ProfileDTO ToProfile(User user)
         {
-            var dto = _mapper.Map<ProfileDTO>(user);
+            var dto = user.ToProfileDTO();
             dto.HasPassword = user.HasPassword;
             return dto;
         }

@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -34,13 +33,11 @@ public class MaintenanceAttachmentServiceTests
         Motorcycle? moto = null,
         bool isDemo = false)
     {
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         return new MaintenanceAttachmentService(
             records ?? new FakeRecordRepository(Record()),
             attachments ?? new FakeAttachmentRepository(),
             new FakeMotorcycleRepository(moto ?? Moto()),
-            new FakeCurrentUserService(isDemo),
-            mapper);
+            new FakeCurrentUserService(isDemo));
     }
 
     [Fact]

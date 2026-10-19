@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Bikontrol.Application.DTOs.Auth;
+﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
@@ -7,6 +6,7 @@ using Bikontrol.Infrastructure.Email;
 using Bikontrol.Shared.Exceptions;
 using Bikontrol.Persistence;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +30,6 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly JwtTokenGenerator _jwtTokenGenerator;
         private readonly IEmailSender _emailSender;
-        private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
 
         public AuthService(
@@ -39,7 +38,6 @@ namespace Bikontrol.Infrastructure.Services
             IPasswordHasher<User> passwordHasher,
             JwtTokenGenerator jwtTokenGenerator,
             IEmailSender emailSender,
-            IMapper mapper,
             IConfiguration configuration)
         {
             _userRepository = userRepository;
@@ -47,7 +45,6 @@ namespace Bikontrol.Infrastructure.Services
             _passwordHasher = passwordHasher;
             _jwtTokenGenerator = jwtTokenGenerator;
             _emailSender = emailSender;
-            _mapper = mapper;
             _configuration = configuration;
         }
 
@@ -77,11 +74,11 @@ namespace Bikontrol.Infrastructure.Services
                 return BuildGenericRegisterResponse(request);
             }
 
-            var user = _mapper.Map<User>(request);
+            var user = new User(request.Email, request.FullName, string.Empty);
             user.SetPasswordHash(_passwordHasher.HashPassword(null!, request.Password));
 
             await _userRepository.AddAsync(user);
-            var response = _mapper.Map<RegisterResponse>(user);
+            var response = user.ToRegisterResponse();
 
             if (IsEmailConfirmationRequired())
             {
@@ -440,7 +437,7 @@ namespace Bikontrol.Infrastructure.Services
 
         private LoginResponse BuildLoginResponse(User user, string refreshToken)
         {
-            var response = _mapper.Map<LoginResponse>(user);
+            var response = user.ToLoginResponse();
             response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;

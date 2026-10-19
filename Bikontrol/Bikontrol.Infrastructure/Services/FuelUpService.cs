@@ -1,9 +1,9 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Infrastructure.Services
@@ -14,7 +14,6 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleRepository _motorcycleRepository;
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
         private readonly IKmHistoryService _kmHistoryService;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
         private readonly ITransactionManager _transactions;
 
@@ -23,7 +22,6 @@ namespace Bikontrol.Infrastructure.Services
             IMotorcycleRepository motorcycleRepository,
             IMotorcycleMaintenanceRecordRepository recordRepository,
             IKmHistoryService kmHistoryService,
-            IMapper mapper,
             ICurrentUserService current,
             ITransactionManager transactions)
         {
@@ -31,7 +29,6 @@ namespace Bikontrol.Infrastructure.Services
             _motorcycleRepository = motorcycleRepository;
             _recordRepository = recordRepository;
             _kmHistoryService = kmHistoryService;
-            _mapper = mapper;
             _current = current;
             _transactions = transactions;
         }
@@ -40,7 +37,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
             var fuelUps = await _repo.GetByMotorcycleIdAsync(motorcycleId);
-            return _mapper.Map<IEnumerable<FuelUpDTO>>(fuelUps);
+            return fuelUps.ToFuelUpDTOs();
         }
 
         public async Task<FuelUpDTO?> GetByIdAsync(Guid id)
@@ -48,7 +45,7 @@ namespace Bikontrol.Infrastructure.Services
             var fuelUp = await _repo.GetByIdAsync(id)
                 ?? throw new NotFoundException("Carga de combustible no encontrada.");
             await EnsureMotorcycleOwnershipAsync(fuelUp.MotorcycleId);
-            return _mapper.Map<FuelUpDTO>(fuelUp);
+            return fuelUp.ToFuelUpDTO();
         }
 
         public async Task<FuelUpDTO> CreateAsync(SaveFuelUpRequest request)
@@ -76,7 +73,7 @@ namespace Bikontrol.Infrastructure.Services
                 var created = await _repo.AddAsync(entity);
                 await AdvanceOdometerIfNeededAsync(request.MotorcycleId, request.OdometerKm);
                 await _repo.SaveChangesAsync();
-                return _mapper.Map<FuelUpDTO>(created);
+                return created.ToFuelUpDTO();
             });
         }
 
@@ -104,7 +101,7 @@ namespace Bikontrol.Infrastructure.Services
                 await _repo.UpdateAsync(entity);
                 await AdvanceOdometerIfNeededAsync(request.MotorcycleId, request.OdometerKm);
                 await _repo.SaveChangesAsync();
-                return _mapper.Map<FuelUpDTO>(entity);
+                return entity.ToFuelUpDTO();
             });
         }
 

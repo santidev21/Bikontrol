@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
@@ -6,6 +5,7 @@ using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
@@ -27,7 +27,6 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IKmHistoryService _kmHistoryService;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITransactionManager _transactions;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
 
         public AccountService(
@@ -41,7 +40,6 @@ namespace Bikontrol.Infrastructure.Services
             IKmHistoryService kmHistoryService,
             IPasswordHasher<User> passwordHasher,
             ITransactionManager transactions,
-            IMapper mapper,
             ICurrentUserService current)
         {
             _userRepository = userRepository;
@@ -54,7 +52,6 @@ namespace Bikontrol.Infrastructure.Services
             _kmHistoryService = kmHistoryService;
             _passwordHasher = passwordHasher;
             _transactions = transactions;
-            _mapper = mapper;
             _current = current;
         }
 
@@ -83,7 +80,7 @@ namespace Bikontrol.Infrastructure.Services
                 ? new Dictionary<Guid, int>()
                 : await _kmHistoryService.GetCurrentKmByMotorcycleIdsAsync(motorcycleIds);
 
-            var motorcycleDtos = _mapper.Map<List<MotorcycleDTO>>(motorcycles);
+            var motorcycleDtos = motorcycles.ToMotorcycleDTOs();
             foreach (var dto in motorcycleDtos)
             {
                 // MotorcycleDTO.Km is resolved from the km history, not the entity.
@@ -91,7 +88,7 @@ namespace Bikontrol.Infrastructure.Services
             }
 
             var maintenanceNames = maintenances.ToDictionary(m => m.Id, m => m.Name);
-            var recordDtos = _mapper.Map<List<MaintenanceRecordDTO>>(records);
+            var recordDtos = records.ToMaintenanceRecordDTOs();
             foreach (var dto in recordDtos)
             {
                 if (maintenanceNames.TryGetValue(dto.UserMaintenanceId, out var name))
@@ -105,10 +102,10 @@ namespace Bikontrol.Infrastructure.Services
                 ExportedAt = DateTime.UtcNow,
                 Profile = ToProfile(user),
                 Motorcycles = motorcycleDtos,
-                Maintenances = _mapper.Map<List<MaintenanceDTO>>(maintenances),
+                Maintenances = maintenances.ToMaintenanceDTOs(),
                 MaintenanceRecords = recordDtos,
-                Attachments = _mapper.Map<List<MaintenanceAttachmentDTO>>(attachments),
-                FuelUps = _mapper.Map<List<FuelUpDTO>>(fuelUps),
+                Attachments = attachments.ToAttachmentDTOs(),
+                FuelUps = fuelUps.ToFuelUpDTOs().ToList(),
             };
         }
 
@@ -149,7 +146,7 @@ namespace Bikontrol.Infrastructure.Services
 
         private ProfileDTO ToProfile(User user)
         {
-            var dto = _mapper.Map<ProfileDTO>(user);
+            var dto = user.ToProfileDTO();
             dto.HasPassword = user.HasPassword;
             return dto;
         }

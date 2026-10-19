@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -12,9 +11,6 @@ namespace Bikontrol.Tests;
 
 public class AccountServiceTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     [Fact]
     public async Task ExportMyDataAsync_ShouldReturnEverythingTheUserOwns()
     {
@@ -211,7 +207,6 @@ public class AccountServiceTests
             new FakeKmHistoryService(currentKms ?? new Dictionary<Guid, int>()),
             new FakePasswordHasher(),
             new FakeTransactionManager(),
-            Mapper,
             new FakeCurrentUserService(userId, role));
     }
 

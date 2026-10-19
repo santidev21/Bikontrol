@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -11,8 +10,6 @@ namespace Bikontrol.Tests;
 
 public class MaintenanceServiceDemoTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     [Fact]
     public async Task CreateUserMaintenanceAsync_WhenDemo_ShouldThrowForbidden()
     {
@@ -57,7 +54,6 @@ public class MaintenanceServiceDemoTests
             new FakeMotorcycleRepository(moto),
             new FakeKmHistoryService(),
             new FakeRecordRepository(),
-            _mapper,
             current,
             new FakeTransactionManager());
     }

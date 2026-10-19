@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Fuel;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -11,9 +10,6 @@ namespace Bikontrol.Tests;
 
 public class FuelUpServiceTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     private static Motorcycle MotorcycleFor(Guid userId) =>
         new("YBR 125", "Yamaha", 2024, "Negra", 125, "ABC12D", userId) { Id = Guid.NewGuid() };
 
@@ -29,7 +25,6 @@ public class FuelUpServiceTests
             motorcycles ?? new FakeMotorcycleRepository(Array.Empty<Motorcycle>()),
             records ?? new FakeRecordRepository(),
             kmHistory ?? new FakeKmHistoryService(),
-            Mapper,
             new FakeCurrentUserService(userId, role),
             new FakeTransactionManager());
 

@@ -1,9 +1,9 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Infrastructure.Services
@@ -15,7 +15,6 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleRepository _motorcycleRepository;
         private readonly IKmHistoryService _kmHistoryService;
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _current;
         private readonly ITransactionManager _transactions;
 
@@ -25,7 +24,6 @@ namespace Bikontrol.Infrastructure.Services
             IMotorcycleRepository motorcycleRepository,
             IKmHistoryService kmHistoryService,
             IMotorcycleMaintenanceRecordRepository recordRepository,
-            IMapper mapper,
             ICurrentUserService current,
             ITransactionManager transactions)
         {
@@ -34,7 +32,6 @@ namespace Bikontrol.Infrastructure.Services
             _motorcycleRepository = motorcycleRepository;
             _kmHistoryService = kmHistoryService;
             _recordRepository = recordRepository;
-            _mapper = mapper;
             _current = current;
             _transactions = transactions;
         }
@@ -42,20 +39,20 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<IEnumerable<MaintenanceDTO>> GetDefaultsAsync()
         {
             var list = await _repo.GetAllForUserAsync(_current.UserId);
-            return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+            return list.ToMaintenanceDTOs();
         }
 
         public async Task<IEnumerable<MaintenanceDTO>> GetUserMaintenanceAsync()
         {
             var list = await _userRepo.GetByUserIdAsync(_current.UserId);
-            return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+            return list.ToMaintenanceDTOs();
         }
 
         public async Task<IEnumerable<MaintenanceDTO>> GetUserMaintenanceByMotorcycleAsync(Guid motorcycleId)
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
             var list = await _userRepo.GetByUserIdAndMotorcycleIdAsync(_current.UserId, motorcycleId);
-            return _mapper.Map<IEnumerable<MaintenanceDTO>>(list);
+            return list.ToMaintenanceDTOs();
         }
 
         public async Task<MaintenanceDTO?> GetByIdAsync(Guid id)
@@ -65,7 +62,7 @@ namespace Bikontrol.Infrastructure.Services
             if (maintenance.UserId != _current.UserId)
                 throw new ForbiddenAccessException("No tienes permisos para ver este mantenimiento.");
 
-            return _mapper.Map<MaintenanceDTO>(maintenance);
+            return maintenance.ToMaintenanceDTO();
         }
 
         private void EnsureCanWrite()
@@ -92,13 +89,20 @@ namespace Bikontrol.Infrastructure.Services
             EnsureValidInterval(dto.TrackingType, dto.KmInterval, dto.TimeIntervalWeeks);
             await EnsureMotorcycleOwnershipAsync(dto.MotorcycleId);
 
-            var entity = _mapper.Map<UserMaintenance>(dto);
-            entity.UserId = _current.UserId;
-            entity.MotorcycleId = dto.MotorcycleId;
+            var entity = new UserMaintenance
+            {
+                UserId = _current.UserId,
+                MotorcycleId = dto.MotorcycleId,
+                Name = dto.Name,
+                Description = dto.Description,
+                KmInterval = dto.KmInterval,
+                TimeIntervalWeeks = dto.TimeIntervalWeeks,
+                TrackingType = dto.TrackingType
+            };
 
             var created = await _userRepo.AddAsync(entity);
             await _userRepo.SaveChangesAsync();
-            return _mapper.Map<MaintenanceDTO>(created);
+            return created.ToMaintenanceDTO();
         }
 
         public async Task DeleteUserMaintenanceAsync(Guid id)
@@ -136,7 +140,7 @@ namespace Bikontrol.Infrastructure.Services
                 existing.TrackingType = trackingType;
                 await _userRepo.UpdateAsync(existing);
                 await _userRepo.SaveChangesAsync();
-                return _mapper.Map<MaintenanceDTO>(existing);
+                return existing.ToMaintenanceDTO();
             }
 
             var entity = new UserMaintenance
@@ -154,7 +158,7 @@ namespace Bikontrol.Infrastructure.Services
 
             var created = await _userRepo.AddAsync(entity);
             await _userRepo.SaveChangesAsync();
-            return _mapper.Map<MaintenanceDTO>(created);
+            return created.ToMaintenanceDTO();
         }
 
         public async Task UpdateAsync(Guid id, SaveMaintenanceDTO dto)
@@ -168,7 +172,11 @@ namespace Bikontrol.Infrastructure.Services
 
             await EnsureMotorcycleOwnershipAsync(dto.MotorcycleId);
 
-            _mapper.Map(dto, entity);
+            entity.Name = dto.Name;
+            entity.Description = dto.Description;
+            entity.KmInterval = dto.KmInterval;
+            entity.TimeIntervalWeeks = dto.TimeIntervalWeeks;
+            entity.TrackingType = dto.TrackingType;
             entity.MotorcycleId = dto.MotorcycleId;
             await _userRepo.UpdateAsync(entity);
             await _userRepo.SaveChangesAsync();
@@ -246,7 +254,7 @@ namespace Bikontrol.Infrastructure.Services
                         await _kmHistoryService.AddKmAsync(request.MotorcycleId, request.PerformedKm.Value);
                 }
 
-                var dto = _mapper.Map<MaintenanceRecordDTO>(created);
+                var dto = created.ToMaintenanceRecordDTO();
                 dto.MaintenanceName = maintenance.Name;
                 return dto;
             });
@@ -256,7 +264,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             await EnsureMotorcycleOwnershipAsync(motorcycleId);
             var records = await _recordRepository.GetByMotorcycleIdAsync(motorcycleId);
-            return _mapper.Map<IEnumerable<MaintenanceRecordDTO>>(records);
+            return records.ToMaintenanceRecordDTOs();
         }
 
         public async Task<IEnumerable<UpcomingMaintenanceDTO>> GetUpcomingByMotorcycleAsync(Guid motorcycleId)
@@ -326,7 +334,7 @@ namespace Bikontrol.Infrastructure.Services
 
             await EnsureMotorcyclesOwnershipAsync(ids);
 
-            var mapped = _mapper.Map<List<MaintenanceRecordDTO>>(await _recordRepository.GetByMotorcycleIdsAsync(ids));
+            var mapped = (await _recordRepository.GetByMotorcycleIdsAsync(ids)).ToMaintenanceRecordDTOs();
             foreach (var id in ids)
             {
                 result[id] = mapped.Where(r => r.MotorcycleId == id).ToList();

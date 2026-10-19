@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -16,9 +15,6 @@ namespace Bikontrol.Tests;
 /// </summary>
 public class MaintenanceServiceIntervalTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     // ---------- Km ----------
 
     [Fact]
@@ -430,7 +426,6 @@ public class MaintenanceServiceIntervalTests
             new FakeMotorcycleRepository(foreignMotorcycle),
             new FakeKmHistoryService(currentKm: 1000),
             new FakeRecordRepository(new()),
-            Mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -530,7 +525,6 @@ public class MaintenanceServiceIntervalTests
             new FakeMotorcycleRepository(new Motorcycle("Moto", "Brand", 2024, "N", 150, "ABC123", userId) { Id = motorcycleId }),
             new FakeKmHistoryService(currentKm: 1000),
             new FakeRecordRepository(new()),
-            Mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
 
@@ -643,7 +637,6 @@ public class MaintenanceServiceIntervalTests
             new FakeMotorcycleRepository(motorcycle),
             kmService ?? new FakeKmHistoryService(currentKm, initialDate),
             new FakeRecordRepository(lastRecords),
-            Mapper,
             new FakeCurrentUserService(userId),
             new FakeTransactionManager());
     }

@@ -2,7 +2,6 @@
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
-using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -37,7 +36,6 @@ namespace Bikontrol.Infrastructure
                 return new ConfigurablePasswordHasher<User>(iterations);
             });
             services.AddScoped<IEmailSender, SmtpEmailSender>();
-            services.AddAutoMapper(typeof(MappingProfile));
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IMotorcycleService, MotorcycleService>();

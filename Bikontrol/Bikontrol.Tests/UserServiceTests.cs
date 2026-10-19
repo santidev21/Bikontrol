@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -12,9 +11,6 @@ namespace Bikontrol.Tests;
 
 public class UserServiceTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     [Fact]
     public async Task GetMeAsync_ShouldReturnProfileWithPasswordFlag()
     {
@@ -175,7 +171,6 @@ public class UserServiceTests
             repository,
             _refreshTokenRepository,
             new FakePasswordHasher(),
-            Mapper,
             new FakeCurrentUserService(userId, role));
     }
 

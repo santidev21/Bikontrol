@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
@@ -14,14 +13,12 @@ namespace Bikontrol.Tests;
 
 public class AuthServiceTests
 {
-    private readonly IMapper _mapper;
     private readonly JwtTokenGenerator _tokenGenerator;
     private FakeRefreshTokenRepository _refreshRepository = new();
     private FakeEmailSender _emailSender = new();
 
     public AuthServiceTests()
     {
-        _mapper = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
         _tokenGenerator = new JwtTokenGenerator(BuildConfiguration());
     }
 
@@ -284,7 +281,6 @@ public class AuthServiceTests
             new FakePasswordHasher(),
             _tokenGenerator,
             new FakeEmailSender(),
-            _mapper,
             new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
@@ -593,7 +589,6 @@ public class AuthServiceTests
             new FakePasswordHasher(),
             _tokenGenerator,
             _emailSender,
-            _mapper,
             configuration ?? BuildConfiguration());
     }
 

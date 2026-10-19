@@ -1,9 +1,9 @@
-﻿using AutoMapper;
-using Bikontrol.Application.DTOs.Motorcycle;
+﻿using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Infrastructure.Mapping;
 using Bikontrol.Shared.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -18,18 +18,16 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IMotorcycleRepository _motorcycleRepository;
         private readonly IKmHistoryRepository _kmHistoryRepository;
         private readonly IKmHistoryService _kmHistoryService;
-        private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUser;
         private readonly ITransactionManager _transactions;
 
         public MotorcycleService(IMotorcycleRepository motorcycleRepository, IKmHistoryRepository kmHistoryRepository,
-            IKmHistoryService kmHistoryService, IMapper mapper, ICurrentUserService currentUser,
+            IKmHistoryService kmHistoryService, ICurrentUserService currentUser,
             ITransactionManager transactions)
         {
             _motorcycleRepository = motorcycleRepository;
             _kmHistoryRepository = kmHistoryRepository;
             _kmHistoryService = kmHistoryService;
-            _mapper = mapper;
             _currentUser = currentUser;
             _transactions = transactions;
         }
@@ -44,8 +42,10 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             EnsureValidImage(dto.Image);
-            var entity = _mapper.Map<Motorcycle>(dto);
-            entity.UserId = _currentUser.UserId;
+            var entity = new Motorcycle(dto.Name, dto.Brand, dto.Year, dto.Nickname, dto.Displacement, dto.Plate, _currentUser.UserId)
+            {
+                Image = dto.Image ?? "default.png"
+            };
             entity.Validate();
 
             // Moto + km inicial en una sola transacción: antes eran dos
@@ -60,7 +60,7 @@ namespace Bikontrol.Infrastructure.Services
                 };
                 await _kmHistoryRepository.AddAsync(kmHistory);
                 await _kmHistoryRepository.SaveChangesAsync();
-                var createdDto = _mapper.Map<MotorcycleDTO>(created);
+                var createdDto = created.ToMotorcycleDTO();
                 createdDto.Km = kmHistory.Km;
                 return createdDto;
             });
@@ -76,7 +76,7 @@ namespace Bikontrol.Infrastructure.Services
             if (entity.UserId != _currentUser.UserId)
                 throw new ForbiddenAccessException("No tienes acceso a esta motocicleta.");
 
-            var dto = _mapper.Map<MotorcycleDTO>(entity);
+            var dto = entity.ToMotorcycleDTO();
             dto.Km = await GetCurrentKmOrDefaultAsync(entity.Id);
             return dto;
         }
@@ -84,7 +84,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<IList<MotorcycleDTO>> GetByCurrentUserAsync()
         {
             var motorcycles = (await _motorcycleRepository.GetByUserIdAsync(_currentUser.UserId)).ToList();
-            var dtos = _mapper.Map<IList<MotorcycleDTO>>(motorcycles);
+            var dtos = motorcycles.ToMotorcycleDTOs();
 
             var kmByMotorcycle = await _kmHistoryRepository.GetLatestKmByMotorcycleIdsAsync(
                 motorcycles.Select(m => m.Id));
@@ -145,7 +145,13 @@ namespace Bikontrol.Infrastructure.Services
             if (entity.UserId != _currentUser.UserId)
                 throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
 
-            _mapper.Map(dto, entity);
+            entity.Name = dto.Name;
+            entity.Brand = dto.Brand;
+            entity.Year = dto.Year;
+            entity.Nickname = dto.Nickname;
+            entity.Image = dto.Image ?? "default.png";
+            entity.Displacement = dto.Displacement;
+            entity.Plate = dto.Plate;
             entity.Validate();
             await _motorcycleRepository.UpdateAsync(entity);
             await _motorcycleRepository.SaveChangesAsync();

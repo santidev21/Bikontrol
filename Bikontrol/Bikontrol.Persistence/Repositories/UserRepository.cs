@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Bikontrol.Application.Interfaces.Repositories;
+﻿using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;

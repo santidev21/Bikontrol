@@ -1,4 +1,3 @@
-using AutoMapper;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -18,9 +17,6 @@ namespace Bikontrol.Tests;
 /// </summary>
 public class MaintenanceServiceCrudTests
 {
-    private static readonly IMapper Mapper =
-        new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()).CreateMapper();
-
     // ---------- Reads ----------
 
     [Fact]
@@ -570,7 +566,6 @@ public class MaintenanceServiceCrudTests
             motorcycles ?? new RecordingMotorcycleRepository(),
             new FakeKmHistoryService(currentKm),
             records ?? new RecordingRecordRepository(),
-            Mapper,
             new FakeCurrentUserService(userId, isDemo ? UserRole.Demo : UserRole.User),
             new FakeTransactionManager());
     }
