@@ -1,5 +1,11 @@
 # API Routes
 
+## Error envelope
+
+- Errors: every API error response is `{ error: <human message in Spanish>, code: <stable machine code> }` via `ExceptionHandlingMiddleware` — types map to `not_found`/`forbidden`/`validation`/`conflict`/`server_error`, and the typed exceptions (`Auth`, `Validation`, `NotFound`, `Forbidden`) may carry a specific code (e.g. `invalid_credentials`, `session_expired`, `maintenance_no_access`, `km_below_previous`).
+- The frontend `HttpErrorService` translates any code with an `errors.*` catalog entry (ES/EN) and falls back to the server message. For a new user-visible exception: throw with a code and add the `errors.<code>` entry to both translation catalogs.
+- DTO attribute-validation messages (`ModelState`) keep the `{ error }`-only shape (their code defaults to `validation`).
+
 ## Health
 - `GET /health` — liveness: `200 Healthy` whenever the process is up (no dependency checks).
 - `GET /ready` — readiness: `200 Healthy` only when PostgreSQL responds; `503` otherwise (own 3s-timeout connection).
