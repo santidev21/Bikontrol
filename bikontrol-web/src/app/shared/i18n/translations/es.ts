@@ -16,12 +16,15 @@ export const es: Record<string, string> = {
   'errors.invalid_credentials': 'Correo o contraseña inválidos.',
   'errors.session_expired': 'Tu sesión expiró. Iniciá sesión de nuevo.',
   'common.loadMore': 'Cargar más',
-  'errors.account_locked': 'La cuenta está temporalmente bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.',
-  'errors.email_unconfirmed': 'Debes confirmar tu correo antes de iniciar sesión. Revisá tu bandeja o pedí un nuevo enlace.',
+  'errors.account_locked':
+    'La cuenta está temporalmente bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.',
+  'errors.email_unconfirmed':
+    'Debes confirmar tu correo antes de iniciar sesión. Revisá tu bandeja o pedí un nuevo enlace.',
   'errors.google_not_configured': 'El inicio de sesión con Google no está configurado.',
   'errors.google_invalid_token': 'El token de Google no es válido.',
   'errors.google_email_unverified': 'La cuenta de Google debe tener el email verificado.',
-  'errors.google_no_password': 'Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.',
+  'errors.google_no_password':
+    'Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.',
   'errors.reset_invalid_token': 'El enlace de recuperación no es válido o ya expiró.',
   'errors.reset_expired_token': 'El enlace de recuperación expiró. Solicita uno nuevo.',
   'errors.confirm_invalid_token': 'El enlace de confirmación no es válido o ya expiró.',
@@ -46,10 +49,13 @@ export const es: Record<string, string> = {
   'errors.time_interval_required': 'Debes indicar un intervalo de tiempo mayor a cero.',
   'errors.already_following': 'Ya estás siguiendo este mantenimiento.',
   'errors.maintenance_future_date': 'No puedes agregar mantenimientos posteriores al dia de hoy',
-  'errors.maintenance_not_on_motorcycle': 'El mantenimiento no pertenece a la motocicleta seleccionada.',
+  'errors.maintenance_not_on_motorcycle':
+    'El mantenimiento no pertenece a la motocicleta seleccionada.',
   'errors.km_required': 'Debes ingresar kilometraje para este mantenimiento.',
-  'errors.km_below_previous': 'El kilometraje no puede ser menor al del registro anterior de este mantenimiento.',
-  'errors.km_above_next': 'El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.',
+  'errors.km_below_previous':
+    'El kilometraje no puede ser menor al del registro anterior de este mantenimiento.',
+  'errors.km_above_next':
+    'El kilometraje no puede ser mayor al del registro posterior de este mantenimiento.',
   'errors.km_below_current': 'No puedes registrar un kilometraje menor al actual.',
   'errors.km_initial_protected': 'No puedes eliminar el registro inicial de kilometraje.',
   'errors.km_above_rollback': 'El nuevo kilometraje no puede ser mayor al registro eliminado.',

@@ -28,9 +28,9 @@ describe('HttpErrorService', () => {
   });
 
   it('should keep the server message for codes without a catalog entry', () => {
-    expect(service.message({ error: { code: 'validation', error: 'Un Mensaje Específico.' } })).toBe(
-      'Un Mensaje Específico.',
-    );
+    expect(
+      service.message({ error: { code: 'validation', error: 'Un Mensaje Específico.' } }),
+    ).toBe('Un Mensaje Específico.');
   });
 
   it('should return a friendly message for connection problems (status 0)', () => {

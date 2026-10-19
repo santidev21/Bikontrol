@@ -78,7 +78,7 @@ namespace Bikontrol.Infrastructure.Services
             var motorcycle = await _motorcycleRepository.GetByIdAsync(record.MotorcycleId);
             if (motorcycle is null || motorcycle.UserId != _current.UserId)
                 throw new ForbiddenAccessException("No tienes permisos para este registro.", "record_no_access");
-            }
+        }
 
         private void EnsureCanWrite()
         {

@@ -40,16 +40,14 @@ export class AuthService {
   }
 
   register(data: RegisterRequest): Observable<RegisterResponse> {
-    return this.http
-      .post<RegisterResponse>(`${this.apiUrl}/register`, data, CREDENTIALS)
-      .pipe(
-        tap((response) => {
-          // When email confirmation is required there is no session yet.
-          if (response.token) {
-            this.storeSession(response);
-          }
-        }),
-      );
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data, CREDENTIALS).pipe(
+      tap((response) => {
+        // When email confirmation is required there is no session yet.
+        if (response.token) {
+          this.storeSession(response);
+        }
+      }),
+    );
   }
 
   confirmEmail(email: string, token: string): Observable<MessageResponse> {
@@ -90,12 +88,10 @@ export class AuthService {
 
   refreshSession(): Observable<boolean> {
     // The refresh token rides the HttpOnly cookie; the body stays empty.
-    return this.http
-      .post<LoginResponse>(`${this.apiUrl}/refresh`, {}, silentContext())
-      .pipe(
-        tap((response) => this.storeSession(response)),
-        map(() => true),
-      );
+    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, {}, silentContext()).pipe(
+      tap((response) => this.storeSession(response)),
+      map(() => true),
+    );
   }
 
   logout(): void {

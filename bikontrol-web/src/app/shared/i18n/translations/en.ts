@@ -16,8 +16,10 @@ export const en: Record<string, string> = {
   'errors.invalid_credentials': 'Invalid email or password.',
   'errors.session_expired': 'Your session expired. Please log in again.',
   'common.loadMore': 'Load more',
-  'errors.account_locked': 'The account is temporarily locked after too many failed attempts. Try again later.',
-  'errors.email_unconfirmed': 'You must confirm your email before signing in. Check your inbox or request a new link.',
+  'errors.account_locked':
+    'The account is temporarily locked after too many failed attempts. Try again later.',
+  'errors.email_unconfirmed':
+    'You must confirm your email before signing in. Check your inbox or request a new link.',
   'errors.google_not_configured': 'Google sign-in is not configured.',
   'errors.google_invalid_token': 'The Google token is invalid.',
   'errors.google_email_unverified': 'The Google account must have a verified email.',
@@ -46,10 +48,13 @@ export const en: Record<string, string> = {
   'errors.time_interval_required': 'You must set a time interval greater than zero.',
   'errors.already_following': 'You are already following this maintenance item.',
   'errors.maintenance_future_date': 'You cannot log maintenance dated after today',
-  'errors.maintenance_not_on_motorcycle': 'The maintenance item does not belong to the selected motorcycle.',
+  'errors.maintenance_not_on_motorcycle':
+    'The maintenance item does not belong to the selected motorcycle.',
   'errors.km_required': 'You must enter mileage for this maintenance item.',
-  'errors.km_below_previous': 'The mileage cannot be lower than the previous record of this maintenance item.',
-  'errors.km_above_next': 'The mileage cannot be higher than the later record of this maintenance item.',
+  'errors.km_below_previous':
+    'The mileage cannot be lower than the previous record of this maintenance item.',
+  'errors.km_above_next':
+    'The mileage cannot be higher than the later record of this maintenance item.',
   'errors.km_below_current': 'You cannot log a mileage lower than the current one.',
   'errors.km_initial_protected': 'You cannot delete the initial mileage record.',
   'errors.km_above_rollback': 'The new mileage cannot be higher than the deleted record.',
