@@ -29,13 +29,13 @@ namespace Bikontrol.Application.Services
             if (string.IsNullOrWhiteSpace(dataUrl) || dataUrl == "default.png")
             {
                 if (required)
-                    throw new ValidationException("La imagen es obligatoria.");
+                    throw new ValidationException("La imagen es obligatoria.", "image_required");
                 return;
             }
 
             var prefix = AllowedPrefixes.FirstOrDefault(p => dataUrl.StartsWith(p, StringComparison.Ordinal));
             if (prefix is null)
-                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.");
+                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.", "image_invalid_format");
 
             var payload = dataUrl[prefix.Length..];
             byte[] bytes;
@@ -45,11 +45,11 @@ namespace Bikontrol.Application.Services
             }
             catch (FormatException)
             {
-                throw new ValidationException("La imagen no es válida.");
+                throw new ValidationException("La imagen no es válida.", "image_invalid");
             }
 
             if (bytes.Length == 0 || bytes.Length > MaxDecodedBytes)
-                throw new ValidationException("La imagen es demasiado grande.");
+                throw new ValidationException("La imagen es demasiado grande.", "image_too_large");
         }
 
         /// <summary>Maps an accepted data URL prefix to its MIME type.</summary>

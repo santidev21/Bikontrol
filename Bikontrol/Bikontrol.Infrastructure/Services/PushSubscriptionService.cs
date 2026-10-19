@@ -23,7 +23,7 @@ namespace Bikontrol.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(request.Endpoint)
                 || string.IsNullOrWhiteSpace(request.Keys?.P256dh)
                 || string.IsNullOrWhiteSpace(request.Keys?.Auth))
-                throw new ValidationException("La suscripción de notificaciones está incompleta.");
+                throw new ValidationException("La suscripción de notificaciones está incompleta.", "push_subscription_incomplete");
 
             await _repository.UpsertAsync(new PushSubscription
             {
@@ -48,7 +48,7 @@ namespace Bikontrol.Infrastructure.Services
         private void EnsureCanWrite()
         {
             if (_current.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
     }
 }

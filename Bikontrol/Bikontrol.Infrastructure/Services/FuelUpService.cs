@@ -43,7 +43,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<FuelUpDTO?> GetByIdAsync(Guid id)
         {
             var fuelUp = await _repo.GetByIdAsync(id)
-                ?? throw new NotFoundException("Carga de combustible no encontrada.");
+                ?? throw new NotFoundException("Carga de combustible no encontrada.", "fuel_not_found");
             await EnsureMotorcycleOwnershipAsync(fuelUp.MotorcycleId);
             return fuelUp.ToFuelUpDTO();
         }
@@ -83,7 +83,7 @@ namespace Bikontrol.Infrastructure.Services
             Validate(request);
 
             var entity = await _repo.GetByIdAsync(id)
-                ?? throw new NotFoundException("Carga de combustible no encontrada.");
+                ?? throw new NotFoundException("Carga de combustible no encontrada.", "fuel_not_found");
             await EnsureMotorcycleOwnershipAsync(entity.MotorcycleId);
             await EnsureMotorcycleOwnershipAsync(request.MotorcycleId);
 
@@ -110,7 +110,7 @@ namespace Bikontrol.Infrastructure.Services
             EnsureCanWrite();
 
             var entity = await _repo.GetByIdAsync(id)
-                ?? throw new NotFoundException("Carga de combustible no encontrada.");
+                ?? throw new NotFoundException("Carga de combustible no encontrada.", "fuel_not_found");
             await EnsureMotorcycleOwnershipAsync(entity.MotorcycleId);
 
             await _transactions.ExecuteInTransactionAsync(async () =>
@@ -163,19 +163,19 @@ namespace Bikontrol.Infrastructure.Services
         private void EnsureCanWrite()
         {
             if (_current.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
 
         private static void Validate(SaveFuelUpRequest request)
         {
             if (request.FueledAt.Date > DateTime.UtcNow.Date)
-                throw new ValidationException("No puedes registrar cargas posteriores al dia de hoy.");
+                throw new ValidationException("No puedes registrar cargas posteriores al dia de hoy.", "fuel_future_date");
 
             if (request.Litres <= 0)
-                throw new ValidationException("Los litros deben ser mayores a cero.");
+                throw new ValidationException("Los litros deben ser mayores a cero.", "fuel_litres_positive");
 
             if (request.TotalCost < 0)
-                throw new ValidationException("El costo no puede ser negativo.");
+                throw new ValidationException("El costo no puede ser negativo.", "cost_negative");
         }
 
         private static string? Normalize(string? value) =>
@@ -193,9 +193,9 @@ namespace Bikontrol.Infrastructure.Services
         private async Task EnsureMotorcycleOwnershipAsync(Guid motorcycleId)
         {
             var motorcycle = await _motorcycleRepository.GetByIdAsync(motorcycleId);
-            if (motorcycle is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (motorcycle is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (motorcycle.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.", "motorcycle_no_access");
         }
 
         private async Task EnsureMotorcyclesOwnershipAsync(IReadOnlyCollection<Guid> motorcycleIds)
@@ -205,7 +205,7 @@ namespace Bikontrol.Infrastructure.Services
                 .ToHashSet();
 
             if (motorcycleIds.Any(id => !owned.Contains(id)))
-                throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.");
+                throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.", "motorcycles_no_access");
         }
     }
 }

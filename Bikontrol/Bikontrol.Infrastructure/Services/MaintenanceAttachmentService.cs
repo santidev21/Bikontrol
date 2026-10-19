@@ -63,7 +63,7 @@ namespace Bikontrol.Infrastructure.Services
 
             var attachment = await _attachmentRepository.GetByIdAsync(attachmentId);
             if (attachment is null || attachment.MotorcycleMaintenanceRecordId != recordId)
-                throw new NotFoundException("Adjunto no encontrado.");
+                throw new NotFoundException("Adjunto no encontrado.", "attachment_not_found");
 
             await _attachmentRepository.RemoveAsync(attachment);
             await _attachmentRepository.SaveChangesAsync();
@@ -73,17 +73,17 @@ namespace Bikontrol.Infrastructure.Services
         {
             var record = await _recordRepository.GetByIdAsync(recordId);
             if (record is null)
-                throw new NotFoundException("Registro de mantenimiento no encontrado.");
+                throw new NotFoundException("Registro de mantenimiento no encontrado.", "record_not_found");
 
             var motorcycle = await _motorcycleRepository.GetByIdAsync(record.MotorcycleId);
             if (motorcycle is null || motorcycle.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para este registro.");
-        }
+                throw new ForbiddenAccessException("No tienes permisos para este registro.", "record_no_access");
+            }
 
         private void EnsureCanWrite()
         {
             if (_current.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
     }
 }

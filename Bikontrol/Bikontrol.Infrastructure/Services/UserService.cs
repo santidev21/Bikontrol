@@ -51,11 +51,11 @@ namespace Bikontrol.Infrastructure.Services
             var user = await GetCurrentUserAsync();
 
             if (!user.HasPassword)
-                throw new ValidationException("Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.");
+                throw new ValidationException("Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.", "google_no_password");
 
             var verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword);
             if (verification != PasswordVerificationResult.Success)
-                throw new ValidationException("La contraseña actual no es correcta.");
+                throw new ValidationException("La contraseña actual no es correcta.", "current_password_incorrect");
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
@@ -90,14 +90,14 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByIdAsync(_current.UserId);
             if (user is null)
-                throw new NotFoundException("Usuario no encontrado.");
+                throw new NotFoundException("Usuario no encontrado.", "user_not_found");
             return user;
         }
 
         private void EnsureCanWrite()
         {
             if (_current.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
 
         private ProfileDTO ToProfile(User user)

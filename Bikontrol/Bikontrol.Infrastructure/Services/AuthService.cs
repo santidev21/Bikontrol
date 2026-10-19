@@ -117,7 +117,8 @@ namespace Bikontrol.Infrastructure.Services
             if (IsLockoutEnabled() && user.IsLockedOut)
                 throw new AuthException(
                     "La cuenta está temporalmente bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.",
-                    429);
+                    429,
+                    "account_locked");
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result != PasswordVerificationResult.Success)
@@ -134,7 +135,8 @@ namespace Bikontrol.Infrastructure.Services
             if (IsEmailConfirmationRequired() && !user.IsEmailConfirmed)
                 throw new AuthException(
                     "Debes confirmar tu correo antes de iniciar sesión. Revisá tu bandeja o pedí un nuevo enlace.",
-                    403);
+                    403,
+                    "email_unconfirmed");
 
             // Successful login clears any previous failed-attempt counter.
             user.ResetAccessFailed();
@@ -148,7 +150,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             var clientId = _configuration["Google:ClientId"];
             if (string.IsNullOrWhiteSpace(clientId))
-                throw new AuthException("El inicio de sesión con Google no está configurado.", 503);
+                throw new AuthException("El inicio de sesión con Google no está configurado.", 503, "google_not_configured");
 
             GoogleJsonWebSignature.Payload payload;
             try
@@ -162,11 +164,11 @@ namespace Bikontrol.Infrastructure.Services
             }
             catch (InvalidJwtException)
             {
-                throw new AuthException("El token de Google no es válido.");
+                throw new AuthException("El token de Google no es válido.", 401, "google_invalid_token");
             }
 
             if (payload.EmailVerified != true)
-                throw new AuthException("La cuenta de Google debe tener el email verificado.");
+                throw new AuthException("La cuenta de Google debe tener el email verificado.", 401, "google_email_unverified");
 
             var user = await _userRepository.GetByEmailAsync(payload.Email);
             if (user == null)
@@ -262,14 +264,14 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(request.Email);
             if (user == null || string.IsNullOrWhiteSpace(user.ResetPasswordTokenHash))
-                throw new AuthException("El enlace de recuperación no es válido o ya expiró.");
+                throw new AuthException("El enlace de recuperación no es válido o ya expiró.", 401, "reset_invalid_token");
 
             if (user.ResetPasswordTokenExpires is null || user.ResetPasswordTokenExpires < DateTime.UtcNow)
-                throw new AuthException("El enlace de recuperación expiró. Solicita uno nuevo.");
+                throw new AuthException("El enlace de recuperación expiró. Solicita uno nuevo.", 401, "reset_expired_token");
 
             var providedHash = HashToken(request.Token);
             if (!FixedTimeEquals(user.ResetPasswordTokenHash, providedHash))
-                throw new AuthException("El enlace de recuperación no es válido.");
+                throw new AuthException("El enlace de recuperación no es válido.", 401, "reset_invalid_token");
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();
@@ -286,7 +288,7 @@ namespace Bikontrol.Infrastructure.Services
         {
             var user = await _userRepository.GetByEmailAsync(request.Email);
             if (user == null)
-                throw new AuthException("El enlace de confirmación no es válido o ya expiró.");
+                throw new AuthException("El enlace de confirmación no es válido o ya expiró.", 401, "confirm_invalid_token");
 
             // Idempotent: confirming an already-confirmed account is a no-op.
             if (user.IsEmailConfirmed)
@@ -295,11 +297,11 @@ namespace Bikontrol.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(user.EmailConfirmationTokenHash)
                 || user.EmailConfirmationTokenExpires is null
                 || user.EmailConfirmationTokenExpires < DateTime.UtcNow)
-                throw new AuthException("El enlace de confirmación no es válido o ya expiró.");
+                throw new AuthException("El enlace de confirmación no es válido o ya expiró.", 401, "confirm_invalid_token");
 
             var providedHash = HashToken(request.Token);
             if (!FixedTimeEquals(user.EmailConfirmationTokenHash, providedHash))
-                throw new AuthException("El enlace de confirmación no es válido.");
+                throw new AuthException("El enlace de confirmación no es válido.", 401, "confirm_invalid_token");
 
             user.MarkEmailConfirmed();
             await _userRepository.SaveChangesAsync();
@@ -322,7 +324,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<LoginResponse> DemoLoginAsync()
         {
             if (!IsDemoEnabled())
-                throw new AuthException("El modo demo no está disponible.", 404);
+                throw new AuthException("El modo demo no está disponible.", 404, "demo_disabled");
 
             var demoEmail = _configuration["DemoUser:Email"] ?? "demo@bikontrol.com";
             var demoName = _configuration["DemoUser:FullName"] ?? "Usuario Demo";
@@ -339,7 +341,7 @@ namespace Bikontrol.Infrastructure.Services
             {
                 // The configured demo email collides with a real account.
                 // Never hand out that account through the anonymous demo endpoint.
-                throw new AuthException("El usuario demo no está disponible.", 403);
+                throw new AuthException("El usuario demo no está disponible.", 403, "demo_unavailable");
             }
 
             // The demo account is usable immediately; it is not a real inbox.

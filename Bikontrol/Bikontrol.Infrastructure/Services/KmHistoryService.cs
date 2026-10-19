@@ -21,7 +21,7 @@ namespace Bikontrol.Infrastructure.Services
             var last = await _repository.GetLastByMotorcycleIdAsync(motorcycleId);
 
             if (last != null && km < last.Km)
-                throw new ValidationException("No puedes registrar un kilometraje menor al actual.");
+                throw new ValidationException("No puedes registrar un kilometraje menor al actual.", "km_below_current");
 
             if (last != null && km == last.Km)
                 return;
@@ -58,16 +58,16 @@ namespace Bikontrol.Infrastructure.Services
         {
             var history = await _repository.GetByMotorcycleIdAsync(motorcycleId);
             if (history.Count <= 1)
-                throw new ValidationException("No puedes eliminar el registro inicial de kilometraje.");
+                throw new ValidationException("No puedes eliminar el registro inicial de kilometraje.", "km_initial_protected");
 
             var last = history[0];
             var previous = history[1];
 
             if (newKm > last.Km)
-                throw new ValidationException("El nuevo kilometraje no puede ser mayor al registro eliminado.");
+                throw new ValidationException("El nuevo kilometraje no puede ser mayor al registro eliminado.", "km_above_rollback");
 
             if (newKm < previous.Km)
-                throw new ValidationException("El nuevo kilometraje no puede ser menor al penultimo registro.");
+                throw new ValidationException("El nuevo kilometraje no puede ser menor al penultimo registro.", "km_below_penultimate");
 
             // Eliminar + re-agregar en una sola transacción.
             await _transactions.ExecuteInTransactionAsync(async () =>

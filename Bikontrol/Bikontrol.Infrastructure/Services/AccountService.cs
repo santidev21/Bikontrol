@@ -58,7 +58,7 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<UserDataExportDTO> ExportMyDataAsync()
         {
             var user = await _userRepository.GetByIdAsync(_current.UserId)
-                ?? throw new NotFoundException("Usuario no encontrado.");
+                ?? throw new NotFoundException("Usuario no encontrado.", "user_not_found");
 
             var motorcycles = (await _motorcycleRepository.GetByUserIdAsync(_current.UserId)).ToList();
             var motorcycleIds = motorcycles.Select(m => m.Id).ToList();
@@ -114,16 +114,16 @@ namespace Bikontrol.Infrastructure.Services
             // The demo tenant is shared: nobody may delete it.
             if (_current.IsDemo)
             {
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
             }
 
             if (!string.Equals(request.Confirmation?.Trim(), "ELIMINAR", StringComparison.OrdinalIgnoreCase))
             {
-                throw new ValidationException("Escribe ELIMINAR para confirmar.");
+                throw new ValidationException("Escribe ELIMINAR para confirmar.", "delete_confirmation_required");
             }
 
             var user = await _userRepository.GetByIdAsync(_current.UserId)
-                ?? throw new NotFoundException("Usuario no encontrado.");
+                ?? throw new NotFoundException("Usuario no encontrado.", "user_not_found");
 
             if (user.HasPassword)
             {
@@ -131,7 +131,7 @@ namespace Bikontrol.Infrastructure.Services
                     || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
                         != PasswordVerificationResult.Success)
                 {
-                    throw new ValidationException("La contraseña no es correcta.");
+                    throw new ValidationException("La contraseña no es correcta.", "current_password_incorrect");
                 }
             }
 

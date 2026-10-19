@@ -61,22 +61,22 @@ namespace Bikontrol.API.Middleware
                     code = authEx.Code ?? "auth_error";
                     break;
 
-                case NotFoundException:
+                case NotFoundException notFoundEx:
                     statusCode = HttpStatusCode.NotFound;
-                    message = exception.Message;
-                    code = "not_found";
+                    message = notFoundEx.Message;
+                    code = notFoundEx.Code ?? "not_found";
                     break;
 
-                case ForbiddenAccessException:
+                case ForbiddenAccessException forbiddenEx:
                     statusCode = HttpStatusCode.Forbidden;
-                    message = exception.Message;
-                    code = "forbidden";
+                    message = forbiddenEx.Message;
+                    code = forbiddenEx.Code ?? "forbidden";
                     break;
 
-                case ValidationException:
+                case ValidationException validationEx:
                     statusCode = HttpStatusCode.BadRequest;
-                    message = exception.Message;
-                    code = "validation";
+                    message = validationEx.Message;
+                    code = validationEx.Code ?? "validation";
                     break;
 
                 case DbUpdateConcurrencyException:

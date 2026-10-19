@@ -41,6 +41,11 @@ export class I18nService {
     }
     return value;
   }
+
+  /** True when the key exists in the current language (or the ES fallback). */
+  has(key: string): boolean {
+    return key in DICTIONARIES[this.current()] || key in es;
+  }
 }
 
 function readInitialLanguage(): Language {

@@ -35,7 +35,7 @@ namespace Bikontrol.Infrastructure.Services
         private void EnsureCanWrite()
         {
             if (_currentUser.IsDemo)
-                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.");
+                throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
 
         public async Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto)
@@ -71,10 +71,10 @@ namespace Bikontrol.Infrastructure.Services
             var entity = await _motorcycleRepository.GetByIdAsync(id);
 
             if (entity is null)
-                throw new NotFoundException("Motocicleta no encontrada.");
+                throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
 
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes acceso a esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes acceso a esta motocicleta.", "motorcycle_no_access");
 
             var dto = entity.ToMotorcycleDTO();
             dto.Km = await GetCurrentKmOrDefaultAsync(entity.Id);
@@ -106,9 +106,9 @@ namespace Bikontrol.Infrastructure.Services
         public async Task<int> GetCurrentKmAsync(Guid id)
         {
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para ver esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para ver esta motocicleta.", "motorcycle_no_access");
 
             return await _kmHistoryService.GetCurrentKmAsync(id);
         }
@@ -117,9 +117,9 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.", "motorcycle_no_access");
 
             await _kmHistoryService.AddKmAsync(id, km);
         }
@@ -128,9 +128,9 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.", "motorcycle_no_access");
 
             await _kmHistoryService.RollbackLastKmAsync(id, newKm);
         }
@@ -140,10 +140,10 @@ namespace Bikontrol.Infrastructure.Services
             EnsureCanWrite();
             EnsureValidImage(dto.Image);
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
 
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para editar esta motocicleta.", "motorcycle_no_access");
 
             entity.Name = dto.Name;
             entity.Brand = dto.Brand;
@@ -161,10 +161,10 @@ namespace Bikontrol.Infrastructure.Services
         {
             EnsureCanWrite();
             var entity = await _motorcycleRepository.GetByIdAsync(id);
-            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.");
+            if (entity is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
 
             if (entity.UserId != _currentUser.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para borrar esta motocicleta.");
+                throw new ForbiddenAccessException("No tienes permisos para borrar esta motocicleta.", "motorcycle_no_access");
 
             await _transactions.ExecuteInTransactionAsync(async () =>
             {
@@ -187,7 +187,7 @@ namespace Bikontrol.Infrastructure.Services
                 : image.StartsWith(webpPrefix, StringComparison.Ordinal) ? webpPrefix
                 : null;
             if (prefix is null)
-                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.");
+                throw new ValidationException("La imagen debe ser un data URL JPEG, PNG o WebP.", "image_invalid_format");
 
             var payload = image[prefix.Length..];
             byte[] bytes;
@@ -197,14 +197,14 @@ namespace Bikontrol.Infrastructure.Services
             }
             catch (FormatException)
             {
-                throw new ValidationException("La imagen no es válida.");
+                throw new ValidationException("La imagen no es válida.", "image_invalid");
             }
 
             // ~1 MB decoded; the DTO length cap (1.4M chars) alone still allows
             // oversized payloads past client-side resizing.
             const int maxDecodedBytes = 1_048_576;
             if (bytes.Length == 0 || bytes.Length > maxDecodedBytes)
-                throw new ValidationException("La imagen es demasiado grande.");
+                throw new ValidationException("La imagen es demasiado grande.", "image_too_large");
         }
     }
 }

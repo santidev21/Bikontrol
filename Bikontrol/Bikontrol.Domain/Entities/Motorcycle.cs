@@ -47,23 +47,23 @@ namespace Bikontrol.Domain.Entities
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(Name))
-                throw new ValidationException("El nombre es obligatorio.");
+                throw new ValidationException("El nombre es obligatorio.", "moto_name_required");
 
             if (string.IsNullOrWhiteSpace(Brand))
-                throw new ValidationException("La marca es obligatoria.");
+                throw new ValidationException("La marca es obligatoria.", "moto_brand_required");
 
             if (string.IsNullOrWhiteSpace(Nickname))
-                throw new ValidationException("El apodo es obligatorio.");
+                throw new ValidationException("El apodo es obligatorio.", "moto_nickname_required");
 
             if (string.IsNullOrWhiteSpace(Plate))
-                throw new ValidationException("La placa es obligatoria.");
+                throw new ValidationException("La placa es obligatoria.", "moto_plate_required");
 
             int currentYear = DateTime.UtcNow.Year;
             if (Year < 1950 || Year > currentYear + 1)
                 throw new ValidationException($"El modelo debe estar entre 1950 y {currentYear + 1}.");
 
             if (Displacement < 0)
-                throw new ValidationException("El cilindraje no puede ser negativo.");
+                throw new ValidationException("El cilindraje no puede ser negativo.", "moto_displacement_negative");
         }
     }
 }
