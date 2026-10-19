@@ -1,6 +1,6 @@
-using AutoMapper;
 using Bikontrol.API.Extensions;
 using Bikontrol.API.Middleware;
+using Bikontrol.API.RateLimiting;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure;
 using Bikontrol.Infrastructure.Authentication;
@@ -187,24 +187,22 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("auth", httpContext =>
     {
         var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 10,
-            Window = TimeSpan.FromMinutes(1),
-            QueueLimit = 0
-        });
-    });
-    options.AddPolicy("auth-sustained", httpContext =>
-    {
-        // The "s:" prefix keeps this policy's partitions independent of the
-        // burst policy's, which uses the bare IP as its key.
-        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return RateLimitPartition.GetFixedWindowLimiter($"s:{clientIp}", _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = authPerHour,
-            Window = TimeSpan.FromHours(1),
-            QueueLimit = 0
-        });
+        // One composite limiter per IP: burst (10/min) + sustained ceiling.
+        // A single policy, because an action-level EnableRateLimiting
+        // attribute would replace the class-level policy instead of adding.
+        return RateLimitPartition.Get(clientIp, _ => new BurstAndSustainedLimiter(
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            },
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = authPerHour,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
     });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
