@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/santidev21/Bikontrol/compare/v0.5.0...v0.6.0) (2026-10-28)
+
+
+### Features
+
+* security, performance and architecture hardening pass ([#103](https://github.com/santidev21/Bikontrol/issues/103)) ([bfc64d8](https://github.com/santidev21/Bikontrol/commit/bfc64d8fc9c9501f159ea83fb66b3da36492a9c2))
+
+
+### Bug Fixes
+
+* **fuel:** guard integrity checks pre-migration and add flow coverage ([#101](https://github.com/santidev21/Bikontrol/issues/101)) ([342ce06](https://github.com/santidev21/Bikontrol/commit/342ce065fdb0f9a086a3e7b66bb207c84d95b8dc))
+* reminder delivery, job locking, audit size, refresh interceptor and backup/restore ([#105](https://github.com/santidev21/Bikontrol/issues/105)) ([01da107](https://github.com/santidev21/Bikontrol/commit/01da107e1c905ee762094a7bd9c7cf30506bade1))
+
 ## [0.5.0](https://github.com/santidev21/Bikontrol/compare/v0.4.0...v0.5.0) (2026-10-15)
 
 
