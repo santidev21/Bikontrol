@@ -48,7 +48,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - API contract: `ApiContractTests` regenerates `docs/api/openapi.json` (routes/requests) and `docs/api/dto-contract.json` (all DTO shapes) and fails CI when they change without the client. Refresh with `npm run api:contract:update` (see `docs/specs/api.md`).
 - E2E: Playwright drives the critical flow (register → motorcycle → maintenance → record → overdue) against the real stack (`e2e/`, `.github/workflows/e2e.yml`; `npm run test:e2e`).
 - CI (`ci.yml`): backend + frontend tests, **frontend production build** (AOT + env generator), Gitleaks, Trivy fs, CodeQL, SonarCloud, dependency audit (non-blocking), compose validation and deploy. E2E runs in `.github/workflows/e2e.yml`.
-- Deploy (`scripts/deploy.sh`): backup + verify → integrity audit → build → up → container healthcheck → **post-deploy smoke test**; rolls back automatically on either failure. Staging reuses it via `DEPLOY_DIR`/`SMOKE_URL`.
+- Deploy (`scripts/deploy.sh`): backup + verify (daily cron + offsite encrypted copy when configured) → integrity audit → pull → build (keeps `:previous` images) → migrate → up → container healthcheck → **post-deploy smoke test**; rolls back automatically (DB dump + previous images) on either failure. `restore-db` restores a dump. Staging reuses it via `DEPLOY_DIR`/`SMOKE_URL`.
 - Releases: `release-please` (`.github/workflows/release.yml`) keeps `CHANGELOG.md` and `version.txt` from **Conventional Commits**; merging its release PR tags `vX.Y.Z`. The version shown in Profile is read from `version.txt` (`bikontrol-web/scripts/set-env.js`).
 - `main` is protected: required status checks, no force-push.
 
@@ -61,7 +61,7 @@ Angular 22 SPA in `bikontrol-web/src/app` (Tailwind + SCSS, PWA via `ngsw-config
 - E2E: `npm run test:e2e` (Playwright; needs the stack up — see `e2e/README.md`)
 - Migrations: `npm run db:migration:add -- <Name>` (see `db-migrations`, or `/migrate`) · `npm run db:migrate` (= `dotnet ef database update …`)
 - DB: `npm run db:up` (Postgres on `127.0.0.1:5434`, loopback-only) · `npm run db:down` · `npm run db:backup` / `db:restore` (compressed, 7-copy retention)
-- Pre-deploy with real users: `npm run db:backup` first, then run `scripts/db-integrity-audit.sql` (read-only; every block must return 0 rows), then deploy (prod auto-applies migrations at startup)
+- Pre-deploy with real users: `npm run db:backup` first, then run `scripts/db-integrity-audit.sql` (read-only; every block must return 0 rows), then deploy (prod applies migrations as a dedicated `deploy.sh migrate` step before `up`; `Database__RunMigrationsOnStartup=false`)
 - Docker: `npm run docker:dev` (= `docker compose -f docker-compose.yml -f docker-compose.local.yml up --build`) (see `docker-dev`)
 
 ## Ports

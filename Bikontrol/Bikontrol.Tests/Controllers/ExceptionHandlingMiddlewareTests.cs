@@ -2,7 +2,9 @@ using System.Text.Json;
 using Bikontrol.API.Middleware;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 
 namespace Bikontrol.Tests.Controllers;
 
@@ -101,5 +103,61 @@ public class ExceptionHandlingMiddlewareTests
         public bool HasStarted => true;
         public void OnStarting(Func<object, Task> callback, object state) { }
         public void OnCompleted(Func<object, Task> callback, object state) { }
+    }
+
+    [Theory]
+    [InlineData("23505", 409, "duplicate")]
+    [InlineData("22001", 400, "validation")]
+    [InlineData("23514", 400, "validation")]
+    public async Task InvokeAsync_WhenDatabaseRejectsTheData_ShouldMapToClientError(string sqlState, int status, string code)
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+        var pg = new PostgresException("rejected", "ERROR", "ERROR", sqlState);
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => throw new DbUpdateException("save failed", pg),
+            NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(status, context.Response.StatusCode);
+        context.Response.Body.Position = 0;
+        using var doc = await JsonDocument.ParseAsync(context.Response.Body);
+        Assert.Equal(code, doc.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WhenDatabaseFailsForAnotherReason_ShouldStayAServerError()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+        var pg = new PostgresException("down", "ERROR", "ERROR", "57P01");
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => throw new DbUpdateException("save failed", pg),
+            NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(500, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WhenTheClientAborted_ShouldNotReportAServerError()
+    {
+        using var cts = new CancellationTokenSource();
+        var context = new DefaultHttpContext { RequestAborted = cts.Token };
+        context.Response.Body = new MemoryStream();
+        var middleware = new ExceptionHandlingMiddleware(
+            _ =>
+            {
+                cts.Cancel();
+                throw new OperationCanceledException(cts.Token);
+            },
+            NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(499, context.Response.StatusCode);
+        Assert.Equal(0, context.Response.Body.Length);
     }
 }

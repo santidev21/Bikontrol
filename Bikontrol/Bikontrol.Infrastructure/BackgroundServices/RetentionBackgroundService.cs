@@ -84,9 +84,19 @@ namespace Bikontrol.Infrastructure.BackgroundServices
 
         private async Task RunOnceAsync(CancellationToken cancellationToken)
         {
-            _lastRunUtc = DateTime.UtcNow;
-
             using var scope = _scopeFactory.CreateScope();
+
+            // One instance at a time: another replica holding the lock is already
+            // doing this run. Release happens when the handle is disposed.
+            var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
+            await using var handle = await distributedLock.TryAcquireAsync("bikontrol:job:retention", cancellationToken);
+            if (handle is null)
+            {
+                _logger.LogInformation("Retention run skipped: another instance holds the lock.");
+                _lastRunUtc = DateTime.UtcNow;
+                return;
+            }
+
             var service = scope.ServiceProvider.GetRequiredService<IRetentionService>();
 
             var result = await service.PurgeAsync(cancellationToken);
@@ -96,6 +106,9 @@ namespace Bikontrol.Infrastructure.BackgroundServices
                 result.RefreshTokensDeleted,
                 result.ReminderLogsDeleted,
                 result.AuditLogsDeleted);
+
+            // Only a fully successful run counts: a failure retries on the next tick.
+            _lastRunUtc = DateTime.UtcNow;
         }
     }
 }

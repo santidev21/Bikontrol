@@ -17,6 +17,9 @@ namespace Bikontrol.Persistence.Configurations
 
             builder.HasIndex(r => new { r.UserMaintenanceId, r.Kind, r.CreatedAt });
             builder.HasIndex(r => r.UserId);
+            // Pending-delivery scans per channel.
+            builder.HasIndex(r => new { r.EmailDeliveredAt, r.CreatedAt });
+            builder.HasIndex(r => new { r.PushDeliveredAt, r.CreatedAt });
 
             builder.HasOne(r => r.User)
                 .WithMany()

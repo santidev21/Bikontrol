@@ -11,6 +11,7 @@ namespace Bikontrol.Application.DTOs.Auth
     {
         [Required(ErrorMessage = "El email es obligatorio.")]
         [EmailAddress(ErrorMessage = "El email no es válido.")]
+        [MaxLength(150, ErrorMessage = "El email no puede superar los 150 caracteres.")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria.")]
@@ -19,6 +20,7 @@ namespace Bikontrol.Application.DTOs.Auth
         public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [MaxLength(200, ErrorMessage = "El nombre no puede superar los 200 caracteres.")]
         public string FullName { get; set; } = string.Empty;
     }
     public class RegisterResponse

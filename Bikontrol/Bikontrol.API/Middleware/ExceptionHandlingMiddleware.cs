@@ -1,6 +1,7 @@
 ﻿using Bikontrol.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
@@ -49,6 +50,13 @@ namespace Bikontrol.API.Middleware
                 return;
             }
 
+            if (exception is OperationCanceledException && context.RequestAborted.IsCancellationRequested)
+            {
+                // The client went away: nothing to answer and nothing to alarm on.
+                context.Response.StatusCode = ClientClosedRequest;
+                return;
+            }
+
             HttpStatusCode statusCode;
             string message;
             string code;
@@ -86,6 +94,24 @@ namespace Bikontrol.API.Middleware
                     LogConcurrencyConflict(logger, exception, requestId, exception.Message);
                     break;
 
+                case DbUpdateException { InnerException: PostgresException pg } when IsClientDataError(pg.SqlState):
+                    // A race on a unique index, or a value the schema rejects, is
+                    // the caller's data, not a server fault.
+                    if (pg.SqlState == PostgresErrorCodes.UniqueViolation)
+                    {
+                        statusCode = HttpStatusCode.Conflict;
+                        message = "Ya existe un registro con esos datos.";
+                        code = "duplicate";
+                    }
+                    else
+                    {
+                        statusCode = HttpStatusCode.BadRequest;
+                        message = "Alguno de los datos enviados no es válido.";
+                        code = "validation";
+                    }
+                    LogDataConflict(logger, exception, requestId, pg.SqlState);
+                    break;
+
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     message = "Error inesperado en el servidor.";
@@ -109,6 +135,18 @@ namespace Bikontrol.API.Middleware
         [LoggerMessage(Level = LogLevel.Warning,
             Message = "Exception after response started [{RequestId}]: {Message}")]
         private static partial void LogAfterResponseStarted(ILogger logger, Exception exception, string requestId, string message);
+
+        private const int ClientClosedRequest = 499;
+
+        private static bool IsClientDataError(string sqlState) =>
+            sqlState is PostgresErrorCodes.UniqueViolation
+                or PostgresErrorCodes.StringDataRightTruncation
+                or PostgresErrorCodes.CheckViolation
+                or PostgresErrorCodes.NotNullViolation;
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Database rejected the data [{RequestId}]: SQLSTATE {SqlState}")]
+        private static partial void LogDataConflict(ILogger logger, Exception exception, string requestId, string sqlState);
 
         [LoggerMessage(Level = LogLevel.Warning,
             Message = "Concurrency conflict [{RequestId}]: {Message}")]

@@ -28,6 +28,7 @@ namespace Bikontrol.Persistence
             services.AddScoped<IMaintenanceRecordAttachmentRepository, MaintenanceRecordAttachmentRepository>();
             services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             services.AddScoped<ITransactionManager, TransactionManager>();
+            services.AddScoped<IDistributedLock, PostgresAdvisoryLock>();
             return services;
         }
     }

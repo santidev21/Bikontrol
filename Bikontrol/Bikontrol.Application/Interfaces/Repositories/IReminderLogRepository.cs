@@ -19,10 +19,13 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task AddAsync(ReminderLog entity);
 
         /// <summary>
-        /// Pending reminders (not yet delivered) with their user and maintenance
-        /// loaded, so the digest can be built without N+1 queries.
+        /// Reminders created since <paramref name="since"/> that were not yet
+        /// delivered on <paramref name="channel"/> (<see cref="ReminderChannel.Email"/>
+        /// or <see cref="ReminderChannel.Push"/>), with their user and maintenance
+        /// loaded so the digest can be built without N+1 queries. Each channel
+        /// tracks its own delivery, so one channel never starves the other.
         /// </summary>
-        Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel);
+        Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel, DateTime since);
 
         /// <summary>Marks the given reminders as delivered on a channel.</summary>
         Task MarkDeliveredAsync(IEnumerable<Guid> ids, string channel, DateTime deliveredAt);

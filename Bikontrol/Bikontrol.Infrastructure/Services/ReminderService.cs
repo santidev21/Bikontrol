@@ -5,6 +5,7 @@ using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Email;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace Bikontrol.Infrastructure.Services
@@ -22,6 +23,7 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IPushSubscriptionRepository _pushSubscriptionRepository;
         private readonly IPushSender _pushSender;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<ReminderService> _logger;
 
         public ReminderService(
             ICurrentUserService current,
@@ -34,7 +36,8 @@ namespace Bikontrol.Infrastructure.Services
             IEmailSender emailSender,
             IPushSubscriptionRepository pushSubscriptionRepository,
             IPushSender pushSender,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<ReminderService> logger)
         {
             _pushSubscriptionRepository = pushSubscriptionRepository;
             _pushSender = pushSender;
@@ -47,11 +50,19 @@ namespace Bikontrol.Infrastructure.Services
             _reminderLogRepository = reminderLogRepository;
             _emailSender = emailSender;
             _configuration = configuration;
+            _logger = logger;
         }
 
         /// <summary>Dedupe window: don't remind the same item twice within N days.</summary>
         private int DedupeDays =>
             int.TryParse(_configuration["Reminders:DedupeDays"], out var days) && days > 0 ? days : 3;
+
+        /// <summary>
+        /// How far back an undelivered reminder is still worth sending. Capped at
+        /// two days so a stale log never goes out as a late "new" reminder and
+        /// never overlaps the next dedupe window.
+        /// </summary>
+        private DateTime DeliverySince => DateTime.UtcNow.AddDays(-Math.Min(DedupeDays, 2));
 
         public async Task<IReadOnlyList<DueReminderDTO>> GetDueForCurrentUserAsync()
         {
@@ -164,11 +175,10 @@ namespace Bikontrol.Infrastructure.Services
 
         public async Task<int> SendPendingEmailsAsync(CancellationToken cancellationToken = default)
         {
-            var pending = await _reminderLogRepository.GetPendingWithDetailsAsync(ReminderChannel.Pending);
+            var pending = await _reminderLogRepository.GetPendingWithDetailsAsync(ReminderChannel.Email, DeliverySince);
             if (pending.Count == 0)
                 return 0;
 
-            var now = DateTime.UtcNow;
             var sent = 0;
 
             // One digest per user, so a user with several due items gets one email.
@@ -185,30 +195,37 @@ namespace Bikontrol.Infrastructure.Services
                 if (!user.RemindersEnabled)
                     continue;
 
-                var baseUrl = (_configuration["Frontend:BaseUrl"] ?? "http://localhost:4200").TrimEnd('/');
-                var subject = logs.Count == 1
-                    ? "Bikontrol: tenés un mantenimiento por vencer"
-                    : $"Bikontrol: {logs.Count} mantenimientos por vencer";
-                var body = BuildDigestBody(user, logs, baseUrl);
+                try
+                {
+                    var baseUrl = (_configuration["Frontend:BaseUrl"] ?? "http://localhost:4200").TrimEnd('/');
+                    var subject = logs.Count == 1
+                        ? "Bikontrol: tenés un mantenimiento por vencer"
+                        : $"Bikontrol: {logs.Count} mantenimientos por vencer";
+                    var body = BuildDigestBody(user, logs, baseUrl);
 
-                await _emailSender.SendAsync(user.Email, subject, body);
-                await _reminderLogRepository.MarkDeliveredAsync(logs.Select(l => l.Id), ReminderChannel.Email, now);
-                sent++;
+                    await _emailSender.SendAsync(user.Email, subject, body);
+
+                    // Persist right after each send: if a later user fails, this
+                    // one is not emailed again on the retry.
+                    await _reminderLogRepository.MarkDeliveredAsync(logs.Select(l => l.Id), ReminderChannel.Email, DateTime.UtcNow);
+                    await _reminderLogRepository.SaveChangesAsync();
+                    sent++;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogWarning(ex, "Reminder digest email failed for user {UserId}; will retry on the next run.", user.Id);
+                }
             }
-
-            if (sent > 0)
-                await _reminderLogRepository.SaveChangesAsync();
 
             return sent;
         }
 
         public async Task<int> SendPendingPushesAsync(CancellationToken cancellationToken = default)
         {
-            var pending = await _reminderLogRepository.GetPendingWithDetailsAsync(ReminderChannel.Pending);
+            var pending = await _reminderLogRepository.GetPendingWithDetailsAsync(ReminderChannel.Push, DeliverySince);
             if (pending.Count == 0)
                 return 0;
 
-            var now = DateTime.UtcNow;
             var delivered = 0;
 
             foreach (var group in pending.GroupBy(r => r.UserId))
@@ -220,44 +237,53 @@ namespace Bikontrol.Infrastructure.Services
                 if (user is null || !user.RemindersEnabled)
                     continue;
 
-                var subscriptions = await _pushSubscriptionRepository.GetByUserIdAsync(user.Id);
-                if (subscriptions.Count == 0)
-                    continue;
-
-                var payload = new PushPayload
+                try
                 {
-                    Title = "Bikontrol: mantenimiento por vencer",
-                    Body = logs.Count == 1
-                        ? $"{logs[0].UserMaintenance?.Name ?? "Mantenimiento"} está por vencer."
-                        : $"{logs.Count} mantenimientos están por vencer.",
-                    Url = "/dashboard"
-                };
+                    var subscriptions = await _pushSubscriptionRepository.GetByUserIdAsync(user.Id);
+                    if (subscriptions.Count == 0)
+                        continue;
 
-                var anyDelivered = false;
-                foreach (var subscription in subscriptions)
-                {
-                    var ok = await _pushSender.SendAsync(subscription, payload);
-                    if (ok)
+                    var payload = new PushPayload
                     {
-                        subscription.LastUsedAt = now;
-                        anyDelivered = true;
-                    }
-                    else
+                        Title = "Bikontrol: mantenimiento por vencer",
+                        Body = logs.Count == 1
+                            ? $"{logs[0].UserMaintenance?.Name ?? "Mantenimiento"} está por vencer."
+                            : $"{logs.Count} mantenimientos están por vencer.",
+                        Url = "/dashboard"
+                    };
+
+                    var now = DateTime.UtcNow;
+                    var anyDelivered = false;
+                    foreach (var subscription in subscriptions)
                     {
-                        // Gone (404/410): drop the dead subscription.
-                        await _pushSubscriptionRepository.RemoveByEndpointAsync(subscription.Endpoint);
+                        var ok = await _pushSender.SendAsync(subscription, payload);
+                        if (ok)
+                        {
+                            subscription.LastUsedAt = now;
+                            anyDelivered = true;
+                        }
+                        else
+                        {
+                            // Gone (404/410): drop the dead subscription.
+                            await _pushSubscriptionRepository.RemoveByEndpointAsync(subscription.Endpoint);
+                        }
                     }
+
+                    if (anyDelivered)
+                    {
+                        await _reminderLogRepository.MarkDeliveredAsync(logs.Select(l => l.Id), ReminderChannel.Push, now);
+                        delivered++;
+                    }
+
+                    await _pushSubscriptionRepository.SaveChangesAsync();
+                    await _reminderLogRepository.SaveChangesAsync();
                 }
-
-                if (anyDelivered)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    await _reminderLogRepository.MarkDeliveredAsync(logs.Select(l => l.Id), ReminderChannel.Push, now);
-                    delivered++;
+                    _logger.LogWarning(ex, "Reminder push failed for user {UserId}; will retry on the next run.", user.Id);
                 }
             }
 
-            await _pushSubscriptionRepository.SaveChangesAsync();
-            await _reminderLogRepository.SaveChangesAsync();
             return delivered;
         }
 

@@ -19,7 +19,7 @@
 
 ## Audit log
 
-- `audit_logs` (append-only) records who changed what: `UserId` (null for background jobs), `EntityName`, `EntityId`, `Action` (`Created`/`Updated`/`Deleted`), `Changes` (jsonb diff, sensitive columns redacted) and `CreatedAt`.
+- `audit_logs` (append-only) records who changed what: `UserId` (null for background jobs), `EntityName`, `EntityId`, `Action` (`Created`/`Updated`/`Deleted`), `Changes` (jsonb diff; sensitive columns redacted and inline images/attachments — `Image`, `DataUrl`, any `data:` value — replaced by a `[binary omitted: N chars]` marker) and `CreatedAt`.
 - Written automatically by `AppDbContext.SaveChangesAsync` for user-facing entities (`User`, `Motorcycle`, `UserMaintenance`, `MotorcycleMaintenanceRecord`, `MotorcycleKmHistory`, `MaintenanceRecordAttachment`, `FuelUp`); infrastructure tables (tokens, push subscriptions, reminder logs) are intentionally excluded.
 - Read through `GET /api/users/me/activity`.
 - Attachments: `maintenance_record_attachments` stores resized image data URLs (JPEG/PNG/WebP, ≤1 MB decoded), cascade-deleted with their maintenance record.

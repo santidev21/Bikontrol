@@ -48,10 +48,11 @@ namespace Bikontrol.Persistence.Repositories
             existing.Auth = subscription.Auth;
         }
 
-        public async Task RemoveByEndpointAsync(string endpoint)
+        public async Task RemoveByEndpointAsync(string endpoint, Guid? ownerUserId = null)
         {
             var existing = await _context.PushSubscriptions
-                .FirstOrDefaultAsync(s => s.Endpoint == endpoint);
+                .FirstOrDefaultAsync(s => s.Endpoint == endpoint
+                    && (ownerUserId == null || s.UserId == ownerUserId));
             if (existing is not null)
                 _context.PushSubscriptions.Remove(existing);
         }

@@ -127,7 +127,7 @@ public class RetentionServiceTests
 
         public Task AddAsync(ReminderLog entity) => Task.CompletedTask;
 
-        public Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel) =>
+        public Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel, DateTime since) =>
             Task.FromResult<IReadOnlyList<ReminderLog>>(new List<ReminderLog>());
 
         public Task MarkDeliveredAsync(IEnumerable<Guid> ids, string channel, DateTime deliveredAt) =>

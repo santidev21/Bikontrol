@@ -44,6 +44,17 @@ public class PushSubscriptionServiceTests
     }
 
     [Fact]
+    public async Task UnregisterAsync_ShouldScopeTheRemovalToTheCurrentUser()
+    {
+        var repo = new FakePushSubscriptionRepository();
+        var service = new PushSubscriptionService(repo, new FakeCurrentUserService(UserId, UserRole.User));
+
+        await service.UnregisterAsync("https://push/1");
+
+        Assert.Equal(UserId, repo.LastRemoveOwner);
+    }
+
+    [Fact]
     public async Task RegisterAsync_WhenDemo_ShouldThrowForbidden()
     {
         var service = new PushSubscriptionService(new FakePushSubscriptionRepository(), new FakeCurrentUserService(UserId, UserRole.Demo));
@@ -75,7 +86,12 @@ public class PushSubscriptionServiceTests
             LastUpsert = subscription;
             return Task.CompletedTask;
         }
-        public Task RemoveByEndpointAsync(string endpoint) => Task.CompletedTask;
+        public Guid? LastRemoveOwner { get; private set; }
+        public Task RemoveByEndpointAsync(string endpoint, Guid? ownerUserId = null)
+        {
+            LastRemoveOwner = ownerUserId;
+            return Task.CompletedTask;
+        }
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 }

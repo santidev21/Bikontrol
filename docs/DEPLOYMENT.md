@@ -31,7 +31,7 @@ Automatic on push to `main` via GitHub Actions, or manual:
 cd /opt/bikontrol && ./scripts/deploy.sh deploy
 ```
 
-Each deploy runs, in order: backup + verify → integrity audit → pull → build → **apply migrations (dedicated step)** → up → **container healthcheck** → **post-deploy smoke test**. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump + config and brings the stack back up).
+Each deploy runs, in order: backup + verify → integrity audit → pull → build → **apply migrations (dedicated step)** → up → **container healthcheck** → **post-deploy smoke test**. `build` keeps the serving images as `:previous`. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump and starts the previous images; falls back to a rebuild from the config backup when no previous images exist).
 
 **Migrations as a dedicated step.** Production does **not** migrate on API startup (`Database__RunMigrationsOnStartup=false`). Instead, `deploy.sh deploy` runs `deploy.sh migrate`, which executes the freshly built API image in migration-only mode (`docker compose run --rm --no-deps api --migrate`), on the internal network, before any container is started for traffic. It is idempotent and fails the deploy (with the pre-deploy backup already taken) before anything is started. Migrate manually with `./scripts/deploy.sh migrate`. Startup migration remains the default outside production (local dev, and the integration test suite).
 
@@ -65,7 +65,7 @@ SMOKE_URL=https://staging.bikontrol.santidev21.tech \
 
 ## Database backups
 
-Every `deploy` call already creates a compressed DB dump (`pg_dump` → `backups/backup-<timestamp>/db.sql.gz`) before pulling new code. Backups are kept in persistent `backups/` (not `/tmp`) with 7-copy retention.
+Every `deploy` call already creates a compressed DB dump (`pg_dump` → `backups/backup-<timestamp>/db.sql.gz`) before pulling new code. Backups are kept in persistent `backups/` (not `/tmp`) with 14-copy retention (`BACKUP_RETENTION`). Dumps use `--clean --if-exists` so they restore over a live database.
 
 Manual backup / restore (VPS or local):
 
@@ -81,12 +81,12 @@ npm run db:restore -- backups/bikontrol-db-xxx.sql.gz
 
 **Verified backups.** A dump is only trusted after it restores. `scripts/db-verify-backup.sh` restores a backup into a temporary `*_restore_check` database inside the running `db` container, asserts the core tables exist and are readable, then drops it — it never touches the live database. `deploy` runs it right after `pg_dump` (a dump that does not restore aborts the deploy), and it can be run on any backup: `./scripts/db-verify-backup.sh backups/backup-XXXX/db.sql.gz`.
 
-**Automatic weekly backups** (recommended, VPS cron — Sunday 02:00 UTC):
+**Automatic daily backups** (VPS cron — 03:00 UTC):
 
 ```bash
-# One-time: install the weekly cron (idempotent, replaces any previous bikontrol backup cron)
+# One-time: install the daily cron (idempotent, replaces any previous bikontrol backup cron)
 sudo /opt/bikontrol/scripts/deploy.sh install-cron
-# Custom schedule: sudo /opt/bikontrol/scripts/deploy.sh install-cron "0 3 * * 0"
+# Custom schedule: sudo /opt/bikontrol/scripts/deploy.sh install-cron "0 4 * * *"
 # Remove: sudo /opt/bikontrol/scripts/deploy.sh remove-cron
 # Check: crontab -l | grep bikontrol
 ```
@@ -94,14 +94,19 @@ sudo /opt/bikontrol/scripts/deploy.sh install-cron
 Manual cron line (equivalent):
 
 ```cron
-0 2 * * 0 /opt/bikontrol/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1
+0 3 * * * /opt/bikontrol/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1
 ```
 
-Add offsite copy if desired: `rclone copy /opt/bikontrol/backups remote:backups/bikontrol` or `rsync`.
+**Offsite, encrypted copy.** Set these in the deploy `.env`; every backup (cron and deploy) is then encrypted with AES-256 and uploaded with `rclone`. A failed upload is logged as a warning and never aborts a deploy.
 
-Backups are **semanales automáticos** vía cron; cada `deploy` también genera un backup justo antes de actualizar.
+```bash
+BACKUP_OFFSITE_REMOTE=b2:bikontrol-backups        # any configured rclone remote path
+BACKUP_ENCRYPTION_KEY_FILE=/opt/bikontrol/.backup-key   # chmod 600; also keep a copy outside the VPS
+```
 
-Recovery: `gunzip -c backups/backup-xxx/db.sql.gz | docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"` (done by `./scripts/deploy.sh rollback` on failed deploy).
+Create the key once with `openssl rand -base64 48 > /opt/bikontrol/.backup-key && chmod 600 /opt/bikontrol/.backup-key` and configure the remote with `rclone config`.
+
+Recovery: `./scripts/deploy.sh restore-db backups/backup-xxx/db.sql.gz` (verifies the dump, restores in a single transaction, restarts the app). `./scripts/deploy.sh rollback` uses the same restore and also returns to the previous images. See [RUNBOOK](RUNBOOK.md) §4.
 
 ## Observability
 

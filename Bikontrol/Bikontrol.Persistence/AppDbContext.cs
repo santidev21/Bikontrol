@@ -154,7 +154,27 @@ namespace Bikontrol.Persistence
             "EmailConfirmationTokenHash"
         };
 
+        /// <summary>
+        /// Images and attachments are stored inline as data URLs; copying them
+        /// into the trail would bloat it and outlive the user's own deletion.
+        /// </summary>
+        private static readonly HashSet<string> BinaryProperties = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Image",
+            "DataUrl"
+        };
+
         private static object? Sanitize(string propertyName, object? value)
-            => RedactedProperties.Contains(propertyName) ? "[redacted]" : value;
+        {
+            if (RedactedProperties.Contains(propertyName))
+                return "[redacted]";
+
+            if (value is string text
+                && (BinaryProperties.Contains(propertyName) || text.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                && text.Length > 64)
+                return $"[binary omitted: {text.Length} chars]";
+
+            return value;
+        }
     }
 }
