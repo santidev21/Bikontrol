@@ -314,6 +314,79 @@ public class AuthServiceTests
         Assert.Single(_refreshRepository.Tokens);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task RefreshAsync_WhenTheCookieIsAbsent_ShouldReportAnExpiredSession(string? token)
+    {
+        var service = CreateService(new FakeUserRepository());
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.RefreshAsync(new RefreshTokenRequest { RefreshToken = token! }));
+
+        Assert.Equal("session_expired", exception.Code);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTheTokenWasRevoked_ShouldReportAnExpiredSession()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        repository.Users.Add(user);
+        var stored = new RefreshToken(user.Id, AuthServiceTestsHash("old"), DateTime.UtcNow.AddDays(7));
+        stored.Revoke();
+        _refreshRepository.Tokens.Add(stored);
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.RefreshAsync(new RefreshTokenRequest { RefreshToken = "old" }));
+
+        Assert.Equal("session_expired", exception.Code);
+    }
+
+    [Fact]
+    public async Task LogoutAsync_WhenTheTokenIsActive_ShouldRevokeIt()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        repository.Users.Add(user);
+        var stored = new RefreshToken(user.Id, AuthServiceTestsHash("live"), DateTime.UtcNow.AddDays(7));
+        _refreshRepository.Tokens.Add(stored);
+
+        await service.LogoutAsync("live");
+
+        Assert.NotNull(stored.RevokedAt);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("unknown-token")]
+    public async Task LogoutAsync_WhenThereIsNothingToRevoke_ShouldNotFail(string? token)
+    {
+        var service = CreateService(new FakeUserRepository());
+
+        await service.LogoutAsync(token);
+
+        Assert.Empty(_refreshRepository.Tokens);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_WhenTheAccountIsUnconfirmed_ShouldConfirmItBecauseGoogleVerifiedTheEmail()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var repository = new FakeUserRepository(existingUsers: [user]);
+        var service = CreateService(repository, GoogleConfiguration());
+        _googleValidator.Identity = new GoogleIdentity("rider@bikontrol.com", true, "Rider");
+
+        await service.GoogleLoginAsync(new GoogleLoginRequest { IdToken = "token" });
+
+        Assert.True(user.IsEmailConfirmed);
+        Assert.Empty(repository.UsersCreated);
+    }
+
     private static string AuthServiceTestsHash(string token) =>
         Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token)));
 
