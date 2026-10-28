@@ -289,6 +289,7 @@ public class MotorcycleServiceTests
             return Task.FromResult(result);
         }
 
+        public Task LockMotorcycleAsync(Guid motorcycleId) => Task.CompletedTask;
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 

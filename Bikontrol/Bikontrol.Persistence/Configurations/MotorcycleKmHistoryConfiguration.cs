@@ -1,4 +1,4 @@
-﻿using Bikontrol.Domain.Entities;
+using Bikontrol.Domain.Entities;
 using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,6 +15,13 @@ namespace Bikontrol.Persistence.Configurations
         public void Configure(EntityTypeBuilder<MotorcycleKmHistory> builder)
         {
             builder.HasKey(x => x.Id);
+
+            // Optimistic concurrency via xmin (Postgres system column); see UserConfiguration.
+            builder.Property<uint>("xmin")
+                .HasColumnType("xid")
+                .HasColumnName("xmin")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
 
             builder.ToTable("MotorcycleKmHistories", t => t.HasCheckConstraint(
                 "CK_MotorcycleKmHistories_Km_NonNegative",
