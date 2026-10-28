@@ -2,8 +2,8 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Mapping;
+using Bikontrol.Application.Services;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;

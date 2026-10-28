@@ -6,7 +6,7 @@ using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Domain.Entities;
 using Riok.Mapperly.Abstractions;
 
-namespace Bikontrol.Infrastructure.Mapping
+namespace Bikontrol.Application.Mapping
 {
     /// <summary>
     /// Source-generated entity to DTO mappings (Riok.Mapperly). Compile-time

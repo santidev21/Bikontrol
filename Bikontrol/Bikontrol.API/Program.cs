@@ -1,12 +1,13 @@
+using Bikontrol.Application;
 using Bikontrol.API.Extensions;
 using Bikontrol.API.Middleware;
 using Bikontrol.API.RateLimiting;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure;
 using Bikontrol.Infrastructure.Authentication;
-using Bikontrol.Infrastructure.Mapping;
-using Bikontrol.Infrastructure.Seed;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Mapping;
+using Bikontrol.Persistence.Seed;
+using Bikontrol.Application.Services;
 using Bikontrol.Persistence;
 using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -246,6 +247,7 @@ if (metricsEnabled)
 }
 
 // Services & Identity tools
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
 

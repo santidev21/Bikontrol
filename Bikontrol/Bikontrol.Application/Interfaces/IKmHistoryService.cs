@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Application.Interfaces.Repositories
+namespace Bikontrol.Application.Interfaces
 {
     public interface IKmHistoryService
     {

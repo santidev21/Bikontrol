@@ -2,7 +2,7 @@ using Bikontrol.Application.DTOs.Reminders;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Services;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;

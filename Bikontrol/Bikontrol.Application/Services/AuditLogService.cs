@@ -2,7 +2,7 @@ using Bikontrol.Application.DTOs.Audit;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     public class AuditLogService : IAuditLogService
     {

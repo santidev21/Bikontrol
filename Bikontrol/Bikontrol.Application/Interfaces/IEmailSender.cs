@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Bikontrol.Infrastructure.Email
+namespace Bikontrol.Application.Interfaces
 {
     public interface IEmailSender
     {

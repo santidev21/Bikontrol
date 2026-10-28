@@ -1,8 +1,8 @@
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Infrastructure.Mapping;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Mapping;
+using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
@@ -199,6 +199,9 @@ public class UserServiceTests
             Task.FromResult(0);
 
         public Task SaveChangesAsync() => Task.CompletedTask;
+
+        public bool ConcurrentConflict { get; set; }
+        public Task<bool> TrySaveAsync() => Task.FromResult(!ConcurrentConflict);
     }
 
     private sealed class FakeUserRepository : IUserRepository

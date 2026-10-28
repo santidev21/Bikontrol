@@ -2,8 +2,8 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Email;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 

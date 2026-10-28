@@ -1,6 +1,6 @@
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Services;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -112,6 +112,9 @@ public class RetentionServiceTests
         }
 
         public Task SaveChangesAsync() => Task.CompletedTask;
+
+        public bool ConcurrentConflict { get; set; }
+        public Task<bool> TrySaveAsync() => Task.FromResult(!ConcurrentConflict);
     }
 
     private sealed class FakeReminderLogRepository : IReminderLogRepository

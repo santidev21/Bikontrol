@@ -3,7 +3,7 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
+using Bikontrol.Application.Mapping;
 using Bikontrol.Shared.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     public class MotorcycleService : IMotorcycleService
     {

@@ -1,3 +1,4 @@
+using Bikontrol.Application.Interfaces;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;

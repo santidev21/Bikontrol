@@ -7,7 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Abstractions only: no EF, no ASP.NET, no third-party SDKs in this layer. -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
+    <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Bikontrol.Domain\Bikontrol.Domain.csproj" />
+    <ProjectReference Include="..\Bikontrol.Shared\Bikontrol.Shared.csproj" />
   </ItemGroup>
 
 </Project>

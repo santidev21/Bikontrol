@@ -1,7 +1,8 @@
 ﻿using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Infrastructure.Email;
+using Bikontrol.Infrastructure.Authentication;
+using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -20,7 +21,9 @@ namespace Bikontrol.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            services.AddScoped<JwtTokenGenerator>();
+            services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+            services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+            services.AddScoped<IMaintenanceBookPdfRenderer, Reports.QuestPdfMaintenanceBookRenderer>();
             services.AddScoped<IPasswordHasher<User>>(sp =>
             {
                 // OWASP's current guidance for PBKDF2-HMAC-SHA256 is 600k
@@ -37,21 +40,7 @@ namespace Bikontrol.Infrastructure
             });
             services.AddScoped<IEmailSender, SmtpEmailSender>();
 
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IMotorcycleService, MotorcycleService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
-            services.AddScoped<IMaintenanceService, MaintenanceService>();
-            services.AddScoped<IFuelUpService, FuelUpService>();
-            services.AddScoped<IKmHistoryService, KmHistoryService>();
-            services.AddScoped<IStatisticsService, StatisticsService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IAccountService, AccountService>();
-            services.AddScoped<IReminderService, ReminderService>();
-            services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
-            services.AddScoped<IMaintenanceBookService, MaintenanceBookService>();
-            services.AddScoped<IMaintenanceAttachmentService, MaintenanceAttachmentService>();
-            services.AddScoped<IAuditLogService, AuditLogService>();
-            services.AddScoped<IRetentionService, RetentionService>();
             services.AddScoped<IPushSender, Notifications.WebPushSender>();
             services.AddHostedService<BackgroundServices.ReminderBackgroundService>();
             services.AddHostedService<BackgroundServices.RetentionBackgroundService>();

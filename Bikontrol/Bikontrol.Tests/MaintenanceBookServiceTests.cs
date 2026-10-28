@@ -1,8 +1,9 @@
 using System.Text;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Infrastructure.Reports;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Services;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;
@@ -51,7 +52,8 @@ public class MaintenanceBookServiceTests
             repo,
             new FakeUserMaintenanceRepository(),
             new FakeRecordRepository(Array.Empty<MotorcycleMaintenanceRecord>()),
-            new FakeKmHistoryService());
+            new FakeKmHistoryService(),
+            new QuestPdfMaintenanceBookRenderer());
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.GetBookAsync(MotoId));
     }
@@ -89,7 +91,8 @@ public class MaintenanceBookServiceTests
             new FakeMotorcycleRepository(Moto()),
             new FakeUserMaintenanceRepository(),
             new FakeRecordRepository(records),
-            new FakeKmHistoryService { CurrentKm = currentKm });
+            new FakeKmHistoryService { CurrentKm = currentKm },
+            new QuestPdfMaintenanceBookRenderer());
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService

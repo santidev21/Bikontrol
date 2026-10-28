@@ -3,12 +3,12 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Email;
+using Bikontrol.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     public class ReminderService : IReminderService
     {
