@@ -3,7 +3,7 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Services;
 
 namespace Bikontrol.Tests;
 

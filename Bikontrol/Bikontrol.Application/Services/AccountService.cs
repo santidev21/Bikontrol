@@ -5,11 +5,11 @@ using Bikontrol.Application.DTOs.Users;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
+using Bikontrol.Application.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     /// <summary>
     /// Account-level operations that span several repositories. Currently the

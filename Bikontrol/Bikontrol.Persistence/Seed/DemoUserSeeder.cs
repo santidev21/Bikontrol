@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 
-namespace Bikontrol.Infrastructure.Seed
+namespace Bikontrol.Persistence.Seed
 {
     public static class DemoUserSeeder
     {

@@ -1,7 +1,7 @@
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Services;
 
 namespace Bikontrol.Tests;
 

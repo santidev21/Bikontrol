@@ -1,6 +1,6 @@
 {
   "stryker-config": {
-    "project": "Bikontrol/Bikontrol.Infrastructure/Bikontrol.Infrastructure.csproj",
+    "project": "Bikontrol/Bikontrol.Application/Bikontrol.Application.csproj",
     "test-projects": ["Bikontrol/Bikontrol.Tests/Bikontrol.Tests.csproj"],
     "mutate": ["Services/MaintenanceService.cs"],
     "test-case-filter": "FullyQualifiedName~MaintenanceService",
