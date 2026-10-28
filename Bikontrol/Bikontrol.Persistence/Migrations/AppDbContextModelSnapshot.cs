@@ -660,6 +660,9 @@ namespace Bikontrol.Persistence.Migrations
                     b.Property<DateTime?>("DeliveredAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("EmailDeliveredAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsOverdue")
                         .HasColumnType("boolean");
 
@@ -673,6 +676,9 @@ namespace Bikontrol.Persistence.Migrations
 
                     b.Property<Guid>("MotorcycleId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PushDeliveredAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("RemainingDays")
                         .HasColumnType("integer");
@@ -689,6 +695,10 @@ namespace Bikontrol.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("EmailDeliveredAt", "CreatedAt");
+
+                    b.HasIndex("PushDeliveredAt", "CreatedAt");
 
                     b.HasIndex("UserMaintenanceId", "Kind", "CreatedAt");
 

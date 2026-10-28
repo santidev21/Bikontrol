@@ -1,21 +1,35 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, shareReplay, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, map, shareReplay, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../../modules/auth/services/auth.service';
 
-let sharedRefresh$: Observable<boolean> | null = null;
+let sharedRefresh$: Observable<true> | null = null;
 
-function getSharedRefresh(authService: AuthService): Observable<boolean> {
+/**
+ * One in-flight refresh serves every concurrent 401. The session teardown
+ * (logout + redirect) lives inside the shared stream so it runs once, not once
+ * per failed request, and `refCount: false` keeps the POST alive even if the
+ * request that started it is cancelled (e.g. its component is destroyed):
+ * aborting it midway would leave the rotated cookie and the stored token out
+ * of sync.
+ */
+function getSharedRefresh(authService: AuthService, router: Router): Observable<true> {
   if (!sharedRefresh$) {
-    // shareReplay keeps concurrent 401s on a single POST /auth/refresh.
-    // Without it every subscriber re-executes refreshSession() and mints
-    // competing refresh tokens.
     sharedRefresh$ = authService.refreshSession().pipe(
-      shareReplay({ bufferSize: 1, refCount: true }),
+      map((ok) => {
+        if (!ok) throw new Error('refresh_rejected');
+        return true as const;
+      }),
+      catchError((error) => {
+        authService.logout();
+        router.navigate(['/login']);
+        return throwError(() => error);
+      }),
       finalize(() => {
         sharedRefresh$ = null;
       }),
+      shareReplay({ bufferSize: 1, refCount: false }),
     );
   }
   return sharedRefresh$;
@@ -39,13 +53,12 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      return getSharedRefresh(authService).pipe(
-        switchMap((ok) => (ok ? next(req) : throwError(() => error))),
-        catchError(() => {
-          authService.logout();
-          router.navigate(['/login']);
-          return throwError(() => error);
-        }),
+      return getSharedRefresh(authService, router).pipe(
+        // A failed refresh already ended the session; callers just see the 401.
+        catchError(() => throwError(() => error)),
+        // Only a successful refresh reaches the retry, so its own errors
+        // (400/404/409/500...) propagate untouched instead of logging the user out.
+        switchMap(() => next(req)),
       );
     }),
   );

@@ -5,6 +5,7 @@ using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Bikontrol.Tests;
 
@@ -240,6 +241,123 @@ public class ReminderServiceTests
         Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel);
     }
 
+    [Fact]
+    public async Task EmailThenPush_ShouldDeliverTheSameReminderOnBothChannels()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+
+        var subs = new FakePushSubscriptionRepository();
+        subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/1", P256dh = "k", Auth = "a" });
+        var email = new FakeEmailSender();
+        var sender = new FakePushSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs,
+            emailSender: email, pushSubscriptions: subs, pushSender: sender);
+
+        // Same order as the background job: email first, then push.
+        Assert.Equal(1, await service.SendPendingEmailsAsync());
+        Assert.Equal(1, await service.SendPendingPushesAsync());
+
+        Assert.Single(email.Sent);
+        Assert.Single(sender.Sent);
+        var log = Assert.Single(logs.Logs);
+        Assert.NotNull(log.EmailDeliveredAt);
+        Assert.NotNull(log.PushDeliveredAt);
+    }
+
+    [Fact]
+    public async Task SendPendingEmailsAsync_ShouldNotResendAlreadyDeliveredReminders()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+
+        var email = new FakeEmailSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, emailSender: email);
+
+        await service.SendPendingEmailsAsync();
+        var second = await service.SendPendingEmailsAsync();
+
+        Assert.Equal(0, second);
+        Assert.Single(email.Sent);
+    }
+
+    [Fact]
+    public async Task SendPendingEmailsAsync_WhenOneUserFails_ShouldStillDeliverTheOthersAndKeepTheFailedPending()
+    {
+        var failing = new User("down@bikontrol.com", "Down", "hash");
+        var healthy = new User("ok@bikontrol.com", "Ok", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        foreach (var u in new[] { failing, healthy })
+        {
+            await logs.AddAsync(new ReminderLog
+            {
+                UserId = u.Id,
+                UserMaintenanceId = item.Id,
+                Channel = ReminderChannel.Pending,
+                User = u,
+                UserMaintenance = item
+            });
+        }
+
+        var email = new FakeEmailSender();
+        email.FailingAddresses.Add(failing.Email);
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, emailSender: email);
+
+        var sent = await service.SendPendingEmailsAsync();
+
+        Assert.Equal(1, sent);
+        Assert.Equal(healthy.Email, Assert.Single(email.Sent).To);
+        Assert.Null(logs.Logs.Single(l => l.UserId == failing.Id).EmailDeliveredAt);
+        Assert.NotNull(logs.Logs.Single(l => l.UserId == healthy.Id).EmailDeliveredAt);
+
+        // The retry only touches the user that failed.
+        email.FailingAddresses.Clear();
+        Assert.Equal(1, await service.SendPendingEmailsAsync());
+        Assert.Equal(2, email.Sent.Count);
+    }
+
+    [Fact]
+    public async Task SendPendingEmailsAsync_ShouldIgnoreRemindersOlderThanTheDeliveryWindow()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            CreatedAt = DateTime.UtcNow.AddDays(-5),
+            User = user,
+            UserMaintenance = item
+        });
+
+        var email = new FakeEmailSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, emailSender: email);
+
+        Assert.Equal(0, await service.SendPendingEmailsAsync());
+        Assert.Empty(email.Sent);
+    }
+
     private static ReminderService CreateService(
         FakeUserMaintenanceRepository userMaintenance,
         FakeReminderLogRepository? reminders = null,
@@ -266,7 +384,8 @@ public class ReminderServiceTests
             emailSender ?? new FakeEmailSender(),
             pushSubscriptions ?? new FakePushSubscriptionRepository(),
             pushSender ?? new FakePushSender(),
-            config);
+            config,
+            NullLogger<ReminderService>.Instance);
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService
@@ -369,16 +488,25 @@ public class ReminderServiceTests
             Logs.Add(entity);
             return Task.CompletedTask;
         }
-        public Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel) =>
+        public Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel, DateTime since) =>
             Task.FromResult<IReadOnlyList<ReminderLog>>(
-                Logs.Where(l => l.Channel == channel).ToList());
+                Logs.Where(l => l.CreatedAt >= since
+                    && (channel == ReminderChannel.Push ? l.PushDeliveredAt == null : l.EmailDeliveredAt == null)).ToList());
         public Task MarkDeliveredAsync(IEnumerable<Guid> ids, string channel, DateTime deliveredAt)
         {
             var idList = ids.ToHashSet();
             foreach (var log in Logs.Where(l => idList.Contains(l.Id)))
             {
-                log.Channel = channel;
-                log.DeliveredAt = deliveredAt;
+                if (channel == ReminderChannel.Push)
+                    log.PushDeliveredAt = deliveredAt;
+                else
+                    log.EmailDeliveredAt = deliveredAt;
+
+                if (log.Channel == ReminderChannel.Pending)
+                {
+                    log.Channel = channel;
+                    log.DeliveredAt = deliveredAt;
+                }
             }
             return Task.CompletedTask;
         }
@@ -390,8 +518,11 @@ public class ReminderServiceTests
     private sealed class FakeEmailSender : IEmailSender
     {
         public List<(string To, string Subject, string Body)> Sent { get; } = new();
+        public HashSet<string> FailingAddresses { get; } = new();
         public Task SendAsync(string toEmail, string subject, string body)
         {
+            if (FailingAddresses.Contains(toEmail))
+                throw new InvalidOperationException("SMTP down");
             Sent.Add((toEmail, subject, body));
             return Task.CompletedTask;
         }
@@ -412,7 +543,7 @@ public class ReminderServiceTests
             Subscriptions.Add(subscription);
             return Task.CompletedTask;
         }
-        public Task RemoveByEndpointAsync(string endpoint)
+        public Task RemoveByEndpointAsync(string endpoint, Guid? ownerUserId = null)
         {
             Subscriptions.RemoveAll(s => s.Endpoint == endpoint);
             return Task.CompletedTask;

@@ -44,17 +44,21 @@ namespace Bikontrol.Persistence.Repositories
             await _context.ReminderLogs.AddAsync(entity);
         }
 
-        public async Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel)
+        public async Task<IReadOnlyList<ReminderLog>> GetPendingWithDetailsAsync(string channel, DateTime since)
         {
             // Read-only: MarkDeliveredAsync re-loads its own tracked copies, so
             // these never need identity resolution.
-            return await _context.ReminderLogs
+            var query = _context.ReminderLogs
                 .Include(r => r.User)
                 .Include(r => r.UserMaintenance)
                 .AsNoTracking()
-                .Where(r => r.Channel == channel)
-                .OrderBy(r => r.CreatedAt)
-                .ToListAsync();
+                .Where(r => r.CreatedAt >= since);
+
+            query = channel == ReminderChannel.Push
+                ? query.Where(r => r.PushDeliveredAt == null)
+                : query.Where(r => r.EmailDeliveredAt == null);
+
+            return await query.OrderBy(r => r.CreatedAt).ToListAsync();
         }
 
         public async Task MarkDeliveredAsync(IEnumerable<Guid> ids, string channel, DateTime deliveredAt)
@@ -69,8 +73,16 @@ namespace Bikontrol.Persistence.Repositories
 
             foreach (var log in logs)
             {
-                log.Channel = channel;
-                log.DeliveredAt = deliveredAt;
+                if (channel == ReminderChannel.Push)
+                    log.PushDeliveredAt = deliveredAt;
+                else
+                    log.EmailDeliveredAt = deliveredAt;
+
+                if (log.Channel == ReminderChannel.Pending)
+                {
+                    log.Channel = channel;
+                    log.DeliveredAt = deliveredAt;
+                }
             }
         }
 

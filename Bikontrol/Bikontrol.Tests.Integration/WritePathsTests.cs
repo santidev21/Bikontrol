@@ -166,6 +166,18 @@ public sealed class WritePathsTests
         var list = await client.GetFromJsonAsync<List<AttachmentResponse>>($"/api/maintenances/records/{record.Id}/attachments");
         Assert.Contains(list!, a => a.Id == attachment.Id);
 
+        // The audit trail records the upload but never copies the inline payload.
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var audit = await db.AuditLogs
+                .Where(a => a.EntityName == "MaintenanceRecordAttachment" && a.EntityId == attachment.Id.ToString())
+                .FirstOrDefaultAsync();
+            Assert.NotNull(audit);
+            Assert.DoesNotContain("iVBORw0KGgo", audit!.Changes);
+            Assert.Contains("binary omitted", audit.Changes);
+        }
+
         var deleteResponse = await client.DeleteAsync($"/api/maintenances/records/{record.Id}/attachments/{attachment.Id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 

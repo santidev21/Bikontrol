@@ -10,15 +10,18 @@ namespace Bikontrol.Application.DTOs.Motorcycle
     public class SaveMotorcycleDTO
     {
         [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [MaxLength(100, ErrorMessage = "El nombre no puede superar los 100 caracteres.")]
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La marca es obligatoria.")]
+        [MaxLength(100, ErrorMessage = "La marca no puede superar los 100 caracteres.")]
         public string Brand { get; set; } = string.Empty;
 
         [Range(1950, 2100, ErrorMessage = "El año debe estar entre 1950 y 2100.")]
         public int Year { get; set; }
 
         [Required(ErrorMessage = "El apodo es obligatorio.")]
+        [MaxLength(100, ErrorMessage = "El apodo no puede superar los 100 caracteres.")]
         public string Nickname { get; set; } = string.Empty;
 
         [Range(0, 1_000_000, ErrorMessage = "El kilometraje debe estar entre 0 y 1,000,000 km.")]
@@ -28,6 +31,7 @@ namespace Bikontrol.Application.DTOs.Motorcycle
         public int Displacement { get; set; }
 
         [Required(ErrorMessage = "La placa es obligatoria.")]
+        [MaxLength(20, ErrorMessage = "La placa no puede superar los 20 caracteres.")]
         public string Plate { get; set; } = string.Empty;
 
         [StringLength(1_400_000, ErrorMessage = "La imagen es demasiado grande.")]

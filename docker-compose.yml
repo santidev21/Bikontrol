@@ -25,6 +25,9 @@ services:
           memory: 256M
 
   api:
+    # Explicit name so deploy.sh can keep the previous build as `:previous` and
+    # roll back by image instead of rebuilding.
+    image: bikontrol-api:latest
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -123,6 +126,7 @@ services:
           memory: 512M
 
   web:
+    image: bikontrol-web:latest
     build:
       context: .
       dockerfile: docker/Dockerfile.web

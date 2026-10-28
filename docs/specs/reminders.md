@@ -23,13 +23,24 @@ threshold as the dashboard's "Próximo" bucket. Km and time items use the same r
   at that moment (overdue, life %, remaining km/days).
 - **Dedupe:** an item that already produced a `Due` reminder within `Reminders:DedupeDays`
   (default **3 days**) is skipped, so a chronically overdue item does not nag every day.
-- Right after generating, the same run sends **one digest email per user** with all their pending
-  reminders (`ReminderService.SendPendingEmailsAsync`), then marks those rows as channel `Email` with
-  `DeliveredAt`. Set `Reminders:EmailEnabled=false` to record without emailing. Email delivery needs
-  SMTP configured (see [auth.md](auth.md)); without SMTP the sender logs and does not deliver.
-- **Web Push** then reads any still-`Pending` rows, delivers to the user's browser subscriptions and
-  marks them channel `Push`. It is a no-op without VAPID keys, and gone subscriptions (404/410) are
-  deleted. See [../adr/001-web-push.md](../adr/001-web-push.md).
+- **Per-channel delivery.** Each log tracks its own `EmailDeliveredAt` and `PushDeliveredAt`, so a
+  reminder can go out on both channels and one channel never starves the other. `Channel` /
+  `DeliveredAt` hold the *first* channel that delivered (`Pending` until then). Only logs created
+  within the last `min(Reminders:DedupeDays, 2)` days are still delivered, so a stale log never goes
+  out as a late "new" reminder.
+- Right after generating, the same run sends **one digest email per user** with all their
+  undelivered reminders (`ReminderService.SendPendingEmailsAsync`). Set `Reminders:EmailEnabled=false`
+  to record without emailing. Email delivery needs SMTP configured (see [auth.md](auth.md)); without
+  SMTP the sender logs and does not deliver.
+- **Web Push** then delivers the logs not yet pushed to the user's browser subscriptions. It is a
+  no-op without VAPID keys, and gone subscriptions (404/410) are deleted. See
+  [../adr/001-web-push.md](../adr/001-web-push.md).
+- **Failure isolation.** Delivery is persisted per user right after each send and a failure for one
+  user is logged and skipped, so a retry never re-sends to users that already received it.
+- **Multi-instance safety.** Both daily jobs take a Postgres advisory lock (`IDistributedLock`,
+  `bikontrol:job:reminders` / `bikontrol:job:retention`) so only one API instance runs a job at a
+  time. A run only counts as done when it finishes without error; a failed run retries on the next
+  15-minute tick, and the engine is idempotent (dedupe + per-channel delivery flags).
 
 ## Web Push
 

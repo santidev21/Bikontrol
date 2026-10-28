@@ -130,4 +130,71 @@ describe('refreshInterceptor', () => {
     expect(secondResponse).toEqual([{ id: 2 }]);
     expect(router.navigate).not.toHaveBeenCalled();
   });
+
+  it('should keep the session and surface the real error when the retry fails with a non-401', () => {
+    let error: any;
+
+    http.get('/api/motorcycles').subscribe({ error: (e) => (error = e) });
+
+    httpMock
+      .expectOne('/api/motorcycles')
+      .flush({ error: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+    httpMock
+      .expectOne('/api/motorcycles')
+      .flush({ error: 'boom' }, { status: 500, statusText: 'Server Error' });
+
+    expect(error.status).toBe(500);
+    expect(authService.logout).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should tear the session down only once when concurrent requests all fail to refresh', () => {
+    const refreshSubject = new Subject<boolean>();
+    authService.refreshSession.mockReturnValue(refreshSubject.asObservable());
+
+    const errors: number[] = [];
+    http.get('/api/motorcycles/mine').subscribe({ error: (e) => errors.push(e.status) });
+    http.get('/api/maintenances/mine').subscribe({ error: (e) => errors.push(e.status) });
+
+    httpMock
+      .expectOne('/api/motorcycles/mine')
+      .flush({ error: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+    httpMock
+      .expectOne('/api/maintenances/mine')
+      .flush({ error: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    refreshSubject.error(new Error('refresh failed'));
+
+    expect(errors).toEqual([401, 401]);
+    expect(authService.refreshSession).toHaveBeenCalledTimes(1);
+    expect(authService.logout).toHaveBeenCalledTimes(1);
+    expect(router.navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not abort the refresh when the request that started it is cancelled', () => {
+    const refreshSubject = new Subject<boolean>();
+    authService.refreshSession.mockReturnValue(refreshSubject.asObservable());
+
+    const cancelled = http.get('/api/motorcycles/mine').subscribe();
+    let response: any;
+    http.get('/api/maintenances/mine').subscribe((res) => (response = res));
+
+    httpMock
+      .expectOne('/api/motorcycles/mine')
+      .flush({ error: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+    httpMock
+      .expectOne('/api/maintenances/mine')
+      .flush({ error: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    // The first caller goes away (component destroyed) mid-refresh.
+    cancelled.unsubscribe();
+    expect(refreshSubject.observed).toBe(true);
+
+    refreshSubject.next(true);
+    refreshSubject.complete();
+
+    httpMock.expectOne('/api/maintenances/mine').flush([{ id: 2 }]);
+    expect(response).toEqual([{ id: 2 }]);
+    expect(authService.refreshSession).toHaveBeenCalledTimes(1);
+  });
 });

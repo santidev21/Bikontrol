@@ -30,13 +30,20 @@ namespace Bikontrol.Domain.Entities
         public int RemainingDays { get; set; }
 
         /// <summary>
-        /// Canal por el que se entregó. PR1 solo genera ("Pending"); PR2
-        /// (email) y PR3 (push) lo actualizan al entregar.
+        /// Primer canal por el que se entregó ("Pending" mientras ninguno lo
+        /// haya hecho). Un recordatorio puede salir por varios canales: la
+        /// entrega por canal se lee de <see cref="EmailDeliveredAt"/> y
+        /// <see cref="PushDeliveredAt"/>.
         /// </summary>
         public string Channel { get; set; } = ReminderChannel.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>Primera entrega por cualquier canal.</summary>
         public DateTime? DeliveredAt { get; set; }
+
+        public DateTime? EmailDeliveredAt { get; set; }
+        public DateTime? PushDeliveredAt { get; set; }
 
         public User? User { get; set; }
         public UserMaintenance? UserMaintenance { get; set; }

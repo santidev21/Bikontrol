@@ -322,7 +322,7 @@ if (mode === 'backup') {
   console.log(`[db:backup] Dumping "${dbName}" to backups/${fileName} ...`);
   const dockerCmd = process.platform === 'win32' ? 'docker.exe' : 'docker';
   // pg_dump via exec, pipe through gzip on host
-  const dump = spawnSync(dockerCmd, ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.local.yml', 'exec', '-T', 'db', 'pg_dump', '-U', dbUser, '-d', dbName], { cwd: rootDirectory, encoding: 'buffer', maxBuffer: 200 * 1024 * 1024, shell: process.platform === 'win32' });
+  const dump = spawnSync(dockerCmd, ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.local.yml', 'exec', '-T', 'db', 'pg_dump', '--clean', '--if-exists', '-U', dbUser, '-d', dbName], { cwd: rootDirectory, encoding: 'buffer', maxBuffer: 200 * 1024 * 1024, shell: process.platform === 'win32' });
   if (dump.error ?? dump.status !== 0) {
     console.error('[db:backup] pg_dump failed. Is the DB running? (`npm run db:up`)');
     if (dump.stderr) console.error(dump.stderr.toString());
@@ -367,7 +367,7 @@ if (mode === 'restore') {
     sqlBuffer = gunzipSync(sqlBuffer);
   }
   // feed to psql via stdin
-  const psql = spawn(dockerCmd2, ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.local.yml', 'exec', '-T', 'db', 'psql', '-U', dbUser, '-d', dbName, '-v', 'ON_ERROR_STOP=1'], { cwd: rootDirectory, stdio: ['pipe', 'inherit', 'inherit'], shell: process.platform === 'win32' });
+  const psql = spawn(dockerCmd2, ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.local.yml', 'exec', '-T', 'db', 'psql', '-U', dbUser, '-d', dbName, '-v', 'ON_ERROR_STOP=1', '--single-transaction'], { cwd: rootDirectory, stdio: ['pipe', 'inherit', 'inherit'], shell: process.platform === 'win32' });
   psql.stdin.write(sqlBuffer);
   psql.stdin.end();
   const code = await new Promise(res => psql.on('close', c => res(c)));

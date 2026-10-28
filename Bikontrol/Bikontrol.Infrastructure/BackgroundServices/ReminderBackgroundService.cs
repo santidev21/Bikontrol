@@ -92,9 +92,19 @@ namespace Bikontrol.Infrastructure.BackgroundServices
 
         private async Task RunOnceAsync(CancellationToken cancellationToken)
         {
-            _lastRunUtc = DateTime.UtcNow;
-
             using var scope = _scopeFactory.CreateScope();
+
+            // One instance at a time: another replica holding the lock is already
+            // doing this run. Release happens when the handle is disposed.
+            var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
+            await using var handle = await distributedLock.TryAcquireAsync("bikontrol:job:reminders", cancellationToken);
+            if (handle is null)
+            {
+                _logger.LogInformation("Reminder run skipped: another instance holds the lock.");
+                _lastRunUtc = DateTime.UtcNow;
+                return;
+            }
+
             var service = scope.ServiceProvider.GetRequiredService<IReminderService>();
 
             var generated = await service.GenerateDueRemindersAsync(cancellationToken);
@@ -116,6 +126,9 @@ namespace Bikontrol.Infrastructure.BackgroundServices
                 generated,
                 emailed,
                 pushed);
+
+            // Only a fully successful run counts: a failure retries on the next tick.
+            _lastRunUtc = DateTime.UtcNow;
         }
     }
 }

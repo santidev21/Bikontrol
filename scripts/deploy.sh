@@ -8,7 +8,12 @@ DEPLOY_DIR="${DEPLOY_DIR:-/opt/bikontrol}"
 LOG_FILE="${LOG_FILE:-/tmp/bikontrol-deploy.log}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="${DEPLOY_DIR}/backups/backup-${TIMESTAMP}"
-BACKUP_RETENTION="${BACKUP_RETENTION:-7}"
+BACKUP_RETENTION="${BACKUP_RETENTION:-14}"
+# Offsite copy (optional but strongly recommended): an rclone remote path such as
+# "b2:bikontrol-backups". Dumps are encrypted client-side with the key file below
+# before leaving the host, so the storage provider never sees user data.
+BACKUP_OFFSITE_REMOTE="${BACKUP_OFFSITE_REMOTE:-}"
+BACKUP_ENCRYPTION_KEY_FILE="${BACKUP_ENCRYPTION_KEY_FILE:-${DEPLOY_DIR}/.backup-key}"
 # Public base URL the post-deploy smoke test hits (frontend + API under one
 # origin). Override for staging: SMOKE_URL=https://staging.example ./deploy.sh deploy
 SMOKE_URL="${SMOKE_URL:-https://bikontrol.santidev21.tech}"
@@ -73,7 +78,7 @@ backup_database() {
     if docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps -q db >/dev/null 2>&1; then
         log "Backing up database to ${BACKUP_DIR}/db.sql.gz ..."
         if ! docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
-            pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>/dev/null | gzip > "${BACKUP_DIR}/db.sql.gz"; then
+            pg_dump --clean --if-exists -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>>"$LOG_FILE" | gzip > "${BACKUP_DIR}/db.sql.gz"; then
             error_exit "database backup failed — aborting"
         fi
         if ! gzip -t "${BACKUP_DIR}/db.sql.gz" 2>/dev/null; then
@@ -84,11 +89,88 @@ backup_database() {
         if ! "${DEPLOY_DIR}/scripts/db-verify-backup.sh" "${BACKUP_DIR}/db.sql.gz"; then
             error_exit "database backup failed verification — aborting"
         fi
+        offsite_backup "${BACKUP_DIR}/db.sql.gz" || log "WARNING: offsite backup failed — only the local copy exists"
         # prune old backups, keep last N
         log "Pruning old backups (keeping last $BACKUP_RETENTION) ..."
         ls -dt "${DEPLOY_DIR}/backups"/backup-* 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -rf
-        ls -t "${DEPLOY_DIR}/backups"/backup-*/db.sql.gz 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -f || true
     fi
+}
+
+# Encrypts a dump with the local key file and ships it with rclone. A no-op when
+# BACKUP_OFFSITE_REMOTE is unset; fails loudly when it is set but unusable.
+offsite_backup() {
+    local dump="$1"
+    if [ -z "$BACKUP_OFFSITE_REMOTE" ]; then
+        log "Offsite backup not configured (BACKUP_OFFSITE_REMOTE unset) — the dump only exists on this host."
+        return 0
+    fi
+    command -v rclone >/dev/null 2>&1 || { log "ERROR: rclone is not installed"; return 1; }
+    command -v openssl >/dev/null 2>&1 || { log "ERROR: openssl is not installed"; return 1; }
+    [ -s "$BACKUP_ENCRYPTION_KEY_FILE" ] || { log "ERROR: encryption key file missing or empty: ${BACKUP_ENCRYPTION_KEY_FILE}"; return 1; }
+
+    local encrypted="${dump}.enc"
+    local remote_name="backup-${TIMESTAMP}.sql.gz.enc"
+    log "Encrypting and uploading the dump to ${BACKUP_OFFSITE_REMOTE}/${remote_name} ..."
+    if ! openssl enc -aes-256-cbc -pbkdf2 -salt -in "$dump" -out "$encrypted" -pass "file:${BACKUP_ENCRYPTION_KEY_FILE}"; then
+        rm -f "$encrypted"
+        log "ERROR: encryption failed"
+        return 1
+    fi
+    if ! rclone copyto "$encrypted" "${BACKUP_OFFSITE_REMOTE}/${remote_name}"; then
+        rm -f "$encrypted"
+        log "ERROR: upload failed"
+        return 1
+    fi
+    rm -f "$encrypted"
+    log "Offsite copy uploaded."
+}
+
+wait_db_ready() {
+    local tries=0
+    until docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db         pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; do
+        tries=$((tries + 1))
+        [ "$tries" -le 30 ] || return 1
+        sleep 2
+    done
+}
+
+# Restores a dump taken by backup_database into the LIVE database. The `public`
+# schema is dropped and recreated first, so objects created AFTER the dump (e.g.
+# tables of a migration being rolled back) do not survive and the migrations
+# history matches the restored schema. Everything runs in a single transaction
+# with ON_ERROR_STOP: it either replaces the database entirely or leaves it
+# untouched. Expects POSTGRES_* in the environment and the db running.
+restore_dump() {
+    local dump="$1"
+    [ -f "$dump" ] || { log "ERROR: dump not found: ${dump}"; return 1; }
+    local reader=(cat)
+    [[ "$dump" == *.gz ]] && reader=(gunzip -c)
+    {
+        echo 'DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO PUBLIC;'
+        "${reader[@]}" "$dump"
+    } | docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
+        psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 --single-transaction -q >/dev/null
+}
+
+# Disaster recovery entry point: verify the dump in a throwaway database first,
+# then stop the app, restore, and start it again.
+restore_db() {
+    local dump="${2:-}"
+    [ -n "$dump" ] || error_exit "usage: $0 restore-db <path/to/db.sql.gz>"
+    [ -f "$DEPLOY_DIR/.env" ] || error_exit ".env not found at $DEPLOY_DIR/.env"
+    set -a
+    # shellcheck disable=SC1091
+    source "$DEPLOY_DIR/.env"
+    set +a
+
+    log "=== Restoring ${dump} into ${POSTGRES_DB} ==="
+    "${DEPLOY_DIR}/scripts/db-verify-backup.sh" "$dump" || error_exit "dump failed verification — refusing to restore"
+    (cd "$DEPLOY_DIR" && docker compose stop api web) || true
+    (cd "$DEPLOY_DIR" && docker compose up -d db)
+    wait_db_ready || error_exit "database did not become ready"
+    restore_dump "$dump" || error_exit "restore failed — the live database was left untouched (single transaction)"
+    (cd "$DEPLOY_DIR" && docker compose up -d --remove-orphans)
+    log "Restore complete. Run: ./scripts/deploy.sh smoke"
 }
 
 backup_only() {
@@ -136,7 +218,7 @@ audit_database() {
 }
 
 install_cron() {
-    local schedule="0 2 * * 0"
+    local schedule="0 3 * * *"
     local cmd="${DEPLOY_DIR}/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1"
     local cron_line="${schedule} ${cmd}"
     # Allow custom schedule: ./scripts/deploy.sh install-cron "0 3 * * 0"
@@ -144,7 +226,7 @@ install_cron() {
         # second argument overrides schedule
         cron_line="${2} ${cmd}"
     fi
-    log "Installing weekly backup cron: ${cron_line}"
+    log "Installing daily backup cron: ${cron_line}"
     # Ensure backup dir + log file exist
     mkdir -p "${DEPLOY_DIR}/backups"
     touch /var/log/bikontrol-backup.log 2>/dev/null || true
@@ -152,7 +234,7 @@ install_cron() {
     (crontab -l 2>/dev/null | grep -v "bikontrol.*backup-db" || true; echo "$cron_line") | crontab -
     log "Cron installed. Current crontab:"
     crontab -l 2>/dev/null | grep bikontrol || true
-    log "Backups run weekly on Sunday 02:00 UTC. Change with: ./scripts/deploy.sh install-cron \"<cron>\""
+    log "Backups run daily at 03:00 UTC. Change with: ./scripts/deploy.sh install-cron \"<cron>\""
 }
 
 remove_cron() {
@@ -167,7 +249,28 @@ pull() {
     log "Code updated."
 }
 
+# Keeps the images that are serving traffic now as `:previous`, so a failed
+# deploy can roll back to the exact previous build (the build below is
+# `--no-cache` and overwrites `:latest`).
+tag_previous_images() {
+    local image
+    for image in bikontrol-api bikontrol-web; do
+        if docker image inspect "${image}:latest" >/dev/null 2>&1; then
+            docker tag "${image}:latest" "${image}:previous"
+            log "Kept ${image}:latest as ${image}:previous."
+        else
+            log "No ${image}:latest image to keep (first deploy with image tags) — rollback will rebuild."
+        fi
+    done
+}
+
+previous_images_available() {
+    docker image inspect bikontrol-api:previous >/dev/null 2>&1 \
+        && docker image inspect bikontrol-web:previous >/dev/null 2>&1
+}
+
 build() {
+    tag_previous_images
     log "Building images..."
     (cd "$DEPLOY_DIR" && docker compose build --no-cache)
     log "Build complete."
@@ -181,8 +284,12 @@ migrate() {
     log "Applying database migrations (dedicated step)..."
     # The DB must be reachable; start it (idempotent) and give it a moment. The
     # api service depends on a healthy db, but `run` starts on demand.
+    set -a
+    # shellcheck disable=SC1091
+    source "$DEPLOY_DIR/.env"
+    set +a
     (cd "$DEPLOY_DIR" && docker compose up -d db)
-    sleep 5
+    wait_db_ready || error_exit "database did not become ready — aborting (nothing was started)"
     (cd "$DEPLOY_DIR" && \
         docker compose run --rm --no-deps api --migrate) \
         || error_exit "database migration failed — aborting (nothing was started)"
@@ -250,39 +357,51 @@ smoke() {
 
 rollback() {
     log "Rolling back..."
-    (cd "$DEPLOY_DIR" && docker compose down) || true
+    local failed=0
+    (cd "$DEPLOY_DIR" && docker compose stop api web) || true
 
-    # Support both .sql and .sql.gz backups
-    local _dump=""
-    if [ -f "${BACKUP_DIR}/db.sql.gz" ]; then _dump="${BACKUP_DIR}/db.sql.gz"
-    elif [ -f "${BACKUP_DIR}/db.sql" ]; then _dump="${BACKUP_DIR}/db.sql"
+    # 1) Database: restore the dump taken at the start of this deploy.
+    local dump=""
+    if [ -f "${BACKUP_DIR}/db.sql.gz" ]; then dump="${BACKUP_DIR}/db.sql.gz"
+    elif [ -f "${BACKUP_DIR}/db.sql" ]; then dump="${BACKUP_DIR}/db.sql"
     fi
-    if [ -n "$_dump" ] && [ -f "$DEPLOY_DIR/.env" ]; then
+    if [ -n "$dump" ] && [ -f "$DEPLOY_DIR/.env" ]; then
         set -a
         # shellcheck disable=SC1091
         source "$DEPLOY_DIR/.env"
         set +a
         log "Starting db to restore dump..."
         (cd "$DEPLOY_DIR" && docker compose up -d db)
-        sleep 10
-        if [[ "$_dump" == *.gz ]]; then
-            gunzip -c "$_dump" | docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
-                psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" \
-                || log "WARNING: database restore failed"
+        if ! wait_db_ready; then
+            log "ERROR: database did not become ready — cannot restore"
+            failed=1
+        elif ! restore_dump "$dump"; then
+            # Single transaction: a failed restore leaves the database as it was.
+            log "ERROR: database restore failed — the database was left as it was"
+            failed=1
         else
-            docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db \
-                psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" < "$_dump" \
-                || log "WARNING: database restore failed"
+            log "Database restored from ${dump}."
         fi
+    else
+        log "WARNING: no pre-deploy dump found in ${BACKUP_DIR} — the database was NOT restored"
     fi
 
-    if [ -f "${BACKUP_DIR}.tgz" ]; then
-        log "Restoring config backup..."
-        tar xzf "${BACKUP_DIR}.tgz" -C /
+    # 2) Code: go back to the previous images (no rebuild, no source needed).
+    if previous_images_available; then
+        log "Restoring previous images..."
+        docker tag bikontrol-api:previous bikontrol-api:latest
+        docker tag bikontrol-web:previous bikontrol-web:latest
+        (cd "$DEPLOY_DIR" && docker compose up -d --no-build --remove-orphans)
+    else
+        # No kept images (first deploy with image tags): fall back to the config
+        # backup and rebuild from it.
+        if [ -f "${BACKUP_DIR}.tgz" ]; then
+            log "No previous images — restoring the config backup and rebuilding..."
+            tar xzf "${BACKUP_DIR}.tgz" -C /
+        fi
+        (cd "$DEPLOY_DIR" && docker compose up -d --build --remove-orphans)
     fi
-
-    (cd "$DEPLOY_DIR" && docker compose up -d --remove-orphans)
-    log "Rollback complete."
+    log "Rollback finished."
 
     # Best-effort: confirm the restored stack actually serves (do not fail the
     # rollback itself if the smoke test has a transient hiccup).
@@ -290,6 +409,11 @@ rollback() {
         log "Verifying rollback (best effort) ..."
         SMOKE_TIMEOUT="${SMOKE_TIMEOUT:-10}" "${DEPLOY_DIR}/scripts/smoke-test.sh" "$SMOKE_URL" \
             || log "WARNING: smoke test after rollback did not pass — investigate"
+    fi
+
+    if [ "$failed" -ne 0 ]; then
+        log "ERROR: rollback finished WITH ERRORS — check the log above and docs/RUNBOOK.md §4"
+        return 1
     fi
 }
 
@@ -307,16 +431,20 @@ deploy() {
     up
     if ! wait_healthy; then
         log "Deployment failed health check — rolling back."
-        rollback
-        error_exit "Deployment failed and was rolled back"
+        if rollback; then
+            error_exit "Deployment failed and was rolled back"
+        fi
+        error_exit "Deployment failed and the ROLLBACK ALSO FAILED — manual recovery needed (docs/RUNBOOK.md §4)"
     fi
     verify
     # A green healthcheck is not enough: prove the public surface actually works
     # end-to-end, and roll back if it does not.
     if ! smoke; then
         log "Deployment failed smoke test — rolling back."
-        rollback
-        error_exit "Deployment failed the smoke test and was rolled back"
+        if rollback; then
+            error_exit "Deployment failed the smoke test and was rolled back"
+        fi
+        error_exit "Deployment failed the smoke test and the ROLLBACK ALSO FAILED — manual recovery needed (docs/RUNBOOK.md §4)"
     fi
     log "=== Deployment successful ==="
     status
@@ -343,12 +471,13 @@ case "${1:-deploy}" in
     verify) verify ;;
     smoke) smoke ;;
     rollback) rollback ;;
+    restore-db) restore_db "$@" ;;
     backup|backup-db|backup-only) backup_only ;;
     audit-db) audit_database ;;
     install-cron) install_cron "$@" ;;
     remove-cron) remove_cron ;;
     *)
-        echo "Usage: $0 [pull|build|migrate|up|deploy|status|logs|verify|smoke|rollback|backup-db|audit-db|install-cron|remove-cron]"
+        echo "Usage: $0 [pull|build|migrate|up|deploy|status|logs|verify|smoke|rollback|restore-db|backup-db|audit-db|install-cron|remove-cron]"
         exit 1
         ;;
 esac

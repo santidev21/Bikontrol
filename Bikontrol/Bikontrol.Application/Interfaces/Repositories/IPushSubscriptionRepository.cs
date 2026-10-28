@@ -16,8 +16,12 @@ namespace Bikontrol.Application.Interfaces.Repositories
         /// </summary>
         Task UpsertAsync(PushSubscription subscription);
 
-        /// <summary>Removes a subscription by endpoint (unsubscribe / gone).</summary>
-        Task RemoveByEndpointAsync(string endpoint);
+        /// <summary>
+        /// Removes a subscription by endpoint. Pass <paramref name="ownerUserId"/>
+        /// for a user-initiated unsubscribe so nobody can drop another user's
+        /// endpoint; leave it null only for system cleanup of dead endpoints.
+        /// </summary>
+        Task RemoveByEndpointAsync(string endpoint, Guid? ownerUserId = null);
 
         Task SaveChangesAsync();
     }

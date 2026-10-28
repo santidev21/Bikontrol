@@ -41,7 +41,7 @@ breaks*. Keep it short, concrete and tested — an untested runbook is a guess.
 - `df -h`, `docker system df`. Usual culprits: old images, logs, backups.
 - `docker image prune -af`, `docker builder prune -af` (safe), trim `backups/`
   (keep the last few verified dumps), `journalctl --vacuum-time=3d`.
-- The deploy already prunes to 7 backups; the weekly cron relies on it.
+- The deploy already prunes to 14 backups (`BACKUP_RETENTION`); the daily cron relies on it.
 
 ### High error rate / latency (no full outage)
 - Confirm with Grafana (5xx rate, p95) and Sentry.
@@ -61,18 +61,25 @@ breaks*. Keep it short, concrete and tested — an untested runbook is a guess.
 
 ## 4. Rollback / restore
 
-### Roll back the last deploy (code + config + DB from its pre-deploy backup)
+### Roll back the last deploy (code + DB)
 ```bash
 cd /opt/bikontrol
 ./scripts/deploy.sh rollback
 ```
-It brings the stack down, restores the DB dump taken at the start of that deploy,
-restores the config tarball, and brings the stack back up. It then runs the smoke
-test best-effort.
+`deploy` runs this automatically when the healthcheck or smoke test fails. It stops
+`api`/`web`, restores the DB dump taken at the start of that deploy, and starts the
+**previous images** (`bikontrol-api:previous`, `bikontrol-web:previous`, kept by
+`build`) without rebuilding. If those images do not exist yet (first deploy after
+image tags were introduced) it falls back to the config tarball and rebuilds. It
+then runs the smoke test best-effort and exits non-zero if the DB restore failed.
 
 ### Restore a specific backup (disaster recovery)
-Backups live in `/opt/bikontrol/backups/backup-<timestamp>/db.sql.gz` (7-copy
-retention; weekly cron). **Always verify a dump before trusting it.**
+Backups live in `/opt/bikontrol/backups/backup-<timestamp>/db.sql.gz` (14-copy
+retention; daily cron at 03:00 UTC, plus one per deploy). When `BACKUP_OFFSITE_REMOTE`
+is set, each dump is also uploaded **encrypted** (`backup-<ts>.sql.gz.enc`). Dumps are
+taken with `--clean --if-exists` and restored with the `public` schema recreated, in a
+single transaction: a restore either replaces the database entirely or leaves it
+untouched.
 
 ```bash
 cd /opt/bikontrol
@@ -80,21 +87,31 @@ cd /opt/bikontrol
 # 1. Pick the dump (newest first)
 ls -dt backups/backup-*/db.sql.gz | head
 
-# 2. Verify it restores into a THROWAWAY database (never touches the live one)
-./scripts/db-verify-backup.sh backups/backup-XXXX/db.sql.gz
+# 2. Restore: verifies the dump in a throwaway database first, stops api/web,
+#    restores into the live database, starts everything again
+./scripts/deploy.sh restore-db backups/backup-XXXX/db.sql.gz
 
-# 3. Stop the app, restore into the live database
-docker compose down
-docker compose up -d db && sleep 10
-set -a && source .env && set +a
-gunzip -c backups/backup-XXXX/db.sql.gz | \
-  docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
-
-# 4. Bring everything back and confirm
-docker compose up -d
+# 3. Confirm
 ./scripts/deploy.sh verify
-npm run smoke https://bikontrol.santidev21.tech
+./scripts/deploy.sh smoke
 ```
+
+From the offsite copy (host lost): fetch and decrypt, then restore as above.
+```bash
+rclone copyto "$BACKUP_OFFSITE_REMOTE/backup-XXXX.sql.gz.enc" db.sql.gz.enc
+openssl enc -d -aes-256-cbc -pbkdf2 -in db.sql.gz.enc -out db.sql.gz -pass file:/opt/bikontrol/.backup-key
+```
+Keep a copy of `.backup-key` **outside** the VPS (password manager): without it the
+offsite dumps cannot be decrypted.
+
+### Restore drill
+Restore a recent dump into a scratch environment (staging, or a throwaway Postgres
+container with the same commands) at least once a quarter and after any change to the
+backup scripts; record the date and the measured time below.
+
+| Date | Environment | Result | Time |
+| --- | --- | --- | --- |
+| _fill in after the first drill on the VPS/staging_ | | | |
 
 > Migrations: production applies migrations as a **dedicated deploy step**
 > (`./scripts/deploy.sh migrate`, run automatically before `up`), not on API
@@ -112,11 +129,11 @@ psql ... -f scripts/db-integrity-audit.sql
 
 | Objective | Target |
 | --- | --- |
-| **RPO** (max data loss) | ≤ 24h on the weekly cron; ≈ 0 for a failed deploy (pre-deploy dump) |
+| **RPO** (max data loss) | ≤ 24h (daily cron); ≈ 0 for a failed deploy (pre-deploy dump) |
 | **RTO** (time to restore) | ≤ 30 min from a verified backup |
 
-Keep at least one dump **off the VPS** (object storage / another host) so a lost
-host is recoverable — see the offsite note in DEPLOYMENT.md.
+Configure the offsite copy (`BACKUP_OFFSITE_REMOTE`, see DEPLOYMENT.md) so a lost
+host is recoverable.
 
 ## 6. After the incident
 
@@ -138,6 +155,7 @@ host is recoverable — see the offsite note in DEPLOYMENT.md.
 | Roll back last deploy | `./scripts/deploy.sh rollback` |
 | Manual DB backup | `./scripts/deploy.sh backup-db` |
 | Verify a dump | `./scripts/db-verify-backup.sh <file.sql.gz>` |
+| Restore a dump | `./scripts/deploy.sh restore-db <file.sql.gz>` |
 | Smoke test | `npm run smoke https://bikontrol.santidev21.tech` |
 | Readiness | `curl -fsS https://bikontrol.santidev21.tech/ready` |
 | Metrics rules | `deploy/monitoring/alerts.yml` |

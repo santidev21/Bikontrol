@@ -41,7 +41,7 @@ namespace Bikontrol.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(endpoint))
                 return;
 
-            await _repository.RemoveByEndpointAsync(endpoint);
+            await _repository.RemoveByEndpointAsync(endpoint, _current.UserId);
             await _repository.SaveChangesAsync();
         }
 
