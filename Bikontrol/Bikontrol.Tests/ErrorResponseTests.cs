@@ -33,5 +33,9 @@ public class ErrorResponseTests
 
         Assert.Empty(options.PreviousKeys);
         Assert.True(options.SecurityStampCacheSeconds > 0);
+
+        options.PreviousKeys.Add(new JwtOptions.PreviousKey { Id = "old", Key = "secret" });
+        Assert.Equal("old", Assert.Single(options.PreviousKeys).Id);
+        Assert.Equal("secret", options.PreviousKeys[0].Key);
     }
 }

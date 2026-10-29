@@ -62,6 +62,15 @@ public class OutboundSendersTests
     }
 
     [Fact]
+    public void IsTransient_ShouldCoverProtocolAndCancellationFailures()
+    {
+        Assert.True(SmtpEmailSender.IsTransient(new MailKit.Net.Smtp.SmtpProtocolException("dropped")));
+        Assert.True(SmtpEmailSender.IsTransient(new OperationCanceledException()));
+        Assert.True(WebPushSender.IsTransient(new TaskCanceledException()));
+        Assert.False(WebPushSender.IsTransient(new InvalidOperationException()));
+    }
+
+    [Fact]
     public async Task WebPush_WhenNotConfigured_ShouldKeepTheSubscription()
     {
         var sender = new WebPushSender(Options.Create(new WebPushOptions()), NullLogger<WebPushSender>.Instance);
