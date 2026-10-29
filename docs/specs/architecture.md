@@ -16,6 +16,10 @@ Internet → gateway (nginx) → bikontrol (Angular, :8080)
 | `api` | .NET 10 API (`:8080`, `/health` liveness + `/ready` readiness, `/metrics` Prometheus metrics when enabled, waits for healthy DB) |
 | `web` | Angular 22 via nginx (`:8080`, loopback `:4200` locally) |
 
+## Typed configuration
+
+`Jwt`, `Smtp`, `WebPush`, `Reminders`, `Retention` and `Database` bind to option classes in `Bikontrol.Application/Options` (`IOptions<T>`) with data-annotation validation and `ValidateOnStart`: a bad value (JWT key under 32 characters, an hour outside 0-23, only one half of the VAPID key pair, a non-positive retention window) stops the boot with a clear message instead of silently falling back to a default. Register a new section with `AddValidatedOptions<T>(section)` (API `Extensions/OptionsExtensions.cs`). `Lockout`, `EmailConfirmation`, `Demo`, `Frontend`, `Auth` and `PasswordHashing` are still read from `IConfiguration`.
+
 ## Backend Layers (Clean Architecture)
 Dependencies point inward: `API` → `Infrastructure` / `Persistence` → `Application` → `Domain` / `Shared`.
 `ArchitectureTests` pins this (Application and Domain must not reference EF, Npgsql, QuestPDF,

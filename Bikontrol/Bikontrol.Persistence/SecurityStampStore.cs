@@ -1,7 +1,8 @@
 using Bikontrol.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
+using Bikontrol.Application.Options;
+using Microsoft.Extensions.Options;
 
 namespace Bikontrol.Persistence
 {
@@ -16,12 +17,11 @@ namespace Bikontrol.Persistence
         private readonly IMemoryCache _cache;
         private readonly TimeSpan _ttl;
 
-        public SecurityStampStore(AppDbContext context, IMemoryCache cache, IConfiguration configuration)
+        public SecurityStampStore(AppDbContext context, IMemoryCache cache, IOptions<JwtOptions> options)
         {
             _context = context;
             _cache = cache;
-            var seconds = int.TryParse(configuration["Jwt:SecurityStampCacheSeconds"], out var s) && s >= 0 ? s : 30;
-            _ttl = TimeSpan.FromSeconds(seconds);
+            _ttl = TimeSpan.FromSeconds(options.Value.SecurityStampCacheSeconds);
         }
 
         public async Task<Guid?> GetAsync(Guid userId, CancellationToken cancellationToken = default)

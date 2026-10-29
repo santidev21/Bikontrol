@@ -1,8 +1,9 @@
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Options;
 using Bikontrol.Infrastructure.Resilience;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MimeKit;
@@ -14,30 +15,20 @@ namespace Bikontrol.Infrastructure.Email
 {
     public class SmtpEmailSender : IEmailSender
     {
-        private readonly IConfiguration _configuration;
+        private readonly SmtpOptions _options;
         private readonly ILogger<SmtpEmailSender> _logger;
         private readonly IHostEnvironment _environment;
 
-        public SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSender> logger, IHostEnvironment environment)
+        public SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpEmailSender> logger, IHostEnvironment environment)
         {
-            _configuration = configuration;
+            _options = options.Value;
             _logger = logger;
             _environment = environment;
         }
 
         public async Task SendAsync(string toEmail, string subject, string body)
         {
-            var host = _configuration["Smtp:Host"];
-            var username = _configuration["Smtp:Username"] ?? string.Empty;
-            var password = _configuration["Smtp:Password"] ?? string.Empty;
-
-            var hostConfigured = !string.IsNullOrWhiteSpace(host) && !host.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase);
-            var credentialsConfigured = !string.IsNullOrWhiteSpace(username)
-                && !username.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(password)
-                && !password.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase);
-
-            if (!hostConfigured || !credentialsConfigured)
+            if (!_options.IsConfigured)
             {
                 if (_environment.IsDevelopment())
                 {
@@ -57,11 +48,13 @@ namespace Bikontrol.Infrastructure.Email
                 return;
             }
 
-            var port = int.TryParse(_configuration["Smtp:Port"], out var parsedPort) ? parsedPort : 587;
-            var useSsl = !bool.TryParse(_configuration["Smtp:EnableSsl"], out var parsedSsl) || parsedSsl;
-            var fromEmail = _configuration["Smtp:FromEmail"] ?? username;
-            var fromName = _configuration["Smtp:FromName"] ?? "Bikontrol";
-            var smtpHost = host!;
+            var username = _options.Username!;
+            var password = _options.Password!;
+            var smtpHost = _options.Host!;
+            var port = _options.Port;
+            var useSsl = _options.EnableSsl;
+            var fromEmail = string.IsNullOrWhiteSpace(_options.FromEmail) ? username : _options.FromEmail;
+            var fromName = _options.FromName;
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromName, fromEmail));
@@ -71,7 +64,7 @@ namespace Bikontrol.Infrastructure.Email
 
             // A hung SMTP server must not pin a request (register/forgot-password
             // await this) for MailKit's two-minute default.
-            var timeoutMs = (int.TryParse(_configuration["Smtp:TimeoutSeconds"], out var seconds) && seconds > 0 ? seconds : 15) * 1000;
+            var timeoutMs = _options.TimeoutSeconds * 1000;
 
             await TransientRetry.ExecuteAsync(async ct =>
             {

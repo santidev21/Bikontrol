@@ -1,3 +1,4 @@
+using Bikontrol.Application.Options;
 using Bikontrol.Infrastructure.Authentication;
 using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,7 +20,7 @@ public class JwtTokenGeneratorTests
             })
             .Build();
 
-        var generator = new JwtTokenGenerator(config);
+        var generator = new JwtTokenGenerator(TestOptions.From<JwtOptions>(config, "Jwt"));
         var userId = Guid.NewGuid();
 
         var token = generator.GenerateToken(userId, "user@bikontrol.com", "Test User");
@@ -48,7 +49,7 @@ public class JwtTokenGeneratorTests
             .Build();
         var stamp = Guid.NewGuid();
 
-        var token = new JwtTokenGenerator(config).GenerateToken(Guid.NewGuid(), "a@b.com", "A", "User", stamp);
+        var token = new JwtTokenGenerator(TestOptions.From<JwtOptions>(config, "Jwt")).GenerateToken(Guid.NewGuid(), "a@b.com", "A", "User", stamp);
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
         Assert.Equal("k2", jwt.Header.Kid);
@@ -67,7 +68,7 @@ public class JwtTokenGeneratorTests
             })
             .Build();
 
-        var generator = new JwtTokenGenerator(config);
+        var generator = new JwtTokenGenerator(TestOptions.From<JwtOptions>(config, "Jwt"));
 
         var userToken = generator.GenerateToken(Guid.NewGuid(), "user@bikontrol.com", "User", "User");
         var demoToken = generator.GenerateToken(Guid.NewGuid(), "demo@bikontrol.com", "Demo", "Demo");
@@ -91,7 +92,7 @@ public class JwtTokenGeneratorTests
             })
             .Build();
 
-        var generator = new JwtTokenGenerator(config);
+        var generator = new JwtTokenGenerator(TestOptions.From<JwtOptions>(config, "Jwt"));
         var token = generator.GenerateToken(Guid.NewGuid(), "x@y.com", "Name");
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
         Assert.Equal("User", jwt.Claims.First(c => c.Type == "role").Value);

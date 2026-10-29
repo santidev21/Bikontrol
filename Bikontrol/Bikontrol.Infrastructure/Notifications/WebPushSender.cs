@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Options;
 using Bikontrol.Infrastructure.Resilience;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using WebPush;
 using PushSubscriptionEntity = Bikontrol.Domain.Entities.PushSubscription;
@@ -19,18 +20,16 @@ namespace Bikontrol.Infrastructure.Notifications
         // socket pool) per notification, with no timeout.
         private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
 
-        private readonly IConfiguration _configuration;
+        private readonly WebPushOptions _options;
         private readonly ILogger<WebPushSender> _logger;
 
-        public WebPushSender(IConfiguration configuration, ILogger<WebPushSender> logger)
+        public WebPushSender(IOptions<WebPushOptions> options, ILogger<WebPushSender> logger)
         {
-            _configuration = configuration;
+            _options = options.Value;
             _logger = logger;
         }
 
-        private bool IsConfigured =>
-            !string.IsNullOrWhiteSpace(_configuration["WebPush:PublicKey"])
-            && !string.IsNullOrWhiteSpace(_configuration["WebPush:PrivateKey"]);
+        private bool IsConfigured => _options.IsConfigured;
 
         public async Task<bool> SendAsync(PushSubscriptionEntity subscription, PushPayload payload)
         {
@@ -41,11 +40,7 @@ namespace Bikontrol.Infrastructure.Notifications
                 return true;
             }
 
-            var subject = _configuration["WebPush:Subject"] ?? "mailto:contacto.santidev21@gmail.com";
-            var vapid = new VapidDetails(
-                subject,
-                _configuration["WebPush:PublicKey"]!,
-                _configuration["WebPush:PrivateKey"]!);
+            var vapid = new VapidDetails(_options.Subject, _options.PublicKey!, _options.PrivateKey!);
 
             var pushSubscription = new WebPush.PushSubscription(subscription.Endpoint, subscription.P256dh, subscription.Auth);
             // Payload shape expected by Angular's service worker (SwPush): the

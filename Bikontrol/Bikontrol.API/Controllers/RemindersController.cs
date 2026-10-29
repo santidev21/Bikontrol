@@ -1,7 +1,9 @@
 using Bikontrol.Application.DTOs.Reminders;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Bikontrol.API.Controllers
 {
@@ -17,16 +19,16 @@ namespace Bikontrol.API.Controllers
     {
         private readonly IReminderService _reminderService;
         private readonly IPushSubscriptionService _pushSubscriptionService;
-        private readonly IConfiguration _configuration;
+        private readonly WebPushOptions _webPush;
 
         public RemindersController(
             IReminderService reminderService,
             IPushSubscriptionService pushSubscriptionService,
-            IConfiguration configuration)
+            IOptions<WebPushOptions> webPush)
         {
             _reminderService = reminderService;
             _pushSubscriptionService = pushSubscriptionService;
-            _configuration = configuration;
+            _webPush = webPush.Value;
         }
 
         /// <summary>Maintenance that is due or overdue, worst first.</summary>
@@ -42,8 +44,7 @@ namespace Bikontrol.API.Controllers
         [AllowAnonymous]
         public IActionResult GetVapidPublicKey()
         {
-            var publicKey = _configuration["WebPush:PublicKey"];
-            return Ok(new { publicKey = string.IsNullOrWhiteSpace(publicKey) ? null : publicKey });
+            return Ok(new { publicKey = string.IsNullOrWhiteSpace(_webPush.PublicKey) ? null : _webPush.PublicKey });
         }
 
         /// <summary>Registers (or refreshes) the current browser's push subscription.</summary>

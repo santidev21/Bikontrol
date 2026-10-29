@@ -1,10 +1,12 @@
 using Bikontrol.Application.DTOs.Reminders;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
+using Bikontrol.Application.Options;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace Bikontrol.Application.Services
@@ -22,6 +24,7 @@ namespace Bikontrol.Application.Services
         private readonly IPushSubscriptionRepository _pushSubscriptionRepository;
         private readonly IPushSender _pushSender;
         private readonly IConfiguration _configuration;
+        private readonly ReminderOptions _options;
         private readonly ILogger<ReminderService> _logger;
 
         public ReminderService(
@@ -36,6 +39,7 @@ namespace Bikontrol.Application.Services
             IPushSubscriptionRepository pushSubscriptionRepository,
             IPushSender pushSender,
             IConfiguration configuration,
+            IOptions<ReminderOptions> options,
             ILogger<ReminderService> logger)
         {
             _pushSubscriptionRepository = pushSubscriptionRepository;
@@ -49,12 +53,12 @@ namespace Bikontrol.Application.Services
             _reminderLogRepository = reminderLogRepository;
             _emailSender = emailSender;
             _configuration = configuration;
+            _options = options.Value;
             _logger = logger;
         }
 
         /// <summary>Dedupe window: don't remind the same item twice within N days.</summary>
-        private int DedupeDays =>
-            int.TryParse(_configuration["Reminders:DedupeDays"], out var days) && days > 0 ? days : 3;
+        private int DedupeDays => _options.DedupeDays;
 
         /// <summary>
         /// How far back an undelivered reminder is still worth sending. Capped at
@@ -71,8 +75,7 @@ namespace Bikontrol.Application.Services
                 return Array.Empty<DueReminderDTO>();
 
             var motorcycleIds = maintenances.Select(m => m.MotorcycleId).Distinct().ToList();
-            var motorcycles = (await _motorcycleRepository.GetByUserIdAsync(userId))
-                .ToDictionary(m => m.Id);
+            var motorcycleNames = await _motorcycleRepository.GetNamesByUserIdAsync(userId);
             var currentKms = await _kmHistoryService.GetCurrentKmByMotorcycleIdsAsync(motorcycleIds);
             var initialDates = await _kmHistoryService.GetInitialRecordedAtByMotorcycleIdsAsync(motorcycleIds);
             var lastRecords = await _recordRepository.GetLastByUserMaintenanceIdsAsync(maintenances.Select(m => m.Id));
@@ -93,7 +96,7 @@ namespace Bikontrol.Application.Services
                 {
                     UserMaintenanceId = item.UserMaintenanceId,
                     MotorcycleId = item.MotorcycleId,
-                    MotorcycleName = motorcycles.TryGetValue(item.MotorcycleId, out var moto) ? moto.Name : string.Empty,
+                    MotorcycleName = motorcycleNames.TryGetValue(item.MotorcycleId, out var motoName) ? motoName : string.Empty,
                     Name = item.Name,
                     Description = item.Description,
                     TrackingType = item.TrackingType,

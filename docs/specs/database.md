@@ -24,6 +24,12 @@
 - Read through `GET /api/users/me/activity`.
 - Attachments: `maintenance_record_attachments` stores resized image data URLs (JPEG/PNG/WebP, ≤1 MB decoded), cascade-deleted with their maintenance record.
 
+## Query shape
+
+- User emails are stored normalized (trim + lower); lookups compare against the normalized form so the unique index serves them (no `ToLower()`). Migration `NormalizeUserEmails` rewrites legacy rows; audit check 17 reports any that could not be rewritten because the normalized address already belongs to another account.
+- Per-motorcycle "latest km", "initial date" and per-maintenance "last record" are computed in SQL (`GROUP BY` / anti-join) instead of loading every row and grouping in memory.
+- `Motorcycle.Image` is a data URL of up to ~1 MB: only the endpoints that return it load it. Callers that need labels or ids (`MotorcycleOwnership`, due reminders) use `GetNamesByUserIdAsync`, a narrow projection.
+
 ## Data retention
 
 - `RetentionBackgroundService` (a second daily background job at `Retention:DailyHourUtc`, default 04:00 UTC — off-peak, clear of the reminder engine's 08:00) runs `RetentionService.PurgeAsync` once a day.

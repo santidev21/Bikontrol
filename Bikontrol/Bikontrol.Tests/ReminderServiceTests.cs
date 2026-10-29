@@ -2,6 +2,7 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
+using Bikontrol.Application.Options;
 using Bikontrol.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -463,6 +464,7 @@ public class ReminderServiceTests
             pushSubscriptions ?? new FakePushSubscriptionRepository(),
             pushSender ?? new FakePushSender(),
             config,
+            TestOptions.From<ReminderOptions>(config, "Reminders"),
             NullLogger<ReminderService>.Instance);
     }
 
