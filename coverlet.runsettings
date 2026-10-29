@@ -6,13 +6,7 @@
         <Configuration>
           <Format>cobertura,opencover</Format>
           <Exclude>[*.Tests]*,[*.Tests.Integration]*</Exclude>
-          <!--
-            CompilerGeneratedAttribute is deliberately NOT excluded: coverlet then
-            drops async state machines (MoveNext) of some classes entirely, so a
-            fully tested async-only class such as DemoUserSeeder is reported as
-            0% covered by Sonar.
-          -->
-          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
           <!--
             EF Core migration scaffolding is auto-generated and applied verbatim by
             the integration-test fixture, so coverlet reports it as ~100% covered

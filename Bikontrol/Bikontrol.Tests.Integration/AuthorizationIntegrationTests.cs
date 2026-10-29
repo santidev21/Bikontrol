@@ -65,6 +65,91 @@ public sealed class AuthorizationIntegrationTests
     }
 
     [RequiresDockerFact]
+    public async Task User_CannotReachAnyChildResourceOfAnotherUsersMotorcycle()
+    {
+        var owner = await RegisterClientAsync();
+        var moto = await CreateMotorcycleAsync(owner);
+
+        var fuel = await owner.PostAsJsonAsync("/api/fuel-ups", new
+        {
+            motorcycleId = moto.Id,
+            fueledAt = DateTime.UtcNow,
+            odometerKm = 1100,
+            litres = 5m,
+            totalCost = 20m,
+            isFullTank = true
+        });
+        fuel.EnsureSuccessStatusCode();
+        var fuelUp = await fuel.Content.ReadFromJsonAsync<IdResponse>();
+
+        var maintenance = await owner.PostAsJsonAsync("/api/maintenances/mine", new
+        {
+            motorcycleId = moto.Id,
+            name = "Cambio de aceite",
+            description = "Aceite",
+            trackingType = "Km",
+            kmInterval = 1500,
+            timeIntervalWeeks = 0
+        });
+        maintenance.EnsureSuccessStatusCode();
+        var userMaintenance = await maintenance.Content.ReadFromJsonAsync<IdResponse>();
+
+        var record = await owner.PostAsJsonAsync("/api/maintenances/records", new
+        {
+            motorcycleId = moto.Id,
+            userMaintenanceId = userMaintenance!.Id,
+            performedAt = DateTime.UtcNow,
+            performedKm = 1050
+        });
+        record.EnsureSuccessStatusCode();
+        var recordId = (await record.Content.ReadFromJsonAsync<IdResponse>())!.Id;
+
+        var intruder = await RegisterClientAsync();
+        var denied = new[] { HttpStatusCode.Forbidden, HttpStatusCode.NotFound };
+
+        var attempts = new Dictionary<string, HttpResponseMessage>
+        {
+            ["fuel list"] = await intruder.GetAsync($"/api/fuel-ups/motorcycle/{moto.Id}"),
+            ["fuel consumption"] = await intruder.GetAsync($"/api/fuel-ups/motorcycle/{moto.Id}/consumption"),
+            ["fuel get"] = await intruder.GetAsync($"/api/fuel-ups/{fuelUp!.Id}"),
+            ["fuel delete"] = await intruder.DeleteAsync($"/api/fuel-ups/{fuelUp.Id}"),
+            ["fuel create"] = await intruder.PostAsJsonAsync("/api/fuel-ups", new
+            {
+                motorcycleId = moto.Id,
+                fueledAt = DateTime.UtcNow,
+                odometerKm = 1200,
+                litres = 5m,
+                totalCost = 20m,
+                isFullTank = true
+            }),
+            ["maintenance get"] = await intruder.GetAsync($"/api/maintenances/{userMaintenance.Id}"),
+            ["maintenance delete"] = await intruder.DeleteAsync($"/api/maintenances/mine/{userMaintenance.Id}"),
+            ["maintenance by moto"] = await intruder.GetAsync($"/api/maintenances/mine/motorcycle/{moto.Id}"),
+            ["records list"] = await intruder.GetAsync($"/api/maintenances/motorcycle/{moto.Id}/records"),
+            ["upcoming"] = await intruder.GetAsync($"/api/maintenances/motorcycle/{moto.Id}/upcoming"),
+            ["record create"] = await intruder.PostAsJsonAsync("/api/maintenances/records", new
+            {
+                motorcycleId = moto.Id,
+                userMaintenanceId = userMaintenance.Id,
+                performedAt = DateTime.UtcNow,
+                performedKm = 1060
+            }),
+            ["attachments list"] = await intruder.GetAsync($"/api/maintenances/records/{recordId}/attachments"),
+            ["book csv"] = await intruder.GetAsync($"/api/motorcycles/{moto.Id}/maintenance-book/book.csv"),
+            ["book pdf"] = await intruder.GetAsync($"/api/motorcycles/{moto.Id}/maintenance-book/book.pdf"),
+        };
+
+        foreach (var (name, response) in attempts)
+            Assert.True(denied.Contains(response.StatusCode), $"{name}: expected 403/404 but got {(int)response.StatusCode}");
+
+        // Nothing leaked through and nothing was written by the intruder.
+        var fuels = await owner.GetFromJsonAsync<List<IdResponse>>($"/api/fuel-ups/motorcycle/{moto.Id}");
+        Assert.Single(fuels!);
+        var records = await owner.GetFromJsonAsync<List<IdResponse>>($"/api/maintenances/motorcycle/{moto.Id}/records");
+        Assert.Single(records!);
+    }
+
+    [RequiresDockerFact]
     public async Task Login_AfterMaxFailedAttempts_ShouldLockAccountAndReturn429()
     {
         // Its own client IP so this test does not spend the per-IP auth rate
@@ -201,6 +286,7 @@ public sealed class AuthorizationIntegrationTests
         return (await response.Content.ReadFromJsonAsync<MotorcycleResponse>())!;
     }
 
+    private sealed record IdResponse(Guid Id);
     private sealed record AuthResponse(string Token, string RefreshToken);
     private sealed record MotorcycleResponse(Guid Id, string Name, int Km);
     private sealed record DueReminderResponse(Guid UserMaintenanceId, string Name, bool IsOverdue);

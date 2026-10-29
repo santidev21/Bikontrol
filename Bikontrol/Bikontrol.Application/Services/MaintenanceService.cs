@@ -347,22 +347,10 @@ namespace Bikontrol.Application.Services
         private static UpcomingMaintenanceDTO CalculateUpcoming(UserMaintenance maintenance, MotorcycleMaintenanceRecord? lastRecord, int currentKm, DateTime? initialRecordedAt)
             => MaintenanceScheduleCalculator.Calculate(maintenance, lastRecord, currentKm, initialRecordedAt);
 
-        private async Task EnsureMotorcycleOwnershipAsync(Guid motorcycleId)
-        {
-            var motorcycle = await _motorcycleRepository.GetByIdAsync(motorcycleId);
-            if (motorcycle is null) throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
-            if (motorcycle.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.", "motorcycle_no_access");
-        }
+        private Task EnsureMotorcycleOwnershipAsync(Guid motorcycleId)
+            => MotorcycleOwnership.EnsureOwnedAsync(_motorcycleRepository, _current.UserId, motorcycleId);
 
-        private async Task EnsureMotorcyclesOwnershipAsync(IReadOnlyCollection<Guid> motorcycleIds)
-        {
-            var owned = (await _motorcycleRepository.GetByUserIdAsync(_current.UserId))
-                .Select(m => m.Id)
-                .ToHashSet();
-
-            if (motorcycleIds.Any(id => !owned.Contains(id)))
-                throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.", "motorcycles_no_access");
-        }
+        private Task EnsureMotorcyclesOwnershipAsync(IReadOnlyCollection<Guid> motorcycleIds)
+            => MotorcycleOwnership.EnsureAllOwnedAsync(_motorcycleRepository, _current.UserId, motorcycleIds);
     }
 }
