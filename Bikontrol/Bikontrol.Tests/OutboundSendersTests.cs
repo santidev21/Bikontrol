@@ -30,7 +30,10 @@ public class OutboundSendersTests
     [InlineData("Production")]
     public async Task Smtp_WhenNotConfigured_ShouldSkipWithoutThrowing(string environment)
     {
-        await Smtp(new SmtpOptions(), environment).SendAsync("rider@example.com", "Subject", "Body");
+        var exception = await Record.ExceptionAsync(() =>
+            Smtp(new SmtpOptions(), environment).SendAsync("rider@example.com", "Subject", "Body"));
+
+        Assert.Null(exception);
     }
 
     [Fact]

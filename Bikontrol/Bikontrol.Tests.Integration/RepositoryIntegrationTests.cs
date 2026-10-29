@@ -1,3 +1,4 @@
+using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence;
@@ -51,6 +52,50 @@ public sealed class RepositoryIntegrationTests
         Assert.True(purged >= 1);
         Assert.Null(await tokens.GetByTokenHashAsync(expired.TokenHash));
         Assert.NotNull(await tokens.GetByTokenHashAsync(hash));
+    }
+
+    [RequiresDockerFact]
+    public async Task RefreshTokens_RevokeFamily_ShouldOnlyTouchThatFamily()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var tokens = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+        var user = new User($"family-{Guid.NewGuid():N}@bikontrol.test", "Family", "hashed");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var family = Guid.NewGuid();
+        var otherHash = $"other-{Guid.NewGuid():N}";
+        await tokens.AddAsync(new RefreshToken(user.Id, $"a-{Guid.NewGuid():N}", DateTime.UtcNow.AddDays(10), family));
+        await tokens.AddAsync(new RefreshToken(user.Id, $"b-{Guid.NewGuid():N}", DateTime.UtcNow.AddDays(10), family));
+        await tokens.AddAsync(new RefreshToken(user.Id, otherHash, DateTime.UtcNow.AddDays(10)));
+        await tokens.SaveChangesAsync();
+
+        Assert.Equal(2, await tokens.RevokeFamilyAsync(family));
+        await tokens.SaveChangesAsync();
+
+        Assert.Equal(0, await tokens.RevokeFamilyAsync(family));
+        Assert.Null((await tokens.GetByTokenHashAsync(otherHash))!.RevokedAt);
+    }
+
+    [RequiresDockerFact]
+    public async Task SecurityStampStore_ShouldReturnTheCurrentStamp()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var store = scope.ServiceProvider.GetRequiredService<ISecurityStampStore>();
+        var user = new User($"stamp-{Guid.NewGuid():N}@bikontrol.test", "Stamp", "hashed");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        Assert.Equal(user.SecurityStamp, await store.GetAsync(user.Id));
+
+        // The factory disables the cache, so a rotation is visible immediately.
+        user.RotateSecurityStamp();
+        await db.SaveChangesAsync();
+        Assert.Equal(user.SecurityStamp, await store.GetAsync(user.Id));
+
+        Assert.Null(await store.GetAsync(Guid.NewGuid()));
     }
 
     [RequiresDockerFact]
