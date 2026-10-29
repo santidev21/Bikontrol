@@ -2,7 +2,6 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -399,8 +398,11 @@ public class ReminderServiceTests
         var logs = new FakeReminderLogRepository();
         await logs.AddAsync(new ReminderLog
         {
-            UserId = user.Id, UserMaintenanceId = item.Id, Channel = ReminderChannel.Pending,
-            User = user, UserMaintenance = item
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
         });
         var subs = new FakePushSubscriptionRepository();
         subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/1", P256dh = "k", Auth = "a" });
@@ -419,8 +421,11 @@ public class ReminderServiceTests
         var logs = new FakeReminderLogRepository();
         await logs.AddAsync(new ReminderLog
         {
-            UserId = user.Id, UserMaintenanceId = item.Id, Channel = ReminderChannel.Pending,
-            User = user, UserMaintenance = item
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
         });
         var subs = new FakePushSubscriptionRepository();
         subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/1", P256dh = "k", Auth = "a" });

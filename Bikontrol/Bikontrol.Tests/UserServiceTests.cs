@@ -158,6 +158,57 @@ public class UserServiceTests
             }));
     }
 
+    [Fact]
+    public async Task UpdateRemindersAsync_ShouldPersistFlag()
+    {
+        var user = new User("user@bikontrol.com", "Santi", "hashed:secret");
+        var repository = new FakeUserRepository(user);
+        var service = CreateService(repository, role: UserRole.User);
+
+        var result = await service.UpdateRemindersAsync(new UpdateRemindersRequest { Enabled = false });
+
+        Assert.False(result.RemindersEnabled);
+        Assert.Equal(1, repository.SaveChangesCalls);
+    }
+
+    [Fact]
+    public async Task UpdateRemindersAsync_WhenDemo_ShouldThrowForbidden()
+    {
+        var user = new User("demo@bikontrol.com", "Demo", "hashed:secret");
+        var service = CreateService(user, role: UserRole.Demo);
+
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
+            service.UpdateRemindersAsync(new UpdateRemindersRequest { Enabled = true }));
+    }
+
+    [Fact]
+    public async Task UpdateBudgetAsync_ShouldPersistBudgets()
+    {
+        var user = new User("user@bikontrol.com", "Santi", "hashed:secret");
+        var repository = new FakeUserRepository(user);
+        var service = CreateService(repository, role: UserRole.User);
+
+        var result = await service.UpdateBudgetAsync(new UpdateBudgetRequest
+        {
+            MonthlyMaintenanceBudget = 50m,
+            AnnualMaintenanceBudget = 600m
+        });
+
+        Assert.Equal(50m, result.MonthlyMaintenanceBudget);
+        Assert.Equal(600m, result.AnnualMaintenanceBudget);
+        Assert.Equal(1, repository.SaveChangesCalls);
+    }
+
+    [Fact]
+    public async Task UpdateBudgetAsync_WhenDemo_ShouldThrowForbidden()
+    {
+        var user = new User("demo@bikontrol.com", "Demo", "hashed:secret");
+        var service = CreateService(user, role: UserRole.Demo);
+
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
+            service.UpdateBudgetAsync(new UpdateBudgetRequest { MonthlyMaintenanceBudget = 1m }));
+    }
+
     private FakeRefreshTokenRepository _refreshTokenRepository = new();
 
     private UserService CreateService(User? user, string role)

@@ -3,7 +3,6 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;

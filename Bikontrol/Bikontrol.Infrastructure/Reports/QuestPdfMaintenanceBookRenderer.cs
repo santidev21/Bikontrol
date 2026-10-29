@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using QuestPDF.Fluent;
@@ -59,7 +60,7 @@ namespace Bikontrol.Infrastructure.Reports
 
                         foreach (var entry in book.Entries)
                         {
-                            table.Cell().Element(BodyCell).Text(entry.PerformedAt.ToString("yyyy-MM-dd"));
+                            table.Cell().Element(BodyCell).Text(entry.PerformedAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
                             table.Cell().Element(BodyCell).Text(entry.PerformedKm.HasValue ? $"{entry.PerformedKm} km" : "—");
                             table.Cell().Element(BodyCell).Text(entry.Name);
                             table.Cell().Element(BodyCell).Text(FormatInterval(entry));

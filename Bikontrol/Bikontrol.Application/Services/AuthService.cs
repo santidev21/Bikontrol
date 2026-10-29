@@ -1,7 +1,6 @@
 ﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Application.Interfaces;
 using Bikontrol.Shared.Exceptions;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Application.Mapping;
