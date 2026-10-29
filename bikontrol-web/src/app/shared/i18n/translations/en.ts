@@ -166,6 +166,15 @@ export const en: Record<string, string> = {
   'auth.confirm.linkInvalid': 'The confirmation link is invalid or incomplete.',
   'auth.confirm.success': 'Email confirmed. You can now sign in.',
   'auth.confirm.goToLogin': 'Go to sign in',
+  'auth.unsubscribe.title': 'Unsubscribe from reminders',
+  'auth.unsubscribe.description':
+    'You will stop receiving upcoming-maintenance emails. You can turn them back on any time from your profile.',
+  'auth.unsubscribe.confirm': 'Unsubscribe me',
+  'auth.unsubscribe.success':
+    "Done: we won't send you reminder emails anymore. You can turn them back on from your profile.",
+  'auth.unsubscribe.linkInvalid': 'The unsubscribe link is invalid or incomplete.',
+  'auth.unsubscribe.goToApp': 'Go to Bikontrol',
+  'errors.invalid_unsubscribe_token': 'The unsubscribe link is not valid.',
 
   // App shell
   'nav.openMenu': 'Open menu',

@@ -30,5 +30,12 @@ namespace Bikontrol.Application.Interfaces
         /// the email step.
         /// </summary>
         Task<int> SendPendingPushesAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Turns off reminder emails and pushes for the user a signed unsubscribe
+        /// token was minted for. Idempotent; needs no login (mail clients call it
+        /// straight from the inbox). Throws a validation error for a bad token.
+        /// </summary>
+        Task UnsubscribeAsync(string? token);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Bikontrol.Application.DTOs.Auth;
+using Bikontrol.Application.Email;
+using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Shared.Exceptions;
@@ -278,8 +279,18 @@ namespace Bikontrol.Application.Services
                 "Recibimos una solicitud para restablecer tu contraseña de Bikontrol.\n" +
                 $"Usa este enlace para crear una nueva (expira en {ResetPasswordTokenHours} horas):\n\n{link}\n\n" +
                 "Si no solicitaste esto, ignora este correo.";
+            var html = EmailTemplate.Render(
+                heading: "Restablece tu contraseña",
+                paragraphs: new[]
+                {
+                    $"Hola {user.FullName}, recibimos una solicitud para restablecer tu contraseña de Bikontrol.",
+                    $"El enlace expira en {ResetPasswordTokenHours} horas.",
+                },
+                buttonLabel: "Crear nueva contraseña",
+                buttonUrl: link,
+                footerLine: "Si no solicitaste esto, ignora este correo: tu contraseña no cambiará.");
 
-            await _emailSender.SendAsync(user.Email, "Restablece tu contraseña de Bikontrol", body);
+            await _emailSender.SendAsync(new EmailMessage(user.Email, "Restablece tu contraseña de Bikontrol", body, html));
         }
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
@@ -443,7 +454,16 @@ namespace Bikontrol.Application.Services
                 "Si fuiste vos, iniciá sesión con tu contraseña (o restablecela si no la recordás).\n" +
                 "Si no fuiste vos, ignorá este correo: nadie pudo acceder a tu cuenta.\n";
 
-            await _emailSender.SendAsync(user.Email, "Ya tenés una cuenta en Bikontrol", body);
+            var html = EmailTemplate.Render(
+                heading: "Ya tenés una cuenta en Bikontrol",
+                paragraphs: new[]
+                {
+                    $"Hola {user.FullName}, recibimos un intento de registro con tu correo en Bikontrol, pero ya existe una cuenta con esta dirección.",
+                    "Si fuiste vos, iniciá sesión con tu contraseña (o restablecela si no la recordás).",
+                },
+                footerLine: "Si no fuiste vos, ignorá este correo: nadie pudo acceder a tu cuenta.");
+
+            await _emailSender.SendAsync(new EmailMessage(user.Email, "Ya tenés una cuenta en Bikontrol", body, html));
         }
 
         private async Task SendConfirmationEmailAsync(User user, string token)
@@ -456,7 +476,18 @@ namespace Bikontrol.Application.Services
                 $"Confirmá tu correo con este enlace (expira en {EmailConfirmationTokenHours} horas):\n\n{link}\n\n" +
                 "Si no creaste esta cuenta, ignorá este correo.";
 
-            await _emailSender.SendAsync(user.Email, "Confirmá tu correo de Bikontrol", body);
+            var html = EmailTemplate.Render(
+                heading: "Confirmá tu correo",
+                paragraphs: new[]
+                {
+                    $"Hola {user.FullName}, gracias por registrarte en Bikontrol.",
+                    $"Confirmá tu correo con el botón de abajo (el enlace expira en {EmailConfirmationTokenHours} horas).",
+                },
+                buttonLabel: "Confirmar correo",
+                buttonUrl: link,
+                footerLine: "Si no creaste esta cuenta, ignorá este correo.");
+
+            await _emailSender.SendAsync(new EmailMessage(user.Email, "Confirmá tu correo de Bikontrol", body, html));
         }
 
         private LoginResponse BuildLoginResponse(User user, string refreshToken)

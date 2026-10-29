@@ -170,6 +170,15 @@ export const es: Record<string, string> = {
   'auth.confirm.linkInvalid': 'El enlace de confirmación es inválido o está incompleto.',
   'auth.confirm.success': 'Correo confirmado. Ya puedes iniciar sesión.',
   'auth.confirm.goToLogin': 'Ir al inicio de sesión',
+  'auth.unsubscribe.title': 'Darte de baja de los avisos',
+  'auth.unsubscribe.description':
+    'Dejarás de recibir por correo los avisos de mantenimientos por vencer. Podés volver a activarlos cuando quieras desde tu perfil.',
+  'auth.unsubscribe.confirm': 'Darme de baja',
+  'auth.unsubscribe.success':
+    'Listo: no te enviaremos más avisos por correo. Podés reactivarlos desde tu perfil.',
+  'auth.unsubscribe.linkInvalid': 'El enlace para darte de baja es inválido o está incompleto.',
+  'auth.unsubscribe.goToApp': 'Ir a Bikontrol',
+  'errors.invalid_unsubscribe_token': 'El enlace para darte de baja no es válido.',
 
   // App shell
   'nav.openMenu': 'Abrir menú',

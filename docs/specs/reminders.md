@@ -31,7 +31,9 @@ threshold as the dashboard's "Próximo" bucket. Km and time items use the same r
 - Right after generating, the same run sends **one digest email per user** with all their
   undelivered reminders (`ReminderService.SendPendingEmailsAsync`). Set `Reminders:EmailEnabled=false`
   to record without emailing. Email delivery needs SMTP configured (see [auth.md](auth.md)); without
-  SMTP the sender logs and does not deliver.
+  SMTP the sender logs and does not deliver. The digest is multipart (text + HTML) and carries a signed
+  one-click unsubscribe (`List-Unsubscribe` headers + `POST /api/reminders/email/unsubscribe`, which
+  turns `RemindersEnabled` off; see [ADR 004](../adr/004-email-delivery.md)).
 - **Web Push** then delivers the logs not yet pushed to the user's browser subscriptions. It is a
   no-op without VAPID keys, and gone subscriptions (404/410) are deleted. See
   [../adr/001-web-push.md](../adr/001-web-push.md).

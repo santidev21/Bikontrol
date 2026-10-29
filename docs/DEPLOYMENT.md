@@ -115,6 +115,26 @@ Create the key once with `openssl rand -base64 48 > /opt/bikontrol/.backup-key &
 
 Recovery: `./scripts/deploy.sh restore-db backups/backup-xxx/db.sql.gz` (verifies the dump, restores in a single transaction, restarts the app). `./scripts/deploy.sh rollback` uses the same restore and also returns to the previous images. See [RUNBOOK](RUNBOOK.md) §4.
 
+## Email deliverability
+
+Bikontrol sends through plain SMTP, so any transactional provider works (Resend, Postmark, Amazon SES):
+set `Smtp__Host`, `Smtp__Port` (587), `Smtp__Username`, `Smtp__Password` and `Smtp__FromEmail` in `.env`
+and redeploy. Typical Resend values: host `smtp.resend.com`, username `resend`, password = the API key.
+
+Gmail and Yahoo reject or spam-folder bulk mail without these DNS records on the **From domain**
+(`Smtp__FromEmail`):
+
+1. **SPF** — one `v=spf1 include:<provider> ~all` TXT record on the domain (never two).
+2. **DKIM** — the CNAME/TXT records your provider shows when you verify the domain
+   (`<selector>._domainkey`).
+3. **DMARC** — `_dmarc.<domain>` TXT, e.g. `v=DMARC1; p=none; rua=mailto:you@domain` at first, moving to
+   `quarantine`/`reject` once the reports look clean.
+
+Check them with `./scripts/check-email-dns.sh <domain> <dkim-selector>` (read-only `dig` lookups).
+The reminder digest also sends `List-Unsubscribe` / `List-Unsubscribe-Post` headers, which Gmail needs
+to show its own unsubscribe button. After changing provider, send a test through the forgot-password
+flow and check the message headers show `spf=pass dkim=pass dmarc=pass`.
+
 ## Observability
 
 - **Structured logs (Serilog)** go to stdout and to the rolling file in `/app/logs` as one compact JSON object per line in production (`@t` timestamp, `@m` rendered message, `@l` level — absent for Information —, `@x` exception, plus the trace/span ids and the structured properties); Development keeps readable text. Filter errors with `jq 'select(.["@l"]=="Error")'`. Each request is logged once (`HTTP {Method} {Path} responded {StatusCode} in {Elapsed} ms`).

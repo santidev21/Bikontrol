@@ -54,6 +54,13 @@ export class AuthService {
     return this.http.post<MessageResponse>(`${this.apiUrl}/confirm-email`, { email, token });
   }
 
+  /** One-click unsubscribe from reminder emails; the signed token comes from the email link. */
+  unsubscribeReminderEmails(token: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/reminders/email/unsubscribe`, null, {
+      params: { token },
+    });
+  }
+
   resendConfirmation(email: string): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.apiUrl}/resend-confirmation`, { email });
   }

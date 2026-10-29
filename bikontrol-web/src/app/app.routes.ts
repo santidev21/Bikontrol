@@ -47,6 +47,14 @@ export const routes: Routes = [
       ),
   },
 
+  {
+    path: 'unsubscribe',
+    loadComponent: () =>
+      import('./modules/auth/pages/unsubscribe/unsubscribe.component').then(
+        (c) => c.UnsubscribeComponent,
+      ),
+  },
+
   // Legal (public)
   {
     path: 'terms',
