@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/santidev21/Bikontrol/compare/v0.6.1...v0.7.0) (2026-10-29)
+
+
+### Features
+
+* phase 1 hardening (auth, limits, resilience, typed options, query shaping) ([#115](https://github.com/santidev21/Bikontrol/issues/115)) ([ec9b335](https://github.com/santidev21/Bikontrol/commit/ec9b335666f734ea8c3fc609059eeca4d6e159f4))
+
 ## [0.6.1](https://github.com/santidev21/Bikontrol/compare/v0.6.0...v0.6.1) (2026-10-29)
 
 
