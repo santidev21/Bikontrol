@@ -1,6 +1,7 @@
 using Bikontrol.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Bikontrol.Application.DTOs.Users;
 
 namespace Bikontrol.API.Controllers
@@ -63,6 +64,7 @@ namespace Bikontrol.API.Controllers
         }
 
         /// <summary>Downloads everything the current user owns as one document.</summary>
+        [EnableRateLimiting("heavy")]
         [HttpGet("me/export")]
         public async Task<IActionResult> ExportMyData()
         {

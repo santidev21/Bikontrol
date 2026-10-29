@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Diagnostics;
 using System.Net;
-using System.Text.Json;
 
 namespace Bikontrol.API.Middleware
 {
@@ -87,6 +86,12 @@ namespace Bikontrol.API.Middleware
                     code = validationEx.Code ?? "validation";
                     break;
 
+                case BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge }:
+                    statusCode = HttpStatusCode.RequestEntityTooLarge;
+                    message = ErrorResponse.ForStatus(StatusCodes.Status413PayloadTooLarge)!.Value.Message;
+                    code = "payload_too_large";
+                    break;
+
                 case DbUpdateConcurrencyException:
                     statusCode = HttpStatusCode.Conflict;
                     message = "Los datos cambiaron mientras los editabas. Recarga e inténtalo de nuevo.";
@@ -120,16 +125,10 @@ namespace Bikontrol.API.Middleware
                     break;
             }
 
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)statusCode;
-
             // The code is the machine-stable part of the envelope: the frontend
             // can translate known codes instead of showing the hardcoded
             // (Spanish) message, which is what unlocks non-Spanish UIs.
-            var response = new { error = message, code };
-            var json = JsonSerializer.Serialize(response);
-
-            await context.Response.WriteAsync(json, context.RequestAborted);
+            await ErrorResponse.WriteAsync(context, (int)statusCode, code, message);
         }
 
         [LoggerMessage(Level = LogLevel.Warning,

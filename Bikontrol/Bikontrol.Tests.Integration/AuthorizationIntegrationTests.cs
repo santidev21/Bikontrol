@@ -267,6 +267,21 @@ public sealed class AuthorizationIntegrationTests
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/users/me")).StatusCode);
     }
 
+    [RequiresDockerFact]
+    public async Task HeavyEndpoint_BeyondItsBudget_ShouldAnswer429WithACodeAndRetryAfter()
+    {
+        var client = await RegisterClientAsync();
+
+        HttpResponseMessage? last = null;
+        for (var i = 0; i < 7; i++)
+            last = await client.GetAsync("/api/users/me/export");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, last!.StatusCode);
+        Assert.True(last.Headers.Contains("Retry-After"));
+        var body = await last.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal("rate_limited", body.GetProperty("code").GetString());
+    }
+
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();

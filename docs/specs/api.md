@@ -2,9 +2,14 @@
 
 ## Error envelope
 
-- Errors: every API error response is `{ error: <human message in Spanish>, code: <stable machine code> }` via `ExceptionHandlingMiddleware` — types map to `not_found`/`forbidden`/`validation`/`conflict`/`server_error`, and the typed exceptions (`Auth`, `Validation`, `NotFound`, `Forbidden`) may carry a specific code (e.g. `invalid_credentials`, `session_expired`, `maintenance_no_access`, `km_below_previous`).
+- Errors: every non-2xx answer is `application/problem+json` (RFC 9457): `{ type: "urn:bikontrol:error:<code>", title, status, detail, code, error, traceId }`. `code` is the stable machine part; `error` repeats the Spanish message for the client contract (`{ error, code }`). `ExceptionHandlingMiddleware` maps types to `not_found`/`forbidden`/`validation`/`conflict`/`duplicate`/`payload_too_large`/`server_error`; the typed exceptions (`Auth`, `Validation`, `NotFound`, `Forbidden`) may carry a specific code (e.g. `invalid_credentials`, `session_expired`, `maintenance_no_access`, `km_below_previous`). Bare `401`/`403`/`404`, model-validation `400`s and rate-limit `429`s use the same envelope (`unauthorized`, `forbidden`, `not_found`, `validation`, `rate_limited`).
 - The frontend `HttpErrorService` translates any code with an `errors.*` catalog entry (ES/EN) and falls back to the server message. For a new user-visible exception: throw with a code and add the `errors.<code>` entry to both translation catalogs.
-- DTO attribute-validation messages (`ModelState`) keep the `{ error }`-only shape (their code defaults to `validation`).
+
+## Limits and rate limiting
+
+- Request bodies are capped by Kestrel (`Limits:MaxRequestBodyBytes`, default 3 MB; images travel as <= 1 MB data URLs) and answer `413 payload_too_large`.
+- `auth` policy (per IP): 10/min burst + `RateLimiting:AuthPerHour` sustained. `heavy` (per user; exports, CSV/PDF maintenance book): `RateLimiting:HeavyPerMinute`, default 6. `upload` (per user; attachments, motorcycle create/update with images): `RateLimiting:UploadPerMinute`, default 20. Rejections are `429 rate_limited` with `Retry-After`. The limiter runs after authentication so per-user policies see the principal.
+- Outbound calls are bounded: SMTP `Smtp:TimeoutSeconds` (default 15) and Web Push (10 s shared `HttpClient`), each retried up to 3 times with exponential backoff on transient failures only (network, timeouts, SMTP 4xx, push 429/5xx).
 
 ## Health
 - `GET /health` — liveness: `200 Healthy` whenever the process is up (no dependency checks).
