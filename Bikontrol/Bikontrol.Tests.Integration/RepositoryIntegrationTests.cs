@@ -111,7 +111,10 @@ public sealed class RepositoryIntegrationTests
         {
             await history.AddAsync(new MotorcycleKmHistory
             {
-                Id = Guid.NewGuid(), MotorcycleId = moto.Id, Km = km, RecordedAt = t0.AddDays(offset)
+                Id = Guid.NewGuid(),
+                MotorcycleId = moto.Id,
+                Km = km,
+                RecordedAt = t0.AddDays(offset)
             });
         }
         await history.SaveChangesAsync();

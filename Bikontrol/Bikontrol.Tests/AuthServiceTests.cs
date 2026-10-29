@@ -422,7 +422,7 @@ public class AuthServiceTests
         Assert.Equal("session_expired", exception.Code);
         // The token minted by the legitimate rotation dies too.
         Assert.All(_refreshRepository.Tokens, t => Assert.NotNull(t.RevokedAt));
-        Assert.Equal(1, _refreshRepository.Tokens.Select(t => t.FamilyId).Distinct().Count());
+        Assert.Single(_refreshRepository.Tokens.Select(t => t.FamilyId).Distinct());
         Assert.NotNull(rotated.RefreshToken);
     }
 

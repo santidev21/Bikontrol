@@ -30,7 +30,7 @@ namespace Bikontrol.Application.Options
         public int SecurityStampCacheSeconds { get; set; } = 30;
 
         /// <summary>Keys still accepted for validation while a signing-key rotation drains.</summary>
-        public List<PreviousKey> PreviousKeys { get; set; } = new();
+        public List<PreviousKey> PreviousKeys { get; set; } = [];
 
         public class PreviousKey
         {

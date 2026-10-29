@@ -255,7 +255,7 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = async (context, token) =>
     {
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         var (code, message) = ErrorResponse.ForStatus(StatusCodes.Status429TooManyRequests)!.Value;
         await ErrorResponse.WriteAsync(context.HttpContext, StatusCodes.Status429TooManyRequests, code, message);
