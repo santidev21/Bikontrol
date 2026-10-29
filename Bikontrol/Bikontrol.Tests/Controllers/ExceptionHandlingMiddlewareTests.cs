@@ -160,4 +160,44 @@ public class ExceptionHandlingMiddlewareTests
         Assert.Equal(499, context.Response.StatusCode);
         Assert.Equal(0, context.Response.Body.Length);
     }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldAnswerWithProblemDetailsKeepingTheLegacyFields()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => throw new NotFoundException("Moto no encontrada", "motorcycle_not_found"),
+            NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal("application/problem+json", context.Response.ContentType);
+        context.Response.Body.Position = 0;
+        using var doc = await JsonDocument.ParseAsync(context.Response.Body);
+        var root = doc.RootElement;
+        Assert.Equal(404, root.GetProperty("status").GetInt32());
+        Assert.Equal("motorcycle_not_found", root.GetProperty("code").GetString());
+        Assert.Equal("urn:bikontrol:error:motorcycle_not_found", root.GetProperty("type").GetString());
+        Assert.Equal("Moto no encontrada", root.GetProperty("detail").GetString());
+        Assert.Equal("Moto no encontrada", root.GetProperty("error").GetString());
+        Assert.True(root.TryGetProperty("traceId", out _));
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WhenTheBodyIsTooLarge_ShouldAnswer413WithAStableCode()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => throw new Microsoft.AspNetCore.Http.BadHttpRequestException("too big", StatusCodes.Status413PayloadTooLarge),
+            NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(413, context.Response.StatusCode);
+        context.Response.Body.Position = 0;
+        using var doc = await JsonDocument.ParseAsync(context.Response.Body);
+        Assert.Equal("payload_too_large", doc.RootElement.GetProperty("code").GetString());
+    }
 }

@@ -1,10 +1,12 @@
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Infrastructure.Resilience;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MimeKit;
+using AuthenticationException = MailKit.Security.AuthenticationException;
 using System;
 using System.Threading.Tasks;
 
@@ -67,16 +69,38 @@ namespace Bikontrol.Infrastructure.Email
             message.Subject = subject;
             message.Body = new TextPart("plain") { Text = body };
 
-            using var client = new SmtpClient();
-            await client.ConnectAsync(
-                smtpHost,
-                port,
-                useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto);
+            // A hung SMTP server must not pin a request (register/forgot-password
+            // await this) for MailKit's two-minute default.
+            var timeoutMs = (int.TryParse(_configuration["Smtp:TimeoutSeconds"], out var seconds) && seconds > 0 ? seconds : 15) * 1000;
 
-            await client.AuthenticateAsync(username, password);
+            await TransientRetry.ExecuteAsync(async ct =>
+            {
+                using var client = new SmtpClient { Timeout = timeoutMs };
+                await client.ConnectAsync(
+                    smtpHost,
+                    port,
+                    useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto,
+                    ct);
 
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+                await client.AuthenticateAsync(username, password, ct);
+
+                await client.SendAsync(message, ct);
+                await client.DisconnectAsync(true, ct);
+                return true;
+            }, IsTransient);
         }
+
+        /// <summary>Network hiccups, timeouts and 4xx SMTP replies are worth another try; auth or address errors are not.</summary>
+        public static bool IsTransient(Exception exception) => exception switch
+        {
+            SmtpCommandException command => (int)command.StatusCode is >= 400 and < 500,
+            AuthenticationException => false,
+            SmtpProtocolException => true,
+            System.IO.IOException => true,
+            System.Net.Sockets.SocketException => true,
+            TimeoutException => true,
+            OperationCanceledException => true,
+            _ => false
+        };
     }
 }
