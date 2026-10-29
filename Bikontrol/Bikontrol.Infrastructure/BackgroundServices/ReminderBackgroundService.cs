@@ -1,8 +1,9 @@
 using Bikontrol.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using Bikontrol.Application.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Bikontrol.Infrastructure.BackgroundServices
 {
@@ -17,28 +18,24 @@ namespace Bikontrol.Infrastructure.BackgroundServices
         private static readonly TimeSpan Tick = TimeSpan.FromMinutes(15);
 
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IConfiguration _configuration;
+        private readonly ReminderOptions _options;
         private readonly ILogger<ReminderBackgroundService> _logger;
 
         private DateTime _lastRunUtc = DateTime.MinValue;
 
         public ReminderBackgroundService(
             IServiceScopeFactory scopeFactory,
-            IConfiguration configuration,
+            IOptions<ReminderOptions> options,
             ILogger<ReminderBackgroundService> logger)
         {
             _scopeFactory = scopeFactory;
-            _configuration = configuration;
+            _options = options.Value;
             _logger = logger;
         }
 
-        private bool IsEnabled =>
-            !bool.TryParse(_configuration["Reminders:Enabled"], out var enabled) || enabled;
+        private bool IsEnabled => _options.Enabled;
 
-        private int DailyHourUtc =>
-            int.TryParse(_configuration["Reminders:DailyHourUtc"], out var hour) && hour is >= 0 and <= 23
-                ? hour
-                : 8;
+        private int DailyHourUtc => _options.DailyHourUtc;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -83,12 +80,10 @@ namespace Bikontrol.Infrastructure.BackgroundServices
         }
 
         /// <summary>Whether the digest email step runs (default true).</summary>
-        private bool IsEmailEnabled =>
-            !bool.TryParse(_configuration["Reminders:EmailEnabled"], out var enabled) || enabled;
+        private bool IsEmailEnabled => _options.EmailEnabled;
 
         /// <summary>Whether the Web Push step runs (default true; a no-op without VAPID keys).</summary>
-        private bool IsPushEnabled =>
-            !bool.TryParse(_configuration["Reminders:PushEnabled"], out var enabled) || enabled;
+        private bool IsPushEnabled => _options.PushEnabled;
 
         private async Task RunOnceAsync(CancellationToken cancellationToken)
         {

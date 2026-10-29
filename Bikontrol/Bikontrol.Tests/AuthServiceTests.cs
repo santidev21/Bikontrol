@@ -4,6 +4,7 @@ using Bikontrol.Domain.Entities;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Mapping;
+using Bikontrol.Application.Options;
 using Bikontrol.Application.Services;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
@@ -20,7 +21,7 @@ public class AuthServiceTests
 
     public AuthServiceTests()
     {
-        _tokenGenerator = new JwtTokenGenerator(BuildConfiguration());
+        _tokenGenerator = new JwtTokenGenerator(TestOptions.From<JwtOptions>(BuildConfiguration(), "Jwt"));
     }
 
     [Fact]

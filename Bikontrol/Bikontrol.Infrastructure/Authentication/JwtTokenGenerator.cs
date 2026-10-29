@@ -1,5 +1,6 @@
 ﻿using Bikontrol.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using Bikontrol.Application.Options;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -13,30 +14,22 @@ namespace Bikontrol.Infrastructure.Authentication
     {
         public const string SecurityStampClaim = "sstamp";
 
-        private readonly IConfiguration _configuration;
+        private readonly JwtOptions _options;
 
-        public JwtTokenGenerator(IConfiguration configuration)
+        public JwtTokenGenerator(IOptions<JwtOptions> options)
         {
-            _configuration = configuration;
+            _options = options.Value;
         }
 
-        public int ExpiresInSeconds
-        {
-            get
-            {
-                var minutes = int.TryParse(_configuration["Jwt:ExpireMinutes"], out var m) ? m : 30;
-                return Math.Max(1, minutes) * 60;
-            }
-        }
+        public int ExpiresInSeconds => _options.ExpireMinutes * 60;
+
+        public int RefreshExpireDays => _options.RefreshExpireDays;
 
         public string GenerateToken(Guid userId, string email, string fullName, string role = Domain.Entities.UserRole.User, Guid? securityStamp = null)
         {
             // The kid lets the validator pick the right key while a rotation is
             // in flight (old tokens keep verifying against Jwt:PreviousKeys).
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!))
-            {
-                KeyId = _configuration["Jwt:KeyId"] ?? "k1"
-            };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)) { KeyId = _options.KeyId };
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
@@ -55,8 +48,8 @@ namespace Bikontrol.Infrastructure.Authentication
             // unchanged, so validation (MapInboundClaims=false) is unaffected.
             var descriptor = new SecurityTokenDescriptor
             {
-                Issuer = _configuration["Jwt:Issuer"],
-                Audience = _configuration["Jwt:Audience"],
+                Issuer = _options.Issuer,
+                Audience = _options.Audience,
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddSeconds(ExpiresInSeconds),
                 SigningCredentials = creds

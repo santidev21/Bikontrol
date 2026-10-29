@@ -142,3 +142,9 @@ SELECT '16. Presupuesto negativo' AS check_name, "Id", "Email",
 FROM users
 WHERE "MonthlyMaintenanceBudget" < 0 OR "AnnualMaintenanceBudget" < 0;
 \endif
+
+-- 17. Emails sin normalizar (las consultas comparan contra trim + minúsculas;
+-- una cuenta que no cumpla no podría iniciar sesión ni recuperar su contraseña)
+SELECT '17. Email sin normalizar' AS check_name, "Id", "Email"
+FROM users
+WHERE "Email" <> lower(btrim("Email"));

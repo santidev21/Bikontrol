@@ -20,9 +20,7 @@ namespace Bikontrol.Application.Services
         /// <summary>Throws when any of the motorcycles is not owned by the user.</summary>
         public static async Task EnsureAllOwnedAsync(IMotorcycleRepository motorcycles, Guid userId, IReadOnlyCollection<Guid> motorcycleIds)
         {
-            var owned = (await motorcycles.GetByUserIdAsync(userId))
-                .Select(m => m.Id)
-                .ToHashSet();
+            var owned = (await motorcycles.GetNamesByUserIdAsync(userId)).Keys.ToHashSet();
 
             if (motorcycleIds.Any(id => !owned.Contains(id)))
                 throw new ForbiddenAccessException("No tienes permisos para ver estas motocicletas.", "motorcycles_no_access");
