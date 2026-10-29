@@ -1,5 +1,6 @@
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Options;
+using Bikontrol.Infrastructure.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,8 @@ namespace Bikontrol.Infrastructure.BackgroundServices
     /// </summary>
     public class ReminderBackgroundService : BackgroundService
     {
+        private const string JobName = "reminders";
+
         private static readonly TimeSpan Tick = TimeSpan.FromMinutes(15);
 
         private readonly IServiceScopeFactory _scopeFactory;
@@ -85,7 +88,10 @@ namespace Bikontrol.Infrastructure.BackgroundServices
         /// <summary>Whether the Web Push step runs (default true; a no-op without VAPID keys).</summary>
         private bool IsPushEnabled => _options.PushEnabled;
 
-        private async Task RunOnceAsync(CancellationToken cancellationToken)
+        private Task RunOnceAsync(CancellationToken cancellationToken) =>
+            JobMetrics.MeasureAsync(JobName, () => RunCoreAsync(cancellationToken));
+
+        private async Task<string> RunCoreAsync(CancellationToken cancellationToken)
         {
             using var scope = _scopeFactory.CreateScope();
 
@@ -97,7 +103,7 @@ namespace Bikontrol.Infrastructure.BackgroundServices
             {
                 _logger.LogInformation("Reminder run skipped: another instance holds the lock.");
                 _lastRunUtc = DateTime.UtcNow;
-                return;
+                return JobMetrics.Skipped;
             }
 
             var service = scope.ServiceProvider.GetRequiredService<IReminderService>();
@@ -116,6 +122,10 @@ namespace Bikontrol.Infrastructure.BackgroundServices
                 pushed = await service.SendPendingPushesAsync(cancellationToken);
             }
 
+            JobMetrics.RecordReminders("generated", generated);
+            JobMetrics.RecordReminders("emailed", emailed);
+            JobMetrics.RecordReminders("pushed", pushed);
+
             _logger.LogInformation(
                 "Reminder run complete: {Generated} generated, {Emailed} digest email(s), {Pushed} push delivery(ies).",
                 generated,
@@ -124,6 +134,7 @@ namespace Bikontrol.Infrastructure.BackgroundServices
 
             // Only a fully successful run counts: a failure retries on the next tick.
             _lastRunUtc = DateTime.UtcNow;
+            return JobMetrics.Success;
         }
     }
 }

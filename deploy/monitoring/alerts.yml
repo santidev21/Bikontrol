@@ -65,6 +65,38 @@ groups:
           summary: 'Bikontrol API heap above 400 MB'
           description: 'The managed heap has exceeded 400 MB for 15 minutes.'
 
+  - name: bikontrol-jobs
+    rules:
+      # The worker owns the daily jobs; without it no reminder is ever sent.
+      - alert: BikontrolWorkerDown
+        expr: up{job="bikontrol-worker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Bikontrol worker is not responding to Prometheus scrapes'
+          description: 'The daily jobs (reminders, retention) are not running. Check the worker container.'
+
+      # A failed run retries on every 15-minute tick, so two failures in an hour
+      # means it keeps failing, not a blip.
+      - alert: BikontrolJobFailing
+        expr: sum by (task) (increase(bikontrol_job_runs_total{result="failed"}[1h])) >= 2
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Background job {{ $labels.task }} keeps failing'
+          description: 'The {{ $labels.task }} job failed at least twice in the last hour. See the worker logs ("Reminder run failed" / "Retention run failed").'
+
+      # Jobs run once a day. The series only exists after the first success since
+      # the worker started, so this catches "ran fine yesterday, silent since".
+      - alert: BikontrolJobStale
+        expr: time() - max by (task) (bikontrol_job_last_success_timestamp_seconds) > 26 * 3600
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Background job {{ $labels.task }} has not succeeded for over 26 hours'
+          description: 'Check the worker logs and the advisory lock (another instance may be holding it).'
+
 # Disk/DB-uptime alerts need a host-level exporter. If node_exporter runs on the
 # VPS, add these (adjust the mountpoint label to your data volume):
 #
