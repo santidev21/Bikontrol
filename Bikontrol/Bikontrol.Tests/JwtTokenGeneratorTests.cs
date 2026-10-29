@@ -35,6 +35,27 @@ public class JwtTokenGeneratorTests
     }
 
     [Fact]
+    public void GenerateToken_ShouldEmbedTheSecurityStampAndKeyId()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "0123456789abcdef0123456789abcdef",
+                ["Jwt:KeyId"] = "k2",
+                ["Jwt:Issuer"] = "Bikontrol",
+                ["Jwt:Audience"] = "Bikontrol.Tests"
+            })
+            .Build();
+        var stamp = Guid.NewGuid();
+
+        var token = new JwtTokenGenerator(config).GenerateToken(Guid.NewGuid(), "a@b.com", "A", "User", stamp);
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+
+        Assert.Equal("k2", jwt.Header.Kid);
+        Assert.Equal(stamp.ToString("N"), jwt.Claims.First(c => c.Type == JwtTokenGenerator.SecurityStampClaim).Value);
+    }
+
+    [Fact]
     public void GenerateToken_ShouldIncludeRoleClaim()
     {
         var config = new ConfigurationBuilder()

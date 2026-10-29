@@ -104,6 +104,7 @@ public class RetentionServiceTests
         public Task AddAsync(RefreshToken refreshToken) => Task.CompletedTask;
 
         public Task<int> RevokeAllForUserAsync(Guid userId) => Task.FromResult(0);
+        public Task<int> RevokeFamilyAsync(Guid familyId) => Task.FromResult(0);
 
         public Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
         {

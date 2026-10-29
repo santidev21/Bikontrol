@@ -400,6 +400,68 @@ public class AuthServiceTests
         }).Build();
 
     [Fact]
+    public async Task RefreshAsync_WhenARotatedTokenIsReplayed_ShouldRevokeTheWholeFamily()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        user.MarkEmailConfirmed();
+        repository.Users.Add(user);
+        var raw = "raw-refresh-token";
+        _refreshRepository.Tokens.Add(new RefreshToken(user.Id, AuthServiceTestsHash(raw), DateTime.UtcNow.AddDays(7)));
+
+        var rotated = await service.RefreshAsync(new RefreshTokenRequest { RefreshToken = raw });
+        var original = _refreshRepository.Tokens[0];
+        typeof(RefreshToken).GetProperty(nameof(RefreshToken.RevokedAt))!
+            .SetValue(original, DateTime.UtcNow.AddMinutes(-5));
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.RefreshAsync(new RefreshTokenRequest { RefreshToken = raw }));
+
+        Assert.Equal("session_expired", exception.Code);
+        // The token minted by the legitimate rotation dies too.
+        Assert.All(_refreshRepository.Tokens, t => Assert.NotNull(t.RevokedAt));
+        Assert.Equal(1, _refreshRepository.Tokens.Select(t => t.FamilyId).Distinct().Count());
+        Assert.NotNull(rotated.RefreshToken);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTheTokenWasRotatedMomentsAgo_ShouldNotRevokeTheFamily()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        user.MarkEmailConfirmed();
+        repository.Users.Add(user);
+        var raw = "raw-refresh-token";
+        _refreshRepository.Tokens.Add(new RefreshToken(user.Id, AuthServiceTestsHash(raw), DateTime.UtcNow.AddDays(7)));
+
+        await service.RefreshAsync(new RefreshTokenRequest { RefreshToken = raw });
+        await Assert.ThrowsAsync<AuthException>(
+            () => service.RefreshAsync(new RefreshTokenRequest { RefreshToken = raw }));
+
+        Assert.Contains(_refreshRepository.Tokens, t => t.IsActive);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTheAccountIsLockedOut_ShouldReportAnExpiredSession()
+    {
+        var repository = new FakeUserRepository();
+        var service = CreateService(repository);
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        user.MarkEmailConfirmed();
+        user.RegisterFailedLogin(1, TimeSpan.FromMinutes(10));
+        repository.Users.Add(user);
+        var raw = "raw-refresh-token";
+        _refreshRepository.Tokens.Add(new RefreshToken(user.Id, AuthServiceTestsHash(raw), DateTime.UtcNow.AddDays(7)));
+
+        var exception = await Assert.ThrowsAsync<AuthException>(
+            () => service.RefreshAsync(new RefreshTokenRequest { RefreshToken = raw }));
+
+        Assert.Equal("session_expired", exception.Code);
+    }
+
+    [Fact]
     public async Task RefreshAsync_WhenAnotherRefreshRotatedTheTokenFirst_ShouldReportAnExpiredSession()
     {
         var repository = new FakeUserRepository();
@@ -761,7 +823,8 @@ public class AuthServiceTests
             ["EmailConfirmation:Required"] = emailConfirmationRequired ? "true" : "false",
             ["Lockout:Enabled"] = lockoutEnabled ? "true" : "false",
             ["Lockout:MaxFailedAttempts"] = "5",
-            ["Lockout:Minutes"] = "15"
+            ["Lockout:Minutes"] = "15",
+            ["Auth:ForgotPasswordMinMs"] = "0"
         };
         if (demoEnabled is not null)
             values["Demo:Enabled"] = demoEnabled;
@@ -851,6 +914,14 @@ public class AuthServiceTests
         {
             Tokens.Add(refreshToken);
             return Task.CompletedTask;
+        }
+
+        public Task<int> RevokeFamilyAsync(Guid familyId)
+        {
+            var active = Tokens.Where(t => t.FamilyId == familyId && t.RevokedAt is null).ToList();
+            foreach (var token in active)
+                token.Revoke();
+            return Task.FromResult(active.Count);
         }
 
         public Task<int> RevokeAllForUserAsync(Guid userId)

@@ -525,7 +525,7 @@ export const es: Record<string, string> = {
   'profile.passwordComplete': 'Completa todos los campos.',
   'profile.passwordMin': 'La nueva contraseña debe tener al menos 8 caracteres.',
   'profile.passwordMismatch': 'La confirmación no coincide con la nueva contraseña.',
-  'profile.passwordUpdated': 'Se actualizó tu contraseña.',
+  'profile.passwordUpdated': 'Se actualizó tu contraseña. Vuelve a iniciar sesión.',
   'profile.passwordUpdateError': 'No se pudo actualizar tu contraseña.',
   'profile.remindersOn': 'Recordatorios activados.',
   'profile.remindersOff': 'Recordatorios desactivados.',
