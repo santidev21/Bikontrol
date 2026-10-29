@@ -41,6 +41,16 @@ namespace Bikontrol.Infrastructure
 
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IPushSender, Notifications.WebPushSender>();
+            return services;
+        }
+
+        /// <summary>
+        /// Registers the daily reminder and retention jobs. Split from
+        /// <see cref="AddInfrastructure"/> so a deployment can run them in a
+        /// dedicated worker container (the API sets <c>Jobs:Enabled=false</c>).
+        /// </summary>
+        public static IServiceCollection AddBackgroundJobs(this IServiceCollection services)
+        {
             services.AddHostedService<BackgroundServices.ReminderBackgroundService>();
             services.AddHostedService<BackgroundServices.RetentionBackgroundService>();
             return services;

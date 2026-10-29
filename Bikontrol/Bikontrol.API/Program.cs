@@ -313,6 +313,13 @@ if (metricsEnabled)
 // Services & Identity tools
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+// The daily jobs run in this process unless Jobs:Enabled=false (the API container
+// in docker-compose); a `worker` container with the same image then owns them.
+// The advisory locks still make an accidental overlap harmless.
+if (builder.Configuration.GetValue("Jobs:Enabled", true))
+{
+    builder.Services.AddBackgroundJobs();
+}
 builder.Services.AddPersistence();
 
 // Configure InvalidModelStateResponseFactory
