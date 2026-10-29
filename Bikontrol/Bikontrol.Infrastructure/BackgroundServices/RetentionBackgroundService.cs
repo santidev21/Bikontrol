@@ -1,8 +1,9 @@
 using Bikontrol.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using Bikontrol.Application.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Bikontrol.Infrastructure.BackgroundServices
 {
@@ -17,28 +18,24 @@ namespace Bikontrol.Infrastructure.BackgroundServices
         private static readonly TimeSpan Tick = TimeSpan.FromMinutes(15);
 
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IConfiguration _configuration;
+        private readonly RetentionOptions _options;
         private readonly ILogger<RetentionBackgroundService> _logger;
 
         private DateTime _lastRunUtc = DateTime.MinValue;
 
         public RetentionBackgroundService(
             IServiceScopeFactory scopeFactory,
-            IConfiguration configuration,
+            IOptions<RetentionOptions> options,
             ILogger<RetentionBackgroundService> logger)
         {
             _scopeFactory = scopeFactory;
-            _configuration = configuration;
+            _options = options.Value;
             _logger = logger;
         }
 
-        private bool IsEnabled =>
-            !bool.TryParse(_configuration["Retention:Enabled"], out var enabled) || enabled;
+        private bool IsEnabled => _options.Enabled;
 
-        private int DailyHourUtc =>
-            int.TryParse(_configuration["Retention:DailyHourUtc"], out var hour) && hour is >= 0 and <= 23
-                ? hour
-                : 4;
+        private int DailyHourUtc => _options.DailyHourUtc;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

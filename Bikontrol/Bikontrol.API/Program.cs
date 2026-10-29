@@ -3,6 +3,7 @@ using Bikontrol.API.Extensions;
 using Bikontrol.API.Middleware;
 using Bikontrol.API.RateLimiting;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Options;
 using Bikontrol.Infrastructure;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Application.Mapping;
@@ -97,18 +98,32 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
     });
 }
 
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+// Typed, validated options. ValidateOnStart makes a bad value (missing JWT key,
+// out-of-range hour, half-configured VAPID pair) fail the boot with a clear
+// message instead of silently falling back to a default at runtime.
+builder.Services.AddValidatedOptions<JwtOptions>(JwtOptions.Section);
+builder.Services.AddValidatedOptions<SmtpOptions>(SmtpOptions.Section);
+builder.Services.AddValidatedOptions<WebPushOptions>(WebPushOptions.Section);
+builder.Services.AddValidatedOptions<ReminderOptions>(ReminderOptions.Section);
+builder.Services.AddValidatedOptions<RetentionOptions>(RetentionOptions.Section);
+builder.Services.AddValidatedOptions<DatabaseOptions>(DatabaseOptions.Section);
+
+// Bound eagerly too: the bearer handler is configured before the container is built.
+var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
+var jwtErrors = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+if (!System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+        jwt, new System.ComponentModel.DataAnnotations.ValidationContext(jwt), jwtErrors, validateAllProperties: true))
 {
     throw new InvalidOperationException(
-        "Jwt:Key is missing or too short (must be at least 32 characters). Set Jwt__Key via environment variables or appsettings.Development.json.");
+        "Invalid Jwt configuration: " + string.Join("; ", jwtErrors.Select(e => e.ErrorMessage))
+        + ". Set Jwt__Key/Jwt__Issuer/Jwt__Audience via environment variables or appsettings.Development.json.");
 }
 
 // Add Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var signingKeys = BuildSigningKeys(builder.Configuration, jwtKey);
+        var signingKeys = BuildSigningKeys(jwt);
         // Keep the "role" claim name as issued by JwtTokenGenerator.
         // With the default (MapInboundClaims = true) "role" is remapped to
         // ClaimTypes.Role and CurrentUserService would miss it, silently
@@ -120,8 +135,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
             // Current key plus any previous ones, matched by kid, so a key can
             // be rotated without logging everybody out (see docs/specs/security).
             IssuerSigningKeyResolver = (_, _, kid, _) => signingKeys.Where(k => kid is null || k.KeyId == kid).ToList(),
@@ -391,7 +406,7 @@ if (metricsEnabled)
 // default for local/dev and any setup that has not moved to the CLI step.
 var migrateOnly = args.Contains("--migrate");
 var runMigrationsOnStartup =
-    builder.Configuration.GetValue("Database:RunMigrationsOnStartup", true)
+    app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DatabaseOptions>>().Value.RunMigrationsOnStartup
     && !app.Environment.IsDevelopment();
 if (migrateOnly || runMigrationsOnStartup)
 {
@@ -435,10 +450,6 @@ public partial class Program
         Exception exception,
         string message);
 
-    /// <summary>
-    /// The signing key plus <c>Jwt:PreviousKeys</c> (entries of <c>Id</c> and
-    /// <c>Key</c>) still accepted for validation while a rotation drains.
-    /// </summary>
     internal static void AddUserPolicy(
         Microsoft.AspNetCore.RateLimiting.RateLimiterOptions options,
         string name,
@@ -464,19 +475,22 @@ public partial class Program
         });
     }
 
-    internal static List<SymmetricSecurityKey> BuildSigningKeys(IConfiguration configuration, string currentKey)
+    /// <summary>
+    /// The signing key plus <c>Jwt:PreviousKeys</c> (entries of <c>Id</c> and
+    /// <c>Key</c>) still accepted for validation while a rotation drains.
+    /// </summary>
+    internal static List<SymmetricSecurityKey> BuildSigningKeys(JwtOptions jwt)
     {
         var keys = new List<SymmetricSecurityKey>
         {
-            new(Encoding.UTF8.GetBytes(currentKey)) { KeyId = configuration["Jwt:KeyId"] ?? "k1" }
+            new(Encoding.UTF8.GetBytes(jwt.Key)) { KeyId = jwt.KeyId }
         };
 
-        foreach (var previous in configuration.GetSection("Jwt:PreviousKeys").GetChildren())
+        foreach (var previous in jwt.PreviousKeys)
         {
-            var key = previous["Key"];
-            if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
+            if (string.IsNullOrWhiteSpace(previous.Key) || previous.Key.Length < 32)
                 continue;
-            keys.Add(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)) { KeyId = previous["Id"] });
+            keys.Add(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(previous.Key)) { KeyId = previous.Id });
         }
 
         return keys;

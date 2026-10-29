@@ -72,16 +72,22 @@ namespace Bikontrol.Persistence.Repositories
             if (ids.Count == 0)
                 return new Dictionary<Guid, MotorcycleMaintenanceRecord>();
 
-            var rows = await _context.MotorcycleMaintenanceRecords
+            // Latest record per maintenance item without pulling every record:
+            // keep a row only when no newer one exists for the same item.
+            var latest = await _context.MotorcycleMaintenanceRecords
                 .AsNoTracking()
                 .Where(x => ids.Contains(x.UserMaintenanceId))
+                .Where(x => !_context.MotorcycleMaintenanceRecords.Any(y =>
+                    y.UserMaintenanceId == x.UserMaintenanceId
+                    && (y.PerformedAt > x.PerformedAt
+                        || (y.PerformedAt == x.PerformedAt && y.CreatedAt > x.CreatedAt))))
                 .ToListAsync();
 
-            return rows
+            // Exact ties on (PerformedAt, CreatedAt) are practically impossible;
+            // pick deterministically if one ever happens.
+            return latest
                 .GroupBy(x => x.UserMaintenanceId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.OrderByDescending(x => x.PerformedAt).ThenByDescending(x => x.CreatedAt).First());
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First());
         }
 
         public async Task SaveChangesAsync()

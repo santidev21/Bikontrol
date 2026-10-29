@@ -471,8 +471,7 @@ namespace Bikontrol.Application.Services
         private async Task<string> IssueRefreshTokenAsync(Guid userId, Guid? familyId = null)
         {
             var rawToken = GenerateSecureToken();
-            var days = int.TryParse(_configuration["Jwt:RefreshExpireDays"], out var parsedDays) ? parsedDays : 30;
-            var entity = new RefreshToken(userId, HashToken(rawToken), DateTime.UtcNow.AddDays(Math.Max(1, days)), familyId);
+            var entity = new RefreshToken(userId, HashToken(rawToken), DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshExpireDays), familyId);
             await _refreshTokenRepository.AddAsync(entity);
             return rawToken;
         }
