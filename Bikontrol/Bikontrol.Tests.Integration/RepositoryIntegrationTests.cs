@@ -1,9 +1,13 @@
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence;
+using Bikontrol.Persistence.Seed;
 using Bikontrol.Tests.Integration.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Bikontrol.Tests.Integration;
 
@@ -84,5 +88,80 @@ public sealed class RepositoryIntegrationTests
         history.Remove((await history.GetLastByMotorcycleIdAsync(moto.Id))!);
         await history.SaveChangesAsync();
         Assert.Equal(1000, (await history.GetLastByMotorcycleIdAsync(moto.Id))!.Km);
+    }
+
+    [RequiresDockerFact]
+    public async Task DemoUserSeeder_ShouldSeedDemoContentOnce()
+    {
+        var email = $"demo-{Guid.NewGuid():N}@bikontrol.test";
+
+        await SeedAsync(email);
+        await SeedAsync(email); // second run must be a no-op
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var user = await db.Users.SingleAsync(u => u.Email == email);
+        Assert.Equal(UserRole.Demo, user.Role);
+        Assert.Equal(2, await db.Motorcycles.CountAsync(m => m.UserId == user.Id));
+        Assert.Equal(10, await db.FuelUps.CountAsync(f => f.Motorcycle.UserId == user.Id));
+        Assert.Equal(5, await db.UserMaintenances.CountAsync(m => m.UserId == user.Id));
+    }
+
+    [RequiresDockerFact]
+    public async Task DemoUserSeeder_WhenEmailBelongsToRealAccount_ShouldNotSeedContent()
+    {
+        var email = $"real-{Guid.NewGuid():N}@bikontrol.test";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Users.Add(new User(email, "Real", "hashed"));
+            await db.SaveChangesAsync();
+        }
+
+        await SeedAsync(email);
+
+        using var check = _factory.Services.CreateScope();
+        var checkDb = check.ServiceProvider.GetRequiredService<AppDbContext>();
+        var user = await checkDb.Users.SingleAsync(u => u.Email == email);
+        Assert.NotEqual(UserRole.Demo, user.Role);
+        Assert.False(await checkDb.Motorcycles.AnyAsync(m => m.UserId == user.Id));
+    }
+
+    [RequiresDockerFact]
+    public async Task DemoUserSeeder_WhenDemoUserIsLockedOut_ShouldClearLockout()
+    {
+        var email = $"locked-{Guid.NewGuid():N}@bikontrol.test";
+        await SeedAsync(email);
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var user = await db.Users.SingleAsync(u => u.Email == email);
+            user.RegisterFailedLogin(1, TimeSpan.FromMinutes(15));
+            Assert.True(user.IsLockedOut);
+            await db.SaveChangesAsync();
+        }
+
+        await SeedAsync(email);
+
+        using var check = _factory.Services.CreateScope();
+        var checkDb = check.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False((await checkDb.Users.SingleAsync(u => u.Email == email)).IsLockedOut);
+    }
+
+    // The seeder opens its own scope and reads the demo email from configuration,
+    // so run it against a small provider that reuses the factory's database.
+    private async Task SeedAsync(string demoEmail)
+    {
+        using var factoryScope = _factory.Services.CreateScope();
+        var services = new ServiceCollection()
+            .AddLogging()
+            .AddSingleton<IConfiguration>(new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["DemoUser:Email"] = demoEmail })
+                .Build())
+            .AddSingleton<IPasswordHasher<User>>(new PasswordHasher<User>())
+            .AddScoped(_ => factoryScope.ServiceProvider.GetRequiredService<AppDbContext>())
+            .BuildServiceProvider();
+
+        await DemoUserSeeder.SeedAsync(services);
     }
 }
