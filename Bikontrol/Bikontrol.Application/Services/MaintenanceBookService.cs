@@ -34,11 +34,7 @@ namespace Bikontrol.Application.Services
 
         public async Task<MaintenanceBookDTO> GetBookAsync(Guid motorcycleId)
         {
-            var motorcycle = await _motorcycleRepository.GetByIdAsync(motorcycleId);
-            if (motorcycle is null)
-                throw new NotFoundException("Motocicleta no encontrada.", "motorcycle_not_found");
-            if (motorcycle.UserId != _current.UserId)
-                throw new ForbiddenAccessException("No tienes permisos para esta motocicleta.", "motorcycle_no_access");
+            var motorcycle = await MotorcycleOwnership.EnsureOwnedAsync(_motorcycleRepository, _current.UserId, motorcycleId);
 
             // Names/intervals come from the (possibly deleted) user maintenance;
             // records already carry the name via the joined entity.

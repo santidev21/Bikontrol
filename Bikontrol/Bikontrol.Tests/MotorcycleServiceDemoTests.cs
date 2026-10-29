@@ -102,6 +102,7 @@ public class MotorcycleServiceDemoTests
         public Task<Dictionary<Guid, int>> GetLatestKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(motorcycleIds.Distinct().ToDictionary(id => id, _ => 100));
         public Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds) => Task.FromResult(new Dictionary<Guid, DateTime?>());
         public void Remove(MotorcycleKmHistory entity) { }
+        public Task LockMotorcycleAsync(Guid motorcycleId) => Task.CompletedTask;
         public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
