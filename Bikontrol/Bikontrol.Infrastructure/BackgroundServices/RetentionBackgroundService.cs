@@ -1,5 +1,7 @@
 using Bikontrol.Application.Interfaces;
+using System.Diagnostics;
 using Bikontrol.Application.Options;
+using Bikontrol.Infrastructure.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,6 +17,8 @@ namespace Bikontrol.Infrastructure.BackgroundServices
     /// </summary>
     public class RetentionBackgroundService : BackgroundService
     {
+        private const string JobName = "retention";
+
         private static readonly TimeSpan Tick = TimeSpan.FromMinutes(15);
 
         private readonly IServiceScopeFactory _scopeFactory;
@@ -81,6 +85,20 @@ namespace Bikontrol.Infrastructure.BackgroundServices
 
         private async Task RunOnceAsync(CancellationToken cancellationToken)
         {
+            var stopwatch = Stopwatch.StartNew();
+            var result = JobMetrics.Failed;
+            try
+            {
+                result = await RunCoreAsync(cancellationToken);
+            }
+            finally
+            {
+                JobMetrics.RecordRun(JobName, result, stopwatch.Elapsed);
+            }
+        }
+
+        private async Task<string> RunCoreAsync(CancellationToken cancellationToken)
+        {
             using var scope = _scopeFactory.CreateScope();
 
             // One instance at a time: another replica holding the lock is already
@@ -91,12 +109,16 @@ namespace Bikontrol.Infrastructure.BackgroundServices
             {
                 _logger.LogInformation("Retention run skipped: another instance holds the lock.");
                 _lastRunUtc = DateTime.UtcNow;
-                return;
+                return JobMetrics.Skipped;
             }
 
             var service = scope.ServiceProvider.GetRequiredService<IRetentionService>();
 
             var result = await service.PurgeAsync(cancellationToken);
+
+            JobMetrics.RecordRetention("refresh_tokens", result.RefreshTokensDeleted);
+            JobMetrics.RecordRetention("reminder_logs", result.ReminderLogsDeleted);
+            JobMetrics.RecordRetention("audit_logs", result.AuditLogsDeleted);
 
             _logger.LogInformation(
                 "Retention run complete: {RefreshTokens} refresh token(s), {ReminderLogs} reminder log(s), {AuditLogs} audit log(s) deleted.",
@@ -106,6 +128,7 @@ namespace Bikontrol.Infrastructure.BackgroundServices
 
             // Only a fully successful run counts: a failure retries on the next tick.
             _lastRunUtc = DateTime.UtcNow;
+            return JobMetrics.Success;
         }
     }
 }

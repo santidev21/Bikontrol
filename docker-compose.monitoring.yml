@@ -1,0 +1,89 @@
+# Metrics, alerting and dashboards for Bikontrol. Run next to the app stack on the
+# same internal network so Prometheus can scrape the API and the worker:
+#   docker compose -f docker-compose.monitoring.yml up -d
+# Images are pinned by version AND digest; bump them deliberately.
+# Everything listens on loopback only (reach Grafana over an SSH tunnel).
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
+    container_name: bikontrol-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - bikontrol_prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - bikontrol-internal-net
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.2@sha256:39d8bb3966c694a124428a3a88fbcffd40bd069129ecd47c059f8a3f17c55f3b
+    container_name: bikontrol-alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --config.expand-envvars
+      - --storage.path=/alertmanager
+    environment:
+      # Reuse the app's SMTP account; ALERT_EMAIL_TO is who gets paged.
+      ALERT_SMTP_HOST: ${Smtp__Host:?Smtp__Host is required for alert emails}
+      ALERT_SMTP_PORT: ${Smtp__Port:-587}
+      ALERT_SMTP_USER: ${Smtp__Username:-}
+      ALERT_SMTP_PASSWORD: ${Smtp__Password:-}
+      ALERT_EMAIL_FROM: ${Smtp__FromEmail:?Smtp__FromEmail is required for alert emails}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:?ALERT_EMAIL_TO is required}
+    volumes:
+      - ./deploy/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - bikontrol_alertmanager_data:/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - bikontrol-internal-net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  grafana:
+    image: grafana/grafana:13.3.0@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
+    container_name: bikontrol-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./deploy/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/bikontrol.json:ro
+      - bikontrol_grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - bikontrol-internal-net
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  bikontrol-internal-net:
+    # Created by the app stack (docker-compose.yml).
+    name: bikontrol-internal-net
+    external: true
+
+volumes:
+  bikontrol_prometheus_data:
+  bikontrol_alertmanager_data:
+  bikontrol_grafana_data:

@@ -17,7 +17,7 @@ breaks*. Keep it short, concrete and tested — an untested runbook is a guess.
    - `./scripts/deploy.sh status` (container health) and
    - `curl -fsS https://bikontrol.santidev21.tech/ready` → `200` healthy, `503` DB down.
 2. **What broke?** Look, in order:
-   - `./scripts/deploy.sh logs` (Serilog JSON lines; search for `"Level":"Error"`).
+   - `./scripts/deploy.sh logs` (Serilog compact JSON lines; errors have `"@l":"Error"`).
    - Sentry (if `Sentry__Dsn` is set) — newest issue, stack trace, `X-Request-Id`.
    - Prometheus/Grafana (`deploy/monitoring/`) — 5xx rate, latency, heap, `up`.
    - Host: `df -h`, `free -m`, `docker system df`.

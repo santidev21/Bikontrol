@@ -32,6 +32,8 @@ x-api-environment: &api-environment
   Lockout__Minutes: ${Lockout__Minutes:-15}
   # Error tracking (Sentry). Empty DSN = disabled (no-op).
   Sentry__Dsn: ${Sentry__Dsn:-}
+  # Distributed traces over OTLP (e.g. http://collector:4317). Empty = disabled.
+  Tracing__OtlpEndpoint: ${Tracing__OtlpEndpoint:-}
   Sentry__TracesSampleRate: ${Sentry__TracesSampleRate:-0.1}
   # Prometheus metrics at /metrics (internal network only; never proxied by
   # the public gateway). Off unless explicitly enabled.
@@ -146,6 +148,7 @@ services:
     environment:
       <<: *api-environment
       Jobs__Enabled: "true"
+      Telemetry__ServiceName: bikontrol-worker
     logging:
       driver: json-file
       options:

@@ -21,11 +21,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using Bikontrol.Infrastructure.Observability;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
+using Serilog.Formatting.Compact;
 using System.Text;
 using System.Threading.RateLimiting;
 using IPNetwork = System.Net.IPNetwork;
@@ -41,24 +44,23 @@ builder.Configuration
         reloadOnChange: true)
     .AddEnvironmentVariables();
 
-// Structured logging: JSON in production (parseable by log collectors), readable
-// text in Development. Enriched with the trace id so a request's lines can be
-// correlated. Output goes to stdout, which Docker captures.
+// Structured logging: one compact JSON object per line in production (parseable
+// by log collectors; carries @t/@m/@l/@x plus the trace and span ids so a
+// request's lines can be correlated), readable text in Development. Output goes
+// to stdout, which Docker captures, and to a rolling file on the logs volume.
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
-    // One template for every sink. In dev it is short; in prod it is ISO-8601 so
-    // the file lines sort lexicographically and are easy to grep.
-    var outputTemplate = context.HostingEnvironment.IsDevelopment()
-        ? "[{Timestamp:HH:mm:ss} {Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}"
-        : "{Timestamp:o} [{Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}";
+    var isDevelopment = context.HostingEnvironment.IsDevelopment();
+    const string DevTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}";
+    var invariant = System.Globalization.CultureInfo.InvariantCulture;
 
-    // Daily rolling log file so it can be read/opened directly (a plain .txt/.log)
-    // instead of only `docker logs`. In containers it lands on a mounted volume
-    // (/app/logs); override the location with Log__Path. 14 files, 50 MB each.
+    // Daily rolling log file so it can be read/opened directly instead of only
+    // `docker logs`. In containers it lands on a mounted volume (/app/logs);
+    // override the location with Log__Path. 14 files, 50 MB each.
     var logPath = context.Configuration["Log__Path"];
     if (string.IsNullOrWhiteSpace(logPath))
     {
-        logPath = context.HostingEnvironment.IsDevelopment()
+        logPath = isDevelopment
             ? Path.Combine("logs", "bikontrol-api-.log")
             : "/app/logs/bikontrol-api-.log";
     }
@@ -69,17 +71,35 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
         .Enrich.FromLogContext()
         .Enrich.WithProperty("Application", "Bikontrol.API")
         .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-        .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-        .WriteTo.Console(outputTemplate: outputTemplate, formatProvider: System.Globalization.CultureInfo.InvariantCulture)
-        .WriteTo.File(
-            path: logPath,
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 14,
-            fileSizeLimitBytes: 50_000_000,
-            rollOnFileSizeLimit: true,
-            shared: true,
-            outputTemplate: outputTemplate,
-            formatProvider: System.Globalization.CultureInfo.InvariantCulture);
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning);
+
+    if (isDevelopment)
+    {
+        loggerConfiguration
+            .WriteTo.Console(outputTemplate: DevTemplate, formatProvider: invariant)
+            .WriteTo.File(
+                path: logPath,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14,
+                fileSizeLimitBytes: 50_000_000,
+                rollOnFileSizeLimit: true,
+                shared: true,
+                outputTemplate: DevTemplate,
+                formatProvider: invariant);
+    }
+    else
+    {
+        loggerConfiguration
+            .WriteTo.Console(new RenderedCompactJsonFormatter())
+            .WriteTo.File(
+                new RenderedCompactJsonFormatter(),
+                logPath,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14,
+                fileSizeLimitBytes: 50_000_000,
+                rollOnFileSizeLimit: true,
+                shared: true);
+    }
 });
 
 // Error tracking (Sentry): only active when a DSN is configured, so local dev
@@ -295,19 +315,43 @@ builder.Services.AddHealthChecks()
         name: "postgresql",
         tags: new[] { "ready" });
 
-// Metrics: OpenTelemetry exported in Prometheus format at /metrics. Off by
-// default so the endpoint is only exposed deliberately (Prometheus scrapes the
-// API over the internal Docker network; the public gateway never proxies it).
+// Telemetry: OpenTelemetry metrics in Prometheus format at /metrics (off by
+// default so the endpoint is only exposed deliberately; Prometheus scrapes it
+// over the internal Docker network and the public gateway never proxies it) and,
+// when Tracing:OtlpEndpoint is set, distributed traces exported over OTLP.
 var metricsEnabled = builder.Configuration.GetValue<bool>("Metrics:Enabled");
-if (metricsEnabled)
+var otlpEndpoint = builder.Configuration["Tracing:OtlpEndpoint"];
+var tracingEnabled = !string.IsNullOrWhiteSpace(otlpEndpoint);
+if (metricsEnabled || tracingEnabled)
 {
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource => resource.AddService("bikontrol-api"))
-        .WithMetrics(metrics => metrics
+    var telemetry = builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource.AddService(
+            builder.Configuration["Telemetry:ServiceName"] ?? "bikontrol-api"));
+
+    if (metricsEnabled)
+    {
+        telemetry.WithMetrics(metrics => metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddRuntimeInstrumentation()
+            .AddMeter(JobMetrics.MeterName)
+            // Daily jobs take seconds to minutes; the default buckets (0-10000)
+            // are tuned for milliseconds and would put every run in one bucket.
+            .AddView("bikontrol.job.duration", new ExplicitBucketHistogramConfiguration
+            {
+                Boundaries = new double[] { 1, 5, 15, 60, 300, 900, 3600 }
+            })
             .AddPrometheusExporter());
+    }
+
+    if (tracingEnabled)
+    {
+        telemetry.WithTracing(tracing => tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddSource("Npgsql")
+            .AddOtlpExporter(otlp => otlp.Endpoint = new Uri(otlpEndpoint!)));
+    }
 }
 
 // Services & Identity tools
