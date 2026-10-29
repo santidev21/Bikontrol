@@ -3,6 +3,7 @@ using Bikontrol.API.Extensions;
 using Bikontrol.API.Middleware;
 using Bikontrol.API.RateLimiting;
 using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Options;
 using Bikontrol.Infrastructure;
 using Bikontrol.Infrastructure.Authentication;
 using Bikontrol.Application.Mapping;
@@ -97,18 +98,32 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
     });
 }
 
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+// Typed, validated options. ValidateOnStart makes a bad value (missing JWT key,
+// out-of-range hour, half-configured VAPID pair) fail the boot with a clear
+// message instead of silently falling back to a default at runtime.
+builder.Services.AddValidatedOptions<JwtOptions>(JwtOptions.Section);
+builder.Services.AddValidatedOptions<SmtpOptions>(SmtpOptions.Section);
+builder.Services.AddValidatedOptions<WebPushOptions>(WebPushOptions.Section);
+builder.Services.AddValidatedOptions<ReminderOptions>(ReminderOptions.Section);
+builder.Services.AddValidatedOptions<RetentionOptions>(RetentionOptions.Section);
+builder.Services.AddValidatedOptions<DatabaseOptions>(DatabaseOptions.Section);
+
+// Bound eagerly too: the bearer handler is configured before the container is built.
+var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
+var jwtErrors = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+if (!System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+        jwt, new System.ComponentModel.DataAnnotations.ValidationContext(jwt), jwtErrors, validateAllProperties: true))
 {
     throw new InvalidOperationException(
-        "Jwt:Key is missing or too short (must be at least 32 characters). Set Jwt__Key via environment variables or appsettings.Development.json.");
+        "Invalid Jwt configuration: " + string.Join("; ", jwtErrors.Select(e => e.ErrorMessage))
+        + ". Set Jwt__Key/Jwt__Issuer/Jwt__Audience via environment variables or appsettings.Development.json.");
 }
 
 // Add Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var key = Encoding.UTF8.GetBytes(jwtKey);
+        var signingKeys = BuildSigningKeys(jwt);
         // Keep the "role" claim name as issued by JwtTokenGenerator.
         // With the default (MapInboundClaims = true) "role" is remapped to
         // ClaimTypes.Role and CurrentUserService would miss it, silently
@@ -120,11 +135,37 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            // Current key plus any previous ones, matched by kid, so a key can
+            // be rotated without logging everybody out (see docs/specs/security).
+            IssuerSigningKeyResolver = (_, _, kid, _) => signingKeys.Where(k => kid is null || k.KeyId == kid).ToList(),
             NameClaimType = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,
             RoleClaimType = "role"
+        };
+        options.Events = new JwtBearerEvents
+        {
+            // Reject tokens minted before a password change/reset or account
+            // deletion: the stamp claim must match the user's current one.
+            OnTokenValidated = async context =>
+            {
+                var sub = context.Principal?.FindFirst("sub")?.Value;
+                var claim = context.Principal?.FindFirst(JwtTokenGenerator.SecurityStampClaim)?.Value;
+                if (!Guid.TryParse(sub, out var userId) || !Guid.TryParseExact(claim, "N", out var tokenStamp))
+                {
+                    context.Fail("Missing identity claims.");
+                    return;
+                }
+
+                // Own scope on purpose: resolving the request-scoped DbContext here
+                // would build ICurrentUserService before the principal is set and
+                // freeze an empty user id for the rest of the request.
+                using var scope = context.HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+                var store = scope.ServiceProvider.GetRequiredService<ISecurityStampStore>();
+                var current = await store.GetAsync(userId, context.HttpContext.RequestAborted);
+                if (current != tokenStamp)
+                    context.Fail("Token revoked.");
+            }
         };
     });
 
@@ -205,7 +246,30 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
     });
+    // Expensive endpoints (exports, PDF/CSV, uploads): per signed-in user, not
+    // per IP, so one account behind a shared NAT cannot starve the others.
+    AddUserPolicy(options, "heavy", builder.Configuration, "RateLimiting:HeavyPerMinute", 6);
+    AddUserPolicy(options, "upload", builder.Configuration, "RateLimiting:UploadPerMinute", 20);
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        var (code, message) = ErrorResponse.ForStatus(StatusCodes.Status429TooManyRequests)!.Value;
+        await ErrorResponse.WriteAsync(context.HttpContext, StatusCodes.Status429TooManyRequests, code, message);
+    };
+});
+
+// Bodies are small JSON (images travel as <= 1 MB data URLs), so anything
+// bigger is abuse; Kestrel answers 413 before the payload is buffered.
+builder.WebHost.ConfigureKestrel(kestrel =>
+{
+    kestrel.Limits.MaxRequestBodySize =
+        long.TryParse(builder.Configuration["Limits:MaxRequestBodyBytes"], out var maxBody) && maxBody > 0
+            ? maxBody
+            : 3 * 1024 * 1024;
 });
 
 // Add services to the container.
@@ -261,8 +325,20 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
             .SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage))
             .ToList();
 
-        var response = new { error = string.Join(" | ", errors) };
-        return new BadRequestObjectResult(response);
+        var message = string.Join(" | ", errors);
+        return new ObjectResult(new Dictionary<string, object?>
+        {
+            ["type"] = "urn:bikontrol:error:validation",
+            ["title"] = message,
+            ["status"] = StatusCodes.Status400BadRequest,
+            ["detail"] = message,
+            ["code"] = "validation",
+            ["error"] = message
+        })
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            ContentTypes = { ErrorResponse.ContentType }
+        };
     };
 });
 var app = builder.Build();
@@ -296,10 +372,17 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors("AllowFrontend");
 
-app.UseRateLimiter();
-
 app.UseAuthentication();
+// After authentication so the per-user policies can read the principal.
+app.UseRateLimiter();
 app.UseAuthorization();
+
+// Bare 401/403/404 (no controller body) get the same coded envelope.
+app.UseStatusCodePages(async context =>
+{
+    if (ErrorResponse.ForStatus(context.HttpContext.Response.StatusCode) is { } error)
+        await ErrorResponse.WriteAsync(context.HttpContext, context.HttpContext.Response.StatusCode, error.Code, error.Message);
+});
 
 app.MapControllers();
 // Liveness: cheap, no dependency checks (used by the web UI/container probes).
@@ -323,7 +406,7 @@ if (metricsEnabled)
 // default for local/dev and any setup that has not moved to the CLI step.
 var migrateOnly = args.Contains("--migrate");
 var runMigrationsOnStartup =
-    builder.Configuration.GetValue("Database:RunMigrationsOnStartup", true)
+    app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DatabaseOptions>>().Value.RunMigrationsOnStartup
     && !app.Environment.IsDevelopment();
 if (migrateOnly || runMigrationsOnStartup)
 {
@@ -366,6 +449,52 @@ public partial class Program
         Microsoft.Extensions.Logging.ILogger logger,
         Exception exception,
         string message);
+
+    internal static void AddUserPolicy(
+        Microsoft.AspNetCore.RateLimiting.RateLimiterOptions options,
+        string name,
+        IConfiguration configuration,
+        string configKey,
+        int defaultPerMinute)
+    {
+        var permits = int.TryParse(configuration[configKey], out var configured) && configured > 0
+            ? configured
+            : defaultPerMinute;
+
+        options.AddPolicy(name, httpContext =>
+        {
+            var partition = httpContext.User.FindFirst("sub")?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown";
+            return RateLimitPartition.GetFixedWindowLimiter($"{name}:{partition}", _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permits,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+        });
+    }
+
+    /// <summary>
+    /// The signing key plus <c>Jwt:PreviousKeys</c> (entries of <c>Id</c> and
+    /// <c>Key</c>) still accepted for validation while a rotation drains.
+    /// </summary>
+    internal static List<SymmetricSecurityKey> BuildSigningKeys(JwtOptions jwt)
+    {
+        var keys = new List<SymmetricSecurityKey>
+        {
+            new(Encoding.UTF8.GetBytes(jwt.Key)) { KeyId = jwt.KeyId }
+        };
+
+        foreach (var previous in jwt.PreviousKeys)
+        {
+            if (string.IsNullOrWhiteSpace(previous.Key) || previous.Key.Length < 32)
+                continue;
+            keys.Add(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(previous.Key)) { KeyId = previous.Id });
+        }
+
+        return keys;
+    }
 
     /// <summary>
     /// Bounds the readiness probe: without a short timeout a hung database would

@@ -1,7 +1,8 @@
 using Bikontrol.Application.DTOs.Retention;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Microsoft.Extensions.Configuration;
+using Bikontrol.Application.Options;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,35 +24,26 @@ namespace Bikontrol.Application.Services
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IReminderLogRepository _reminderLogRepository;
         private readonly IAuditLogRepository _auditLogRepository;
-        private readonly IConfiguration _configuration;
+        private readonly RetentionOptions _options;
 
         public RetentionService(
             IRefreshTokenRepository refreshTokenRepository,
             IReminderLogRepository reminderLogRepository,
             IAuditLogRepository auditLogRepository,
-            IConfiguration configuration)
+            IOptions<RetentionOptions> options)
         {
             _refreshTokenRepository = refreshTokenRepository;
             _reminderLogRepository = reminderLogRepository;
             _auditLogRepository = auditLogRepository;
-            _configuration = configuration;
+            _options = options.Value;
         }
 
-        /// <summary>Days a dead token is kept after expiring or being revoked (default 30).</summary>
-        private int RefreshTokenRetentionDays =>
-            int.TryParse(_configuration["Retention:RefreshTokenDays"], out var days) && days > 0 ? days : 30;
+        private int RefreshTokenRetentionDays => _options.RefreshTokenDays;
 
-        /// <summary>Days reminder history is kept (default 90; the dedupe window needs 3).</summary>
-        private int ReminderLogRetentionDays =>
-            int.TryParse(_configuration["Retention:ReminderLogDays"], out var days) && days > 0 ? days : 90;
+        private int ReminderLogRetentionDays => _options.ReminderLogDays;
 
-        /// <summary>
-        /// Days audit entries are kept. 0 (the default) keeps them forever:
-        /// the audit trail is append-only by design until an explicit policy
-        /// says otherwise.
-        /// </summary>
-        private int AuditLogRetentionDays =>
-            int.TryParse(_configuration["Retention:AuditLogDays"], out var days) && days > 0 ? days : 0;
+        /// <summary>0 keeps audit entries forever (append-only by design).</summary>
+        private int AuditLogRetentionDays => _options.AuditLogDays;
 
         public async Task<RetentionRunResult> PurgeAsync(CancellationToken cancellationToken = default)
         {

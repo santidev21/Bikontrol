@@ -1,3 +1,4 @@
+using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Persistence;
@@ -54,6 +55,50 @@ public sealed class RepositoryIntegrationTests
     }
 
     [RequiresDockerFact]
+    public async Task RefreshTokens_RevokeFamily_ShouldOnlyTouchThatFamily()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var tokens = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+        var user = new User($"family-{Guid.NewGuid():N}@bikontrol.test", "Family", "hashed");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var family = Guid.NewGuid();
+        var otherHash = $"other-{Guid.NewGuid():N}";
+        await tokens.AddAsync(new RefreshToken(user.Id, $"a-{Guid.NewGuid():N}", DateTime.UtcNow.AddDays(10), family));
+        await tokens.AddAsync(new RefreshToken(user.Id, $"b-{Guid.NewGuid():N}", DateTime.UtcNow.AddDays(10), family));
+        await tokens.AddAsync(new RefreshToken(user.Id, otherHash, DateTime.UtcNow.AddDays(10)));
+        await tokens.SaveChangesAsync();
+
+        Assert.Equal(2, await tokens.RevokeFamilyAsync(family));
+        await tokens.SaveChangesAsync();
+
+        Assert.Equal(0, await tokens.RevokeFamilyAsync(family));
+        Assert.Null((await tokens.GetByTokenHashAsync(otherHash))!.RevokedAt);
+    }
+
+    [RequiresDockerFact]
+    public async Task SecurityStampStore_ShouldReturnTheCurrentStamp()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var store = scope.ServiceProvider.GetRequiredService<ISecurityStampStore>();
+        var user = new User($"stamp-{Guid.NewGuid():N}@bikontrol.test", "Stamp", "hashed");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        Assert.Equal(user.SecurityStamp, await store.GetAsync(user.Id));
+
+        // The factory disables the cache, so a rotation is visible immediately.
+        user.RotateSecurityStamp();
+        await db.SaveChangesAsync();
+        Assert.Equal(user.SecurityStamp, await store.GetAsync(user.Id));
+
+        Assert.Null(await store.GetAsync(Guid.NewGuid()));
+    }
+
+    [RequiresDockerFact]
     public async Task KmHistory_Queries_ShouldReturnFirstLastAndBatchedValues()
     {
         using var scope = _factory.Services.CreateScope();
@@ -88,6 +133,63 @@ public sealed class RepositoryIntegrationTests
         history.Remove((await history.GetLastByMotorcycleIdAsync(moto.Id))!);
         await history.SaveChangesAsync();
         Assert.Equal(1000, (await history.GetLastByMotorcycleIdAsync(moto.Id))!.Km);
+    }
+
+    [RequiresDockerFact]
+    public async Task KmHistory_BatchQueries_ShouldResolvePerMotorcycleInTheDatabase()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var history = scope.ServiceProvider.GetRequiredService<IKmHistoryRepository>();
+        var motorcycles = scope.ServiceProvider.GetRequiredService<IMotorcycleRepository>();
+        var user = new User($"batch-{Guid.NewGuid():N}@bikontrol.test", "Batch", "hashed");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        var first = new Motorcycle("YBR", "Yamaha", 2024, "A", 125, "AAA11A", user.Id);
+        var second = new Motorcycle("FZ", "Yamaha", 2023, "B", 150, "BBB22B", user.Id);
+        db.Motorcycles.AddRange(first, second);
+        await db.SaveChangesAsync();
+
+        var t0 = DateTime.UtcNow.AddDays(-10);
+        t0 = new DateTime(t0.Ticks - t0.Ticks % TimeSpan.TicksPerMillisecond, DateTimeKind.Utc); // Postgres keeps microseconds
+        foreach (var (moto, km, offset) in new[] { (first, 100, 0), (first, 900, 5), (first, 400, 2), (second, 50, 1), (second, 70, 3) })
+        {
+            await history.AddAsync(new MotorcycleKmHistory
+            {
+                Id = Guid.NewGuid(),
+                MotorcycleId = moto.Id,
+                Km = km,
+                RecordedAt = t0.AddDays(offset)
+            });
+        }
+        await history.SaveChangesAsync();
+
+        var latest = await history.GetLatestKmByMotorcycleIdsAsync(new[] { first.Id, second.Id });
+        Assert.Equal(900, latest[first.Id]);
+        Assert.Equal(70, latest[second.Id]);
+
+        var initial = await history.GetInitialRecordedAtByMotorcycleIdsAsync(new[] { first.Id, second.Id });
+        Assert.Equal(t0, initial[first.Id]);
+        Assert.Equal(t0.AddDays(1), initial[second.Id]);
+
+        var names = await motorcycles.GetNamesByUserIdAsync(user.Id);
+        Assert.Equal("YBR", names[first.Id]);
+        Assert.Equal("FZ", names[second.Id]);
+    }
+
+    [RequiresDockerFact]
+    public async Task UserRepository_ShouldFindAccountsByTheirNormalizedEmail()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var local = $"Mixed-{Guid.NewGuid():N}";
+        db.Users.Add(new User($"  {local}@Bikontrol.Test ", "Mixed", "hashed"));
+        await db.SaveChangesAsync();
+
+        Assert.NotNull(await users.GetByEmailAsync($"{local.ToUpperInvariant()}@BIKONTROL.TEST"));
+        Assert.True(await users.ExistsByEmailAsync($"{local}@bikontrol.test"));
+        Assert.Null(await users.GetByEmailAsync($"other-{local}@bikontrol.test"));
     }
 
     [RequiresDockerFact]

@@ -31,6 +31,15 @@ namespace Bikontrol.Persistence.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IReadOnlyDictionary<Guid, string>> GetNamesByUserIdAsync(Guid userId)
+        {
+            return await _context.Motorcycles
+                .AsNoTracking()
+                .Where(m => m.UserId == userId && m.IsEnabled)
+                .Select(m => new { m.Id, m.Name })
+                .ToDictionaryAsync(m => m.Id, m => m.Name);
+        }
+
         public async Task<Motorcycle> AddAsync(Motorcycle motorcycle)
         {
             await _context.Motorcycles.AddAsync(motorcycle);

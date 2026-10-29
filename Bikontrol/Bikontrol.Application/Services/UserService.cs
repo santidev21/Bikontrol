@@ -5,6 +5,7 @@ using Bikontrol.Domain.Entities;
 using Bikontrol.Application.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 
@@ -16,13 +17,16 @@ namespace Bikontrol.Application.Services
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ICurrentUserService _current;
+        private readonly IConfiguration? _configuration;
 
         public UserService(
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher,
-            ICurrentUserService current)
+            ICurrentUserService current,
+            IConfiguration? configuration = null)
         {
+            _configuration = configuration;
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _passwordHasher = passwordHasher;
@@ -53,9 +57,14 @@ namespace Bikontrol.Application.Services
             if (!user.HasPassword)
                 throw new ValidationException("Tu cuenta usa inicio de sesión con Google y no tiene contraseña para cambiar.", "google_no_password");
 
+            PasswordAttemptGuard.EnsureNotLocked(user, _configuration);
             var verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword);
             if (verification != PasswordVerificationResult.Success)
+            {
+                PasswordAttemptGuard.RegisterFailure(user, _configuration);
+                await _userRepository.SaveChangesAsync();
                 throw new ValidationException("La contraseña actual no es correcta.", "current_password_incorrect");
+            }
 
             user.UpdatePassword(_passwordHasher.HashPassword(user, request.NewPassword));
             user.ClearResetPasswordToken();

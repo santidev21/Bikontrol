@@ -1,3 +1,4 @@
+using Bikontrol.Application.Options;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Application.Services;
@@ -47,23 +48,6 @@ public class RetentionServiceTests
         AssertCutoff(auditLogRepository.LastCutoffUtc, 365);
     }
 
-    [Fact]
-    public async Task PurgeAsync_WhenDaysAreInvalid_ShouldFallBackToDefaults()
-    {
-        var refreshTokenRepository = new FakeRefreshTokenRepository();
-        var reminderLogRepository = new FakeReminderLogRepository();
-        var service = CreateService(
-            refreshTokenRepository, reminderLogRepository, new FakeAuditLogRepository(),
-            refreshTokenDays: "0",
-            reminderLogDays: "-5");
-
-        await service.PurgeAsync();
-
-        // Invalid values (0 or negative) keep the safe defaults.
-        AssertCutoff(refreshTokenRepository.LastCutoffUtc, 30);
-        AssertCutoff(reminderLogRepository.LastCutoffUtc, 90);
-    }
-
     private static RetentionService CreateService(
         FakeRefreshTokenRepository refreshTokenRepository,
         FakeReminderLogRepository reminderLogRepository,
@@ -82,7 +66,8 @@ public class RetentionServiceTests
             .AddInMemoryCollection(values.Where(v => v.Value is not null))
             .Build();
 
-        return new RetentionService(refreshTokenRepository, reminderLogRepository, auditLogRepository, configuration);
+        return new RetentionService(refreshTokenRepository, reminderLogRepository, auditLogRepository,
+            TestOptions.From<RetentionOptions>(configuration, "Retention"));
     }
 
     /// <summary>The cutoff must be within a couple of seconds of the expected days ago.</summary>
@@ -104,6 +89,7 @@ public class RetentionServiceTests
         public Task AddAsync(RefreshToken refreshToken) => Task.CompletedTask;
 
         public Task<int> RevokeAllForUserAsync(Guid userId) => Task.FromResult(0);
+        public Task<int> RevokeFamilyAsync(Guid familyId) => Task.FromResult(0);
 
         public Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
         {

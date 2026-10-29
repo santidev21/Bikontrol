@@ -68,16 +68,17 @@ namespace Bikontrol.Persistence.Repositories
             if (ids.Count == 0)
                 return new Dictionary<Guid, int>();
 
-            var rows = await _context.MotorcycleKmHistories
+            // One row per motorcycle computed in the database instead of loading
+            // the whole history of every motorcycle and grouping in memory.
+            return await _context.MotorcycleKmHistories
                 .Where(x => ids.Contains(x.MotorcycleId))
-                .Select(x => new { x.MotorcycleId, x.Km, x.RecordedAt, x.Id })
-                .ToListAsync();
-
-            return rows
                 .GroupBy(x => x.MotorcycleId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.OrderByDescending(x => x.RecordedAt).ThenByDescending(x => x.Id).First().Km);
+                .Select(g => new
+                {
+                    MotorcycleId = g.Key,
+                    Km = g.OrderByDescending(x => x.RecordedAt).ThenByDescending(x => x.Id).Select(x => x.Km).First()
+                })
+                .ToDictionaryAsync(x => x.MotorcycleId, x => x.Km);
         }
 
         public async Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds)
@@ -86,14 +87,11 @@ namespace Bikontrol.Persistence.Repositories
             if (ids.Count == 0)
                 return new Dictionary<Guid, DateTime?>();
 
-            var rows = await _context.MotorcycleKmHistories
+            return await _context.MotorcycleKmHistories
                 .Where(x => ids.Contains(x.MotorcycleId))
-                .Select(x => new { x.MotorcycleId, x.RecordedAt })
-                .ToListAsync();
-
-            return rows
                 .GroupBy(x => x.MotorcycleId)
-                .ToDictionary(g => g.Key, g => (DateTime?)g.Min(x => x.RecordedAt));
+                .Select(g => new { MotorcycleId = g.Key, Initial = (DateTime?)g.Min(x => x.RecordedAt) })
+                .ToDictionaryAsync(x => x.MotorcycleId, x => x.Initial);
         }
 
         public async Task SaveChangesAsync()

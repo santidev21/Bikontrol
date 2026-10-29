@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Bikontrol.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using Bikontrol.Application.Options;
+using Bikontrol.Infrastructure.Resilience;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using WebPush;
 using PushSubscriptionEntity = Bikontrol.Domain.Entities.PushSubscription;
@@ -14,18 +16,20 @@ namespace Bikontrol.Infrastructure.Notifications
     /// </summary>
     public class WebPushSender : IPushSender
     {
-        private readonly IConfiguration _configuration;
+        // One shared client: new WebPushClient() builds an HttpClient (and a
+        // socket pool) per notification, with no timeout.
+        private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
+
+        private readonly WebPushOptions _options;
         private readonly ILogger<WebPushSender> _logger;
 
-        public WebPushSender(IConfiguration configuration, ILogger<WebPushSender> logger)
+        public WebPushSender(IOptions<WebPushOptions> options, ILogger<WebPushSender> logger)
         {
-            _configuration = configuration;
+            _options = options.Value;
             _logger = logger;
         }
 
-        private bool IsConfigured =>
-            !string.IsNullOrWhiteSpace(_configuration["WebPush:PublicKey"])
-            && !string.IsNullOrWhiteSpace(_configuration["WebPush:PrivateKey"]);
+        private bool IsConfigured => _options.IsConfigured;
 
         public async Task<bool> SendAsync(PushSubscriptionEntity subscription, PushPayload payload)
         {
@@ -36,11 +40,7 @@ namespace Bikontrol.Infrastructure.Notifications
                 return true;
             }
 
-            var subject = _configuration["WebPush:Subject"] ?? "mailto:contacto.santidev21@gmail.com";
-            var vapid = new VapidDetails(
-                subject,
-                _configuration["WebPush:PublicKey"]!,
-                _configuration["WebPush:PrivateKey"]!);
+            var vapid = new VapidDetails(_options.Subject, _options.PublicKey!, _options.PrivateKey!);
 
             var pushSubscription = new WebPush.PushSubscription(subscription.Endpoint, subscription.P256dh, subscription.Auth);
             // Payload shape expected by Angular's service worker (SwPush): the
@@ -63,10 +63,14 @@ namespace Bikontrol.Infrastructure.Notifications
                 }
             });
 
-            var client = new WebPushClient();
+            var client = new WebPushClient(SharedHttpClient);
             try
             {
-                await client.SendNotificationAsync(pushSubscription, body, vapid);
+                await TransientRetry.ExecuteAsync(async ct =>
+                {
+                    await client.SendNotificationAsync(pushSubscription, body, vapid, ct);
+                    return true;
+                }, IsTransient);
                 return true;
             }
             catch (WebPushException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound
@@ -77,5 +81,14 @@ namespace Bikontrol.Infrastructure.Notifications
                 return false;
             }
         }
+
+        /// <summary>429/5xx from the push service and network failures are retried; 4xx (bad subscription/VAPID) are not.</summary>
+        public static bool IsTransient(Exception exception) => exception switch
+        {
+            WebPushException ex => (int)ex.StatusCode is 429 or >= 500,
+            HttpRequestException => true,
+            TaskCanceledException => true,
+            _ => false
+        };
     }
 }

@@ -2,6 +2,7 @@
 using Bikontrol.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Bikontrol.API.Controllers
 {
@@ -19,6 +20,7 @@ namespace Bikontrol.API.Controllers
             _maintenanceBookService = maintenanceBookService;
         }
 
+        [EnableRateLimiting("upload")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] SaveMotorcycleDTO dto)
         {
@@ -60,6 +62,7 @@ namespace Bikontrol.API.Controllers
             return NoContent();
         }
 
+        [EnableRateLimiting("heavy")]
         [HttpGet("{id}/maintenance-book/book.csv")]
         public async Task<IActionResult> GetMaintenanceBookCsv(Guid id)
         {
@@ -67,6 +70,7 @@ namespace Bikontrol.API.Controllers
             return File(bytes, "text/csv", $"mantenimiento-{id}.csv");
         }
 
+        [EnableRateLimiting("heavy")]
         [HttpGet("{id}/maintenance-book/book.pdf")]
         public async Task<IActionResult> GetMaintenanceBookPdf(Guid id)
         {
@@ -74,6 +78,7 @@ namespace Bikontrol.API.Controllers
             return File(bytes, "application/pdf", $"mantenimiento-{id}.pdf");
         }
 
+        [EnableRateLimiting("upload")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] SaveMotorcycleDTO dto)
         {

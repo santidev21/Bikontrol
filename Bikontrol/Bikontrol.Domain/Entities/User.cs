@@ -20,6 +20,12 @@ namespace Bikontrol.Domain.Entities
         public DateTime? ResetPasswordTokenExpires { get; private set; }
 
         /// <summary>
+        /// Embedded in every access token. Rotating it (password change/reset,
+        /// account deletion) invalidates the tokens issued before.
+        /// </summary>
+        public Guid SecurityStamp { get; private set; } = Guid.NewGuid();
+
+        /// <summary>
         /// Cuando no es null, el email fue verificado. Las cuentas creadas antes
         /// de esta feature se marcan al migrar; las nuevas quedan pendientes
         /// hasta confirmar (salvo Google, cuyo email ya viene verificado).
@@ -89,7 +95,10 @@ namespace Bikontrol.Domain.Entities
         public void UpdatePassword(string newHash)
         {
             PasswordHash = newHash ?? throw new ArgumentNullException(nameof(newHash));
+            RotateSecurityStamp();
         }
+
+        public void RotateSecurityStamp() => SecurityStamp = Guid.NewGuid();
 
         public void SetResetPasswordToken(string tokenHash, DateTime expiresAt)
         {
@@ -200,6 +209,7 @@ namespace Bikontrol.Domain.Entities
             Email = $"deleted+{Id}@bikontrol.local";
             FullName = "Cuenta eliminada";
             PasswordHash = $"deleted:{Guid.NewGuid():N}";
+            RotateSecurityStamp();
             Role = UserRole.User;
             AuthProvider = null;
             ResetPasswordTokenHash = null;

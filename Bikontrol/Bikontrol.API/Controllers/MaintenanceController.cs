@@ -4,6 +4,7 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Bikontrol.API.Controllers;
 
@@ -92,6 +93,7 @@ public class MaintenancesController : ControllerBase
         return Ok(await _attachmentService.GetByRecordAsync(recordId));
     }
 
+    [EnableRateLimiting("upload")]
     [HttpPost("records/{recordId:guid}/attachments")]
     public async Task<IActionResult> AddAttachment(Guid recordId, [FromBody] AddAttachmentRequest request)
     {
