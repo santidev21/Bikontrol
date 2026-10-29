@@ -28,10 +28,15 @@ docker network create bikontrol-internal-net
 Automatic on push to `main` via GitHub Actions, or manual:
 
 ```bash
-cd /opt/bikontrol && ./scripts/deploy.sh deploy
+cd /opt/bikontrol && ./scripts/deploy.sh deploy sha-<commit>   # published images
+cd /opt/bikontrol && ./scripts/deploy.sh deploy                # build on this host
 ```
 
-Each deploy runs, in order: backup + verify → integrity audit → pull → build → **apply migrations (dedicated step)** → up → **container healthcheck** → **post-deploy smoke test**. `build` keeps the serving images as `:previous`. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump and starts the previous images; falls back to a rebuild from the config backup when no previous images exist).
+**Build once, deploy by tag.** On `main`, CI (`publish-images`) runs after the tests, Gitleaks, Trivy fs and compose validation, builds the API and web images once, scans both with Trivy (HIGH/CRITICAL fail the job) and pushes them to GHCR as `ghcr.io/<owner>/bikontrol-{api,web}:sha-<commit>`. The `deploy` job (GitHub environment `production`, which carries the manual approval — configure **Required reviewers** in Settings → Environments) then runs `deploy.sh deploy sha-<commit>` over SSH: the host checks out that exact commit (compose file and scripts match the images), pulls the images and never builds. CodeQL, SonarCloud and E2E run as required status checks on the PR, so only commits that passed them reach `main`. The web bundle bakes the public Google client id from the repository variable `GOOGLE_CLIENT_ID`.
+
+Each deploy runs, in order: backup + verify → integrity audit → checkout/pull → pull images (or build) → **apply migrations (dedicated step)** → up → **container healthcheck** → **post-deploy smoke test**. The serving tag and the previous one are recorded in `.deploy-state`. If the healthcheck **or** the smoke test fails, the deploy **rolls back automatically** (restores the pre-deploy DB dump and starts the previous tag; hosts still on build-mode deploys use the `:previous` local images, then a rebuild from the config backup). Roll back manually with `./scripts/deploy.sh rollback [sha-<commit>]`.
+
+The package visibility of the GHCR images is private by default; the deploy job logs the host in with the run's short-lived `GITHUB_TOKEN` (`packages: read`). For manual tagged deploys, run `docker login ghcr.io` once on the host or export `REGISTRY_USER`/`REGISTRY_TOKEN`.
 
 **Migrations as a dedicated step.** Production does **not** migrate on API startup (`Database__RunMigrationsOnStartup=false`). Instead, `deploy.sh deploy` runs `deploy.sh migrate`, which executes the freshly built API image in migration-only mode (`docker compose run --rm --no-deps api --migrate`), on the internal network, before any container is started for traffic. It is idempotent and fails the deploy (with the pre-deploy backup already taken) before anything is started. Migrate manually with `./scripts/deploy.sh migrate`. Startup migration remains the default outside production (local dev, and the integration test suite).
 
@@ -48,7 +53,7 @@ SMOKE_URL=https://staging.bikontrol.santidev21.tech \
   ./scripts/deploy.sh deploy
 ```
 
-`DEPLOY_DIR`, `SMOKE_URL`, `LOG_FILE` and `BACKUP_RETENTION` are all environment-overridable, so staging shares the code but keeps its own data, backups and domain. Add a matching gateway site config (see the gateway repo) and a `.env` with staging values.
+Staging deploys in build mode (no tag) because the web bundle bakes the API URL and the Google client id, so one image cannot be promoted across domains until the frontend reads its config at runtime. `DEPLOY_DIR`, `SMOKE_URL`, `LOG_FILE` and `BACKUP_RETENTION` are all environment-overridable, so staging shares the code but keeps its own data, backups and domain. Add a matching gateway site config (see the gateway repo) and a `.env` with staging values.
 
 ## Gateway integration
 
@@ -148,7 +153,7 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 
 - **Never in the repo.** Real values live in `/opt/bikontrol/.env` (mode `600`, owned by the deploy user) and, for local dev, in the gitignored `appsettings.Development.json`. `.env.example` only carries placeholders and is checked by Gitleaks on every PR.
 - **Rotating `Jwt__Key`** immediately invalidates every issued access token (all users must log in again). Refresh tokens survive, so sessions renew on the next refresh; rotate during a low-traffic window.
-- **Rotating DB credentials:** update `POSTGRES_PASSWORD` **and** the password inside `ConnectionStrings__DefaultConnection` together (they must match), then `./scripts/deploy.sh deploy`. Existing connections are re-established on restart.
+- **Rotating DB credentials:** update `POSTGRES_PASSWORD` **and** the password inside `ConnectionStrings__DefaultConnection` together (they must match), then redeploy the current tag (`./scripts/deploy.sh deploy $(. .deploy-state; echo $IMAGE_TAG)`). Existing connections are re-established on restart.
 - **Rotating SMTP / Google / Sentry:** update the matching vars, redeploy.
 - After any rotation, verify: `./scripts/deploy.sh verify` (containers healthy) and a login + `/ready` check. Keep one previous value until the deploy is confirmed healthy, then discard it.
 - **Secret scanning** (Gitleaks) runs in CI; Trivy scans the filesystem. Neither replaces rotating a leaked secret — if a secret ever reaches a commit, rotate it, don't just delete the line.

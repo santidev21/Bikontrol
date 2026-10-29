@@ -68,10 +68,13 @@ cd /opt/bikontrol
 ```
 `deploy` runs this automatically when the healthcheck or smoke test fails. It stops
 `api`/`web`, restores the DB dump taken at the start of that deploy, and starts the
-**previous images** (`bikontrol-api:previous`, `bikontrol-web:previous`, kept by
-`build`) without rebuilding. If those images do not exist yet (first deploy after
-image tags were introduced) it falls back to the config tarball and rebuilds. It
-then runs the smoke test best-effort and exits non-zero if the DB restore failed.
+**previous image tag** (`PREVIOUS_IMAGE_TAG` in `/opt/bikontrol/.deploy-state`):
+it checks out the commit behind that `sha-<commit>` tag, pulls the images from
+GHCR and starts them without building. To go back to a specific release instead
+(images only, no DB restore): `./scripts/deploy.sh rollback sha-<commit>`. Hosts
+still on build-mode deploys fall back to the `:previous` local images, and then to
+the config tarball with a rebuild. It then runs the smoke test best-effort and
+exits non-zero if the DB restore failed.
 
 ### Restore a specific backup (disaster recovery)
 Backups live in `/opt/bikontrol/backups/backup-<timestamp>/db.sql.gz` (14-copy
@@ -149,7 +152,7 @@ host is recoverable.
 | --- | --- |
 | Stack health | `./scripts/deploy.sh status` |
 | Logs | `./scripts/deploy.sh logs` |
-| Deploy | `./scripts/deploy.sh deploy` |
+| Deploy | `./scripts/deploy.sh deploy sha-<commit>` (build mode: no tag) |
 | Apply migrations | `./scripts/deploy.sh migrate` |
 | Verify only | `./scripts/deploy.sh verify` |
 | Roll back last deploy | `./scripts/deploy.sh rollback` |

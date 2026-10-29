@@ -190,22 +190,115 @@ jobs:
         working-directory: bikontrol-web
         run: npm audit --omit=dev --audit-level=high
 
-  deploy:
-    name: Deploy to VPS
+  # Build each image exactly once, scan the result, then publish it with an
+  # immutable `sha-<commit>` tag. The deploy pulls these tags and never builds on
+  # the server, so what was tested and scanned is what runs, and a rollback is
+  # just "run the previous tag".
+  publish-images:
+    name: Build, scan and publish images
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, docker-compose-validate]
+    needs: [backend-tests, frontend-tests, secret-scan, trivy, docker-compose-validate]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+      api_image: ${{ steps.vars.outputs.api_image }}
+      web_image: ${{ steps.vars.outputs.web_image }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Image names and tag
+        id: vars
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "tag=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "api_image=ghcr.io/${owner}/bikontrol-api" >> "$GITHUB_OUTPUT"
+          echo "web_image=ghcr.io/${owner}/bikontrol-web" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.api
+          load: true
+          tags: ${{ steps.vars.outputs.api_image }}:${{ steps.vars.outputs.tag }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.web
+          load: true
+          build-args: |
+            GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+          tags: ${{ steps.vars.outputs.web_image }}:${{ steps.vars.outputs.tag }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: Trivy scan (API image)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.vars.outputs.api_image }}:${{ steps.vars.outputs.tag }}
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          ignore-unfixed: true
+
+      - name: Trivy scan (web image)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.vars.outputs.web_image }}:${{ steps.vars.outputs.tag }}
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          ignore-unfixed: true
+
+      - name: Push images
+        run: |
+          docker push "${{ steps.vars.outputs.api_image }}:${{ steps.vars.outputs.tag }}"
+          docker push "${{ steps.vars.outputs.web_image }}:${{ steps.vars.outputs.tag }}"
+
+  # `main` is protected: the CodeQL, SonarCloud and E2E workflows are required
+  # status checks on the PR, so only commits that passed them reach this job.
+  # The `production` environment adds a manual approval (Settings -> Environments
+  # -> production -> Required reviewers).
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: [publish-images]
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Deploy ${{ needs.publish-images.outputs.tag }} via SSH
         uses: appleboy/ssh-action@v1.2.5
+        env:
+          IMAGE_TAG: ${{ needs.publish-images.outputs.tag }}
+          API_IMAGE: ${{ needs.publish-images.outputs.api_image }}
+          WEB_IMAGE: ${{ needs.publish-images.outputs.web_image }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG,API_IMAGE,WEB_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
           script: |
             cd /opt/bikontrol
-            ./scripts/deploy.sh deploy
+            ./scripts/deploy.sh deploy "$IMAGE_TAG"
