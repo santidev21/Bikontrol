@@ -208,7 +208,14 @@ export class ProfileComponent {
     this.userService.changePassword(this.currentPassword(), this.newPassword()).subscribe({
       next: () => {
         this.closePasswordModal();
-        this.swal.success(this.i18n.t('common.success'), this.i18n.t('profile.passwordUpdated'));
+        // The server closed every session (refresh and access tokens), so
+        // continuing would just 401: send the user to sign in again.
+        this.swal
+          .success(this.i18n.t('common.success'), this.i18n.t('profile.passwordUpdated'))
+          .then(() => {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          });
       },
       error: (err) => {
         this.isChangingPassword.set(false);

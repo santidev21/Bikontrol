@@ -20,6 +20,12 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task<int> RevokeAllForUserAsync(Guid userId);
 
         /// <summary>
+        /// Revokes every still-active token of a rotation family (reuse
+        /// detection). Persisted with <see cref="SaveChangesAsync"/>.
+        /// </summary>
+        Task<int> RevokeFamilyAsync(Guid familyId);
+
+        /// <summary>
         /// Bulk-deletes tokens that expired or were revoked before the cutoff
         /// (retention purge; bypasses the change tracker and the audit trail).
         /// Returns how many rows were deleted.

@@ -28,6 +28,7 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(u => u.EmailConfirmationTokenExpires);
             builder.Property(u => u.AccessFailedCount).IsRequired().HasDefaultValue(0);
             builder.Property(u => u.LockoutEnd);
+            builder.Property(u => u.SecurityStamp).IsRequired();
             builder.Property(u => u.AuthProvider).HasMaxLength(30);
             builder.Property(u => u.RemindersEnabled).IsRequired().HasDefaultValue(true);
             builder.Property(u => u.MonthlyMaintenanceBudget).HasPrecision(12, 2);

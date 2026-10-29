@@ -108,7 +108,7 @@ if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var key = Encoding.UTF8.GetBytes(jwtKey);
+        var signingKeys = BuildSigningKeys(builder.Configuration, jwtKey);
         // Keep the "role" claim name as issued by JwtTokenGenerator.
         // With the default (MapInboundClaims = true) "role" is remapped to
         // ClaimTypes.Role and CurrentUserService would miss it, silently
@@ -122,9 +122,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key),
+            // Current key plus any previous ones, matched by kid, so a key can
+            // be rotated without logging everybody out (see docs/specs/security).
+            IssuerSigningKeyResolver = (_, _, kid, _) => signingKeys.Where(k => kid is null || k.KeyId == kid).ToList(),
             NameClaimType = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,
             RoleClaimType = "role"
+        };
+        options.Events = new JwtBearerEvents
+        {
+            // Reject tokens minted before a password change/reset or account
+            // deletion: the stamp claim must match the user's current one.
+            OnTokenValidated = async context =>
+            {
+                var sub = context.Principal?.FindFirst("sub")?.Value;
+                var claim = context.Principal?.FindFirst(JwtTokenGenerator.SecurityStampClaim)?.Value;
+                if (!Guid.TryParse(sub, out var userId) || !Guid.TryParseExact(claim, "N", out var tokenStamp))
+                {
+                    context.Fail("Missing identity claims.");
+                    return;
+                }
+
+                // Own scope on purpose: resolving the request-scoped DbContext here
+                // would build ICurrentUserService before the principal is set and
+                // freeze an empty user id for the rest of the request.
+                using var scope = context.HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+                var store = scope.ServiceProvider.GetRequiredService<ISecurityStampStore>();
+                var current = await store.GetAsync(userId, context.HttpContext.RequestAborted);
+                if (current != tokenStamp)
+                    context.Fail("Token revoked.");
+            }
         };
     });
 
@@ -366,6 +392,28 @@ public partial class Program
         Microsoft.Extensions.Logging.ILogger logger,
         Exception exception,
         string message);
+
+    /// <summary>
+    /// The signing key plus <c>Jwt:PreviousKeys</c> (entries of <c>Id</c> and
+    /// <c>Key</c>) still accepted for validation while a rotation drains.
+    /// </summary>
+    internal static List<SymmetricSecurityKey> BuildSigningKeys(IConfiguration configuration, string currentKey)
+    {
+        var keys = new List<SymmetricSecurityKey>
+        {
+            new(Encoding.UTF8.GetBytes(currentKey)) { KeyId = configuration["Jwt:KeyId"] ?? "k1" }
+        };
+
+        foreach (var previous in configuration.GetSection("Jwt:PreviousKeys").GetChildren())
+        {
+            var key = previous["Key"];
+            if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
+                continue;
+            keys.Add(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)) { KeyId = previous["Id"] });
+        }
+
+        return keys;
+    }
 
     /// <summary>
     /// Bounds the readiness probe: without a short timeout a hung database would

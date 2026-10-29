@@ -27,6 +27,8 @@ namespace Bikontrol.Persistence
             services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
             services.AddScoped<IMaintenanceRecordAttachmentRepository, MaintenanceRecordAttachmentRepository>();
             services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+            services.AddMemoryCache();
+            services.AddScoped<ISecurityStampStore, SecurityStampStore>();
             services.AddScoped<ITransactionManager, TransactionManager>();
             services.AddScoped<IDistributedLock, PostgresAdvisoryLock>();
             return services;

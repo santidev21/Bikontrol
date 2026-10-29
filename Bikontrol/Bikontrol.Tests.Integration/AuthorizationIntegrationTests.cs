@@ -250,6 +250,23 @@ public sealed class AuthorizationIntegrationTests
         Assert.Equal(string.Empty, session.RefreshToken);
     }
 
+    [RequiresDockerFact]
+    public async Task ChangePassword_ShouldRevokeTheAccessTokenIssuedBefore()
+    {
+        var client = await RegisterClientAsync();
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/users/me")).StatusCode);
+
+        var change = await client.PostAsJsonAsync("/api/users/me/password", new
+        {
+            currentPassword = "Secret123!",
+            newPassword = "Another123!"
+        });
+        change.EnsureSuccessStatusCode();
+
+        // Same JWT, still inside its lifetime, but minted before the stamp rotated.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/users/me")).StatusCode);
+    }
+
     private async Task<HttpClient> RegisterClientAsync()
     {
         var client = _factory.CreateClient();

@@ -518,7 +518,7 @@ export const en: Record<string, string> = {
   'profile.passwordComplete': 'Complete all fields.',
   'profile.passwordMin': 'The new password must be at least 8 characters.',
   'profile.passwordMismatch': 'The confirmation does not match the new password.',
-  'profile.passwordUpdated': 'Your password was updated.',
+  'profile.passwordUpdated': 'Your password was updated. Please sign in again.',
   'profile.passwordUpdateError': 'Could not update your password.',
   'profile.remindersOn': 'Reminders on.',
   'profile.remindersOff': 'Reminders off.',
