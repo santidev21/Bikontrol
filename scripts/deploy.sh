@@ -29,14 +29,14 @@ SMOKE_URL="${SMOKE_URL:-https://bikontrol.santidev21.tech}"
 # PREVIOUS_IMAGE_TAG). Sourced on every run so `up`, `migrate`, `status`… always
 # address the same images compose was last started with.
 STATE_FILE="${DEPLOY_DIR}/.deploy-state"
-if [ -f "$STATE_FILE" ]; then
+if [[ -f "$STATE_FILE" ]]; then
     # shellcheck disable=SC1090
     source "$STATE_FILE"
 fi
 export IMAGE_TAG="${IMAGE_TAG:-}" API_IMAGE="${API_IMAGE:-}" WEB_IMAGE="${WEB_IMAGE:-}"
-[ -n "$IMAGE_TAG" ] || unset IMAGE_TAG
-[ -n "$API_IMAGE" ] || unset API_IMAGE
-[ -n "$WEB_IMAGE" ] || unset WEB_IMAGE
+[[ -n "$IMAGE_TAG" ]] || unset IMAGE_TAG
+[[ -n "$API_IMAGE" ]] || unset API_IMAGE
+[[ -n "$WEB_IMAGE" ]] || unset WEB_IMAGE
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -55,7 +55,7 @@ validate_docker() {
 
 validate_env() {
     log "Validating .env file..."
-    if [ ! -f "$DEPLOY_DIR/.env" ]; then
+    if [[ ! -f "$DEPLOY_DIR/.env" ]]; then
         error_exit ".env file not found at $DEPLOY_DIR/.env (copy .env.example and fill it in)"
     fi
     if grep -q "CHANGE_ME" "$DEPLOY_DIR/.env"; then
@@ -72,7 +72,7 @@ validate_config() {
 
 backup() {
     mkdir -p "$(dirname "$BACKUP_DIR")"
-    if [ -d "$DEPLOY_DIR" ]; then
+    if [[ -d "$DEPLOY_DIR" ]]; then
         log "Creating config backup at ${BACKUP_DIR}.tgz..."
         tar czf "${BACKUP_DIR}.tgz" -C / \
             --exclude=opt/bikontrol/.git \
@@ -85,7 +85,7 @@ backup() {
 }
 
 backup_database() {
-    if [ ! -f "$DEPLOY_DIR/.env" ]; then
+    if [[ ! -f "$DEPLOY_DIR/.env" ]]; then
         return 0
     fi
     set -a
@@ -120,13 +120,13 @@ backup_database() {
 # BACKUP_OFFSITE_REMOTE is unset; fails loudly when it is set but unusable.
 offsite_backup() {
     local dump="$1"
-    if [ -z "$BACKUP_OFFSITE_REMOTE" ]; then
+    if [[ -z "$BACKUP_OFFSITE_REMOTE" ]]; then
         log "Offsite backup not configured (BACKUP_OFFSITE_REMOTE unset) — the dump only exists on this host."
         return 0
     fi
     command -v rclone >/dev/null 2>&1 || { log "ERROR: rclone is not installed"; return 1; }
     command -v openssl >/dev/null 2>&1 || { log "ERROR: openssl is not installed"; return 1; }
-    [ -s "$BACKUP_ENCRYPTION_KEY_FILE" ] || { log "ERROR: encryption key file missing or empty: ${BACKUP_ENCRYPTION_KEY_FILE}"; return 1; }
+    [[ -s "$BACKUP_ENCRYPTION_KEY_FILE" ]] || { log "ERROR: encryption key file missing or empty: ${BACKUP_ENCRYPTION_KEY_FILE}"; return 1; }
 
     local encrypted="${dump}.enc"
     local remote_name="backup-${TIMESTAMP}.sql.gz.enc"
@@ -149,7 +149,7 @@ wait_db_ready() {
     local tries=0
     until docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T db         pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; do
         tries=$((tries + 1))
-        [ "$tries" -le 30 ] || return 1
+        [[ "$tries" -le 30 ]] || return 1
         sleep 2
     done
 }
@@ -162,7 +162,7 @@ wait_db_ready() {
 # untouched. Expects POSTGRES_* in the environment and the db running.
 restore_dump() {
     local dump="$1"
-    [ -f "$dump" ] || { log "ERROR: dump not found: ${dump}"; return 1; }
+    [[ -f "$dump" ]] || { log "ERROR: dump not found: ${dump}"; return 1; }
     local reader=(cat)
     [[ "$dump" == *.gz ]] && reader=(gunzip -c)
     {
@@ -176,8 +176,8 @@ restore_dump() {
 # then stop the app, restore, and start it again.
 restore_db() {
     local dump="${2:-}"
-    [ -n "$dump" ] || error_exit "usage: $0 restore-db <path/to/db.sql.gz>"
-    [ -f "$DEPLOY_DIR/.env" ] || error_exit ".env not found at $DEPLOY_DIR/.env"
+    [[ -n "$dump" ]] || error_exit "usage: $0 restore-db <path/to/db.sql.gz>"
+    [[ -f "$DEPLOY_DIR/.env" ]] || error_exit ".env not found at $DEPLOY_DIR/.env"
     set -a
     # shellcheck disable=SC1091
     source "$DEPLOY_DIR/.env"
@@ -205,7 +205,7 @@ backup_only() {
 # Read-only data integrity audit (scripts/db-integrity-audit.sql).
 # Every block must return 0 rows; any output aborts the deploy.
 audit_database() {
-    if [ ! -f "$DEPLOY_DIR/.env" ]; then
+    if [[ ! -f "$DEPLOY_DIR/.env" ]]; then
         return 0
     fi
     set -a
@@ -214,7 +214,7 @@ audit_database() {
     set +a
 
     local audit_sql="${DEPLOY_DIR}/scripts/db-integrity-audit.sql"
-    if [ ! -f "$audit_sql" ]; then
+    if [[ ! -f "$audit_sql" ]]; then
         log "WARNING: ${audit_sql} not found — skipping integrity audit"
         return 0
     fi
@@ -229,7 +229,7 @@ audit_database() {
         psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -A -q -v ON_ERROR_STOP=1 -f - \
         < "$audit_sql" 2>/dev/null || true)"
 
-    if [ -n "$findings" ]; then
+    if [[ -n "$findings" ]]; then
         log "ERROR: integrity audit returned findings:"
         echo "$findings" | tee -a "$LOG_FILE"
         error_exit "integrity audit failed — fix the data before deploying"
@@ -242,7 +242,7 @@ install_cron() {
     local cmd="${DEPLOY_DIR}/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1"
     local cron_line="${schedule} ${cmd}"
     # Allow custom schedule: ./scripts/deploy.sh install-cron "0 3 * * 0"
-    if [ -n "${2:-}" ]; then
+    if [[ -n "${2:-}" ]]; then
         # second argument overrides schedule
         cron_line="${2} ${cmd}"
     fi
@@ -284,14 +284,14 @@ commit_of_tag() {
 
 checkout_commit() {
     local commit="$1"
-    [ -n "$commit" ] || return 0
+    [[ -n "$commit" ]] || return 0
     (cd "$DEPLOY_DIR" && git fetch origin main && git reset --hard "$commit")
 }
 
 # GHCR login for private packages. CI passes a short-lived GITHUB_TOKEN; manual
 # runs rely on a previous `docker login`.
 registry_login() {
-    if [ -n "${REGISTRY_TOKEN:-}" ] && [ -n "${REGISTRY_USER:-}" ]; then
+    if [[ -n "${REGISTRY_TOKEN:-}" ]] && [[ -n "${REGISTRY_USER:-}" ]]; then
         echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin >/dev/null \
             || error_exit "registry login failed"
     fi
@@ -330,7 +330,7 @@ previous_images_available() {
 }
 
 build() {
-    if [ -n "${DEPLOY_TAGGED:-}" ]; then
+    if [[ -n "${DEPLOY_TAGGED:-}" ]]; then
         pull_images
         return 0
     fi
@@ -372,12 +372,12 @@ wait_healthy() {
     local INTERVAL=5
     local ELAPSED=0
 
-    while [ $ELAPSED -lt $TIMEOUT ]; do
+    while [[ $ELAPSED -lt $TIMEOUT ]]; do
         local API_STATUS WEB_STATUS
         API_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol-api 2>/dev/null || echo "not_found")
         WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol 2>/dev/null || echo "not_found")
 
-        if [ "$API_STATUS" = "healthy" ] && [ "$WEB_STATUS" = "healthy" ]; then
+        if [[ "$API_STATUS" = "healthy" ]] && [[ "$WEB_STATUS" = "healthy" ]]; then
             log "Services healthy."
             return 0
         fi
@@ -397,8 +397,8 @@ verify() {
     API_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol-api 2>/dev/null || echo "not_found")
     WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol 2>/dev/null || echo "not_found")
 
-    [ "$API_STATUS" = "healthy" ] || error_exit "bikontrol-api is not healthy (status: $API_STATUS)"
-    [ "$WEB_STATUS" = "healthy" ] || error_exit "bikontrol is not healthy (status: $WEB_STATUS)"
+    [[ "$API_STATUS" = "healthy" ]] || error_exit "bikontrol-api is not healthy (status: $API_STATUS)"
+    [[ "$WEB_STATUS" = "healthy" ]] || error_exit "bikontrol is not healthy (status: $WEB_STATUS)"
 
     log "Deployment verified (containers healthy)."
 }
@@ -408,7 +408,7 @@ verify() {
 # being served, the SPA shell not loading).
 smoke() {
     local script="${DEPLOY_DIR}/scripts/smoke-test.sh"
-    if [ ! -f "$script" ]; then
+    if [[ ! -f "$script" ]]; then
         log "WARNING: ${script} not found — skipping smoke test"
         return 0
     fi
@@ -426,10 +426,10 @@ rollback() {
 
     # 1) Database: restore the dump taken at the start of this deploy.
     local dump=""
-    if [ -f "${BACKUP_DIR}/db.sql.gz" ]; then dump="${BACKUP_DIR}/db.sql.gz"
-    elif [ -f "${BACKUP_DIR}/db.sql" ]; then dump="${BACKUP_DIR}/db.sql"
+    if [[ -f "${BACKUP_DIR}/db.sql.gz" ]]; then dump="${BACKUP_DIR}/db.sql.gz"
+    elif [[ -f "${BACKUP_DIR}/db.sql" ]]; then dump="${BACKUP_DIR}/db.sql"
     fi
-    if [ -n "$dump" ] && [ -f "$DEPLOY_DIR/.env" ]; then
+    if [[ -n "$dump" ]] && [[ -f "$DEPLOY_DIR/.env" ]]; then
         set -a
         # shellcheck disable=SC1091
         source "$DEPLOY_DIR/.env"
@@ -452,7 +452,7 @@ rollback() {
 
     # 2) Code: go back to the previous images (no rebuild, no source needed).
     local target_tag="${ROLLBACK_TAG:-${PREVIOUS_IMAGE_TAG:-}}"
-    if [ -n "$target_tag" ]; then
+    if [[ -n "$target_tag" ]]; then
         log "Rolling back images to tag ${target_tag} ..."
         checkout_commit "$(commit_of_tag "$target_tag")" || log "WARNING: could not check out the commit for ${target_tag}"
         PREVIOUS_IMAGE_TAG="${IMAGE_TAG:-}"
@@ -473,7 +473,7 @@ rollback() {
         # backup and rebuild from it.
         unset IMAGE_TAG API_IMAGE WEB_IMAGE
         write_state
-        if [ -f "${BACKUP_DIR}.tgz" ]; then
+        if [[ -f "${BACKUP_DIR}.tgz" ]]; then
             log "No previous images — restoring the config backup and rebuilding..."
             tar xzf "${BACKUP_DIR}.tgz" -C /
         fi
@@ -483,13 +483,13 @@ rollback() {
 
     # Best-effort: confirm the restored stack actually serves (do not fail the
     # rollback itself if the smoke test has a transient hiccup).
-    if [ -f "${DEPLOY_DIR}/scripts/smoke-test.sh" ]; then
+    if [[ -f "${DEPLOY_DIR}/scripts/smoke-test.sh" ]]; then
         log "Verifying rollback (best effort) ..."
         SMOKE_TIMEOUT="${SMOKE_TIMEOUT:-10}" "${DEPLOY_DIR}/scripts/smoke-test.sh" "$SMOKE_URL" \
             || log "WARNING: smoke test after rollback did not pass — investigate"
     fi
 
-    if [ "$failed" -ne 0 ]; then
+    if [[ "$failed" -ne 0 ]]; then
         log "ERROR: rollback finished WITH ERRORS — check the log above and docs/RUNBOOK.md §4"
         return 1
     fi
@@ -498,7 +498,7 @@ rollback() {
 deploy() {
     local tag="${1:-}"
     local from_tag="${IMAGE_TAG:-}"
-    if [ -n "$tag" ]; then
+    if [[ -n "$tag" ]]; then
         DEPLOY_TAGGED=1
         PREVIOUS_IMAGE_TAG="$from_tag"
         export IMAGE_TAG="$tag"
@@ -517,7 +517,7 @@ deploy() {
     backup
     backup_database
     audit_database
-    if [ -n "$tag" ]; then
+    if [[ -n "$tag" ]]; then
         checkout_commit "$(commit_of_tag "$tag")"
     else
         pull
