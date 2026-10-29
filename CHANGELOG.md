@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/santidev21/Bikontrol/compare/v0.6.0...v0.6.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* shared ownership check, xmin tokens and atomic odometer writes ([#110](https://github.com/santidev21/Bikontrol/issues/110)) ([9bd3be8](https://github.com/santidev21/Bikontrol/commit/9bd3be85d6602e4f9f876e88c6c31014bc0eb30b))
+
 ## [0.6.0](https://github.com/santidev21/Bikontrol/compare/v0.5.0...v0.6.0) (2026-10-28)
 
 
