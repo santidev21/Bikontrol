@@ -25,9 +25,10 @@ services:
           memory: 256M
 
   api:
-    # Explicit name so deploy.sh can keep the previous build as `:previous` and
-    # roll back by image instead of rebuilding.
-    image: bikontrol-api:latest
+    # CI publishes immutable `sha-<commit>` tags to GHCR and deploy.sh sets
+    # API_IMAGE/IMAGE_TAG (persisted in .deploy-state); locally the defaults
+    # keep building `bikontrol-api:latest`.
+    image: ${API_IMAGE:-bikontrol-api}:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -126,7 +127,7 @@ services:
           memory: 512M
 
   web:
-    image: bikontrol-web:latest
+    image: ${WEB_IMAGE:-bikontrol-web}:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.web
