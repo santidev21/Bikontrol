@@ -20,6 +20,13 @@ namespace Bikontrol.Persistence.Configurations
 
             builder.HasKey(x => x.Id);
 
+            // Optimistic concurrency via xmin (Postgres system column); see UserConfiguration.
+            builder.Property<uint>("xmin")
+                .HasColumnType("xid")
+                .HasColumnName("xmin")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
+
             builder.Property(x => x.PerformedAt).IsRequired();
             builder.Property(x => x.CreatedAt).IsRequired();
             builder.Property(x => x.PerformedKm).IsRequired(false);

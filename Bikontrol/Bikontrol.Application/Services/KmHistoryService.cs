@@ -18,22 +18,26 @@ namespace Bikontrol.Application.Services
 
         public async Task AddKmAsync(Guid motorcycleId, int km)
         {
-            var last = await _repository.GetLastByMotorcycleIdAsync(motorcycleId);
-
-            if (last != null && km < last.Km)
-                throw new ValidationException("No puedes registrar un kilometraje menor al actual.", "km_below_current");
-
-            if (last != null && km == last.Km)
-                return;
-
-            var entity = new MotorcycleKmHistory
+            // The motorcycle row lock serialises concurrent writers: the second one re-reads
+            // the odometer after the first has committed instead of racing on a stale value.
+            await _transactions.ExecuteInTransactionAsync(async () =>
             {
-                MotorcycleId = motorcycleId,
-                Km = km
-            };
+                await _repository.LockMotorcycleAsync(motorcycleId);
 
-            await _repository.AddAsync(entity);
-            await _repository.SaveChangesAsync();
+                var last = await _repository.GetLastByMotorcycleIdAsync(motorcycleId);
+
+                if (last != null && km < last.Km)
+                    throw new ValidationException("No puedes registrar un kilometraje menor al actual.", "km_below_current");
+
+                if (last != null && km == last.Km)
+                    return;
+
+                await _repository.AddAsync(new MotorcycleKmHistory
+                {
+                    MotorcycleId = motorcycleId,
+                    Km = km
+                });
+            });
         }
 
         public async Task<int> GetCurrentKmAsync(Guid motorcycleId)

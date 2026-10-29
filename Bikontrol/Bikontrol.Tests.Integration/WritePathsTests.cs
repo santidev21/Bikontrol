@@ -276,6 +276,35 @@ public sealed class WritePathsTests
         Assert.True(summary!.TotalFuelCost >= 16m);
     }
 
+    [RequiresDockerFact]
+    public async Task ConcurrentFuelUps_ShouldKeepTheOdometerMonotonic()
+    {
+        var client = await AuthenticatedClientAsync();
+        var motorcycle = await CreateMotorcycleAsync(client, km: 1000);
+
+        var readings = Enumerable.Range(1, 8).Select(i => 1000 + i * 10).ToArray();
+        var responses = await Task.WhenAll(readings.Select(km => client.PostAsJsonAsync("/api/fuel-ups", new
+        {
+            motorcycleId = motorcycle.Id,
+            fueledAt = DateTime.UtcNow,
+            odometerKm = km,
+            litres = 4m,
+            totalCost = 16m,
+            isFullTank = true
+        })));
+
+        // Out-of-order arrivals may be rejected as backdated (400) but never as a server error.
+        Assert.All(responses, r => Assert.True(
+            r.StatusCode is HttpStatusCode.OK or HttpStatusCode.Created or HttpStatusCode.BadRequest,
+            $"Unexpected {r.StatusCode}"));
+
+        var accepted = readings.Where((_, i) => responses[i].IsSuccessStatusCode).ToArray();
+        Assert.NotEmpty(accepted);
+
+        var current = await client.GetFromJsonAsync<MotorcycleResponse>($"/api/motorcycles/{motorcycle.Id}");
+        Assert.Equal(accepted.Max(), current!.Km);
+    }
+
     private static async Task<FuelUpResponse> LogFuelUpAsync(
         HttpClient client, Guid motorcycleId, int odometerKm, decimal litres, decimal cost)
     {

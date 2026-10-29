@@ -1,4 +1,4 @@
-﻿using Bikontrol.Application.Interfaces.Repositories;
+using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -15,6 +15,12 @@ namespace Bikontrol.Persistence.Repositories
         public KmHistoryRepository(AppDbContext context)
         {
             _context = context;
+        }
+
+        public async Task LockMotorcycleAsync(Guid motorcycleId)
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM \"Motorcycles\" WHERE \"Id\" = {motorcycleId} FOR UPDATE");
         }
 
         public async Task AddAsync(MotorcycleKmHistory entity)

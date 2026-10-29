@@ -1,4 +1,4 @@
-﻿using Bikontrol.Domain.Entities;
+using Bikontrol.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +20,12 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task<Dictionary<Guid, int>> GetLatestKmByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds);
 
         Task<Dictionary<Guid, DateTime?>> GetInitialRecordedAtByMotorcycleIdsAsync(IEnumerable<Guid> motorcycleIds);
+
+        /// <summary>
+        /// Takes a row lock on the motorcycle until the surrounding transaction ends, so concurrent
+        /// odometer writes for the same bike run one after the other. Must run inside a transaction.
+        /// </summary>
+        Task LockMotorcycleAsync(Guid motorcycleId);
 
         Task SaveChangesAsync();
     }
