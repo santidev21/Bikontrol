@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,6 +20,9 @@ namespace Bikontrol.Application.Services
     {
         private const int ResetPasswordTokenHours = 2;
         private const int EmailConfirmationTokenHours = 24;
+
+        /// <summary>Two tabs may refresh with the same token within this window without it counting as theft.</summary>
+        private static readonly TimeSpan RefreshReuseGrace = TimeSpan.FromSeconds(10);
 
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -98,7 +102,7 @@ namespace Bikontrol.Application.Services
             var refreshToken = await IssueRefreshTokenAsync(user.Id);
             await _userRepository.SaveChangesAsync();
 
-            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
+            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role, user.SecurityStamp);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;
             return response;
@@ -108,7 +112,12 @@ namespace Bikontrol.Application.Services
         {
             var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null)
+            {
+                // Spend the same CPU as a real verification so response time does
+                // not reveal whether the address is registered.
+                _passwordHasher.HashPassword(null!, dto.Password);
                 throw new AuthException("El correo o contraseña son inválidos.", 401, "invalid_credentials");
+            }
 
             // Never run the hasher while locked out, so a locked account cannot
             // be used to keep guessing (and cannot spend more CPU).
@@ -190,11 +199,28 @@ namespace Bikontrol.Application.Services
 
             var tokenHash = HashToken(request.RefreshToken);
             var stored = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
-            if (stored?.User == null || !stored.IsActive)
+            if (stored?.User == null)
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
+
+            // A token that was already rotated and is presented again (beyond the
+            // grace window for two tabs refreshing at once) means it leaked:
+            // kill the whole chain so neither party keeps a session.
+            if (stored.IsReused(RefreshReuseGrace))
+            {
+                await _refreshTokenRepository.RevokeFamilyAsync(stored.FamilyId);
+                await _refreshTokenRepository.SaveChangesAsync();
+                throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
+            }
+
+            // Re-check the account: a refresh must not outlive a lockout or an
+            // unconfirmed email.
+            if (!stored.IsActive
+                || (IsLockoutEnabled() && stored.User.IsLockedOut)
+                || (IsEmailConfirmationRequired() && !stored.User.IsEmailConfirmed))
                 throw new AuthException("La sesión expiró. Inicia sesión de nuevo.", 401, "session_expired");
 
             stored.Revoke();
-            var newRefreshToken = await IssueRefreshTokenAsync(stored.UserId);
+            var newRefreshToken = await IssueRefreshTokenAsync(stored.UserId, stored.FamilyId);
             if (!await _refreshTokenRepository.TrySaveAsync())
             {
                 // Another concurrent refresh already rotated this token.
@@ -222,6 +248,19 @@ namespace Bikontrol.Application.Services
         }
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            // An unknown address returns instantly while a known one sends an
+            // email; pad both to a floor so latency does not leak registration.
+            var started = Stopwatch.StartNew();
+            await ForgotPasswordCoreAsync(request);
+            var floor = TimeSpan.FromMilliseconds(
+                int.TryParse(_configuration["Auth:ForgotPasswordMinMs"], out var ms) && ms >= 0 ? ms : 600);
+            var remaining = floor - started.Elapsed;
+            if (remaining > TimeSpan.Zero)
+                await Task.Delay(remaining);
+        }
+
+        private async Task ForgotPasswordCoreAsync(ForgotPasswordRequest request)
         {
             var user = await _userRepository.GetByEmailAsync(request.Email);
             // Always succeed to avoid revealing whether the email is registered.
@@ -423,17 +462,17 @@ namespace Bikontrol.Application.Services
         private LoginResponse BuildLoginResponse(User user, string refreshToken)
         {
             var response = user.ToLoginResponse();
-            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role);
+            response.Token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.FullName, user.Role, user.SecurityStamp);
             response.RefreshToken = refreshToken;
             response.ExpiresIn = _jwtTokenGenerator.ExpiresInSeconds;
             return response;
         }
 
-        private async Task<string> IssueRefreshTokenAsync(Guid userId)
+        private async Task<string> IssueRefreshTokenAsync(Guid userId, Guid? familyId = null)
         {
             var rawToken = GenerateSecureToken();
             var days = int.TryParse(_configuration["Jwt:RefreshExpireDays"], out var parsedDays) ? parsedDays : 30;
-            var entity = new RefreshToken(userId, HashToken(rawToken), DateTime.UtcNow.AddDays(Math.Max(1, days)));
+            var entity = new RefreshToken(userId, HashToken(rawToken), DateTime.UtcNow.AddDays(Math.Max(1, days)), familyId);
             await _refreshTokenRepository.AddAsync(entity);
             return rawToken;
         }

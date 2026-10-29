@@ -42,6 +42,18 @@ namespace Bikontrol.Persistence.Repositories
             return active.Count;
         }
 
+        public async Task<int> RevokeFamilyAsync(Guid familyId)
+        {
+            var active = await _context.RefreshTokens
+                .Where(t => t.FamilyId == familyId && t.RevokedAt == null)
+                .ToListAsync();
+
+            foreach (var token in active)
+                token.Revoke();
+
+            return active.Count;
+        }
+
         public async Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default)
         {
             return await _context.RefreshTokens

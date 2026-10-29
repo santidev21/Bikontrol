@@ -130,6 +130,34 @@ public class UserServiceTests
     }
 
     [Fact]
+    public async Task ChangePasswordAsync_RepeatedWrongPasswords_ShouldLockTheAccount()
+    {
+        var user = new User("user@bikontrol.com", "Santi", "hashed:old");
+        var service = CreateService(user, role: UserRole.User);
+        var request = new ChangePasswordRequest { CurrentPassword = "wrong", NewPassword = "newsecret" };
+
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<ValidationException>(() => service.ChangePasswordAsync(request));
+
+        Assert.True(user.IsLockedOut);
+        var locked = await Assert.ThrowsAsync<AuthException>(() => service.ChangePasswordAsync(
+            new ChangePasswordRequest { CurrentPassword = "old", NewPassword = "newsecret" }));
+        Assert.Equal("account_locked", locked.Code);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_ShouldRotateTheSecurityStamp()
+    {
+        var user = new User("user@bikontrol.com", "Santi", "hashed:old");
+        var before = user.SecurityStamp;
+        var service = CreateService(user, role: UserRole.User);
+
+        await service.ChangePasswordAsync(new ChangePasswordRequest { CurrentPassword = "old", NewPassword = "newsecret" });
+
+        Assert.NotEqual(before, user.SecurityStamp);
+    }
+
+    [Fact]
     public async Task ChangePasswordAsync_GoogleAccount_ShouldThrowValidation()
     {
         var user = new User("g@bikontrol.com", "G User", "hashed:random");
@@ -236,6 +264,14 @@ public class UserServiceTests
         {
             Tokens.Add(refreshToken);
             return Task.CompletedTask;
+        }
+
+        public Task<int> RevokeFamilyAsync(Guid familyId)
+        {
+            var active = Tokens.Where(t => t.FamilyId == familyId && t.RevokedAt is null).ToList();
+            foreach (var token in active)
+                token.Revoke();
+            return Task.FromResult(active.Count);
         }
 
         public Task<int> RevokeAllForUserAsync(Guid userId)

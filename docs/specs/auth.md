@@ -46,6 +46,8 @@
 - After `Lockout:MaxFailedAttempts` (default 5) consecutive failed logins the account is locked for `Lockout:Minutes` (default 15). The password hasher is skipped while locked, and login returns `429`.
 - A successful login clears `AccessFailedCount`; a successful password reset also unlocks the account.
 - Opt-out via `Lockout:Enabled` (default true).
+- Endpoints that re-verify the current password (`POST /api/users/me/password`, account deletion) share the same counter and return `429` while locked, so a stolen access token cannot brute-force the password there.
+- Unknown emails burn the same hashing CPU as a real verification, and `forgot-password` pads its response to `Auth:ForgotPasswordMinMs` (default 600), so latency does not reveal whether an address is registered.
 - The demo account is unlocked when its session is issued, so visitors are never blocked by a lockout.
 
 ## Sessions (refresh tokens)
@@ -53,6 +55,9 @@
 - Access token lifetime: `Jwt__ExpireMinutes` (default 15 min). Refresh token lifetime: `Jwt__RefreshExpireDays` (default 30 days, which is also the cookie `Max-Age`).
 - Transport: the refresh token is delivered in a `Set-Cookie` header (`HttpOnly`, `SameSite=Strict`, `Secure` always, `Path=/api/auth`; browsers accept Secure cookies on `http://localhost`, so plain-HTTP local development keeps working) and the JSON body always carries an empty `refreshToken`. Auth requests use `withCredentials` and the CORS policy has `AllowCredentials` (needed in development; inert same-origin in production).
 - Refresh tokens are stored in the `refresh_tokens` table (SHA-256 hash only) and are revoked/rotated on every use. `RevokedAt` is a concurrency token, so two simultaneous refreshes with the same token cannot both mint replacements.
+- Every login starts a token **family** (`FamilyId`) that rotation preserves. Presenting an already-rotated token (more than 10 s after rotation, to tolerate two tabs refreshing at once) revokes the whole family, so a leaked chain kills both the thief's and the owner's session. A refresh also re-checks the account: lockout or an unconfirmed email ends the session.
+- Access tokens carry a `sstamp` claim matching `users.SecurityStamp`, which rotates on password change/reset and account deletion. The JWT bearer handler rejects a mismatch (stamp read cached `Jwt:SecurityStampCacheSeconds`, default 30), so a stolen access token dies with the password instead of at expiry. The profile page signs the user out after a password change.
+- Signing keys carry a `kid` (`Jwt:KeyId`, default `k1`). To rotate: set a new `Jwt:Key` + `Jwt:KeyId` and move the old pair to `Jwt:PreviousKeys:0:Id` / `Jwt:PreviousKeys:0:Key`; tokens signed with the old key keep validating until they expire, then drop the entry.
 - `POST /api/auth/logout` revokes the presented token (cookie or body fallback) and clears the cookie — best-effort, always `200`.
 - Changing the password (`POST /api/users/me/password`) or resetting it (`POST /api/auth/reset-password`) revokes **all** active refresh tokens for the user, so any stolen session dies with the password change.
 - Google-only accounts get a random password hash; they can adopt a password through the recovery flow.

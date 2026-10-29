@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
 
@@ -10,6 +11,8 @@ namespace Bikontrol.Infrastructure.Authentication
 {
     public class JwtTokenGenerator : IJwtTokenGenerator
     {
+        public const string SecurityStampClaim = "sstamp";
+
         private readonly IConfiguration _configuration;
 
         public JwtTokenGenerator(IConfiguration configuration)
@@ -26,12 +29,17 @@ namespace Bikontrol.Infrastructure.Authentication
             }
         }
 
-        public string GenerateToken(Guid userId, string email, string fullName, string role = Domain.Entities.UserRole.User)
+        public string GenerateToken(Guid userId, string email, string fullName, string role = Domain.Entities.UserRole.User, Guid? securityStamp = null)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            // The kid lets the validator pick the right key while a rotation is
+            // in flight (old tokens keep verifying against Jwt:PreviousKeys).
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!))
+            {
+                KeyId = _configuration["Jwt:KeyId"] ?? "k1"
+            };
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, email),
@@ -39,6 +47,8 @@ namespace Bikontrol.Infrastructure.Authentication
                 new Claim("role", string.IsNullOrWhiteSpace(role) ? Domain.Entities.UserRole.User : role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+            if (securityStamp is { } stamp)
+                claims.Add(new Claim(SecurityStampClaim, stamp.ToString("N")));
 
             // JsonWebTokenHandler is the recommended, faster handler (the legacy
             // JwtSecurityTokenHandler is on the way out). The claim names are

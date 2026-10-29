@@ -28,6 +28,7 @@ namespace Bikontrol.Application.Services
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITransactionManager _transactions;
         private readonly ICurrentUserService _current;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration? _configuration;
 
         public AccountService(
             IUserRepository userRepository,
@@ -40,8 +41,10 @@ namespace Bikontrol.Application.Services
             IKmHistoryService kmHistoryService,
             IPasswordHasher<User> passwordHasher,
             ITransactionManager transactions,
-            ICurrentUserService current)
+            ICurrentUserService current,
+            Microsoft.Extensions.Configuration.IConfiguration? configuration = null)
         {
+            _configuration = configuration;
             _userRepository = userRepository;
             _motorcycleRepository = motorcycleRepository;
             _userMaintenanceRepository = userMaintenanceRepository;
@@ -127,10 +130,13 @@ namespace Bikontrol.Application.Services
 
             if (user.HasPassword)
             {
+                PasswordAttemptGuard.EnsureNotLocked(user, _configuration);
                 if (string.IsNullOrWhiteSpace(request.Password)
                     || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
                         != PasswordVerificationResult.Success)
                 {
+                    PasswordAttemptGuard.RegisterFailure(user, _configuration);
+                    await _userRepository.SaveChangesAsync();
                     throw new ValidationException("La contraseña no es correcta.", "current_password_incorrect");
                 }
             }

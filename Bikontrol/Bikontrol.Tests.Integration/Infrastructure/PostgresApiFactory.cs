@@ -39,6 +39,8 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         Environment.SetEnvironmentVariable("Jwt__Audience", "Bikontrol.Tests");
         Environment.SetEnvironmentVariable("Jwt__ExpireMinutes", "15");
         Environment.SetEnvironmentVariable("Jwt__RefreshExpireDays", "30");
+        // No stamp caching, so a password change revokes access tokens at once.
+        Environment.SetEnvironmentVariable("Jwt__SecurityStampCacheSeconds", "0");
         Environment.SetEnvironmentVariable("Google__ClientId", "test.apps.googleusercontent.com");
         // The demo tenant is opt-in; the integration tests exercise it explicitly.
         Environment.SetEnvironmentVariable("Demo__Enabled", "true");

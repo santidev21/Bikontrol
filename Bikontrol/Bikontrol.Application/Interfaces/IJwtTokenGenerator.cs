@@ -8,6 +8,7 @@ namespace Bikontrol.Application.Interfaces
         /// <summary>Lifetime of the tokens it issues, in seconds.</summary>
         int ExpiresInSeconds { get; }
 
-        string GenerateToken(Guid userId, string email, string fullName, string role = UserRole.User);
+        /// <param name="securityStamp">Embedded as the <c>sstamp</c> claim so a stamp rotation revokes the token.</param>
+        string GenerateToken(Guid userId, string email, string fullName, string role = UserRole.User, Guid? securityStamp = null);
     }
 }
