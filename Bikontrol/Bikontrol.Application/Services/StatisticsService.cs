@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     /// <summary>
     /// Solo lectura. Reutiliza IMotorcycleService / IMaintenanceService para no

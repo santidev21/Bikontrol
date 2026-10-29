@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     /// <summary>
     /// Data-retention purge. Refresh tokens rotate on every session refresh

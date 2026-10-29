@@ -27,5 +27,12 @@ namespace Bikontrol.Application.Interfaces.Repositories
         Task<int> DeleteInactiveBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken = default);
 
         Task SaveChangesAsync();
+
+        /// <summary>
+        /// Persists pending changes, returning <c>false</c> (instead of throwing)
+        /// when another writer changed the same token first, e.g. two refreshes
+        /// rotating one token at once.
+        /// </summary>
+        Task<bool> TrySaveAsync();
     }
 }

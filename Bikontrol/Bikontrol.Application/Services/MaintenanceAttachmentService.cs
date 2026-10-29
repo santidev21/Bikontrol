@@ -3,10 +3,10 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Application.Services;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
+using Bikontrol.Application.Mapping;
 using Bikontrol.Shared.Exceptions;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     /// <summary>
     /// Photos/documents attached to a maintenance record. Ownership is verified

@@ -17,7 +17,7 @@ on:
     paths:
       - 'Bikontrol/Bikontrol.Application/Services/MaintenanceScheduleCalculator.cs'
       - 'Bikontrol/Bikontrol.Application/Services/FuelConsumptionCalculator.cs'
-      - 'Bikontrol/Bikontrol.Infrastructure/Services/MaintenanceService.cs'
+      - 'Bikontrol/Bikontrol.Application/Services/MaintenanceService.cs'
       - 'Bikontrol/Bikontrol.Tests/MaintenanceService*'
       - 'Bikontrol/Bikontrol.Tests/ReminderServiceTests.cs'
       - 'Bikontrol/Bikontrol.Tests/FuelConsumptionCalculatorTests.cs'

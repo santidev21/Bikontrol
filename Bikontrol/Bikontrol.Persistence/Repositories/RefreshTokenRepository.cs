@@ -53,5 +53,18 @@ namespace Bikontrol.Persistence.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return false;
+            }
+        }
     }
 }

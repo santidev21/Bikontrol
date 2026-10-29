@@ -1,6 +1,6 @@
 using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
+using Bikontrol.Application.Mapping;
 
 namespace Bikontrol.Tests;
 

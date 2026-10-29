@@ -4,7 +4,7 @@ using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Shared.Exceptions;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     public class PushSubscriptionService : IPushSubscriptionService
     {

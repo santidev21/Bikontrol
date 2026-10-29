@@ -1,15 +1,10 @@
 ﻿using Bikontrol.Application.DTOs.Auth;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Infrastructure.Authentication;
-using Bikontrol.Infrastructure.Email;
 using Bikontrol.Shared.Exceptions;
-using Bikontrol.Persistence;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
-using Google.Apis.Auth;
+using Bikontrol.Application.Mapping;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -18,7 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bikontrol.Infrastructure.Services
+namespace Bikontrol.Application.Services
 {
     public class AuthService : IAuthService
     {
@@ -28,7 +23,8 @@ namespace Bikontrol.Infrastructure.Services
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
-        private readonly JwtTokenGenerator _jwtTokenGenerator;
+        private readonly IJwtTokenGenerator _jwtTokenGenerator;
+        private readonly IGoogleTokenValidator _googleTokenValidator;
         private readonly IEmailSender _emailSender;
         private readonly IConfiguration _configuration;
 
@@ -36,7 +32,8 @@ namespace Bikontrol.Infrastructure.Services
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher,
-            JwtTokenGenerator jwtTokenGenerator,
+            IJwtTokenGenerator jwtTokenGenerator,
+            IGoogleTokenValidator googleTokenValidator,
             IEmailSender emailSender,
             IConfiguration configuration)
         {
@@ -44,6 +41,7 @@ namespace Bikontrol.Infrastructure.Services
             _refreshTokenRepository = refreshTokenRepository;
             _passwordHasher = passwordHasher;
             _jwtTokenGenerator = jwtTokenGenerator;
+            _googleTokenValidator = googleTokenValidator;
             _emailSender = emailSender;
             _configuration = configuration;
         }
@@ -152,22 +150,11 @@ namespace Bikontrol.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(clientId))
                 throw new AuthException("El inicio de sesión con Google no está configurado.", 503, "google_not_configured");
 
-            GoogleJsonWebSignature.Payload payload;
-            try
-            {
-                payload = await GoogleJsonWebSignature.ValidateAsync(
-                    request.IdToken,
-                    new GoogleJsonWebSignature.ValidationSettings
-                    {
-                        Audience = new[] { clientId }
-                    });
-            }
-            catch (InvalidJwtException)
-            {
+            var payload = await _googleTokenValidator.ValidateAsync(request.IdToken, clientId);
+            if (payload is null)
                 throw new AuthException("El token de Google no es válido.", 401, "google_invalid_token");
-            }
 
-            if (payload.EmailVerified != true)
+            if (!payload.EmailVerified)
                 throw new AuthException("La cuenta de Google debe tener el email verificado.", 401, "google_email_unverified");
 
             var user = await _userRepository.GetByEmailAsync(payload.Email);
@@ -208,11 +195,7 @@ namespace Bikontrol.Infrastructure.Services
 
             stored.Revoke();
             var newRefreshToken = await IssueRefreshTokenAsync(stored.UserId);
-            try
-            {
-                await _refreshTokenRepository.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
+            if (!await _refreshTokenRepository.TrySaveAsync())
             {
                 // Another concurrent refresh already rotated this token.
                 // Report it as an expired session so the client logs out cleanly

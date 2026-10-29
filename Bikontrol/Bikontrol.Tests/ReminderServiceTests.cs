@@ -2,8 +2,7 @@ using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Email;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -358,6 +357,85 @@ public class ReminderServiceTests
         Assert.Empty(email.Sent);
     }
 
+    [Fact]
+    public async Task GenerateDueRemindersAsync_WhenThereAreNoRecipients_ShouldDoNothing()
+    {
+        var service = CreateService(
+            new FakeUserMaintenanceRepository(Array.Empty<UserMaintenance>()),
+            userRepository: new FakeUserRepository(Array.Empty<User>()));
+
+        Assert.Equal(0, await service.GenerateDueRemindersAsync());
+    }
+
+    [Fact]
+    public async Task GenerateDueRemindersAsync_WhenNobodyTracksAnything_ShouldDoNothing()
+    {
+        var service = CreateService(new FakeUserMaintenanceRepository(Array.Empty<UserMaintenance>()));
+
+        Assert.Equal(0, await service.GenerateDueRemindersAsync());
+    }
+
+    [Fact]
+    public async Task GenerateDueRemindersAsync_WhenTheItemIsNotDue_ShouldNotRecordIt()
+    {
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        var service = CreateService(
+            new FakeUserMaintenanceRepository(new[] { item }),
+            reminders: logs,
+            kmHistories: new Dictionary<Guid, int> { [MotoId] = 0 });
+
+        Assert.Equal(0, await service.GenerateDueRemindersAsync());
+        Assert.Empty(logs.Logs);
+    }
+
+    [Fact]
+    public async Task SendPendingPushesAsync_WhenUserOptedOut_ShouldSkip()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        user.SetRemindersEnabled(false);
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+        var subs = new FakePushSubscriptionRepository();
+        subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/1", P256dh = "k", Auth = "a" });
+        var sender = new FakePushSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, pushSubscriptions: subs, pushSender: sender);
+
+        Assert.Equal(0, await service.SendPendingPushesAsync());
+        Assert.Empty(sender.Sent);
+    }
+
+    [Fact]
+    public async Task SendPendingPushesAsync_WhenThePushServiceFails_ShouldKeepTheReminderPending()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            User = user,
+            UserMaintenance = item
+        });
+        var subs = new FakePushSubscriptionRepository();
+        subs.Subscriptions.Add(new PushSubscription { UserId = user.Id, Endpoint = "https://push/1", P256dh = "k", Auth = "a" });
+        var sender = new FakePushSender { ThrowOnSend = true };
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, pushSubscriptions: subs, pushSender: sender);
+
+        Assert.Equal(0, await service.SendPendingPushesAsync());
+        Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel);
+    }
+
     private static ReminderService CreateService(
         FakeUserMaintenanceRepository userMaintenance,
         FakeReminderLogRepository? reminders = null,
@@ -556,8 +634,11 @@ public class ReminderServiceTests
         public List<(PushSubscription Subscription, PushPayload Payload)> Sent { get; } = new();
         /// <summary>Endpoints that should be reported as gone (404/410).</summary>
         public HashSet<string> GoneEndpoints { get; } = new();
+        public bool ThrowOnSend { get; set; }
         public Task<bool> SendAsync(PushSubscription subscription, PushPayload payload)
         {
+            if (ThrowOnSend)
+                throw new InvalidOperationException("push service down");
             if (GoneEndpoints.Contains(subscription.Endpoint))
                 return Task.FromResult(false);
             Sent.Add((subscription, payload));

@@ -2,8 +2,8 @@ using Bikontrol.Application.DTOs.Motorcycle;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
-using Bikontrol.Infrastructure.Mapping;
-using Bikontrol.Infrastructure.Services;
+using Bikontrol.Application.Mapping;
+using Bikontrol.Application.Services;
 using Bikontrol.Shared.Exceptions;
 
 namespace Bikontrol.Tests;
@@ -176,6 +176,91 @@ public class MotorcycleServiceTests
         });
 
         Assert.NotEqual(Guid.Empty, result.Id);
+    }
+
+    [Fact]
+    public async Task GetCurrentKmAsync_Owned_ShouldReturnKm()
+    {
+        var userId = Guid.NewGuid();
+        var moto = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", userId) { Id = Guid.NewGuid() };
+        var service = CreateService(userId, new FakeMotorcycleRepository(moto), new FakeKmHistoryRepository());
+
+        Assert.Equal(0, await service.GetCurrentKmAsync(moto.Id));
+    }
+
+    [Fact]
+    public async Task GetCurrentKmAsync_UnknownOrForeign_ShouldThrow()
+    {
+        var moto = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", Guid.NewGuid()) { Id = Guid.NewGuid() };
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(moto), new FakeKmHistoryRepository());
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetCurrentKmAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.GetCurrentKmAsync(moto.Id));
+    }
+
+    [Fact]
+    public async Task AddKmHistoryAsync_Owned_ShouldSucceed_AndGuardsOwnership()
+    {
+        var userId = Guid.NewGuid();
+        var mine = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", userId) { Id = Guid.NewGuid() };
+        var foreign = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "XYZ12D", Guid.NewGuid()) { Id = Guid.NewGuid() };
+        var service = CreateService(userId, new FakeMotorcycleRepository(mine, foreign), new FakeKmHistoryRepository());
+
+        await service.AddKmHistoryAsync(mine.Id, 500);
+        await Assert.ThrowsAsync<NotFoundException>(() => service.AddKmHistoryAsync(Guid.NewGuid(), 500));
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.AddKmHistoryAsync(foreign.Id, 500));
+    }
+
+    [Fact]
+    public async Task RollbackLastKmAsync_Owned_ShouldSucceed_AndGuardsOwnership()
+    {
+        var userId = Guid.NewGuid();
+        var mine = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", userId) { Id = Guid.NewGuid() };
+        var foreign = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "XYZ12D", Guid.NewGuid()) { Id = Guid.NewGuid() };
+        var service = CreateService(userId, new FakeMotorcycleRepository(mine, foreign), new FakeKmHistoryRepository());
+
+        await service.RollbackLastKmAsync(mine.Id, 400);
+        await Assert.ThrowsAsync<NotFoundException>(() => service.RollbackLastKmAsync(Guid.NewGuid(), 400));
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.RollbackLastKmAsync(foreign.Id, 400));
+    }
+
+    [Theory]
+    [InlineData("data:image/png;base64,!!!not-base64!!!")]
+    [InlineData("data:image/webp;base64,")]
+    public async Task CreateAsync_WithInvalidImagePayload_ShouldThrowValidation(string image)
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+
+        await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(new SaveMotorcycleDTO
+        {
+            Name = "YBR 125",
+            Brand = "Yamaha",
+            Year = 2024,
+            Nickname = "Negra",
+            Km = 100,
+            Displacement = 125,
+            Plate = "ABC12D",
+            Image = image
+        }));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithOversizedImage_ShouldThrowValidation()
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+        var payload = Convert.ToBase64String(new byte[1_048_577]);
+
+        await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(new SaveMotorcycleDTO
+        {
+            Name = "YBR 125",
+            Brand = "Yamaha",
+            Year = 2024,
+            Nickname = "Negra",
+            Km = 100,
+            Displacement = 125,
+            Plate = "ABC12D",
+            Image = "data:image/png;base64," + payload
+        }));
     }
 
     private static MotorcycleService CreateService(Guid userId, FakeMotorcycleRepository motos, FakeKmHistoryRepository history)
