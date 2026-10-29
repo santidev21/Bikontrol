@@ -1,5 +1,4 @@
 using Bikontrol.Application.Interfaces;
-using System.Diagnostics;
 using Bikontrol.Application.Options;
 using Bikontrol.Infrastructure.Observability;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,19 +82,8 @@ namespace Bikontrol.Infrastructure.BackgroundServices
             return _lastRunUtc == DateTime.MinValue || _lastRunUtc.Date < nowUtc.Date;
         }
 
-        private async Task RunOnceAsync(CancellationToken cancellationToken)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            var result = JobMetrics.Failed;
-            try
-            {
-                result = await RunCoreAsync(cancellationToken);
-            }
-            finally
-            {
-                JobMetrics.RecordRun(JobName, result, stopwatch.Elapsed);
-            }
-        }
+        private Task RunOnceAsync(CancellationToken cancellationToken) =>
+            JobMetrics.MeasureAsync(JobName, () => RunCoreAsync(cancellationToken));
 
         private async Task<string> RunCoreAsync(CancellationToken cancellationToken)
         {

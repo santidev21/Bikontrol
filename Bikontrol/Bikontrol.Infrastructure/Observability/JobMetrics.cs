@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
 namespace Bikontrol.Infrastructure.Observability
@@ -39,6 +40,25 @@ namespace Bikontrol.Infrastructure.Observability
             () => LastSuccessUnix.Select(p => new Measurement<double>(p.Value, new KeyValuePair<string, object?>("task", p.Key))),
             unit: "s",
             description: "Unix time of the last successful run of each job.");
+
+        /// <summary>
+        /// Runs a job body that reports <see cref="Success"/> or <see cref="Skipped"/>
+        /// and records the outcome and duration; an exception counts as
+        /// <see cref="Failed"/> and still propagates to the caller's retry logic.
+        /// </summary>
+        public static async Task MeasureAsync(string job, Func<Task<string>> run)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var result = Failed;
+            try
+            {
+                result = await run();
+            }
+            finally
+            {
+                RecordRun(job, result, stopwatch.Elapsed);
+            }
+        }
 
         public static void RecordRun(string job, string result, TimeSpan elapsed)
         {

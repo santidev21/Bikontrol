@@ -67,6 +67,33 @@ public class JobMetricsTests
         Assert.Equal(new long[] { 3 }, seen);
     }
 
+    [Fact]
+    public async Task MeasureAsync_RecordsFailureAndRethrows()
+    {
+        var results = new List<string?>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == JobMetrics.MeterName && instrument.Name == "bikontrol.job.runs")
+            {
+                l.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
+        {
+            if (Tag(tags, "task") == "measure-failing-job")
+            {
+                results.Add(Tag(tags, "result"));
+            }
+        });
+        listener.Start();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            JobMetrics.MeasureAsync("measure-failing-job", () => throw new InvalidOperationException("boom")));
+
+        Assert.Equal(new[] { JobMetrics.Failed }, results);
+    }
+
     private static string? Tag(ReadOnlySpan<KeyValuePair<string, object?>> tags, string key)
     {
         foreach (var tag in tags)
