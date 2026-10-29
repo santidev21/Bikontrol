@@ -185,7 +185,7 @@ restore_db() {
 
     log "=== Restoring ${dump} into ${POSTGRES_DB} ==="
     "${DEPLOY_DIR}/scripts/db-verify-backup.sh" "$dump" || error_exit "dump failed verification — refusing to restore"
-    (cd "$DEPLOY_DIR" && docker compose stop api web) || true
+    (cd "$DEPLOY_DIR" && docker compose stop api web worker) || true
     (cd "$DEPLOY_DIR" && docker compose up -d db)
     wait_db_ready || error_exit "database did not become ready"
     restore_dump "$dump" || error_exit "restore failed — the live database was left untouched (single transaction)"
@@ -366,6 +366,17 @@ up() {
     log "Containers started."
 }
 
+# Health of the (unnamed) worker container; "not_found" when it is not running.
+worker_status() {
+    local id
+    id="$(cd "$DEPLOY_DIR" && docker compose ps -q worker 2>/dev/null || true)"
+    if [[ -z "$id" ]]; then
+        echo "not_found"
+        return
+    fi
+    docker inspect --format='{{.State.Health.Status}}' "$id" 2>/dev/null || echo "not_found"
+}
+
 wait_healthy() {
     log "Waiting for services to become healthy..."
     local TIMEOUT=180
@@ -373,16 +384,17 @@ wait_healthy() {
     local ELAPSED=0
 
     while [[ $ELAPSED -lt $TIMEOUT ]]; do
-        local API_STATUS WEB_STATUS
+        local API_STATUS WEB_STATUS WORKER_STATUS
         API_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol-api 2>/dev/null || echo "not_found")
         WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol 2>/dev/null || echo "not_found")
+        WORKER_STATUS=$(worker_status)
 
-        if [[ "$API_STATUS" = "healthy" ]] && [[ "$WEB_STATUS" = "healthy" ]]; then
+        if [[ "$API_STATUS" = "healthy" ]] && [[ "$WEB_STATUS" = "healthy" ]] && [[ "$WORKER_STATUS" = "healthy" ]]; then
             log "Services healthy."
             return 0
         fi
 
-        log "Waiting... ($ELAPSED/$TIMEOUT) api: $API_STATUS web: $WEB_STATUS"
+        log "Waiting... ($ELAPSED/$TIMEOUT) api: $API_STATUS web: $WEB_STATUS worker: $WORKER_STATUS"
         sleep $INTERVAL
         ELAPSED=$((ELAPSED + INTERVAL))
     done
@@ -393,10 +405,12 @@ wait_healthy() {
 
 verify() {
     log "Verifying deployment..."
-    local API_STATUS WEB_STATUS
+    local API_STATUS WEB_STATUS WORKER_STATUS
     API_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol-api 2>/dev/null || echo "not_found")
     WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bikontrol 2>/dev/null || echo "not_found")
+    WORKER_STATUS=$(worker_status)
 
+    [[ "$WORKER_STATUS" = "healthy" ]] || error_exit "worker is not healthy (status: $WORKER_STATUS)"
     [[ "$API_STATUS" = "healthy" ]] || error_exit "bikontrol-api is not healthy (status: $API_STATUS)"
     [[ "$WEB_STATUS" = "healthy" ]] || error_exit "bikontrol is not healthy (status: $WEB_STATUS)"
 
@@ -422,7 +436,7 @@ smoke() {
 rollback() {
     log "Rolling back..."
     local failed=0
-    (cd "$DEPLOY_DIR" && docker compose stop api web) || true
+    (cd "$DEPLOY_DIR" && docker compose stop api web worker) || true
 
     # 1) Database: restore the dump taken at the start of this deploy.
     local dump=""

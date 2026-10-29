@@ -7,6 +7,9 @@ services:
       - "127.0.0.1:5434:5432"
 
   api:
+    environment:
+      # No deploy.sh here: let the API create the schema on startup.
+      Database__RunMigrationsOnStartup: ${Database__RunMigrationsOnStartup:-true}
     ports:
       - "127.0.0.1:8080:8080"
 

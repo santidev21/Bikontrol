@@ -1,3 +1,67 @@
+x-api-environment: &api-environment
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:8080
+  ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+  # Migrations are a dedicated step (`deploy.sh migrate`), so the default is
+  # false: replicas never race on the schema. docker-compose.local.yml and the
+  # E2E/ZAP workflows turn it on because they do not run deploy.sh.
+  Database__RunMigrationsOnStartup: ${Database__RunMigrationsOnStartup:-false}
+  Jwt__Key: ${Jwt__Key}
+  Jwt__Issuer: ${Jwt__Issuer:-BikontrolAPI}
+  Jwt__Audience: ${Jwt__Audience:-BikontrolClient}
+  Jwt__ExpireMinutes: ${Jwt__ExpireMinutes:-15}
+  Jwt__RefreshExpireDays: ${Jwt__RefreshExpireDays:-30}
+  Google__ClientId: ${Google__ClientId:-}
+  Frontend__BaseUrl: ${Frontend__BaseUrl:-https://bikontrol.santidev21.tech}
+  Smtp__Host: ${Smtp__Host:-}
+  Smtp__Port: ${Smtp__Port:-587}
+  Smtp__Username: ${Smtp__Username:-}
+  Smtp__Password: ${Smtp__Password:-}
+  Smtp__FromEmail: ${Smtp__FromEmail:-}
+  Smtp__FromName: ${Smtp__FromName:-Bikontrol}
+  Smtp__EnableSsl: ${Smtp__EnableSsl:-true}
+  Cors__AllowedOrigins: ${Cors__AllowedOrigins:-https://bikontrol.santidev21.tech,http://127.0.0.1:4200,http://127.0.0.1:4201}
+  # Public demo tenant: off by default. Turn it on deliberately (and only
+  # for a controlled demo) with Demo__Enabled=true.
+  Demo__Enabled: ${Demo__Enabled:-false}
+  # Require email confirmation before login (default true).
+  EmailConfirmation__Required: ${EmailConfirmation__Required:-true}
+  # Account lockout after repeated failed logins (defaults: on, 5, 15 min).
+  Lockout__Enabled: ${Lockout__Enabled:-true}
+  Lockout__MaxFailedAttempts: ${Lockout__MaxFailedAttempts:-5}
+  Lockout__Minutes: ${Lockout__Minutes:-15}
+  # Error tracking (Sentry). Empty DSN = disabled (no-op).
+  Sentry__Dsn: ${Sentry__Dsn:-}
+  Sentry__TracesSampleRate: ${Sentry__TracesSampleRate:-0.1}
+  # Prometheus metrics at /metrics (internal network only; never proxied by
+  # the public gateway). Off unless explicitly enabled.
+  Metrics__Enabled: ${Metrics__Enabled:-true}
+  # Maintenance reminders engine (daily job + dedupe window).
+  Reminders__Enabled: ${Reminders__Enabled:-true}
+  Reminders__EmailEnabled: ${Reminders__EmailEnabled:-true}
+  Reminders__PushEnabled: ${Reminders__PushEnabled:-true}
+  Reminders__DailyHourUtc: ${Reminders__DailyHourUtc:-8}
+  Reminders__DedupeDays: ${Reminders__DedupeDays:-3}
+  # Rate limiting: auth burst is 10/min per client IP (hardcoded policy);
+  # the sustained ceiling per hour is tunable.
+  RateLimiting__AuthPerHour: ${RateLimiting__AuthPerHour:-60}
+  # Data retention (daily bulk purge at 04:00 UTC): dead refresh tokens
+  # and old reminder logs; audit logs stay forever unless given a
+  # positive Retention__AuditLogDays.
+  Retention__Enabled: ${Retention__Enabled:-true}
+  Retention__DailyHourUtc: ${Retention__DailyHourUtc:-4}
+  Retention__RefreshTokenDays: ${Retention__RefreshTokenDays:-30}
+  Retention__ReminderLogDays: ${Retention__ReminderLogDays:-90}
+  Retention__AuditLogDays: ${Retention__AuditLogDays:-0}
+  # Password hashing work factor (PBKDF2-HMAC-SHA256 iterations; OWASP
+  # guidance is 600k). Hashes embed their own iteration count, so changing
+  # this never invalidates existing passwords.
+  PasswordHashing__Iterations: ${PasswordHashing__Iterations:-600000}
+  # Web Push (VAPID). Empty keys = push is a no-op.
+  WebPush__PublicKey: ${WebPush__PublicKey:-}
+  WebPush__PrivateKey: ${WebPush__PrivateKey:-}
+  WebPush__Subject: ${WebPush__Subject:-mailto:contacto.santidev21@gmail.com}
+
 services:
   db:
     image: postgres:16-alpine
@@ -38,69 +102,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
-      # In production, deploy.sh applies migrations as a dedicated step
-      # (`deploy.sh migrate`) and .env sets this to false. The default stays
-      # true so local/Docker dev and CI (which do not run deploy.sh) still get
-      # their schema created on startup.
-      Database__RunMigrationsOnStartup: ${Database__RunMigrationsOnStartup:-true}
-      Jwt__Key: ${Jwt__Key}
-      Jwt__Issuer: ${Jwt__Issuer:-BikontrolAPI}
-      Jwt__Audience: ${Jwt__Audience:-BikontrolClient}
-      Jwt__ExpireMinutes: ${Jwt__ExpireMinutes:-15}
-      Jwt__RefreshExpireDays: ${Jwt__RefreshExpireDays:-30}
-      Google__ClientId: ${Google__ClientId:-}
-      Frontend__BaseUrl: ${Frontend__BaseUrl:-https://bikontrol.santidev21.tech}
-      Smtp__Host: ${Smtp__Host:-}
-      Smtp__Port: ${Smtp__Port:-587}
-      Smtp__Username: ${Smtp__Username:-}
-      Smtp__Password: ${Smtp__Password:-}
-      Smtp__FromEmail: ${Smtp__FromEmail:-}
-      Smtp__FromName: ${Smtp__FromName:-Bikontrol}
-      Smtp__EnableSsl: ${Smtp__EnableSsl:-true}
-      Cors__AllowedOrigins: ${Cors__AllowedOrigins:-https://bikontrol.santidev21.tech,http://127.0.0.1:4200,http://127.0.0.1:4201}
-      # Public demo tenant: off by default. Turn it on deliberately (and only
-      # for a controlled demo) with Demo__Enabled=true.
-      Demo__Enabled: ${Demo__Enabled:-false}
-      # Require email confirmation before login (default true).
-      EmailConfirmation__Required: ${EmailConfirmation__Required:-true}
-      # Account lockout after repeated failed logins (defaults: on, 5, 15 min).
-      Lockout__Enabled: ${Lockout__Enabled:-true}
-      Lockout__MaxFailedAttempts: ${Lockout__MaxFailedAttempts:-5}
-      Lockout__Minutes: ${Lockout__Minutes:-15}
-      # Error tracking (Sentry). Empty DSN = disabled (no-op).
-      Sentry__Dsn: ${Sentry__Dsn:-}
-      Sentry__TracesSampleRate: ${Sentry__TracesSampleRate:-0.1}
-      # Prometheus metrics at /metrics (internal network only; never proxied by
-      # the public gateway). Off unless explicitly enabled.
-      Metrics__Enabled: ${Metrics__Enabled:-true}
-      # Maintenance reminders engine (daily job + dedupe window).
-      Reminders__Enabled: ${Reminders__Enabled:-true}
-      Reminders__EmailEnabled: ${Reminders__EmailEnabled:-true}
-      Reminders__PushEnabled: ${Reminders__PushEnabled:-true}
-      Reminders__DailyHourUtc: ${Reminders__DailyHourUtc:-8}
-      Reminders__DedupeDays: ${Reminders__DedupeDays:-3}
-      # Rate limiting: auth burst is 10/min per client IP (hardcoded policy);
-      # the sustained ceiling per hour is tunable.
-      RateLimiting__AuthPerHour: ${RateLimiting__AuthPerHour:-60}
-      # Data retention (daily bulk purge at 04:00 UTC): dead refresh tokens
-      # and old reminder logs; audit logs stay forever unless given a
-      # positive Retention__AuditLogDays.
-      Retention__Enabled: ${Retention__Enabled:-true}
-      Retention__DailyHourUtc: ${Retention__DailyHourUtc:-4}
-      Retention__RefreshTokenDays: ${Retention__RefreshTokenDays:-30}
-      Retention__ReminderLogDays: ${Retention__ReminderLogDays:-90}
-      Retention__AuditLogDays: ${Retention__AuditLogDays:-0}
-      # Password hashing work factor (PBKDF2-HMAC-SHA256 iterations; OWASP
-      # guidance is 600k). Hashes embed their own iteration count, so changing
-      # this never invalidates existing passwords.
-      PasswordHashing__Iterations: ${PasswordHashing__Iterations:-600000}
-      # Web Push (VAPID). Empty keys = push is a no-op.
-      WebPush__PublicKey: ${WebPush__PublicKey:-}
-      WebPush__PrivateKey: ${WebPush__PrivateKey:-}
-      WebPush__Subject: ${WebPush__Subject:-mailto:contacto.santidev21@gmail.com}
+      <<: *api-environment
+      # The daily jobs run in the `worker` service, not in the (replicable) API.
+      Jobs__Enabled: "false"
     volumes:
       # Serilog writes here (see Program.cs): a plain, readable .log file that
       # survives container recreation (docker volume bikontrol_api_logs).
@@ -125,6 +129,41 @@ services:
         limits:
           cpus: "1.00"
           memory: 512M
+
+  # Same image as the API, but it owns the daily reminder/retention jobs. No
+  # public route (internal network only) and no fixed container name, so the API
+  # can be scaled without running the jobs N times (advisory locks still make an
+  # accidental overlap harmless).
+  worker:
+    image: ${API_IMAGE:-bikontrol-api}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      # Waits for the API so a schema created on API startup (local/E2E) exists.
+      api:
+        condition: service_healthy
+    environment:
+      <<: *api-environment
+      Jobs__Enabled: "true"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - bikontrol-internal-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 384M
 
   web:
     image: ${WEB_IMAGE:-bikontrol-web}:${IMAGE_TAG:-latest}
