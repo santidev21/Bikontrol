@@ -159,10 +159,8 @@ jobs:
             prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2 \
             check config /etc/prometheus/prometheus.yml
           docker run --rm --entrypoint amtool -v "$PWD/deploy/monitoring:/m:ro" \
-            -e ALERT_SMTP_HOST=smtp.example -e ALERT_SMTP_PORT=587 -e ALERT_SMTP_USER=u \
-            -e ALERT_SMTP_PASSWORD=p -e ALERT_EMAIL_FROM=a@example.com -e ALERT_EMAIL_TO=b@example.com \
             prom/alertmanager:v0.34.2@sha256:39d8bb3966c694a124428a3a88fbcffd40bd069129ecd47c059f8a3f17c55f3b \
-            check-config --alertmanager.config.expand-envvars /m/alertmanager.yml
+            check-config /m/alertmanager.yml
         env:
           POSTGRES_DB: bikontrol_db
           POSTGRES_USER: bikontrol
