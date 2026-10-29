@@ -3,6 +3,7 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace Bikontrol.API.Controllers
@@ -37,6 +38,20 @@ namespace Bikontrol.API.Controllers
         {
             var result = await _reminderService.GetDueForCurrentUserAsync();
             return Ok(result);
+        }
+
+        /// <summary>
+        /// One-click unsubscribe from reminder emails (RFC 8058). Anonymous by
+        /// design: the signed token in the link identifies the user, so mail
+        /// clients can POST here straight from the inbox. Idempotent.
+        /// </summary>
+        [HttpPost("email/unsubscribe")]
+        [AllowAnonymous]
+        [EnableRateLimiting("auth")]
+        public async Task<IActionResult> UnsubscribeEmail([FromQuery] string? token)
+        {
+            await _reminderService.UnsubscribeAsync(token);
+            return NoContent();
         }
 
         /// <summary>The VAPID public key the browser needs to subscribe (null when push is off).</summary>

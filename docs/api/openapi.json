@@ -1178,6 +1178,27 @@
         }
       }
     },
+    "/api/Reminders/email/unsubscribe": {
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Reminders/push/vapid-public-key": {
       "get": {
         "tags": [

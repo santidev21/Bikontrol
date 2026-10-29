@@ -1,3 +1,5 @@
+using Bikontrol.Shared.Exceptions;
+using Bikontrol.Application.Email;
 using Bikontrol.Application.DTOs.Reminders;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -23,6 +25,7 @@ namespace Bikontrol.Application.Services
         private readonly IEmailSender _emailSender;
         private readonly IPushSubscriptionRepository _pushSubscriptionRepository;
         private readonly IPushSender _pushSender;
+        private readonly IUnsubscribeTokenService _unsubscribeTokens;
         private readonly IConfiguration _configuration;
         private readonly ReminderOptions _options;
         private readonly ILogger<ReminderService> _logger;
@@ -38,12 +41,14 @@ namespace Bikontrol.Application.Services
             IEmailSender emailSender,
             IPushSubscriptionRepository pushSubscriptionRepository,
             IPushSender pushSender,
+            IUnsubscribeTokenService unsubscribeTokens,
             IConfiguration configuration,
             IOptions<ReminderOptions> options,
             ILogger<ReminderService> logger)
         {
             _pushSubscriptionRepository = pushSubscriptionRepository;
             _pushSender = pushSender;
+            _unsubscribeTokens = unsubscribeTokens;
             _current = current;
             _userRepository = userRepository;
             _userMaintenanceRepository = userMaintenanceRepository;
@@ -203,9 +208,16 @@ namespace Bikontrol.Application.Services
                     var subject = logs.Count == 1
                         ? "Bikontrol: tenés un mantenimiento por vencer"
                         : $"Bikontrol: {logs.Count} mantenimientos por vencer";
-                    var body = BuildDigestBody(user, logs, baseUrl);
+                    var token = _unsubscribeTokens.Create(user.Id);
+                    var unsubscribePage = $"{baseUrl}/unsubscribe?token={Uri.EscapeDataString(token)}";
+                    var oneClickUrl = $"{baseUrl}/api/reminders/email/unsubscribe?token={Uri.EscapeDataString(token)}";
 
-                    await _emailSender.SendAsync(user.Email, subject, body);
+                    await _emailSender.SendAsync(new EmailMessage(
+                        user.Email,
+                        subject,
+                        BuildDigestBody(user, logs, baseUrl, unsubscribePage),
+                        BuildDigestHtml(user, logs, baseUrl, unsubscribePage),
+                        oneClickUrl));
 
                     // Persist right after each send: if a later user fails, this
                     // one is not emailed again on the retry.
@@ -289,14 +301,25 @@ namespace Bikontrol.Application.Services
             return delivered;
         }
 
-        private static string BuildDigestBody(User user, IReadOnlyList<ReminderLog> logs, string baseUrl)
+        public async Task UnsubscribeAsync(string? token)
         {
-            var builder = new StringBuilder();
-            builder.AppendLine($"Hola {user.FullName},");
-            builder.AppendLine();
-            builder.AppendLine("Estos mantenimientos de tus motos están por vencer o vencidos:");
-            builder.AppendLine();
+            if (!_unsubscribeTokens.TryValidate(token, out var userId))
+                throw new ValidationException("El enlace para darte de baja no es válido.", "invalid_unsubscribe_token");
 
+            var user = await _userRepository.GetByIdAsync(userId);
+            // Unknown or deleted account: nothing left to unsubscribe, and
+            // answering the same way avoids revealing which accounts exist.
+            if (user is null || !user.RemindersEnabled)
+                return;
+
+            user.SetRemindersEnabled(false);
+            await _userRepository.UpdateAsync(user);
+            await _userRepository.SaveChangesAsync();
+        }
+
+        private static List<string> DigestLines(IReadOnlyList<ReminderLog> logs)
+        {
+            var lines = new List<string>();
             foreach (var log in logs)
             {
                 var name = log.UserMaintenance?.Name ?? "Mantenimiento";
@@ -305,14 +328,41 @@ namespace Bikontrol.Application.Services
                     : log.RemainingKm > 0
                         ? $"faltan {log.RemainingKm} km"
                         : $"faltan {log.RemainingDays} días";
-                builder.AppendLine($"- {name}: {detail} ({log.LifePercent}% de vida restante)");
+                lines.Add($"{name}: {detail} ({log.LifePercent}% de vida restante)");
+            }
+
+            return lines;
+        }
+
+        private static string BuildDigestBody(User user, IReadOnlyList<ReminderLog> logs, string baseUrl, string unsubscribeUrl)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine($"Hola {user.FullName},");
+            builder.AppendLine();
+            builder.AppendLine("Estos mantenimientos de tus motos están por vencer o vencidos:");
+            builder.AppendLine();
+
+            foreach (var line in DigestLines(logs))
+            {
+                builder.AppendLine($"- {line}");
             }
 
             builder.AppendLine();
             builder.AppendLine($"Entrá a Bikontrol para registrar lo que hiciste: {baseUrl}/dashboard");
             builder.AppendLine();
-            builder.AppendLine("Si no querés recibir estos avisos, podés desactivarlos en tu perfil.");
+            builder.AppendLine($"Si no querés recibir estos avisos, date de baja acá: {unsubscribeUrl}");
             return builder.ToString();
         }
+
+        private static string BuildDigestHtml(User user, IReadOnlyList<ReminderLog> logs, string baseUrl, string unsubscribeUrl) =>
+            EmailTemplate.Render(
+                heading: logs.Count == 1 ? "Tenés un mantenimiento por vencer" : $"Tenés {logs.Count} mantenimientos por vencer",
+                paragraphs: new[] { $"Hola {user.FullName}, estos mantenimientos de tus motos están por vencer o vencidos:" },
+                bullets: DigestLines(logs),
+                buttonLabel: "Abrir Bikontrol",
+                buttonUrl: $"{baseUrl}/dashboard",
+                footerLine: "Recibís este aviso porque activaste los recordatorios.",
+                footerLinkLabel: "Darme de baja",
+                footerLinkUrl: unsubscribeUrl);
     }
 }

@@ -1,3 +1,4 @@
+using Bikontrol.Shared.Exceptions;
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
@@ -437,6 +438,73 @@ public class ReminderServiceTests
         Assert.Equal(ReminderChannel.Pending, logs.Logs[0].Channel);
     }
 
+    private static UnsubscribeTokenService TestTokens() =>
+        new(Microsoft.Extensions.Options.Options.Create(new JwtOptions { Key = new string('k', 40) }));
+
+    [Fact]
+    public async Task SendPendingEmailsAsync_ShouldSendHtmlAndAOneClickUnsubscribeLink()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var item = KmMaintenance(Guid.NewGuid(), 1000, MotoId);
+        var logs = new FakeReminderLogRepository();
+        await logs.AddAsync(new ReminderLog
+        {
+            UserId = user.Id,
+            UserMaintenanceId = item.Id,
+            Channel = ReminderChannel.Pending,
+            IsOverdue = true,
+            User = user,
+            UserMaintenance = item
+        });
+        var email = new FakeEmailSender();
+        var service = CreateService(new FakeUserMaintenanceRepository(new[] { item }), reminders: logs, emailSender: email);
+
+        await service.SendPendingEmailsAsync();
+
+        var message = Assert.Single(email.Messages);
+        Assert.NotNull(message.HtmlBody);
+        Assert.Contains("<ul", message.HtmlBody);
+        Assert.StartsWith("http://localhost:4200/api/reminders/email/unsubscribe?token=", message.UnsubscribeUrl);
+        Assert.Contains("http://localhost:4200/unsubscribe?token=", message.TextBody);
+
+        var token = Uri.UnescapeDataString(message.UnsubscribeUrl![(message.UnsubscribeUrl.IndexOf("token=", StringComparison.Ordinal) + 6)..]);
+        Assert.True(TestTokens().TryValidate(token, out var userId));
+        Assert.Equal(user.Id, userId);
+    }
+
+    [Fact]
+    public async Task UnsubscribeAsync_WithAValidToken_TurnsRemindersOff()
+    {
+        var user = new User("rider@bikontrol.com", "Rider", "hash");
+        var service = CreateService(
+            new FakeUserMaintenanceRepository(Array.Empty<UserMaintenance>()),
+            userRepository: new FakeUserRepository(new[] { user }));
+
+        await service.UnsubscribeAsync(TestTokens().Create(user.Id));
+        await service.UnsubscribeAsync(TestTokens().Create(user.Id)); // idempotent
+
+        Assert.False(user.RemindersEnabled);
+    }
+
+    [Fact]
+    public async Task UnsubscribeAsync_WithAnInvalidToken_ShouldThrowAValidationError()
+    {
+        var service = CreateService(new FakeUserMaintenanceRepository(Array.Empty<UserMaintenance>()));
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => service.UnsubscribeAsync("forged.token"));
+        Assert.Equal("invalid_unsubscribe_token", ex.Code);
+    }
+
+    [Fact]
+    public async Task UnsubscribeAsync_ForAnUnknownUser_ShouldSucceedSilently()
+    {
+        var service = CreateService(
+            new FakeUserMaintenanceRepository(Array.Empty<UserMaintenance>()),
+            userRepository: new FakeUserRepository(Array.Empty<User>()));
+
+        await service.UnsubscribeAsync(TestTokens().Create(Guid.NewGuid()));
+    }
+
     private static ReminderService CreateService(
         FakeUserMaintenanceRepository userMaintenance,
         FakeReminderLogRepository? reminders = null,
@@ -463,6 +531,7 @@ public class ReminderServiceTests
             emailSender ?? new FakeEmailSender(),
             pushSubscriptions ?? new FakePushSubscriptionRepository(),
             pushSender ?? new FakePushSender(),
+            new UnsubscribeTokenService(Microsoft.Extensions.Options.Options.Create(new JwtOptions { Key = new string('k', 40) })),
             config,
             TestOptions.From<ReminderOptions>(config, "Reminders"),
             NullLogger<ReminderService>.Instance);
@@ -598,12 +667,14 @@ public class ReminderServiceTests
     private sealed class FakeEmailSender : IEmailSender
     {
         public List<(string To, string Subject, string Body)> Sent { get; } = new();
+        public List<EmailMessage> Messages { get; } = new();
         public HashSet<string> FailingAddresses { get; } = new();
-        public Task SendAsync(string toEmail, string subject, string body)
+        public Task SendAsync(EmailMessage message)
         {
-            if (FailingAddresses.Contains(toEmail))
+            if (FailingAddresses.Contains(message.To))
                 throw new InvalidOperationException("SMTP down");
-            Sent.Add((toEmail, subject, body));
+            Sent.Add((message.To, message.Subject, message.TextBody));
+            Messages.Add(message);
             return Task.CompletedTask;
         }
     }

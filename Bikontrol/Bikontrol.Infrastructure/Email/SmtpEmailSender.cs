@@ -26,8 +26,11 @@ namespace Bikontrol.Infrastructure.Email
             _environment = environment;
         }
 
-        public async Task SendAsync(string toEmail, string subject, string body)
+        public async Task SendAsync(EmailMessage email)
         {
+            var toEmail = email.To;
+            var subject = email.Subject;
+            var body = email.TextBody;
             if (!_options.IsConfigured)
             {
                 if (_environment.IsDevelopment())
@@ -56,11 +59,7 @@ namespace Bikontrol.Infrastructure.Email
             var fromEmail = string.IsNullOrWhiteSpace(_options.FromEmail) ? username : _options.FromEmail;
             var fromName = _options.FromName;
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(fromName, fromEmail));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = subject;
-            message.Body = new TextPart("plain") { Text = body };
+            var message = BuildMessage(email, fromEmail, fromName);
 
             // A hung SMTP server must not pin a request (register/forgot-password
             // await this) for MailKit's two-minute default.
@@ -81,6 +80,28 @@ namespace Bikontrol.Infrastructure.Email
                 await client.DisconnectAsync(true, ct);
                 return true;
             }, IsTransient);
+        }
+
+        /// <summary>
+        /// Builds the MIME message: text and HTML alternatives plus, for bulk-style
+        /// mail, the RFC 2369 / RFC 8058 one-click unsubscribe headers that Gmail
+        /// and Outlook use to show their own "Unsubscribe" button.
+        /// </summary>
+        public static MimeMessage BuildMessage(EmailMessage email, string fromEmail, string fromName)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, fromEmail));
+            message.To.Add(MailboxAddress.Parse(email.To));
+            message.Subject = email.Subject;
+            message.Body = new BodyBuilder { TextBody = email.TextBody, HtmlBody = email.HtmlBody }.ToMessageBody();
+
+            if (!string.IsNullOrWhiteSpace(email.UnsubscribeUrl))
+            {
+                message.Headers.Add("List-Unsubscribe", $"<{email.UnsubscribeUrl}>");
+                message.Headers.Add("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+            }
+
+            return message;
         }
 
         /// <summary>Network hiccups, timeouts and 4xx SMTP replies are worth another try; auth or address errors are not.</summary>
