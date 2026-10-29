@@ -231,7 +231,30 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
     });
+    // Expensive endpoints (exports, PDF/CSV, uploads): per signed-in user, not
+    // per IP, so one account behind a shared NAT cannot starve the others.
+    AddUserPolicy(options, "heavy", builder.Configuration, "RateLimiting:HeavyPerMinute", 6);
+    AddUserPolicy(options, "upload", builder.Configuration, "RateLimiting:UploadPerMinute", 20);
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+
+        var (code, message) = ErrorResponse.ForStatus(StatusCodes.Status429TooManyRequests)!.Value;
+        await ErrorResponse.WriteAsync(context.HttpContext, StatusCodes.Status429TooManyRequests, code, message);
+    };
+});
+
+// Bodies are small JSON (images travel as <= 1 MB data URLs), so anything
+// bigger is abuse; Kestrel answers 413 before the payload is buffered.
+builder.WebHost.ConfigureKestrel(kestrel =>
+{
+    kestrel.Limits.MaxRequestBodySize =
+        long.TryParse(builder.Configuration["Limits:MaxRequestBodyBytes"], out var maxBody) && maxBody > 0
+            ? maxBody
+            : 3 * 1024 * 1024;
 });
 
 // Add services to the container.
@@ -287,8 +310,20 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
             .SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage))
             .ToList();
 
-        var response = new { error = string.Join(" | ", errors) };
-        return new BadRequestObjectResult(response);
+        var message = string.Join(" | ", errors);
+        return new ObjectResult(new Dictionary<string, object?>
+        {
+            ["type"] = "urn:bikontrol:error:validation",
+            ["title"] = message,
+            ["status"] = StatusCodes.Status400BadRequest,
+            ["detail"] = message,
+            ["code"] = "validation",
+            ["error"] = message
+        })
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            ContentTypes = { ErrorResponse.ContentType }
+        };
     };
 });
 var app = builder.Build();
@@ -322,10 +357,17 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors("AllowFrontend");
 
-app.UseRateLimiter();
-
 app.UseAuthentication();
+// After authentication so the per-user policies can read the principal.
+app.UseRateLimiter();
 app.UseAuthorization();
+
+// Bare 401/403/404 (no controller body) get the same coded envelope.
+app.UseStatusCodePages(async context =>
+{
+    if (ErrorResponse.ForStatus(context.HttpContext.Response.StatusCode) is { } error)
+        await ErrorResponse.WriteAsync(context.HttpContext, context.HttpContext.Response.StatusCode, error.Code, error.Message);
+});
 
 app.MapControllers();
 // Liveness: cheap, no dependency checks (used by the web UI/container probes).
@@ -397,6 +439,31 @@ public partial class Program
     /// The signing key plus <c>Jwt:PreviousKeys</c> (entries of <c>Id</c> and
     /// <c>Key</c>) still accepted for validation while a rotation drains.
     /// </summary>
+    internal static void AddUserPolicy(
+        Microsoft.AspNetCore.RateLimiting.RateLimiterOptions options,
+        string name,
+        IConfiguration configuration,
+        string configKey,
+        int defaultPerMinute)
+    {
+        var permits = int.TryParse(configuration[configKey], out var configured) && configured > 0
+            ? configured
+            : defaultPerMinute;
+
+        options.AddPolicy(name, httpContext =>
+        {
+            var partition = httpContext.User.FindFirst("sub")?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown";
+            return RateLimitPartition.GetFixedWindowLimiter($"{name}:{partition}", _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permits,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+        });
+    }
+
     internal static List<SymmetricSecurityKey> BuildSigningKeys(IConfiguration configuration, string currentKey)
     {
         var keys = new List<SymmetricSecurityKey>
