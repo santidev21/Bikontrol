@@ -2,7 +2,6 @@
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Authentication;
-using Bikontrol.Application.Interfaces;
 using Bikontrol.Infrastructure.Services;
 using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
