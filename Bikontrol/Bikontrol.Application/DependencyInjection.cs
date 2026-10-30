@@ -19,6 +19,8 @@ namespace Bikontrol.Application
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IReminderService, ReminderService>();
             services.AddSingleton<IUnsubscribeTokenService, UnsubscribeTokenService>();
+            services.AddSingleton<IMediaUrlSigner, MediaUrlSigner>();
+            services.AddScoped<AttachmentStorageMigrator>();
             services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
             services.AddScoped<IMaintenanceBookService, MaintenanceBookService>();
             services.AddScoped<IMaintenanceAttachmentService, MaintenanceAttachmentService>();

@@ -360,6 +360,23 @@ migrate() {
     log "Migrations applied."
 }
 
+# One-off after enabling object storage: moves attachment images that still
+# live as data URLs in the database into the bucket. Idempotent and resumable
+# (run it again after a failure); the app keeps serving both kinds meanwhile.
+migrate_attachments() {
+    log "Moving database-stored attachment images to object storage..."
+    set -a
+    # shellcheck disable=SC1091
+    source "$DEPLOY_DIR/.env"
+    set +a
+    [[ "${Storage__Enabled:-false}" == "true" ]] || error_exit "Storage__Enabled is not true in $DEPLOY_DIR/.env — nothing to migrate to"
+    (cd "$DEPLOY_DIR" && docker compose up -d db)
+    wait_db_ready || error_exit "database did not become ready"
+    (cd "$DEPLOY_DIR" && docker compose run --rm --no-deps api --migrate-attachments) \
+        || error_exit "attachment migration reported failures — check the log and run it again"
+    log "Attachment migration finished."
+}
+
 up() {
     log "Starting containers..."
     (cd "$DEPLOY_DIR" && docker compose up -d --remove-orphans)
@@ -576,6 +593,7 @@ main() {
         pull) pull ;;
         build) build ;;
         migrate) migrate ;;
+        migrate-attachments) migrate_attachments ;;
         up) up ;;
         deploy) deploy "${2:-}" ;;
         status) status ;;
@@ -589,7 +607,7 @@ main() {
         install-cron) install_cron "$@" ;;
         remove-cron) remove_cron ;;
         *)
-            echo "Usage: $0 [pull|build|migrate|up|deploy|status|logs|verify|smoke|rollback|restore-db|backup-db|audit-db|install-cron|remove-cron]"
+            echo "Usage: $0 [pull|build|migrate|migrate-attachments|up|deploy|status|logs|verify|smoke|rollback|restore-db|backup-db|audit-db|install-cron|remove-cron]"
             exit 1
             ;;
     esac

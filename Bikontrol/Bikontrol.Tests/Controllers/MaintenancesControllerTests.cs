@@ -339,6 +339,9 @@ public class MaintenancesControllerTests
             return Task.FromResult(Attachments);
         }
 
+        public Task<StoredObject> OpenMediaAsync(Guid attachmentId, long expiresUnix, string? signature, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
         public Task<MaintenanceAttachmentDTO> AddAsync(Guid recordId, AddAttachmentRequest request)
         {
             LastRecordId = recordId;

@@ -151,24 +151,40 @@ describe('MaintenanceService (unit, mocked HttpClient)', () => {
   });
 
   it('should fetch attachments of a record', async () => {
-    httpClientMock.get.mockReturnValue(of([{ id: 'att-1' }]));
+    httpClientMock.get.mockReturnValue(
+      of([{ id: 'att-1', dataUrl: 'data:image/png;base64,AAAA' }]),
+    );
 
     const res = await firstValueFrom(service.getAttachments('record-1'));
 
-    expect(res).toEqual([{ id: 'att-1' }]);
+    expect(res).toEqual([{ id: 'att-1', dataUrl: 'data:image/png;base64,AAAA' }]);
     expect(httpClientMock.get).toHaveBeenCalledWith(
       `${service['apiUrl']}/records/record-1/attachments`,
     );
   });
 
+  it('should resolve stored-image paths against the API origin', async () => {
+    httpClientMock.get.mockReturnValue(
+      of([
+        { id: 'a', dataUrl: '/api/media/attachments/a?exp=1&sig=s' },
+        { id: 'b', dataUrl: 'data:image/png;base64,AAAA' },
+      ]),
+    );
+
+    const res = await firstValueFrom(service.getAttachments('record-1'));
+
+    expect(res[0].dataUrl).toMatch(/^https?:\/\/.+\/api\/media\/attachments\/a\?exp=1&sig=s$/);
+    expect(res[1].dataUrl).toBe('data:image/png;base64,AAAA');
+  });
+
   it('should add an attachment', async () => {
-    httpClientMock.post.mockReturnValue(of({ id: 'att-1' }));
+    httpClientMock.post.mockReturnValue(of({ id: 'att-1', dataUrl: 'data:image/png;base64,AAAA' }));
 
     const res = await firstValueFrom(
       service.addAttachment('record-1', 'data:image/png;base64,AAAA', 'factura.png'),
     );
 
-    expect(res).toEqual({ id: 'att-1' });
+    expect(res).toEqual({ id: 'att-1', dataUrl: 'data:image/png;base64,AAAA' });
     expect(httpClientMock.post).toHaveBeenCalledWith(
       `${service['apiUrl']}/records/record-1/attachments`,
       { dataUrl: 'data:image/png;base64,AAAA', fileName: 'factura.png' },

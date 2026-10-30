@@ -8,6 +8,8 @@ using Bikontrol.Domain.Entities;
 using Bikontrol.Application.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Bikontrol.Application.Services
 {
@@ -27,6 +29,8 @@ namespace Bikontrol.Application.Services
         private readonly IKmHistoryService _kmHistoryService;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITransactionManager _transactions;
+        private readonly IObjectStorage _storage;
+        private readonly ILogger<AccountService> _logger;
         private readonly ICurrentUserService _current;
         private readonly Microsoft.Extensions.Configuration.IConfiguration? _configuration;
 
@@ -41,9 +45,13 @@ namespace Bikontrol.Application.Services
             IKmHistoryService kmHistoryService,
             IPasswordHasher<User> passwordHasher,
             ITransactionManager transactions,
+            IObjectStorage storage,
             ICurrentUserService current,
-            Microsoft.Extensions.Configuration.IConfiguration? configuration = null)
+            Microsoft.Extensions.Configuration.IConfiguration? configuration = null,
+            ILogger<AccountService>? logger = null)
         {
+            _storage = storage;
+            _logger = logger ?? NullLogger<AccountService>.Instance;
             _configuration = configuration;
             _userRepository = userRepository;
             _motorcycleRepository = motorcycleRepository;
@@ -107,7 +115,7 @@ namespace Bikontrol.Application.Services
                 Motorcycles = motorcycleDtos,
                 Maintenances = maintenances.ToMaintenanceDTOs(),
                 MaintenanceRecords = recordDtos,
-                Attachments = attachments.ToAttachmentDTOs(),
+                Attachments = await ToExportAttachmentsAsync(attachments),
                 FuelUps = fuelUps.ToFuelUpDTOs().ToList(),
             };
         }
@@ -141,6 +149,9 @@ namespace Bikontrol.Application.Services
                 }
             }
 
+            // Collect the object keys first: the purge below deletes the rows that name them.
+            var storageKeys = await _attachmentRepository.GetStorageKeysByUserAsync(user.Id);
+
             await _transactions.ExecuteInTransactionAsync(async () =>
             {
                 await _accountRepository.PurgeUserDataAsync(user.Id);
@@ -148,6 +159,50 @@ namespace Bikontrol.Application.Services
                 await _userRepository.UpdateAsync(user);
                 await _userRepository.SaveChangesAsync();
             });
+
+            // After the commit, so a rolled-back deletion never loses the user's images.
+            // Best effort: an object left behind is unreachable (no row points to it).
+            if (storageKeys.Count > 0)
+            {
+                try
+                {
+                    await _storage.DeleteAsync(storageKeys);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Account deleted but {Count} stored object(s) could not be removed.", storageKeys.Count);
+                }
+            }
+        }
+
+        // The export is a real copy of the user's data: stored images are inlined as
+        // data URLs (signed URLs would expire inside the downloaded file).
+        private async Task<List<MaintenanceAttachmentDTO>> ToExportAttachmentsAsync(IEnumerable<MaintenanceRecordAttachment> attachments)
+        {
+            var result = new List<MaintenanceAttachmentDTO>();
+            foreach (var attachment in attachments)
+            {
+                var dto = attachment.ToAttachmentDTO();
+                if (attachment.StorageKey is not null)
+                {
+                    var stored = await _storage.GetAsync(attachment.StorageKey);
+                    if (stored is null)
+                    {
+                        _logger.LogWarning("Attachment {AttachmentId} points to a missing object; exporting it empty.", attachment.Id);
+                    }
+                    else
+                    {
+                        using var buffer = new MemoryStream();
+                        await stored.Content.CopyToAsync(buffer);
+                        stored.Dispose();
+                        dto.DataUrl = ImageDataUrlValidator.Encode(buffer.ToArray(), attachment.ContentType);
+                    }
+                }
+
+                result.Add(dto);
+            }
+
+            return result;
         }
 
         private ProfileDTO ToProfile(User user)

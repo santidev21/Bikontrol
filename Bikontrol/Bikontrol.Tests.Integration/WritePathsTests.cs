@@ -166,7 +166,8 @@ public sealed class WritePathsTests
         var list = await client.GetFromJsonAsync<List<AttachmentResponse>>($"/api/maintenances/records/{record.Id}/attachments");
         Assert.Contains(list!, a => a.Id == attachment.Id);
 
-        // The audit trail records the upload but never copies the inline payload.
+        // The audit trail records the upload but never copies the image payload:
+        // with object storage the row only holds the object key.
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -175,7 +176,7 @@ public sealed class WritePathsTests
                 .FirstOrDefaultAsync();
             Assert.NotNull(audit);
             Assert.DoesNotContain("iVBORw0KGgo", audit!.Changes);
-            Assert.Contains("binary omitted", audit.Changes);
+            Assert.Contains("StorageKey", audit.Changes);
         }
 
         var deleteResponse = await client.DeleteAsync($"/api/maintenances/records/{record.Id}/attachments/{attachment.Id}");

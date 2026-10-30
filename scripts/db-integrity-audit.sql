@@ -148,3 +148,14 @@ WHERE "MonthlyMaintenanceBudget" < 0 OR "AnnualMaintenanceBudget" < 0;
 SELECT '17. Email sin normalizar' AS check_name, "Id", "Email"
 FROM users
 WHERE "Email" <> lower(btrim("Email"));
+
+SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_record_attachments' AND column_name = 'StorageKey'
+) AS storage_column_exists \gset
+\if :storage_column_exists
+-- 18. Adjuntos sin imagen en ninguna parte (ni data URL ni objeto en el bucket)
+SELECT '18. Adjunto sin imagen' AS check_name, "Id", "MotorcycleMaintenanceRecordId"
+FROM maintenance_record_attachments
+WHERE "StorageKey" IS NULL AND "DataUrl" = '';
+\endif

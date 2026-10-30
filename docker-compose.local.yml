@@ -1,13 +1,36 @@
 # Local development overrides. Run together with docker-compose.yml:
 #   docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 
+x-local-storage: &local-storage
+  # A local S3-compatible server (Adobe S3Mock) so attachments use the same code
+  # path as production. Credentials are ignored by the mock.
+  Storage__Enabled: "true"
+  Storage__ServiceUrl: http://storage:9090
+  Storage__Bucket: bikontrol-local
+  Storage__AccessKey: local
+  Storage__SecretKey: local
+
 services:
   db:
     ports:
       - "127.0.0.1:5434:5432"
 
+  storage:
+    image: adobe/s3mock:5.2.3
+    container_name: bikontrol-storage
+    restart: unless-stopped
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: bikontrol-local
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /data
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+    volumes:
+      - bikontrol_storage_data:/data
+    networks:
+      - bikontrol-internal-net
+
   api:
     environment:
+      <<: *local-storage
       # No deploy.sh here: let the API create the schema on startup.
       Database__RunMigrationsOnStartup: ${Database__RunMigrationsOnStartup:-true}
     ports:
@@ -26,6 +49,10 @@ services:
     ports:
       - "127.0.0.1:4200:8080"
 
+  worker:
+    environment:
+      <<: *local-storage
+
 networks:
   bikontrol-net:
     name: bikontrol-net
@@ -35,3 +62,6 @@ networks:
     name: bikontrol-internal-net
     driver: bridge
     external: false
+
+volumes:
+  bikontrol_storage_data:

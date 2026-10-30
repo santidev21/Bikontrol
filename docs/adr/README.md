@@ -8,6 +8,7 @@ report.
 - [002-disable-inline-critical-css.md](002-disable-inline-critical-css.md) — inline critical CSS off (CSP-compatible production build).
 - [003-account-deletion.md](003-account-deletion.md) — self-service account deletion: anonymize the row, purge owned data.
 - [004-email-delivery.md](004-email-delivery.md) — provider-agnostic SMTP, HTML templates, one-click unsubscribe, why no outbox.
+- [005-object-storage.md](005-object-storage.md) — attachment images in a private S3-compatible bucket behind signed same-origin URLs.
 
 Use an ADR when a choice is hard to reverse or future-you needs the *why* (storage, security
 trade-offs, schema strategy, protocol, deployment topology). For everyday changes, update the

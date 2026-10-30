@@ -1,4 +1,5 @@
 ﻿using Bikontrol.Application.Interfaces;
+using Bikontrol.Application.Options;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Infrastructure.Email;
 using Bikontrol.Infrastructure.Authentication;
@@ -7,6 +8,7 @@ using Bikontrol.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +40,11 @@ namespace Bikontrol.Infrastructure
                 return new ConfigurablePasswordHasher<User>(iterations);
             });
             services.AddScoped<IEmailSender, SmtpEmailSender>();
+            services.AddSingleton<IObjectStorage>(sp =>
+            {
+                var options = sp.GetRequiredService<IOptions<StorageOptions>>();
+                return options.Value.Enabled ? new Storage.S3ObjectStorage(options) : new Storage.NoopObjectStorage();
+            });
 
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IPushSender, Notifications.WebPushSender>();
