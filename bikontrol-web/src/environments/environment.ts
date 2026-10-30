@@ -5,7 +5,9 @@ export const environment = {
   // Public demo tenant. Must match the API's `Demo:Enabled` flag; when false
   // the login screen hides the demo button (POST /api/auth/demo returns 404).
   demoEnabled: true,
+  // Error reporting (Sentry browser project). Empty in dev: only production builds report.
+  sentryDsn: '',
   // Etiqueta legible de la versión que se muestra en Perfil.
   // Súbela solo en releases con cambios visibles para el usuario (no en cada commit).
-  appVersion: '0.5.0',
+  appVersion: '0.7.0',
 };

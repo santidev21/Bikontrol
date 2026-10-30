@@ -25,6 +25,7 @@
     "@angular/platform-browser": "^22.2.3",
     "@angular/router": "^22.2.3",
     "@angular/service-worker": "^22.2.3",
+    "@sentry/browser": "^11.10.0",
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.26.25",
     "tslib": "^2.3.0"

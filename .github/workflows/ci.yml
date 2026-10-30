@@ -262,6 +262,7 @@ jobs:
           load: true
           build-args: |
             GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+            SENTRY_DSN=${{ vars.SENTRY_DSN_WEB }}
           tags: ${{ steps.vars.outputs.web_image }}:${{ steps.vars.outputs.tag }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
