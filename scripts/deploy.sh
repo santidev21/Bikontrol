@@ -24,6 +24,12 @@ BACKUP_ENCRYPTION_KEY_FILE="${BACKUP_ENCRYPTION_KEY_FILE:-${DEPLOY_DIR}/.backup-
 # Public base URL the post-deploy smoke test hits (frontend + API under one
 # origin). Override for staging: SMOKE_URL=https://staging.example ./deploy.sh deploy
 SMOKE_URL="${SMOKE_URL:-https://bikontrol.santidev21.tech}"
+# Where the cron job appends its output. Inside DEPLOY_DIR so the deploy user can write
+# it without root (the old /var/log path made the cron redirect fail for non-root).
+BACKUP_CRON_LOG="${BACKUP_CRON_LOG:-${DEPLOY_DIR}/backups/cron.log}"
+# rclone is installed per user (no root needed) and cron's PATH is minimal, so make sure
+# ~/.local/bin is searched whether the script runs from a shell, SSH or cron.
+export PATH="${HOME}/.local/bin:${PATH}"
 
 # Image state of the stack that is serving now (IMAGE_TAG, API_IMAGE, WEB_IMAGE,
 # PREVIOUS_IMAGE_TAG). Sourced on every run so `up`, `migrate`, `status`… always
@@ -245,7 +251,7 @@ audit_database() {
 
 install_cron() {
     local schedule="0 3 * * *"
-    local cmd="${DEPLOY_DIR}/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1"
+    local cmd="${DEPLOY_DIR}/scripts/deploy.sh backup-db >> ${BACKUP_CRON_LOG} 2>&1"
     local cron_line="${schedule} ${cmd}"
     # Allow custom schedule: ./scripts/deploy.sh install-cron "0 3 * * 0"
     if [[ -n "${2:-}" ]]; then
@@ -253,9 +259,8 @@ install_cron() {
         cron_line="${2} ${cmd}"
     fi
     log "Installing daily backup cron: ${cron_line}"
-    # Ensure backup dir + log file exist
+    # The log lives next to the backups; create the directory so the redirect cannot fail.
     mkdir -p "${DEPLOY_DIR}/backups"
-    touch /var/log/bikontrol-backup.log 2>/dev/null || true
     # Remove any previous bikontrol backup crons to avoid duplicates
     (crontab -l 2>/dev/null | grep -v "bikontrol.*backup-db" || true; echo "$cron_line") | crontab -
     log "Cron installed. Current crontab:"

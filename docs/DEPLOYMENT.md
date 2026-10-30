@@ -91,17 +91,18 @@ npm run db:restore -- backups/bikontrol-db-xxx.sql.gz
 **Automatic daily backups** (VPS cron — 03:00 UTC):
 
 ```bash
-# One-time: install the daily cron (idempotent, replaces any previous bikontrol backup cron)
-sudo /opt/bikontrol/scripts/deploy.sh install-cron
-# Custom schedule: sudo /opt/bikontrol/scripts/deploy.sh install-cron "0 4 * * *"
-# Remove: sudo /opt/bikontrol/scripts/deploy.sh remove-cron
-# Check: crontab -l | grep bikontrol
+# One-time, as the deploy user (no sudo): installs the daily cron in that user's crontab.
+# Idempotent; replaces only a previous bikontrol backup line and leaves other entries alone.
+/opt/bikontrol/scripts/deploy.sh install-cron
+# Custom schedule: /opt/bikontrol/scripts/deploy.sh install-cron "0 4 * * *"
+# Remove: /opt/bikontrol/scripts/deploy.sh remove-cron
+# Check: crontab -l | grep bikontrol   (output goes to /opt/bikontrol/backups/cron.log)
 ```
 
 Manual cron line (equivalent):
 
 ```cron
-0 3 * * * /opt/bikontrol/scripts/deploy.sh backup-db >> /var/log/bikontrol-backup.log 2>&1
+0 3 * * * /opt/bikontrol/scripts/deploy.sh backup-db >> /opt/bikontrol/backups/cron.log 2>&1
 ```
 
 **Offsite, encrypted copy.** Set these in the deploy `.env`; every backup (cron and deploy) is then encrypted with AES-256 and uploaded with `rclone`. A failed upload is logged as a warning and never aborts a deploy.
