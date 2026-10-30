@@ -29,6 +29,12 @@ SMOKE_URL="${SMOKE_URL:-https://bikontrol.santidev21.tech}"
 # PREVIOUS_IMAGE_TAG). Sourced on every run so `up`, `migrate`, `status`… always
 # address the same images compose was last started with.
 STATE_FILE="${DEPLOY_DIR}/.deploy-state"
+# The state file is the only source of truth for what is serving. Ignore any
+# IMAGE_TAG / PREVIOUS_IMAGE_TAG inherited from the caller's environment: a CI
+# step that exports the *new* tag would otherwise be recorded as the "previous"
+# one on the first tagged deploy, and rollback would point at itself.
+IMAGE_TAG=""
+PREVIOUS_IMAGE_TAG=""
 if [[ -f "$STATE_FILE" ]]; then
     # shellcheck disable=SC1090
     source "$STATE_FILE"
