@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Options;
@@ -135,11 +136,36 @@ public class OutboundSendersTests
     /// <summary>A loopback push service that answers every request with <paramref name="status"/>.</summary>
     private static HttpListener StartListener(HttpStatusCode status, out string endpoint)
     {
-        var port = new Random().Next(20000, 40000);
-        var listener = new HttpListener();
-        endpoint = $"http://127.0.0.1:{port}/push/";
-        listener.Prefixes.Add(endpoint);
-        listener.Start();
+        // Let the OS pick a free port, then retry if another test or process grabs
+        // it between releasing it here and HttpListener binding it (a fixed random
+        // range collided on CI: "Address already in use").
+        const int maxAttempts = 10;
+        for (var attempt = 1; ; attempt++)
+        {
+            var probe = new TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            var port = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+
+            var candidate = new HttpListener();
+            endpoint = $"http://127.0.0.1:{port}/push/";
+            candidate.Prefixes.Add(endpoint);
+            try
+            {
+                candidate.Start();
+            }
+            catch (HttpListenerException) when (attempt < maxAttempts)
+            {
+                candidate.Close();
+                continue;
+            }
+
+            return ServeInBackground(candidate, status);
+        }
+    }
+
+    private static HttpListener ServeInBackground(HttpListener listener, HttpStatusCode status)
+    {
         _ = Task.Run(async () =>
         {
             try
