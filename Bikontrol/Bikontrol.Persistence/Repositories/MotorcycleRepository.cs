@@ -40,6 +40,30 @@ namespace Bikontrol.Persistence.Repositories
                 .ToDictionaryAsync(m => m.Id, m => m.Name);
         }
 
+        public async Task<long> GetImageBytesByUserAsync(Guid userId)
+        {
+            return await _context.Motorcycles
+                .Where(m => m.UserId == userId)
+                .SumAsync(m => (long)m.ImageSizeBytes);
+        }
+
+        public async Task<IReadOnlyList<string>> GetImageKeysByUserAsync(Guid userId)
+        {
+            return await _context.Motorcycles
+                .Where(m => m.UserId == userId && m.ImageKey != null)
+                .Select(m => m.ImageKey!)
+                .ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<Motorcycle>> GetPendingImageMigrationAsync(int take)
+        {
+            return await _context.Motorcycles
+                .Where(m => m.ImageKey == null && m.Image.StartsWith("data:"))
+                .OrderBy(m => m.Id)
+                .Take(take)
+                .ToListAsync();
+        }
+
         public async Task<Motorcycle> AddAsync(Motorcycle motorcycle)
         {
             await _context.Motorcycles.AddAsync(motorcycle);

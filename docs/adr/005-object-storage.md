@@ -1,9 +1,9 @@
-# ADR 005 — Object storage for attachment images (private bucket, signed same-origin URLs)
+# ADR 005 — Object storage for attachment images and motorcycle photos (private bucket, signed same-origin URLs)
 
 ## Context
 
-Maintenance-record attachments were stored as base64 data URLs in a PostgreSQL `text` column (up to
-~1 MB decoded each). That inflates the database, its dumps and backups, makes every list payload carry
+Maintenance-record attachments and motorcycle photos were stored as base64 data URLs in PostgreSQL
+`text` columns (up to ~1 MB decoded each). That inflates the database, its dumps and backups, makes every list payload carry
 megabytes, and blocks per-user limits and horizontal scaling.
 
 Options considered:
@@ -31,8 +31,8 @@ compatible, no egress fees. `Storage:Enabled=false` keeps the previous behaviour
   resolves the path against the API origin.
 - **Quota.** `Storage:MaxBytesPerUser` (default 50 MB, 0 = off) is checked on upload against the sum of
   `SizeBytes`; it applies with or without the bucket. Exceeding it is `400 storage_quota_exceeded`.
-- **Migration.** `deploy.sh migrate-attachments` (`Program --migrate-attachments`) moves existing rows
-  in batches, updating a row only after its upload succeeded: idempotent and resumable, and the app
+- **Migration.** `deploy.sh migrate-images` (`Program --migrate-images`; `migrate-attachments` is the old
+  name and still works) moves existing attachment images and motorcycle photos in batches, updating a row only after its upload succeeded: idempotent and resumable, and the app
   serves both kinds while it runs.
 - **Lifecycle.** Deleting an attachment or an account deletes its objects after the database commit,
   best effort. A failed `SaveChanges` after an upload removes that object. Account export inlines the
@@ -48,6 +48,17 @@ compatible, no egress fees. `Storage:Enabled=false` keeps the previous behaviour
 - Image bytes flow through the API instead of the CDN. At ≤1 MB per image with browser caching this is
   acceptable; if it stops being, the change is confined to `MediaController` (redirect to a short-lived
   presigned URL plus a CSP `img-src` entry).
-- Motorcycle photos still live in `motorcycles.Image`; they move in a follow-up that reuses this port.
+- **Motorcycle photos use the same port, URLs and quota** (`/api/media/motorcycles/{id}?v&exp&sig`). They
+  differ in three ways:
+  - One photo per bike that can be replaced, so each upload gets a new `ImageVersion` (and object key).
+    `v` is part of the URL only to bust the browser cache, so a changed photo shows at once instead of
+    after the 6-hour cache window; it is not signed because it grants nothing. The old object is deleted
+    after the new one is saved, and the new one is deleted if saving fails.
+  - The edit form reads the bike with `GET` and sends the `image` field back. The server therefore treats
+    this bike's own media URL (path or absolute) as "unchanged", an empty value or `default.png` as
+    "remove", a data URL as a new photo, and rejects anything else (`image_invalid_format`).
+  - Soft-deleting a bike drops its photo (the maintenance history stays), so a deleted bike cannot keep
+    eating the user's quota.
+- Attachments and photos share one budget (`IStorageQuota`); replacing a photo frees its old size first.
 - Rotating `Jwt:Key` invalidates outstanding media URLs; the next API response issues fresh ones.
 - Local development and CI run a real S3 server (Adobe S3Mock) so the adapter is exercised end to end.

@@ -209,6 +209,43 @@ public class AccountServiceTests
     }
 
     [Fact]
+    public async Task DeleteMyAccountAsync_ShouldAlsoRemoveTheMotorcyclePhotosFromStorage()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed:secret");
+        var storage = new Bikontrol.Infrastructure.Storage.InMemoryObjectStorage();
+        await storage.PutAsync("motorcycles/u/m/v1.png", new byte[] { 1 }, "image/png");
+        await storage.PutAsync("motorcycles/someone-else.png", new byte[] { 2 }, "image/png");
+        var moto = MotorcycleFor(user.Id, "XTZ");
+        moto.ImageKey = "motorcycles/u/m/v1.png";
+        var service = CreateService(user.Id, user, motorcycles: new[] { moto }, storage: storage);
+
+        await service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "secret" });
+
+        Assert.Equal(new[] { "motorcycles/someone-else.png" }, storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task ExportMyDataAsync_ShouldInlineMotorcyclePhotosAsDataUrls()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed");
+        var storage = new Bikontrol.Infrastructure.Storage.InMemoryObjectStorage();
+        await storage.PutAsync("motorcycles/u/m/v1.png", new byte[] { 1, 2, 3 }, "image/png");
+        var inBucket = MotorcycleFor(user.Id, "A");
+        inBucket.ImageKey = "motorcycles/u/m/v1.png";
+        var missing = MotorcycleFor(user.Id, "B");
+        missing.ImageKey = "motorcycles/u/m/gone.png";
+        var legacy = MotorcycleFor(user.Id, "C");
+        legacy.Image = "data:image/png;base64,AAAA";
+        var service = CreateService(user.Id, user, motorcycles: new[] { inBucket, missing, legacy }, storage: storage);
+
+        var export = await service.ExportMyDataAsync();
+
+        Assert.Equal("data:image/png;base64,AQID", export.Motorcycles.Single(m => m.Id == inBucket.Id).Image);
+        Assert.Equal("default.png", export.Motorcycles.Single(m => m.Id == missing.Id).Image);
+        Assert.Equal("data:image/png;base64,AAAA", export.Motorcycles.Single(m => m.Id == legacy.Id).Image);
+    }
+
+    [Fact]
     public async Task DeleteMyAccountAsync_GoogleAccount_ShouldNotRequirePassword()
     {
         var user = new User("rider@bikontrol.test", "Rider", "hashed:random");
@@ -309,6 +346,8 @@ public class AccountServiceTests
     {
         private readonly List<Motorcycle> _items;
         public FakeMotorcycleRepository(IEnumerable<Motorcycle> items) => _items = items.ToList();
+        public Task<IReadOnlyList<string>> GetImageKeysByUserAsync(Guid userId) =>
+            Task.FromResult<IReadOnlyList<string>>(_items.Where(m => m.UserId == userId && m.ImageKey is not null).Select(m => m.ImageKey!).ToList());
         public Task<Motorcycle?> GetByIdAsync(Guid id) => Task.FromResult(_items.FirstOrDefault(m => m.Id == id));
         public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) =>
             Task.FromResult(_items.Where(m => m.UserId == userId).AsEnumerable());

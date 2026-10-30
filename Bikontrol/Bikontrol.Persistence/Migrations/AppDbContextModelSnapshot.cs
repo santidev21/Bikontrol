@@ -484,6 +484,19 @@ namespace Bikontrol.Persistence.Migrations
                         .HasColumnType("text")
                         .HasDefaultValue("default.png");
 
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("ImageSizeBytes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("ImageVersion")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
 

@@ -3,6 +3,10 @@ using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Application.Mapping;
+using Bikontrol.Application.Options;
+using Bikontrol.Infrastructure.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Bikontrol.Application.Services;
 using Bikontrol.Shared.Exceptions;
 
@@ -263,13 +267,305 @@ public class MotorcycleServiceTests
         }));
     }
 
-    private static MotorcycleService CreateService(Guid userId, FakeMotorcycleRepository motos, FakeKmHistoryRepository history)
+    private static MotorcycleService CreateService(
+        Guid userId,
+        FakeMotorcycleRepository motos,
+        FakeKmHistoryRepository history,
+        IObjectStorage? storage = null,
+        long maxBytesPerUser = 0,
+        long attachmentBytes = 0)
         => new(
             motos,
             history,
             new FakeKmHistoryService(),
             new FakeCurrentUserService(userId),
-            new FakeTransactionManager());
+            new FakeTransactionManager(),
+            storage ?? new NoopObjectStorage(),
+            Signer(),
+            new StorageQuota(new FakeAttachmentBytes(attachmentBytes), motos, Options.Create(new StorageOptions { MaxBytesPerUser = maxBytesPerUser })),
+            NullLogger<MotorcycleService>.Instance);
+
+    private static MediaUrlSigner Signer() => new(Options.Create(new JwtOptions { Key = new string('k', 40) }));
+
+    private static readonly byte[] PhotoBytes = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    private static readonly string PhotoDataUrl = "data:image/png;base64," + Convert.ToBase64String(PhotoBytes);
+
+    private static SaveMotorcycleDTO Dto(string? image) => new()
+    {
+        Name = "YBR 125",
+        Brand = "Yamaha",
+        Year = 2024,
+        Nickname = "Negra",
+        Km = 100,
+        Displacement = 125,
+        Plate = "ABC12D",
+        Image = image
+    };
+
+    private static (Guid Id, long Exp, string Sig, string? Version) ParseMediaUrl(string url)
+    {
+        var uri = new Uri("http://x" + url);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        return (Guid.Parse(uri.Segments[^1]), long.Parse(query["exp"]!, System.Globalization.CultureInfo.InvariantCulture), query["sig"]!, query["v"]);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithStorage_UploadsThePhotoAndReturnsASignedUrl()
+    {
+        var userId = Guid.NewGuid();
+        var motos = new FakeMotorcycleRepository();
+        var storage = new InMemoryObjectStorage();
+        var service = CreateService(userId, motos, new FakeKmHistoryRepository(), storage);
+
+        var result = await service.CreateAsync(Dto(PhotoDataUrl));
+
+        var stored = await motos.GetByIdAsync(result.Id);
+        Assert.Equal("default.png", stored!.Image);
+        Assert.Equal(PhotoBytes.Length, stored.ImageSizeBytes);
+        Assert.Equal($"motorcycles/{userId:N}/{result.Id:N}/{stored.ImageVersion}.png", stored.ImageKey);
+        Assert.Equal(new[] { stored.ImageKey! }, storage.GetKeys());
+        Assert.StartsWith($"/api/media/motorcycles/{result.Id}?v={stored.ImageVersion}&exp=", result.Image);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithoutStorage_KeepsTheDataUrlInTheDatabase()
+    {
+        var motos = new FakeMotorcycleRepository();
+        var service = CreateService(Guid.NewGuid(), motos, new FakeKmHistoryRepository());
+
+        var result = await service.CreateAsync(Dto(PhotoDataUrl));
+
+        var stored = await motos.GetByIdAsync(result.Id);
+        Assert.Equal(PhotoDataUrl, stored!.Image);
+        Assert.Null(stored.ImageKey);
+        Assert.StartsWith("/api/media/motorcycles/", result.Image);
+        Assert.DoesNotContain("base64", result.Image);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithoutPhoto_KeepsTheDefaultImage()
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+
+        Assert.Equal("default.png", (await service.CreateAsync(Dto(null))).Image);
+        Assert.Equal("default.png", (await service.CreateAsync(Dto("default.png"))).Image);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithAMediaUrl_IsRejected()
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            service.CreateAsync(Dto($"/api/media/motorcycles/{Guid.NewGuid()}?v=1&exp=1&sig=x")));
+
+        Assert.Equal("image_invalid_format", ex.Code);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenSavingFails_RemovesTheUploadedPhoto()
+    {
+        var userId = Guid.NewGuid();
+        var storage = new InMemoryObjectStorage();
+        var history = new FakeKmHistoryRepository { ThrowOnSave = true };
+        var service = CreateService(userId, new FakeMotorcycleRepository(), history, storage);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(Dto(PhotoDataUrl)));
+
+        Assert.Empty(storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task CreateAsync_BeyondTheQuota_IsRejectedBeforeUploading()
+    {
+        var userId = Guid.NewGuid();
+        var storage = new InMemoryObjectStorage();
+        // 995 bytes already used (attachments) + 8 incoming > 1000.
+        var service = CreateService(userId, new FakeMotorcycleRepository(), new FakeKmHistoryRepository(), storage, maxBytesPerUser: 1000, attachmentBytes: 995);
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(Dto(PhotoDataUrl)));
+
+        Assert.Equal("storage_quota_exceeded", ex.Code);
+        Assert.Empty(storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReplacingThePhoto_UploadsTheNewOneAndDeletesTheOldOneAfterSaving()
+    {
+        var userId = Guid.NewGuid();
+        var motos = new FakeMotorcycleRepository();
+        var storage = new InMemoryObjectStorage();
+        var service = CreateService(userId, motos, new FakeKmHistoryRepository(), storage);
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+        var moto = (await motos.GetByIdAsync(created.Id))!;
+        var oldKey = moto.ImageKey!;
+
+        await service.UpdateAsync(created.Id, Dto("data:image/webp;base64," + Convert.ToBase64String(new byte[] { 9, 9 })));
+
+        Assert.NotEqual(oldKey, moto.ImageKey);
+        Assert.EndsWith(".webp", moto.ImageKey);
+        Assert.Equal(2, moto.ImageSizeBytes);
+        Assert.Equal(new[] { moto.ImageKey! }, storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_EchoingTheOwnMediaUrl_KeepsThePhotoUntouched()
+    {
+        var userId = Guid.NewGuid();
+        var motos = new FakeMotorcycleRepository();
+        var storage = new InMemoryObjectStorage();
+        var service = CreateService(userId, motos, new FakeKmHistoryRepository(), storage);
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+        var moto = (await motos.GetByIdAsync(created.Id))!;
+        var (key, version) = (moto.ImageKey, moto.ImageVersion);
+
+        // The edit form sends back what the GET returned: a path or an absolute URL.
+        await service.UpdateAsync(created.Id, Dto(created.Image));
+        await service.UpdateAsync(created.Id, Dto("https://bikontrol.example" + created.Image));
+
+        Assert.Equal(key, moto.ImageKey);
+        Assert.Equal(version, moto.ImageVersion);
+        Assert.Equal(new[] { key! }, storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithAnotherMotorcyclesMediaUrl_IsRejected()
+    {
+        var userId = Guid.NewGuid();
+        var moto = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", userId) { Id = Guid.NewGuid() };
+        var service = CreateService(userId, new FakeMotorcycleRepository(moto), new FakeKmHistoryRepository());
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            service.UpdateAsync(moto.Id, Dto($"/api/media/motorcycles/{Guid.NewGuid()}?v=1&exp=1&sig=x")));
+
+        Assert.Equal("image_invalid_format", ex.Code);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("default.png")]
+    public async Task UpdateAsync_WithoutAPhoto_RemovesTheCurrentOne(string? image)
+    {
+        var userId = Guid.NewGuid();
+        var motos = new FakeMotorcycleRepository();
+        var storage = new InMemoryObjectStorage();
+        var service = CreateService(userId, motos, new FakeKmHistoryRepository(), storage);
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+        var moto = (await motos.GetByIdAsync(created.Id))!;
+
+        await service.UpdateAsync(created.Id, Dto(image));
+
+        Assert.Equal("default.png", moto.Image);
+        Assert.Null(moto.ImageKey);
+        Assert.Equal(0, moto.ImageSizeBytes);
+        Assert.Empty(storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenSavingFails_RemovesTheNewObjectAndKeepsTheOldOne()
+    {
+        var userId = Guid.NewGuid();
+        var motos = new FakeMotorcycleRepository();
+        var storage = new InMemoryObjectStorage();
+        var service = CreateService(userId, motos, new FakeKmHistoryRepository(), storage);
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+        var oldKey = (await motos.GetByIdAsync(created.Id))!.ImageKey!;
+        motos.ThrowOnSave = true;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.UpdateAsync(created.Id, Dto("data:image/jpeg;base64," + Convert.ToBase64String(new byte[] { 7 }))));
+
+        Assert.Equal(new[] { oldKey }, storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReplacingFreesTheOldPhotoInTheQuota()
+    {
+        var userId = Guid.NewGuid();
+        var moto = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", userId) { Id = Guid.NewGuid(), ImageSizeBytes = 900, Image = "default.png" };
+        // 900 used by this very photo; the new 8-byte one replaces it, so 8 <= 1000 even though 900 + 8 + 100 would not be.
+        var service = CreateService(userId, new FakeMotorcycleRepository(moto), new FakeKmHistoryRepository(), maxBytesPerUser: 1000, attachmentBytes: 100);
+
+        await service.UpdateAsync(moto.Id, Dto(PhotoDataUrl));
+
+        Assert.Equal(PhotoBytes.Length, moto.ImageSizeBytes);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_DropsThePhotoSoItNoLongerCountsAgainstTheQuota()
+    {
+        var userId = Guid.NewGuid();
+        var motos = new FakeMotorcycleRepository();
+        var storage = new InMemoryObjectStorage();
+        var service = CreateService(userId, motos, new FakeKmHistoryRepository(), storage);
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+
+        await service.SoftDeleteAsync(created.Id);
+
+        Assert.Empty(storage.GetKeys());
+        Assert.Equal(0, await motos.GetImageBytesByUserAsync(userId));
+    }
+
+    [Fact]
+    public async Task GetByCurrentUserAsync_ExposesSignedUrlsAndKeepsTheDefault()
+    {
+        var userId = Guid.NewGuid();
+        var service = CreateService(userId, new FakeMotorcycleRepository(), new FakeKmHistoryRepository(), new InMemoryObjectStorage());
+        var withPhoto = await service.CreateAsync(Dto(PhotoDataUrl));
+        var without = await service.CreateAsync(Dto(null));
+
+        var list = await service.GetByCurrentUserAsync();
+
+        Assert.StartsWith("/api/media/motorcycles/", list.Single(m => m.Id == withPhoto.Id).Image);
+        Assert.Equal("default.png", list.Single(m => m.Id == without.Id).Image);
+    }
+
+    [Fact]
+    public async Task OpenImageAsync_ServesTheStoredPhotoForAValidSignature()
+    {
+        var motos = new FakeMotorcycleRepository();
+        var service = CreateService(Guid.NewGuid(), motos, new FakeKmHistoryRepository(), new InMemoryObjectStorage());
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+        var (id, exp, sig, _) = ParseMediaUrl(created.Image);
+
+        using var media = await service.OpenImageAsync(id, exp, sig);
+        using var buffer = new MemoryStream();
+        await media.Content.CopyToAsync(buffer);
+
+        Assert.Equal("image/png", media.ContentType);
+        Assert.Equal(PhotoBytes, buffer.ToArray());
+    }
+
+    [Fact]
+    public async Task OpenImageAsync_ForALegacyDatabasePhoto_ServesTheDecodedBytes()
+    {
+        var service = CreateService(Guid.NewGuid(), new FakeMotorcycleRepository(), new FakeKmHistoryRepository());
+        var created = await service.CreateAsync(Dto(PhotoDataUrl));
+        var (id, exp, sig, _) = ParseMediaUrl(created.Image);
+
+        using var media = await service.OpenImageAsync(id, exp, sig);
+
+        Assert.Equal(PhotoBytes.Length, media.Length);
+        Assert.Equal("image/png", media.ContentType);
+    }
+
+    [Fact]
+    public async Task OpenImageAsync_WithABadSignatureOrNoPhoto_ThrowsNotFound()
+    {
+        var userId = Guid.NewGuid();
+        var service = CreateService(userId, new FakeMotorcycleRepository(), new FakeKmHistoryRepository(), new InMemoryObjectStorage());
+        var withPhoto = await service.CreateAsync(Dto(PhotoDataUrl));
+        var without = await service.CreateAsync(Dto(null));
+        var (id, exp, sig, _) = ParseMediaUrl(withPhoto.Image);
+        var signer = Signer();
+        var (noPhotoExp, noPhotoSig) = (long.Parse(System.Web.HttpUtility.ParseQueryString(new Uri("http://x" + signer.CreateMotorcycleUrl(without.Id, null)).Query)["exp"]!, System.Globalization.CultureInfo.InvariantCulture),
+            System.Web.HttpUtility.ParseQueryString(new Uri("http://x" + signer.CreateMotorcycleUrl(without.Id, null)).Query)["sig"]!);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.OpenImageAsync(id, exp, sig + "x"));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.OpenImageAsync(Guid.NewGuid(), exp, sig));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.OpenImageAsync(without.Id, noPhotoExp, noPhotoSig));
+    }
 
     private sealed class FakeTransactionManager : ITransactionManager
     {
@@ -294,6 +590,11 @@ public class MotorcycleServiceTests
 
         public FakeMotorcycleRepository(params Motorcycle[] seed) => _items.AddRange(seed);
 
+        public bool ThrowOnSave { get; set; }
+
+        public Task<long> GetImageBytesByUserAsync(Guid userId) =>
+            Task.FromResult(_items.Where(m => m.UserId == userId).Sum(m => (long)m.ImageSizeBytes));
+
         public Task<Motorcycle> AddAsync(Motorcycle motorcycle)
         {
             if (motorcycle.Id == Guid.Empty) motorcycle.Id = Guid.NewGuid();
@@ -315,12 +616,33 @@ public class MotorcycleServiceTests
         }
 
         public Task UpdateAsync(Motorcycle motorcycle) => Task.CompletedTask;
-        public Task SaveChangesAsync() => Task.CompletedTask;
+
+        public Task SaveChangesAsync() =>
+            ThrowOnSave ? throw new InvalidOperationException("db down") : Task.CompletedTask;
+    }
+
+    /// <summary>Only the attachment byte total matters to the shared quota.</summary>
+    private sealed class FakeAttachmentBytes : IMaintenanceRecordAttachmentRepository
+    {
+        private readonly long _bytes;
+        public FakeAttachmentBytes(long bytes) => _bytes = bytes;
+        public Task<long> GetTotalSizeBytesByUserAsync(Guid userId) => Task.FromResult(_bytes);
+        public Task<MaintenanceRecordAttachment?> GetByIdAsync(Guid id) => throw new NotImplementedException();
+        public Task<IReadOnlyList<MaintenanceRecordAttachment>> GetByRecordIdAsync(Guid recordId) => throw new NotImplementedException();
+        public Task<IReadOnlyList<MaintenanceRecordAttachment>> GetByRecordIdsAsync(IEnumerable<Guid> recordIds) => throw new NotImplementedException();
+        public Task<IReadOnlyList<string>> GetStorageKeysByUserAsync(Guid userId) => throw new NotImplementedException();
+        public Task<IReadOnlyList<MaintenanceRecordAttachment>> GetPendingStorageMigrationAsync(int take) => throw new NotImplementedException();
+        public Task<Guid?> GetOwnerIdAsync(Guid attachmentId) => throw new NotImplementedException();
+        public Task AddAsync(MaintenanceRecordAttachment entity) => throw new NotImplementedException();
+        public Task RemoveAsync(MaintenanceRecordAttachment entity) => throw new NotImplementedException();
+        public Task SaveChangesAsync() => throw new NotImplementedException();
     }
 
     private sealed class FakeKmHistoryRepository : IKmHistoryRepository
     {
         private readonly List<MotorcycleKmHistory> _items = new();
+
+        public bool ThrowOnSave { get; set; }
 
         public void Seed(Guid motorcycleId, int km, DateTime recordedAt) =>
             _items.Add(new MotorcycleKmHistory { MotorcycleId = motorcycleId, Km = km, RecordedAt = recordedAt });
@@ -375,7 +697,8 @@ public class MotorcycleServiceTests
         }
 
         public Task LockMotorcycleAsync(Guid motorcycleId) => Task.CompletedTask;
-        public Task SaveChangesAsync() => Task.CompletedTask;
+        public Task SaveChangesAsync() =>
+            ThrowOnSave ? throw new InvalidOperationException("db down") : Task.CompletedTask;
     }
 
     private sealed class FakeKmHistoryService : IKmHistoryService

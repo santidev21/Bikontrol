@@ -219,6 +219,9 @@ public class StatisticsServiceTests
 
     private sealed class FakeMotorcycleService : IMotorcycleService
     {
+        public Task<StoredObject> OpenImageAsync(Guid id, long expiresUnix, string? signature, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
         private readonly List<MotorcycleDTO> _motorcycles;
         public FakeMotorcycleService(List<MotorcycleDTO> motorcycles) => _motorcycles = motorcycles;
         public Task<MotorcycleDTO> CreateAsync(SaveMotorcycleDTO dto) => throw new NotImplementedException();

@@ -44,7 +44,7 @@ export const es: Record<string, string> = {
   'errors.attachment_not_found': 'Adjunto no encontrado.',
   'errors.record_not_found': 'Registro de mantenimiento no encontrado.',
   'errors.storage_quota_exceeded':
-    'Alcanzaste el límite de almacenamiento de adjuntos. Elimina alguno para subir otro.',
+    'Alcanzaste el límite de almacenamiento de imágenes. Elimina alguna para subir otra.',
   'errors.record_no_access': 'No tienes permisos para este registro.',
   'errors.fuel_not_found': 'Carga de combustible no encontrada.',
   'errors.fuel_future_date': 'No puedes registrar cargas posteriores al dia de hoy.',
