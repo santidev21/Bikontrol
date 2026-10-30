@@ -17,7 +17,7 @@ namespace Bikontrol.Application.Services
     /// database); either way the API hands out signed same-origin URLs, and a
     /// per-user quota caps the stored bytes.
     /// </summary>
-    public class MaintenanceAttachmentService : IMaintenanceAttachmentService
+    public partial class MaintenanceAttachmentService : IMaintenanceAttachmentService
     {
         private readonly IMotorcycleMaintenanceRecordRepository _recordRepository;
         private readonly IMaintenanceRecordAttachmentRepository _attachmentRepository;
@@ -165,7 +165,7 @@ namespace Bikontrol.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not delete {Count} object(s) from storage; they are orphaned.", keys.Count());
+                LogOrphanedObjects(_logger, ex, keys.Count());
             }
         }
 
@@ -185,5 +185,8 @@ namespace Bikontrol.Application.Services
             if (_current.IsDemo)
                 throw new ForbiddenAccessException("El usuario demo solo puede visualizar información.", "demo_read_only");
         }
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Could not delete {Count} object(s) from storage; they are orphaned.")]
+        private static partial void LogOrphanedObjects(ILogger logger, Exception exception, int count);
     }
 }

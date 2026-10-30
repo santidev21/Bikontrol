@@ -132,7 +132,7 @@ public sealed class AttachmentStorageIntegrationTests
 
         var key = await StorageKeyOfAsync(legacyId);
         Assert.NotNull(key);
-        using var stored = await Storage.GetAsync(key!);
+        using var stored = await Storage.GetAsync(key);
         Assert.NotNull(stored);
 
         // And it is still listed and served for its owner.

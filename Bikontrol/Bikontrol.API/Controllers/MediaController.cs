@@ -31,7 +31,7 @@ namespace Bikontrol.API.Controllers
             // The bytes behind an id never change, so the id is a perfect ETag; the
             // signed URL is stable for a 6-hour window, which lets the browser cache.
             Response.Headers.CacheControl = "private, max-age=21600";
-            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            Response.Headers.XContentTypeOptions = "nosniff";
             return File(media.Content, media.ContentType, lastModified: null, entityTag: new EntityTagHeaderValue($"\"{id:N}\""));
         }
     }

@@ -14,7 +14,7 @@ namespace Bikontrol.Application.Services
     /// crash is harmless. Run it from a fresh DI scope per batch so the change
     /// tracker never accumulates megabytes of base64.
     /// </summary>
-    public sealed class AttachmentStorageMigrator
+    public sealed partial class AttachmentStorageMigrator
     {
         private readonly IMaintenanceRecordAttachmentRepository _attachments;
         private readonly IObjectStorage _storage;
@@ -46,7 +46,7 @@ namespace Bikontrol.Application.Services
                     var owner = await _attachments.GetOwnerIdAsync(attachment.Id);
                     if (owner is null)
                     {
-                        _logger.LogWarning("Attachment {AttachmentId} has no owner; skipped.", attachment.Id);
+                        LogNoOwner(_logger, attachment.Id);
                         failed++;
                         continue;
                     }
@@ -67,12 +67,18 @@ namespace Bikontrol.Application.Services
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    _logger.LogWarning(ex, "Could not migrate attachment {AttachmentId}; it stays in the database.", attachment.Id);
+                    LogMigrationFailed(_logger, ex, attachment.Id);
                     failed++;
                 }
             }
 
             return new StorageMigrationBatch(migrated, failed);
         }
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Attachment {AttachmentId} has no owner; skipped.")]
+        private static partial void LogNoOwner(ILogger logger, Guid attachmentId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Could not migrate attachment {AttachmentId}; it stays in the database.")]
+        private static partial void LogMigrationFailed(ILogger logger, Exception exception, Guid attachmentId);
     }
 }

@@ -17,7 +17,7 @@ namespace Bikontrol.Application.Services
     /// Account-level operations that span several repositories. Currently the
     /// "download my data" export; deletion will live here too.
     /// </summary>
-    public class AccountService : IAccountService
+    public partial class AccountService : IAccountService
     {
         private readonly IUserRepository _userRepository;
         private readonly IMotorcycleRepository _motorcycleRepository;
@@ -170,7 +170,7 @@ namespace Bikontrol.Application.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Account deleted but {Count} stored object(s) could not be removed.", storageKeys.Count);
+                    LogObjectsNotRemoved(_logger, ex, storageKeys.Count);
                 }
             }
         }
@@ -188,7 +188,7 @@ namespace Bikontrol.Application.Services
                     var stored = await _storage.GetAsync(attachment.StorageKey);
                     if (stored is null)
                     {
-                        _logger.LogWarning("Attachment {AttachmentId} points to a missing object; exporting it empty.", attachment.Id);
+                        LogMissingObject(_logger, attachment.Id);
                     }
                     else
                     {
@@ -211,5 +211,11 @@ namespace Bikontrol.Application.Services
             dto.HasPassword = user.HasPassword;
             return dto;
         }
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Account deleted but {Count} stored object(s) could not be removed.")]
+        private static partial void LogObjectsNotRemoved(ILogger logger, Exception exception, int count);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Attachment {AttachmentId} points to a missing object; exporting it empty.")]
+        private static partial void LogMissingObject(ILogger logger, Guid attachmentId);
     }
 }

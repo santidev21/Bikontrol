@@ -56,7 +56,7 @@ public class MaintenanceAttachmentServiceTests
     {
         var uri = new Uri("http://x" + url);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        return (Guid.Parse(uri.Segments[^1]), long.Parse(query["exp"]!), query["sig"]!);
+        return (Guid.Parse(uri.Segments[^1]), long.Parse(query["exp"]!, System.Globalization.CultureInfo.InvariantCulture), query["sig"]!);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class MaintenanceAttachmentServiceTests
         var saved = Assert.Single(repo.Saved);
         Assert.Equal(string.Empty, saved.DataUrl);
         Assert.Equal($"attachments/{UserId:N}/{saved.Id:N}.png", saved.StorageKey);
-        Assert.Equal(new[] { saved.StorageKey }, storage.Keys);
+        Assert.Equal(new[] { saved.StorageKey! }, storage.GetKeys());
         Assert.StartsWith("/api/media/attachments/", dto.DataUrl);
     }
 
@@ -210,7 +210,7 @@ public class MaintenanceAttachmentServiceTests
             service.AddAsync(RecordId, new AddAttachmentRequest { DataUrl = PngDataUrl }));
 
         Assert.Equal("storage_quota_exceeded", ex.Code);
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.GetKeys());
         Assert.Empty(repo.Saved);
     }
 
@@ -224,7 +224,7 @@ public class MaintenanceAttachmentServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.AddAsync(RecordId, new AddAttachmentRequest { DataUrl = PngDataUrl }));
 
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.GetKeys());
     }
 
     [Fact]
@@ -239,7 +239,7 @@ public class MaintenanceAttachmentServiceTests
 
         await service.DeleteAsync(RecordId, attachment.Id);
 
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.GetKeys());
     }
 
     [Fact]

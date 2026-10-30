@@ -20,7 +20,7 @@ public class ObjectStorageTests
     private static (long Exp, string Sig) Parse(string url)
     {
         var query = System.Web.HttpUtility.ParseQueryString(new Uri("http://x" + url).Query);
-        return (long.Parse(query["exp"]!), query["sig"]!);
+        return (long.Parse(query["exp"]!, System.Globalization.CultureInfo.InvariantCulture), query["sig"]!);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class ObjectStorageTests
         using (var found = await storage.GetAsync("k"))
         {
             Assert.NotNull(found);
-            Assert.Equal("image/png", found!.ContentType);
+            Assert.Equal("image/png", found.ContentType);
             Assert.Equal(1, found.Length);
         }
 
@@ -128,7 +128,7 @@ public class ObjectStorageTests
         Assert.Equal($"attachments/{owner:N}/{legacy.Id:N}.png", legacy.StorageKey);
         Assert.Equal(string.Empty, legacy.DataUrl);
         Assert.Equal(ImageDataUrlValidator.Decode(PngDataUrl).Length, legacy.SizeBytes);
-        Assert.Equal(new[] { legacy.StorageKey }, storage.Keys);
+        Assert.Equal(new[] { legacy.StorageKey! }, storage.GetKeys());
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class ObjectStorageTests
         Assert.Equal(new StorageMigrationBatch(0, 2), result);
         Assert.Null(broken.StorageKey);
         Assert.Null(orphan.StorageKey);
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.GetKeys());
     }
 
     [Fact]

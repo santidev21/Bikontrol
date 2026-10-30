@@ -13,7 +13,7 @@ namespace Bikontrol.Infrastructure.Storage
 
         public bool IsEnabled => true;
 
-        public IReadOnlyCollection<string> Keys => _objects.Keys.ToList();
+        public IReadOnlyCollection<string> GetKeys() => _objects.Keys.ToList();
 
         public Task PutAsync(string key, byte[] content, string contentType, CancellationToken cancellationToken = default)
         {

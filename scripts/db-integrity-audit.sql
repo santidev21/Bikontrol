@@ -157,5 +157,5 @@ SELECT EXISTS (
 -- 18. Adjuntos sin imagen en ninguna parte (ni data URL ni objeto en el bucket)
 SELECT '18. Adjunto sin imagen' AS check_name, "Id", "MotorcycleMaintenanceRecordId"
 FROM maintenance_record_attachments
-WHERE "StorageKey" IS NULL AND "DataUrl" = '';
+WHERE "StorageKey" IS NULL AND char_length("DataUrl") = 0;
 \endif

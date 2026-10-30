@@ -162,7 +162,7 @@ public class AccountServiceTests
 
         await service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "secret" });
 
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.GetKeys());
     }
 
     [Fact]
