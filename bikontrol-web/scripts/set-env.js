@@ -31,6 +31,10 @@ const fileEnv = parseEnvFile(envPath);
 const googleClientId =
   process.env.GOOGLE_CLIENT_ID || fileEnv.GOOGLE_CLIENT_ID || fileEnv.Google__ClientId || '';
 
+// Browser error tracking (Sentry). Public DSN, baked in at build time; empty
+// disables the SDK entirely (nothing is loaded or sent).
+const sentryDsn = process.env.SENTRY_DSN_WEB || fileEnv.SENTRY_DSN_WEB || '';
+
 // Etiqueta visible en Perfil. Fuente única: el `version.txt` de la raíz, que
 // mantiene release-please. En Docker el archivo se copia a `/version.txt`
 // (ver docker/Dockerfile.web).
@@ -58,6 +62,8 @@ function writeEnv(file, apiUrl, production, demoEnabled) {
   production: ${production},
   apiUrl: '${apiUrl}',
   googleClientId: '${googleClientId}',
+  // Public Sentry DSN for browser errors; empty = error tracking off.
+  sentryDsn: '${sentryDsn}',
   // Public demo tenant. Must match the API's \`Demo:Enabled\` flag; when false
   // the login screen hides the demo button (POST /api/auth/demo returns 404).
   demoEnabled: ${demoEnabled},

@@ -6,11 +6,13 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './shared/interceptors/auth.interceptor';
 import { refreshInterceptor } from './shared/interceptors/refresh.interceptor';
+import { provideErrorTracking } from './shared/monitoring/sentry';
 import { loadingInterceptor } from './shared/interceptors/loading.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    ...provideErrorTracking(),
     provideRouter(routes),
     provideHttpClient(
       withFetch(),

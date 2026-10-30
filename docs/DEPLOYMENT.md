@@ -68,7 +68,7 @@ Staging deploys in build mode (no tag) because the web bundle bakes the API URL 
 
 - **TLS** terminates at the gateway with TLS 1.2/1.3 only, HSTS (`max-age=31536000; includeSubDomains; preload`), OCSP stapling and a strong cipher suite (gateway `snippets/ssl-params.conf` + `security-headers.conf`).
 - **Security headers** (HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP/CORP) are applied at the gateway for every response; the frontend container repeats the essential ones for defense in depth.
-- **Content-Security-Policy** is set per site at the gateway (`sites-enabled/bikontrol.santidev21.tech.conf`) and mirrored in the frontend container (`docker/nginx.conf`). The allow-list is intentionally tight: `'self'` plus Google Identity Services (`accounts.google.com`) and the Font Awesome CDN (`cdnjs.cloudflare.com`); `data:`/`blob:` for resized photos. There is **no `'unsafe-eval'`**. When adding a third-party script/style/font/frame, add its origin to the CSP in **both** places or it will be blocked.
+- **Content-Security-Policy** is set per site at the gateway (`sites-enabled/bikontrol.santidev21.tech.conf`) and mirrored in the frontend container (`docker/nginx.conf`). The allow-list is intentionally tight: `'self'` plus Google Identity Services (`accounts.google.com`) the Font Awesome CDN (`cdnjs.cloudflare.com`) and Sentry's ingest hosts (`*.ingest.sentry.io`, `*.ingest.de.sentry.io`, `*.ingest.us.sentry.io`, `connect-src` only); `data:`/`blob:` for resized photos. There is **no `'unsafe-eval'`**. When adding a third-party script/style/font/frame, add its origin to the CSP in **both** places or it will be blocked.
 
 ## Database backups
 
