@@ -73,7 +73,7 @@
     },
     {
       "id": 4,
-      "title": "Managed heap (MB)",
+      "title": "Process memory (MB)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -87,8 +87,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "process_runtime_dotnet_gc_heap_size_bytes / 1024 / 1024",
-          "legendFormat": "heap",
+          "expr": "dotnet_process_memory_working_set_bytes / 1024 / 1024",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ]
