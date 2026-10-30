@@ -302,7 +302,7 @@ jobs:
       - name: Deploy ${{ needs.publish-images.outputs.tag }} via SSH
         uses: appleboy/ssh-action@v1.2.5
         env:
-          IMAGE_TAG: ${{ needs.publish-images.outputs.tag }}
+          DEPLOY_TAG: ${{ needs.publish-images.outputs.tag }}
           API_IMAGE: ${{ needs.publish-images.outputs.api_image }}
           WEB_IMAGE: ${{ needs.publish-images.outputs.web_image }}
           REGISTRY_USER: ${{ github.actor }}
@@ -311,7 +311,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          envs: IMAGE_TAG,API_IMAGE,WEB_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
+          envs: DEPLOY_TAG,API_IMAGE,WEB_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
           script: |
             cd /opt/bikontrol
-            ./scripts/deploy.sh deploy "$IMAGE_TAG"
+            ./scripts/deploy.sh deploy "$DEPLOY_TAG"
