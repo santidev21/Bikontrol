@@ -188,6 +188,8 @@ services:
         # Public Google OAuth client id, baked into the bundle. Sourced from the
         # deploy .env (Google__ClientId); empty disables the Google button.
         GOOGLE_CLIENT_ID: ${Google__ClientId:-}
+        # Public DSN of the frontend (browser) Sentry project; empty disables it.
+        SENTRY_DSN: ${Sentry__WebDsn:-}
     container_name: bikontrol
     restart: unless-stopped
     depends_on:

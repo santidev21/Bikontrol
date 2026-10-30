@@ -5,6 +5,10 @@ FROM node:24-alpine AS build
 # at build time (set-env.js reads GOOGLE_CLIENT_ID). Public value, no secret.
 ARG GOOGLE_CLIENT_ID=
 ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+# Public DSN of the frontend Sentry project, baked in like the client id above.
+# Empty disables error reporting (and the SDK is never downloaded by the browser).
+ARG SENTRY_DSN=
+ENV SENTRY_DSN=${SENTRY_DSN}
 # API base URL baked into the prod bundle. `prebuild` (set-env.js) reads API_URL,
 # so the value must be set before `npm run build` (post-build rewrites of the
 # hashed .js invalidate ngsw.json integrity and break the service worker).

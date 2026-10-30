@@ -31,6 +31,10 @@ const fileEnv = parseEnvFile(envPath);
 const googleClientId =
   process.env.GOOGLE_CLIENT_ID || fileEnv.GOOGLE_CLIENT_ID || fileEnv.Google__ClientId || '';
 
+// Public DSN of the *frontend* Sentry project (a DSN is a public identifier, like the
+// Google client id). Empty = error reporting disabled and the SDK is never downloaded.
+const sentryDsn = process.env.SENTRY_DSN || fileEnv.SENTRY_DSN || fileEnv.Sentry__WebDsn || '';
+
 // Etiqueta visible en Perfil. Fuente única: el `version.txt` de la raíz, que
 // mantiene release-please. En Docker el archivo se copia a `/version.txt`
 // (ver docker/Dockerfile.web).
@@ -53,7 +57,7 @@ function readDemoEnabled() {
   return String(raw).trim().toLowerCase() === 'true';
 }
 
-function writeEnv(file, apiUrl, production, demoEnabled) {
+function writeEnv(file, apiUrl, production, demoEnabled, dsn) {
   const content = `export const environment = {
   production: ${production},
   apiUrl: '${apiUrl}',
@@ -61,6 +65,8 @@ function writeEnv(file, apiUrl, production, demoEnabled) {
   // Public demo tenant. Must match the API's \`Demo:Enabled\` flag; when false
   // the login screen hides the demo button (POST /api/auth/demo returns 404).
   demoEnabled: ${demoEnabled},
+  // Error reporting (Sentry browser project). Empty in dev: only production builds report.
+  sentryDsn: '${dsn}',
   // Etiqueta legible de la versión que se muestra en Perfil.
   // Súbela solo en releases con cambios visibles para el usuario (no en cada commit).
   appVersion: '${appVersion}',
@@ -78,8 +84,8 @@ const envDir = path.resolve(__dirname, '..', 'src', 'environments');
 const prodApiUrl = process.env.API_URL || 'https://bikontrol.santidev21.tech/api';
 // Dev usa HTTP plano (:5202) para no pelear con el cert autofirmado de Kestrel
 // en el navegador (ERR_CERT_AUTHORITY_INVALID). Prod mantiene su HTTPS real.
-writeEnv(path.join(envDir, 'environment.ts'), 'http://localhost:5202/api', false, true);
-writeEnv(path.join(envDir, 'environment.prod.ts'), prodApiUrl, true, prodDemoEnabled);
+writeEnv(path.join(envDir, 'environment.ts'), 'http://localhost:5202/api', false, true, '');
+writeEnv(path.join(envDir, 'environment.prod.ts'), prodApiUrl, true, prodDemoEnabled, sentryDsn);
 console.log(
-  `environment.ts and environment.prod.ts generated (prod apiUrl=${prodApiUrl}, prod demoEnabled=${prodDemoEnabled})`,
+  `environment.ts and environment.prod.ts generated (prod apiUrl=${prodApiUrl}, prod demoEnabled=${prodDemoEnabled}, error reporting ${sentryDsn ? 'on' : 'off'})`,
 );
