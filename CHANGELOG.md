@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.8.0](https://github.com/santidev21/Bikontrol/compare/v0.7.0...v0.8.0) (2026-10-30)
+
+
+### Features
+
+* dedicated worker for daily jobs; migrations off on startup by default ([#118](https://github.com/santidev21/Bikontrol/issues/118)) ([2e92de8](https://github.com/santidev21/Bikontrol/commit/2e92de8689ca5312d8bcd8596bbaaf631a673e70))
+* HTML emails with one-click unsubscribe and DNS deliverability check ([#121](https://github.com/santidev21/Bikontrol/issues/121)) ([7d3d44f](https://github.com/santidev21/Bikontrol/commit/7d3d44f26e9180435ad9f7ac5a61d9ae59f10acf))
+* JSON logs, job metrics, tracing and a monitoring stack with alerting ([#120](https://github.com/santidev21/Bikontrol/issues/120)) ([b3588ed](https://github.com/santidev21/Bikontrol/commit/b3588edbd5d0500a0f5f7d1ebda5c30c84863ff9))
+* store attachment images in a private S3-compatible bucket ([#123](https://github.com/santidev21/Bikontrol/issues/123)) ([0ddc475](https://github.com/santidev21/Bikontrol/commit/0ddc475967cb72f5809189bc8106a5e25432d6f3))
+* store motorcycle photos in object storage ([#128](https://github.com/santidev21/Bikontrol/issues/128)) ([8cb0da1](https://github.com/santidev21/Bikontrol/commit/8cb0da1c181b1f4a61a4c042f4924c51cd7653a3))
+* **web:** report unhandled browser errors to Sentry ([#129](https://github.com/santidev21/Bikontrol/issues/129)) ([e2c47b1](https://github.com/santidev21/Bikontrol/commit/e2c47b113e74c414e9176bc358e50f7bbd79d546))
+
+
+### Bug Fixes
+
+* **deploy:** let the backup cron run without root and find per-user rclone ([#130](https://github.com/santidev21/Bikontrol/issues/130)) ([e7379d2](https://github.com/santidev21/Bikontrol/commit/e7379d26d1bb5c230eca67598d6aef05081a7655))
+* **deploy:** let the backup cron run without root and find per-user rclone ([#131](https://github.com/santidev21/Bikontrol/issues/131)) ([2819083](https://github.com/santidev21/Bikontrol/commit/2819083d6332d132b2fc96d39ca43443d655eb3c))
+* **deploy:** record the real previous tag on the first tagged deploy ([#124](https://github.com/santidev21/Bikontrol/issues/124)) ([60e7efa](https://github.com/santidev21/Bikontrol/commit/60e7efa8fd21332561066f13de2921c311ba0710))
+* **deps:** patch vulnerable packages and fix the memory alert metric ([#127](https://github.com/santidev21/Bikontrol/issues/127)) ([e6d1672](https://github.com/santidev21/Bikontrol/commit/e6d1672c68e805e1a4f711d7f2e05900fbffc7a0))
+* **docker:** apply Alpine security updates in the web image ([#122](https://github.com/santidev21/Bikontrol/issues/122)) ([615d5be](https://github.com/santidev21/Bikontrol/commit/615d5bee07e46d16edf3e6fa6ae9acf97d5686c6))
+
 ## [0.7.0](https://github.com/santidev21/Bikontrol/compare/v0.6.1...v0.7.0) (2026-10-29)
 
 
