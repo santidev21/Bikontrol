@@ -55,15 +55,18 @@ groups:
 
   - name: bikontrol-resources
     rules:
-      # .NET heap growing a lot (possible leak).
+      # Process working set creeping toward the 512 MB container limit (possible
+      # leak, and the usual precursor of an OOM kill). Applies to the API and the
+      # worker. The runtime metrics were renamed to dotnet_* by OpenTelemetry
+      # runtime instrumentation >= 1.10.
       - alert: BikontrolHighMemory
-        expr: process_runtime_dotnet_gc_heap_size_bytes > 400 * 1024 * 1024
+        expr: dotnet_process_memory_working_set_bytes > 400 * 1024 * 1024
         for: 15m
         labels:
           severity: warning
         annotations:
-          summary: 'Bikontrol API heap above 400 MB'
-          description: 'The managed heap has exceeded 400 MB for 15 minutes.'
+          summary: 'Bikontrol {{ $labels.job }} memory above 400 MB'
+          description: 'The {{ $labels.job }} process working set has exceeded 400 MB for 15 minutes (container limit: 512 MB).'
 
   - name: bikontrol-jobs
     rules:

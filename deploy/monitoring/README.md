@@ -12,7 +12,7 @@ proxies it, so it must not be exposed publicly.
 | --- | --- |
 | ASP.NET Core | `http_server_request_duration_seconds_*` (rate, latency, status codes) |
 | HttpClient | `http_client_request_duration_seconds_*` |
-| .NET runtime | `process_runtime_dotnet_gc_*`, thread pool, exceptions |
+| .NET runtime | `dotnet_*` (GC, working set, thread pool, exceptions) |
 | Jobs and business | `bikontrol_job_runs_total{task,result}`, `bikontrol_job_duration_seconds`, `bikontrol_job_last_success_timestamp_seconds{task}`, `bikontrol_reminders_total{stage}`, `bikontrol_retention_deleted_total{kind}` |
 
 ## Running the stack
@@ -46,7 +46,7 @@ curl -XPOST localhost:9093/api/v2/alerts -H 'Content-Type: application/json' \
 - **Down / DB unreachable** — `up == 0` and a failing `/ready` probe.
 - **Errors** — 5xx rate above 5% for 10 minutes.
 - **Latency** — p95 above 1s for 10 minutes.
-- **Memory** — managed heap above 400 MB for 15 minutes.
+- **Memory** — process working set above 400 MB for 15 minutes (API and worker).
 - **Jobs** — worker down, a job failing repeatedly, or no successful run for 26 hours.
 
 Disk and blackbox (`/ready`) rules are included as comments since they need a
