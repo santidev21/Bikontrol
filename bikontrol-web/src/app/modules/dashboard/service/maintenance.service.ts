@@ -1,7 +1,8 @@
 import { Injectable, Signal, inject } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { resolveMediaUrl } from '../../../shared/utils/media-url';
 import {
   Maintenance,
   SaveMaintenanceDTO,
@@ -69,7 +70,9 @@ export class MaintenanceService {
   }
 
   getAttachments(recordId: string): Observable<MaintenanceAttachment[]> {
-    return this.http.get<MaintenanceAttachment[]>(`${this.apiUrl}/records/${recordId}/attachments`);
+    return this.http
+      .get<MaintenanceAttachment[]>(`${this.apiUrl}/records/${recordId}/attachments`)
+      .pipe(map((attachments) => attachments.map(withResolvedMedia)));
   }
 
   addAttachment(
@@ -77,10 +80,12 @@ export class MaintenanceService {
     dataUrl: string,
     fileName?: string | null,
   ): Observable<MaintenanceAttachment> {
-    return this.http.post<MaintenanceAttachment>(`${this.apiUrl}/records/${recordId}/attachments`, {
-      dataUrl,
-      fileName,
-    });
+    return this.http
+      .post<MaintenanceAttachment>(`${this.apiUrl}/records/${recordId}/attachments`, {
+        dataUrl,
+        fileName,
+      })
+      .pipe(map(withResolvedMedia));
   }
 
   deleteAttachment(recordId: string, attachmentId: string): Observable<void> {
@@ -133,4 +138,9 @@ export class MaintenanceService {
         : `${this.apiUrl}/motorcycle/${id}/records`;
     });
   }
+}
+
+/** `dataUrl` is a signed media path for stored images (or a legacy data URL). */
+function withResolvedMedia(attachment: MaintenanceAttachment): MaintenanceAttachment {
+  return { ...attachment, dataUrl: resolveMediaUrl(attachment.dataUrl) };
 }

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Testcontainers.PostgreSql;
 
 namespace Bikontrol.Tests.Integration.Infrastructure;
@@ -20,6 +22,18 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         .WithImage("postgres:16-alpine")
         .Build();
 
+    private const string Bucket = "bikontrol-test";
+    private const int StoragePort = 9090;
+
+    // A real S3-compatible HTTP server (Adobe S3Mock), so the storage adapter and
+    // the signed media endpoint are exercised end to end, not against a fake.
+    private readonly IContainer _storage = new ContainerBuilder()
+        .WithImage("adobe/s3mock:5.2.3")
+        .WithPortBinding(StoragePort, assignRandomHostPort: true)
+        .WithEnvironment("COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS", Bucket)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPath("/").ForPort(StoragePort)))
+        .Build();
+
     public async Task InitializeAsync()
     {
         if (!DockerProbe.IsAvailable)
@@ -27,7 +41,15 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
             return;
         }
 
-        await _database.StartAsync();
+        await Task.WhenAll(_database.StartAsync(), _storage.StartAsync());
+
+        var storageUrl = $"http://{_storage.Hostname}:{_storage.GetMappedPublicPort(StoragePort)}";
+
+        Environment.SetEnvironmentVariable("Storage__Enabled", "true");
+        Environment.SetEnvironmentVariable("Storage__ServiceUrl", storageUrl);
+        Environment.SetEnvironmentVariable("Storage__Bucket", Bucket);
+        Environment.SetEnvironmentVariable("Storage__AccessKey", "test-access-key");
+        Environment.SetEnvironmentVariable("Storage__SecretKey", "test-secret-key");
 
         // Program.cs reads configuration (and fails fast on Jwt:Key) before the
         // factory's ConfigureAppConfiguration runs, so use env vars. "Testing" is
@@ -66,6 +88,7 @@ public sealed class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncL
         if (DockerProbe.IsAvailable)
         {
             await _database.DisposeAsync();
+            await _storage.DisposeAsync();
         }
 
         await base.DisposeAsync();

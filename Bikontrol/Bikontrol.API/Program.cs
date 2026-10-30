@@ -127,6 +127,7 @@ builder.Services.AddValidatedOptions<WebPushOptions>(WebPushOptions.Section);
 builder.Services.AddValidatedOptions<ReminderOptions>(ReminderOptions.Section);
 builder.Services.AddValidatedOptions<RetentionOptions>(RetentionOptions.Section);
 builder.Services.AddValidatedOptions<DatabaseOptions>(DatabaseOptions.Section);
+builder.Services.AddValidatedOptions<StorageOptions>(StorageOptions.Section);
 
 // Bound eagerly too: the bearer handler is configured before the container is built.
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
@@ -471,6 +472,30 @@ if (migrateOnly || runMigrationsOnStartup)
             return;
         }
     }
+}
+
+// One-off (`deploy.sh migrate-attachments`): move attachment images that still
+// live as data URLs in the database into object storage. Idempotent, resumable,
+// one DI scope per batch so the change tracker never holds megabytes of base64.
+if (args.Contains("--migrate-attachments"))
+{
+    var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+    int migrated = 0, failed = 0;
+    while (true)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var batch = await scope.ServiceProvider
+            .GetRequiredService<Bikontrol.Application.Services.AttachmentStorageMigrator>()
+            .MigrateBatchAsync(50);
+        migrated += batch.Migrated;
+        failed += batch.Failed;
+        if (batch.Migrated == 0)
+            break;
+    }
+
+    Log.Information("Attachment migration finished: {Migrated} moved, {Failed} failed.", migrated, failed);
+    Environment.ExitCode = failed > 0 ? 1 : 0;
+    return;
 }
 
 // Demo mode is opt-in: never seed the demo tenant unless explicitly enabled.

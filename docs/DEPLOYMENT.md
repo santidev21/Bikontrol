@@ -115,6 +115,37 @@ Create the key once with `openssl rand -base64 48 > /opt/bikontrol/.backup-key &
 
 Recovery: `./scripts/deploy.sh restore-db backups/backup-xxx/db.sql.gz` (verifies the dump, restores in a single transaction, restarts the app). `./scripts/deploy.sh rollback` uses the same restore and also returns to the previous images. See [RUNBOOK](RUNBOOK.md) §4.
 
+## Object storage (attachment images)
+
+Attachment photos can live in a private S3-compatible bucket instead of PostgreSQL (design and trade-offs:
+[ADR 005](adr/005-object-storage.md)). Recommended: **Cloudflare R2** (S3 API, no egress fees).
+
+1. Create a **private** bucket (e.g. `bikontrol-prod`). No public access, no CORS: the API streams the
+   images behind signed URLs.
+2. Create an API token scoped to that bucket with *Object Read & Write*.
+3. Set in `.env`:
+   ```
+   Storage__Enabled=true
+   Storage__ServiceUrl=https://<account-id>.r2.cloudflarestorage.com
+   Storage__Bucket=bikontrol-prod
+   Storage__AccessKey=<token access key id>
+   Storage__SecretKey=<token secret>
+   ```
+   (`Storage__Region=auto` and path-style addressing are the defaults and are what R2 expects. For B2 use
+   its S3 endpoint and your bucket region; for MinIO/AWS adjust `ServiceUrl`/`Region`.)
+   `Storage__MaxBytesPerUser` caps each user's stored attachments (default 50 MB; `0` disables it).
+4. Deploy. New uploads go to the bucket; existing ones keep working from the database.
+5. Move the existing images: `./scripts/deploy.sh migrate-attachments` (idempotent; rerun after a failure;
+   exits non-zero if any row could not be moved). Afterwards the `DataUrl` column is empty for those rows,
+   which shrinks the database and its dumps.
+
+**Backups.** `pg_dump` and the offsite DB copy no longer contain the images, only their keys. Enable
+versioning or replication on the bucket at the provider, or mirror it periodically, e.g.
+`rclone sync r2:bikontrol-prod b2:bikontrol-prod-mirror`. Deploy-time rollbacks that restore a dump are
+safe: the bucket is only ever added to by new uploads.
+
+Local `docker:dev` and CI run a real S3 server (Adobe S3Mock) for the same code path.
+
 ## Email deliverability
 
 Bikontrol sends through plain SMTP, so any transactional provider works (Resend, Postmark, Amazon SES):
@@ -165,6 +196,7 @@ Postgres runs with `ssl=on` via `docker/db/init-ssl.sh` (self-signed `CN=bikontr
 | `EmailConfirmation__Required` | Require email confirmation before login (default `true`). Requires working SMTP; set `false` to skip verification. |
 | `Lockout__Enabled` / `Lockout__MaxFailedAttempts` / `Lockout__Minutes` | Account lockout after repeated failed logins (defaults: `true` / `5` / `15`). |
 | `Sentry__Dsn` / `Sentry__TracesSampleRate` | Error tracking (Sentry). Empty DSN = disabled. Sample rate default `0.1`. |
+| `Storage__Enabled` / `Storage__ServiceUrl` / `Storage__Bucket` / `Storage__AccessKey` / `Storage__SecretKey` / `Storage__Region` / `Storage__ForcePathStyle` / `Storage__MaxBytesPerUser` | Object storage for attachment images (default off: images stay in the database). Startup fails when enabled with missing settings. See *Object storage*. |
 | `Metrics__Enabled` | Expose OpenTelemetry metrics at `/metrics` (Prometheus format). Default `true` in compose; internal-network only. See [`deploy/monitoring/`](../deploy/monitoring/README.md). |
 | `Reminders__Enabled` / `Reminders__EmailEnabled` / `Reminders__PushEnabled` / `Reminders__DailyHourUtc` / `Reminders__DedupeDays` | Maintenance reminder engine (defaults: `true` / `true` / `true` / `8` (UTC) / `3`). Email digest needs SMTP; push needs VAPID. |
 | `WebPush__PublicKey` / `WebPush__PrivateKey` / `WebPush__Subject` | Web Push (VAPID). Generate with `npx web-push generate-vapid-keys --json`. Empty keys disable push (email still works). **Rotating the keys invalidates all existing subscriptions** (users must re-enable notifications). |

@@ -147,6 +147,68 @@ public class AccountServiceTests
     }
 
     [Fact]
+    public async Task DeleteMyAccountAsync_ShouldRemoveTheUsersStoredObjectsAfterThePurge()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed:secret");
+        var storage = new Bikontrol.Infrastructure.Storage.InMemoryObjectStorage();
+        await storage.PutAsync("attachments/a.png", new byte[] { 1 }, "image/png");
+        var attachment = new MaintenanceRecordAttachment
+        {
+            Id = Guid.NewGuid(),
+            MotorcycleMaintenanceRecordId = Guid.NewGuid(),
+            StorageKey = "attachments/a.png"
+        };
+        var service = CreateService(user.Id, user, attachments: new[] { attachment }, storage: storage);
+
+        await service.DeleteMyAccountAsync(new DeleteAccountRequest { Confirmation = "ELIMINAR", Password = "secret" });
+
+        Assert.Empty(storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task ExportMyDataAsync_ShouldInlineStoredImagesAsDataUrls()
+    {
+        var user = new User("rider@bikontrol.test", "Rider", "hashed");
+        var motorcycle = MotorcycleFor(user.Id, "XTZ");
+        var record = new MotorcycleMaintenanceRecord { Id = Guid.NewGuid(), MotorcycleId = motorcycle.Id, UserMaintenanceId = Guid.NewGuid() };
+        var storage = new Bikontrol.Infrastructure.Storage.InMemoryObjectStorage();
+        await storage.PutAsync("attachments/a.png", new byte[] { 1, 2, 3 }, "image/png");
+        var stored = new MaintenanceRecordAttachment
+        {
+            Id = Guid.NewGuid(),
+            MotorcycleMaintenanceRecordId = record.Id,
+            StorageKey = "attachments/a.png",
+            ContentType = "image/png"
+        };
+        var missing = new MaintenanceRecordAttachment
+        {
+            Id = Guid.NewGuid(),
+            MotorcycleMaintenanceRecordId = record.Id,
+            StorageKey = "attachments/gone.png",
+            ContentType = "image/png"
+        };
+        var legacy = new MaintenanceRecordAttachment
+        {
+            Id = Guid.NewGuid(),
+            MotorcycleMaintenanceRecordId = record.Id,
+            DataUrl = "data:image/png;base64,AAAA",
+            ContentType = "image/png"
+        };
+        var service = CreateService(
+            user.Id, user,
+            motorcycles: new[] { motorcycle },
+            records: new[] { record },
+            attachments: new[] { stored, missing, legacy },
+            storage: storage);
+
+        var export = await service.ExportMyDataAsync();
+
+        Assert.Equal("data:image/png;base64,AQID", export.Attachments.Single(a => a.Id == stored.Id).DataUrl);
+        Assert.Equal(string.Empty, export.Attachments.Single(a => a.Id == missing.Id).DataUrl);
+        Assert.Equal("data:image/png;base64,AAAA", export.Attachments.Single(a => a.Id == legacy.Id).DataUrl);
+    }
+
+    [Fact]
     public async Task DeleteMyAccountAsync_GoogleAccount_ShouldNotRequirePassword()
     {
         var user = new User("rider@bikontrol.test", "Rider", "hashed:random");
@@ -194,7 +256,8 @@ public class AccountServiceTests
         IEnumerable<MotorcycleMaintenanceRecord>? records = null,
         IEnumerable<MaintenanceRecordAttachment>? attachments = null,
         IReadOnlyDictionary<Guid, int>? currentKms = null,
-        string? role = null)
+        string? role = null,
+        Bikontrol.Application.Interfaces.IObjectStorage? storage = null)
     {
         return new AccountService(
             userRepository ?? new FakeUserRepository(user),
@@ -207,6 +270,7 @@ public class AccountServiceTests
             new FakeKmHistoryService(currentKms ?? new Dictionary<Guid, int>()),
             new FakePasswordHasher(),
             new FakeTransactionManager(),
+            storage ?? new Bikontrol.Infrastructure.Storage.NoopObjectStorage(),
             new FakeCurrentUserService(userId, role));
     }
 
@@ -319,6 +383,12 @@ public class AccountServiceTests
             return Task.FromResult<IReadOnlyList<MaintenanceRecordAttachment>>(
                 _items.Where(a => ids.Contains(a.MotorcycleMaintenanceRecordId)).ToList());
         }
+        public Task<long> GetTotalSizeBytesByUserAsync(Guid userId) => Task.FromResult(_items.Sum(a => (long)a.SizeBytes));
+        public Task<IReadOnlyList<string>> GetStorageKeysByUserAsync(Guid userId) =>
+            Task.FromResult<IReadOnlyList<string>>(_items.Where(a => a.StorageKey is not null).Select(a => a.StorageKey!).ToList());
+        public Task<IReadOnlyList<MaintenanceRecordAttachment>> GetPendingStorageMigrationAsync(int take) =>
+            Task.FromResult<IReadOnlyList<MaintenanceRecordAttachment>>(Array.Empty<MaintenanceRecordAttachment>());
+        public Task<Guid?> GetOwnerIdAsync(Guid attachmentId) => Task.FromResult<Guid?>(null);
         public Task AddAsync(MaintenanceRecordAttachment entity) => Task.CompletedTask;
         public Task RemoveAsync(MaintenanceRecordAttachment entity) => Task.CompletedTask;
         public Task SaveChangesAsync() => Task.CompletedTask;

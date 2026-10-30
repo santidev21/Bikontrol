@@ -42,6 +42,8 @@ export const en: Record<string, string> = {
   'errors.default_maintenance_not_found': 'The default maintenance item was not found.',
   'errors.attachment_not_found': 'Attachment not found.',
   'errors.record_not_found': 'Maintenance record not found.',
+  'errors.storage_quota_exceeded':
+    'You reached the attachment storage limit. Delete one to upload another.',
   'errors.record_no_access': 'You are not allowed to access this record.',
   'errors.fuel_not_found': 'Fuel-up not found.',
   'errors.fuel_future_date': 'You cannot log fuel-ups dated after today.',

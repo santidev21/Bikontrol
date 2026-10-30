@@ -52,6 +52,22 @@ namespace Bikontrol.Application.Services
                 throw new ValidationException("La imagen es demasiado grande.", "image_too_large");
         }
 
+        /// <summary>Decodes an already validated image data URL into its bytes.</summary>
+        public static byte[] Decode(string dataUrl) =>
+            Convert.FromBase64String(dataUrl[(dataUrl.IndexOf(',', StringComparison.Ordinal) + 1)..]);
+
+        /// <summary>Builds a data URL from stored bytes (account export, legacy-compatible reads).</summary>
+        public static string Encode(byte[] content, string contentType) =>
+            $"data:{contentType};base64,{Convert.ToBase64String(content)}";
+
+        /// <summary>File extension used in object keys for an accepted MIME type.</summary>
+        public static string ExtensionOf(string contentType) => contentType switch
+        {
+            "image/png" => "png",
+            "image/webp" => "webp",
+            _ => "jpg"
+        };
+
         /// <summary>Maps an accepted data URL prefix to its MIME type.</summary>
         public static string ContentTypeOf(string dataUrl)
         {

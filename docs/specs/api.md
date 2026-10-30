@@ -50,9 +50,11 @@
 - `POST /api/maintenances/records` (optional `cost`, ≥ 0; feeds cost statistics)
 - `GET /api/maintenances/motorcycle/{motorcycleId}/records` (newest first; optional `?limit` 1–500 to page the history, default = full history — values over the ceiling clamp)
 - `GET /api/maintenances/motorcycle/{motorcycleId}/upcoming`
-- `GET /api/maintenances/records/{recordId}/attachments` (photos/documents of a record)
+- `GET /api/maintenances/records/{recordId}/attachments` (photos/documents of a record; `dataUrl` is a signed `/api/media/...` path)
 - `POST /api/maintenances/records/{recordId}/attachments` (`{ dataUrl, fileName }`; JPEG/PNG/WebP data URL, ≤1 MB decoded)
 - `DELETE /api/maintenances/records/{recordId}/attachments/{attachmentId}`
+- `GET /api/media/attachments/{id}?exp&sig` (anonymous; streams the image behind a signed, expiring URL; 404 for a bad, expired or unknown one; cacheable)
+- Uploads beyond `Storage:MaxBytesPerUser` answer `400 storage_quota_exceeded`.
 
 ## Reminders
 - `GET /api/reminders/due` (maintenance due/overdue for the current user)

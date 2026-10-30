@@ -11,9 +11,11 @@ namespace Bikontrol.Persistence.Configurations
             builder.ToTable("maintenance_record_attachments");
             builder.HasKey(a => a.Id);
 
-            // Data URLs are large; text avoids a length cap and the client already
-            // resizes. Size is enforced by ImageDataUrlValidator (<= ~1 MB decoded).
+            // Legacy rows keep the data URL here (text: no length cap); new rows leave it
+            // empty and use StorageKey. Size is enforced by ImageDataUrlValidator (<= ~1 MB).
             builder.Property(a => a.DataUrl).IsRequired();
+            builder.Property(a => a.StorageKey).HasMaxLength(300);
+            builder.Property(a => a.SizeBytes).IsRequired().HasDefaultValue(0);
             builder.Property(a => a.FileName).HasMaxLength(200);
             builder.Property(a => a.ContentType).IsRequired().HasMaxLength(50);
             builder.Property(a => a.CreatedAt).IsRequired();

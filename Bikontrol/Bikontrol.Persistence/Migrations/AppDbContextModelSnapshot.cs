@@ -448,6 +448,15 @@ namespace Bikontrol.Persistence.Migrations
                     b.Property<Guid>("MotorcycleMaintenanceRecordId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("SizeBytes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("StorageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MotorcycleMaintenanceRecordId");
