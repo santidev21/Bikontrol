@@ -17,7 +17,7 @@ namespace Bikontrol.Application.Services
     /// Account-level operations that span several repositories. Currently the
     /// "download my data" export; deletion will live here too.
     /// </summary>
-    public partial class AccountService : IAccountService
+    public class AccountService : IAccountService
     {
         private readonly IUserRepository _userRepository;
         private readonly IMotorcycleRepository _motorcycleRepository;
@@ -170,7 +170,7 @@ namespace Bikontrol.Application.Services
                 }
                 catch (Exception ex)
                 {
-                    LogObjectsNotRemoved(_logger, ex, storageKeys.Count);
+                    LogObjectsNotRemoved(_logger, storageKeys.Count, ex);
                 }
             }
         }
@@ -188,7 +188,7 @@ namespace Bikontrol.Application.Services
                     var stored = await _storage.GetAsync(attachment.StorageKey);
                     if (stored is null)
                     {
-                        LogMissingObject(_logger, attachment.Id);
+                        LogMissingObject(_logger, attachment.Id, null);
                     }
                     else
                     {
@@ -212,10 +212,10 @@ namespace Bikontrol.Application.Services
             return dto;
         }
 
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Account deleted but {Count} stored object(s) could not be removed.")]
-        private static partial void LogObjectsNotRemoved(ILogger logger, Exception exception, int count);
+        private static readonly Action<ILogger, int, Exception?> LogObjectsNotRemoved = LoggerMessage.Define<int>(
+            LogLevel.Warning, new EventId(1, nameof(LogObjectsNotRemoved)), "Account deleted but {Count} stored object(s) could not be removed.");
 
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Attachment {AttachmentId} points to a missing object; exporting it empty.")]
-        private static partial void LogMissingObject(ILogger logger, Guid attachmentId);
+        private static readonly Action<ILogger, Guid, Exception?> LogMissingObject = LoggerMessage.Define<Guid>(
+            LogLevel.Warning, new EventId(2, nameof(LogMissingObject)), "Attachment {AttachmentId} points to a missing object; exporting it empty.");
     }
 }

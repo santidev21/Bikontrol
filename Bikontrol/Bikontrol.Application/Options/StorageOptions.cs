@@ -35,17 +35,22 @@ namespace Bikontrol.Application.Options
         [Range(0, long.MaxValue)]
         public long MaxBytesPerUser { get; set; } = 50L * 1024 * 1024;
 
+        // Builds a list instead of using `yield`: coverlet excludes compiler-generated
+        // iterator state machines, which would leave this body permanently "uncovered".
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            var errors = new List<ValidationResult>();
             if (!Enabled)
-                yield break;
+                return errors;
 
             if (!Uri.TryCreate(ServiceUrl, UriKind.Absolute, out _))
-                yield return new ValidationResult("Storage:ServiceUrl must be an absolute URL when storage is enabled.", new[] { nameof(ServiceUrl) });
+                errors.Add(new ValidationResult("Storage:ServiceUrl must be an absolute URL when storage is enabled.", new[] { nameof(ServiceUrl) }));
             if (string.IsNullOrWhiteSpace(Bucket))
-                yield return new ValidationResult("Storage:Bucket is required when storage is enabled.", new[] { nameof(Bucket) });
+                errors.Add(new ValidationResult("Storage:Bucket is required when storage is enabled.", new[] { nameof(Bucket) }));
             if (string.IsNullOrWhiteSpace(AccessKey) || string.IsNullOrWhiteSpace(SecretKey))
-                yield return new ValidationResult("Storage:AccessKey and Storage:SecretKey are required when storage is enabled.", new[] { nameof(AccessKey) });
+                errors.Add(new ValidationResult("Storage:AccessKey and Storage:SecretKey are required when storage is enabled.", new[] { nameof(AccessKey) }));
+
+            return errors;
         }
     }
 }
