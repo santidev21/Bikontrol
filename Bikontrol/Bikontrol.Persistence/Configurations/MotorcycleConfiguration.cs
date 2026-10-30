@@ -18,6 +18,9 @@ namespace Bikontrol.Persistence.Configurations
             builder.Property(m => m.Brand).IsRequired().HasMaxLength(100);
             builder.Property(m => m.Plate).IsRequired().HasMaxLength(20);
             builder.Property(m => m.Image).HasDefaultValue("default.png");
+            builder.Property(m => m.ImageKey).HasMaxLength(300);
+            builder.Property(m => m.ImageVersion).HasMaxLength(32);
+            builder.Property(m => m.ImageSizeBytes).IsRequired().HasDefaultValue(0);
 
             // Optimistic concurrency via xmin (Postgres system column): two
             // simultaneous writes to the same motorcycle are not silently lost.

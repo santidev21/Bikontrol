@@ -25,6 +25,39 @@ describe('MotorcyclesService (unit, mocked HttpClient)', () => {
 
   afterEach(() => vi.resetAllMocks());
 
+  it('should resolve signed photo paths against the API origin and leave other values alone', async () => {
+    mockHttp.get.mockReturnValue(
+      of([
+        { id: '1', image: '/api/media/motorcycles/1?v=a&exp=1&sig=s' },
+        { id: '2', image: 'default.png' },
+        { id: '3', image: 'data:image/png;base64,AAAA' },
+        { id: '4' },
+      ]),
+    );
+
+    const res = await firstValueFrom(service.getMyMotorcycles());
+
+    expect(res[0].image).toMatch(/^https?:\/\/.+\/api\/media\/motorcycles\/1\?v=a&exp=1&sig=s$/);
+    expect(res[1].image).toBe('default.png');
+    expect(res[2].image).toBe('data:image/png;base64,AAAA');
+    expect(res[3].image).toBeUndefined();
+  });
+
+  it('should resolve the photo of a single motorcycle and of a created one', async () => {
+    mockHttp.get.mockReturnValue(
+      of({ id: '1', image: '/api/media/motorcycles/1?v=a&exp=1&sig=s' }),
+    );
+    mockHttp.post.mockReturnValue(
+      of({ id: '2', image: '/api/media/motorcycles/2?v=b&exp=1&sig=s' }),
+    );
+
+    const one = await firstValueFrom(service.getById('1'));
+    const created = await firstValueFrom(service.addMotorcycle({} as any));
+
+    expect(one.image).toMatch(/^https?:\/\/.+\/api\/media\/motorcycles\/1/);
+    expect(created.image).toMatch(/^https?:\/\/.+\/api\/media\/motorcycles\/2/);
+  });
+
   it('should fetch my motorcycles', async () => {
     const mock: any[] = [
       {

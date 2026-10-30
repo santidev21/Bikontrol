@@ -125,7 +125,7 @@ public sealed class AttachmentStorageIntegrationTests
 
         using (var scope = _factory.Services.CreateScope())
         {
-            var batch = await scope.ServiceProvider.GetRequiredService<AttachmentStorageMigrator>().MigrateBatchAsync(50);
+            var batch = await scope.ServiceProvider.GetRequiredService<ImageStorageMigrator>().MigrateBatchAsync(50);
             Assert.True(batch.Migrated >= 1);
             Assert.Equal(0, batch.Failed);
         }

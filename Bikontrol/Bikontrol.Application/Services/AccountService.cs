@@ -92,10 +92,17 @@ namespace Bikontrol.Application.Services
                 : await _kmHistoryService.GetCurrentKmByMotorcycleIdsAsync(motorcycleIds);
 
             var motorcycleDtos = motorcycles.ToMotorcycleDTOs();
+            var imageKeys = motorcycles.Where(m => m.ImageKey is not null).ToDictionary(m => m.Id, m => m.ImageKey!);
             foreach (var dto in motorcycleDtos)
             {
                 // MotorcycleDTO.Km is resolved from the km history, not the entity.
                 dto.Km = currentKms.TryGetValue(dto.Id, out var km) ? km : 0;
+
+                // Photos in the bucket are inlined (a signed URL would expire inside the file).
+                if (imageKeys.TryGetValue(dto.Id, out var imageKey))
+                {
+                    dto.Image = await ReadAsDataUrlAsync(imageKey, StorageKeys.ContentTypeOfKey(imageKey), dto.Id) ?? "default.png";
+                }
             }
 
             var maintenanceNames = maintenances.ToDictionary(m => m.Id, m => m.Name);
@@ -150,7 +157,9 @@ namespace Bikontrol.Application.Services
             }
 
             // Collect the object keys first: the purge below deletes the rows that name them.
-            var storageKeys = await _attachmentRepository.GetStorageKeysByUserAsync(user.Id);
+            var storageKeys = (await _attachmentRepository.GetStorageKeysByUserAsync(user.Id))
+                .Concat(await _motorcycleRepository.GetImageKeysByUserAsync(user.Id))
+                .ToList();
 
             await _transactions.ExecuteInTransactionAsync(async () =>
             {
@@ -185,24 +194,29 @@ namespace Bikontrol.Application.Services
                 var dto = attachment.ToAttachmentDTO();
                 if (attachment.StorageKey is not null)
                 {
-                    var stored = await _storage.GetAsync(attachment.StorageKey);
-                    if (stored is null)
-                    {
-                        LogMissingObject(_logger, attachment.Id, null);
-                    }
-                    else
-                    {
-                        using var buffer = new MemoryStream();
-                        await stored.Content.CopyToAsync(buffer);
-                        stored.Dispose();
-                        dto.DataUrl = ImageDataUrlValidator.Encode(buffer.ToArray(), attachment.ContentType);
-                    }
+                    dto.DataUrl = await ReadAsDataUrlAsync(attachment.StorageKey, attachment.ContentType, attachment.Id) ?? string.Empty;
                 }
 
                 result.Add(dto);
             }
 
             return result;
+        }
+
+        /// <summary>The stored object as a data URL, or null (logged) when the key points at nothing.</summary>
+        private async Task<string?> ReadAsDataUrlAsync(string key, string contentType, Guid ownerEntityId)
+        {
+            var stored = await _storage.GetAsync(key);
+            if (stored is null)
+            {
+                LogMissingObject(_logger, ownerEntityId, null);
+                return null;
+            }
+
+            using var buffer = new MemoryStream();
+            await stored.Content.CopyToAsync(buffer);
+            stored.Dispose();
+            return ImageDataUrlValidator.Encode(buffer.ToArray(), contentType);
         }
 
         private ProfileDTO ToProfile(User user)
@@ -216,6 +230,6 @@ namespace Bikontrol.Application.Services
             LogLevel.Warning, new EventId(1, nameof(LogObjectsNotRemoved)), "Account deleted but {Count} stored object(s) could not be removed.");
 
         private static readonly Action<ILogger, Guid, Exception?> LogMissingObject = LoggerMessage.Define<Guid>(
-            LogLevel.Warning, new EventId(2, nameof(LogMissingObject)), "Attachment {AttachmentId} points to a missing object; exporting it empty.");
+            LogLevel.Warning, new EventId(2, nameof(LogMissingObject)), "Stored image of {EntityId} points to a missing object; exporting it empty.");
     }
 }

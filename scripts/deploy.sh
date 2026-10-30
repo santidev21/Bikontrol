@@ -369,8 +369,8 @@ migrate() {
 # One-off after enabling object storage: moves attachment images that still
 # live as data URLs in the database into the bucket. Idempotent and resumable
 # (run it again after a failure); the app keeps serving both kinds meanwhile.
-migrate_attachments() {
-    log "Moving database-stored attachment images to object storage..."
+migrate_images() {
+    log "Moving database-stored images (attachments and motorcycle photos) to object storage..."
     set -a
     # shellcheck disable=SC1091
     source "$DEPLOY_DIR/.env"
@@ -378,9 +378,9 @@ migrate_attachments() {
     [[ "${Storage__Enabled:-false}" == "true" ]] || error_exit "Storage__Enabled is not true in $DEPLOY_DIR/.env — nothing to migrate to"
     (cd "$DEPLOY_DIR" && docker compose up -d db)
     wait_db_ready || error_exit "database did not become ready"
-    (cd "$DEPLOY_DIR" && docker compose run --rm --no-deps api --migrate-attachments) \
-        || error_exit "attachment migration reported failures — check the log and run it again"
-    log "Attachment migration finished."
+    (cd "$DEPLOY_DIR" && docker compose run --rm --no-deps api --migrate-images) \
+        || error_exit "image migration reported failures — check the log and run it again"
+    log "Image migration finished."
 }
 
 up() {
@@ -599,7 +599,7 @@ main() {
         pull) pull ;;
         build) build ;;
         migrate) migrate ;;
-        migrate-attachments) migrate_attachments ;;
+        migrate-images|migrate-attachments) migrate_images ;;
         up) up ;;
         deploy) deploy "${2:-}" ;;
         status) status ;;
@@ -613,7 +613,7 @@ main() {
         install-cron) install_cron "$@" ;;
         remove-cron) remove_cron ;;
         *)
-            echo "Usage: $0 [pull|build|migrate|migrate-attachments|up|deploy|status|logs|verify|smoke|rollback|restore-db|backup-db|audit-db|install-cron|remove-cron]"
+            echo "Usage: $0 [pull|build|migrate|migrate-images|up|deploy|status|logs|verify|smoke|rollback|restore-db|backup-db|audit-db|install-cron|remove-cron]"
             exit 1
             ;;
     esac

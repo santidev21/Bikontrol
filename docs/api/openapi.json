@@ -5,6 +5,48 @@
     "version": "v1"
   },
   "paths": {
+    "/api/media/attachments/{id}": {
+      "get": {
+        "tags": [
+          "AttachmentMedia"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "exp",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "sig",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/register": {
       "post": {
         "tags": [
@@ -882,10 +924,10 @@
         }
       }
     },
-    "/api/media/attachments/{id}": {
+    "/api/media/motorcycles/{id}": {
       "get": {
         "tags": [
-          "Media"
+          "MotorcycleMedia"
         ],
         "parameters": [
           {
@@ -911,6 +953,13 @@
           },
           {
             "name": "sig",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
             "in": "query",
             "schema": {
               "type": "string"
@@ -2122,6 +2171,9 @@
   ],
   "tags": [
     {
+      "name": "AttachmentMedia"
+    },
+    {
       "name": "Auth"
     },
     {
@@ -2131,7 +2183,7 @@
       "name": "Maintenances"
     },
     {
-      "name": "Media"
+      "name": "MotorcycleMedia"
     },
     {
       "name": "Motorcycles"

@@ -6,25 +6,25 @@ using Microsoft.Net.Http.Headers;
 namespace Bikontrol.API.Controllers
 {
     /// <summary>
-    /// Streams stored images behind signed, expiring URLs (see
+    /// Streams attachment images behind signed, expiring URLs (see
     /// <see cref="IMediaUrlSigner"/>). Anonymous because an <c>&lt;img&gt;</c> tag
     /// cannot send a bearer token; the HMAC signature is the credential and the
     /// bucket itself stays private.
     /// </summary>
     [ApiController]
-    [Route("api/media")]
+    [Route("api/media/attachments")]
     [AllowAnonymous]
-    public class MediaController : ControllerBase
+    public class AttachmentMediaController : ControllerBase
     {
         private readonly IMaintenanceAttachmentService _attachmentService;
 
-        public MediaController(IMaintenanceAttachmentService attachmentService)
+        public AttachmentMediaController(IMaintenanceAttachmentService attachmentService)
         {
             _attachmentService = attachmentService;
         }
 
-        [HttpGet("attachments/{id:guid}")]
-        public async Task<IActionResult> GetAttachment(Guid id, [FromQuery] long exp, [FromQuery] string? sig, CancellationToken cancellationToken)
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> Get(Guid id, [FromQuery] long exp, [FromQuery] string? sig, CancellationToken cancellationToken)
         {
             var media = await _attachmentService.OpenMediaAsync(id, exp, sig, cancellationToken);
 

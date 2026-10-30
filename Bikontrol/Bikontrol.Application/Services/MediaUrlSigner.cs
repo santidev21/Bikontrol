@@ -34,24 +34,38 @@ namespace Bikontrol.Application.Services
 
         public string CreateAttachmentUrl(Guid attachmentId)
         {
-            var now = _clock().ToUnixTimeSeconds();
-            var expires = ((now / WindowSeconds) + 2) * WindowSeconds;
-            return $"/api/media/attachments/{attachmentId}?exp={expires}&sig={Sign(attachmentId, expires)}";
+            var expires = NextExpiry();
+            return $"/api/media/attachments/{attachmentId}?exp={expires}&sig={Sign($"attachments/{attachmentId}", expires)}";
         }
 
-        public bool IsValidAttachmentUrl(Guid attachmentId, long expiresUnix, string? signature)
+        public bool IsValidAttachmentUrl(Guid attachmentId, long expiresUnix, string? signature) =>
+            IsValid($"attachments/{attachmentId}", expiresUnix, signature);
+
+        public string CreateMotorcycleUrl(Guid motorcycleId, string? version)
+        {
+            var expires = NextExpiry();
+            var v = Uri.EscapeDataString(string.IsNullOrEmpty(version) ? "0" : version);
+            return $"/api/media/motorcycles/{motorcycleId}?v={v}&exp={expires}&sig={Sign($"motorcycles/{motorcycleId}", expires)}";
+        }
+
+        public bool IsValidMotorcycleUrl(Guid motorcycleId, long expiresUnix, string? signature) =>
+            IsValid($"motorcycles/{motorcycleId}", expiresUnix, signature);
+
+        private long NextExpiry() => ((_clock().ToUnixTimeSeconds() / WindowSeconds) + 2) * WindowSeconds;
+
+        private bool IsValid(string resource, long expiresUnix, string? signature)
         {
             if (string.IsNullOrEmpty(signature) || expiresUnix < _clock().ToUnixTimeSeconds())
                 return false;
 
-            var expected = Encoding.ASCII.GetBytes(Sign(attachmentId, expiresUnix));
+            var expected = Encoding.ASCII.GetBytes(Sign(resource, expiresUnix));
             var provided = Encoding.ASCII.GetBytes(signature);
             return CryptographicOperations.FixedTimeEquals(expected, provided);
         }
 
-        private string Sign(Guid attachmentId, long expiresUnix)
+        private string Sign(string resource, long expiresUnix)
         {
-            var data = Encoding.UTF8.GetBytes($"attachments/{attachmentId}.{expiresUnix}");
+            var data = Encoding.UTF8.GetBytes($"{resource}.{expiresUnix}");
             return Convert.ToBase64String(HMACSHA256.HashData(_key, data))
                 .TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }

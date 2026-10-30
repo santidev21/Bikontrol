@@ -39,14 +39,16 @@ public class MaintenanceAttachmentServiceTests
         IObjectStorage? storage = null,
         long maxBytesPerUser = 0)
     {
+        var attachmentRepository = attachments ?? new FakeAttachmentRepository();
+        var motorcycleRepository = new FakeMotorcycleRepository(moto ?? Moto());
         return new MaintenanceAttachmentService(
             records ?? new FakeRecordRepository(Record()),
-            attachments ?? new FakeAttachmentRepository(),
-            new FakeMotorcycleRepository(moto ?? Moto()),
+            attachmentRepository,
+            motorcycleRepository,
             new FakeCurrentUserService(isDemo),
             storage ?? new NoopObjectStorage(),
             Signer(),
-            Options.Create(new StorageOptions { MaxBytesPerUser = maxBytesPerUser }),
+            new StorageQuota(attachmentRepository, motorcycleRepository, Options.Create(new StorageOptions { MaxBytesPerUser = maxBytesPerUser })),
             NullLogger<MaintenanceAttachmentService>.Instance);
     }
 

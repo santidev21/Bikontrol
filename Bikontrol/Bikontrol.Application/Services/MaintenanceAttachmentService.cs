@@ -1,12 +1,10 @@
 using Bikontrol.Application.DTOs.Maintenance;
 using Bikontrol.Application.Interfaces;
 using Bikontrol.Application.Interfaces.Repositories;
-using Bikontrol.Application.Options;
 using Bikontrol.Domain.Entities;
 using Bikontrol.Application.Mapping;
 using Bikontrol.Shared.Exceptions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Bikontrol.Application.Services
 {
@@ -25,7 +23,7 @@ namespace Bikontrol.Application.Services
         private readonly ICurrentUserService _current;
         private readonly IObjectStorage _storage;
         private readonly IMediaUrlSigner _urlSigner;
-        private readonly StorageOptions _options;
+        private readonly IStorageQuota _quota;
         private readonly ILogger<MaintenanceAttachmentService> _logger;
 
         public MaintenanceAttachmentService(
@@ -35,7 +33,7 @@ namespace Bikontrol.Application.Services
             ICurrentUserService current,
             IObjectStorage storage,
             IMediaUrlSigner urlSigner,
-            IOptions<StorageOptions> options,
+            IStorageQuota quota,
             ILogger<MaintenanceAttachmentService> logger)
         {
             _recordRepository = recordRepository;
@@ -44,7 +42,7 @@ namespace Bikontrol.Application.Services
             _current = current;
             _storage = storage;
             _urlSigner = urlSigner;
-            _options = options.Value;
+            _quota = quota;
             _logger = logger;
         }
 
@@ -62,7 +60,7 @@ namespace Bikontrol.Application.Services
             ImageDataUrlValidator.Validate(request.DataUrl, required: true);
 
             var bytes = ImageDataUrlValidator.Decode(request.DataUrl);
-            await EnsureWithinQuotaAsync(bytes.Length);
+            await _quota.EnsureWithinAsync(_current.UserId, bytes.Length);
 
             var contentType = ImageDataUrlValidator.ContentTypeOf(request.DataUrl);
             var attachment = new MaintenanceRecordAttachment
@@ -144,16 +142,6 @@ namespace Bikontrol.Application.Services
             var dto = attachment.ToAttachmentDTO();
             dto.DataUrl = _urlSigner.CreateAttachmentUrl(attachment.Id);
             return dto;
-        }
-
-        private async Task EnsureWithinQuotaAsync(int incomingBytes)
-        {
-            if (_options.MaxBytesPerUser <= 0)
-                return;
-
-            var used = await _attachmentRepository.GetTotalSizeBytesByUserAsync(_current.UserId);
-            if (used + incomingBytes > _options.MaxBytesPerUser)
-                throw new ValidationException("Alcanzaste el límite de almacenamiento de adjuntos.", "storage_quota_exceeded");
         }
 
         // Best effort: a leftover object costs a few KB, a failed request costs the user.

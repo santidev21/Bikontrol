@@ -61,7 +61,16 @@ public class MotorcycleServiceDemoTests
             new FakeKmHistoryRepository(),
             new FakeKmHistoryService(),
             current,
-            new FakeTransactionManager());
+            new FakeTransactionManager(),
+            new Bikontrol.Infrastructure.Storage.NoopObjectStorage(),
+            new MediaUrlSigner(Microsoft.Extensions.Options.Options.Create(new Bikontrol.Application.Options.JwtOptions { Key = new string('k', 40) })),
+            new FakeQuota(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<MotorcycleService>.Instance);
+    }
+
+    private sealed class FakeQuota : IStorageQuota
+    {
+        public Task EnsureWithinAsync(Guid userId, long incomingBytes, long replacingBytes = 0) => Task.CompletedTask;
     }
 
     private sealed class FakeTransactionManager : ITransactionManager
