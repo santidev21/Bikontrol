@@ -53,7 +53,7 @@
 - `GET /api/maintenances/records/{recordId}/attachments` (photos/documents of a record; `dataUrl` is a signed `/api/media/...` path)
 - `POST /api/maintenances/records/{recordId}/attachments` (`{ dataUrl, fileName }`; JPEG/PNG/WebP data URL, ≤1 MB decoded)
 - `DELETE /api/maintenances/records/{recordId}/attachments/{attachmentId}`
-- `GET /api/media/attachments/{id}?exp&sig` (anonymous; streams the image behind a signed, expiring URL; 404 for a bad, expired or unknown one; cacheable)
+- `GET /api/media/attachments/{id}?exp&sig` and `GET /api/media/motorcycles/{id}?v&exp&sig` (anonymous; stream the image behind a signed, expiring URL; 404 for a bad, expired or unknown one; cacheable; `v` is only a cache-buster). The motorcycle `image` field in requests is `default.png`/empty (remove), a data URL (new photo) or the bike's own media URL (unchanged).
 - Uploads beyond `Storage:MaxBytesPerUser` answer `400 storage_quota_exceeded`.
 
 ## Reminders

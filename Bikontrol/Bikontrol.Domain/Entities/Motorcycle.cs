@@ -15,7 +15,21 @@ namespace Bikontrol.Domain.Entities
         public string Brand { get; set; } = string.Empty;
         public int Year { get; set; }
         public string Nickname { get; set; } = string.Empty;
+        /// <summary>
+        /// "default.png", or a data URL while the photo still lives in the database
+        /// (legacy rows, or object storage disabled). Once it is in the bucket this
+        /// goes back to "default.png" and <see cref="ImageKey"/> points at the object.
+        /// </summary>
         public string Image { get; set; } = "default.png";
+
+        /// <summary>Object key of the photo in the bucket, or null.</summary>
+        public string? ImageKey { get; set; }
+
+        /// <summary>Changes with every new photo; it busts the browser cache of the signed URL.</summary>
+        public string? ImageVersion { get; set; }
+
+        /// <summary>Decoded photo size, for the per-user storage quota.</summary>
+        public int ImageSizeBytes { get; set; }
         public int Displacement { get; set; }
         public string Plate { get; set; } = string.Empty;
         public bool IsEnabled { get; set; } = true;

@@ -172,6 +172,9 @@ public class MotorcyclesControllerTests
 
     private sealed class FakeMotorcycleService : IMotorcycleService
     {
+        public Task<StoredObject> OpenImageAsync(Guid id, long expiresUnix, string? signature, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
         public SaveMotorcycleDTO? LastCreateRequest { get; private set; }
         public SaveMotorcycleDTO? LastUpdateRequest { get; private set; }
         public Guid LastDeletedId { get; private set; }

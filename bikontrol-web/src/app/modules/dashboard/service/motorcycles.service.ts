@@ -1,7 +1,8 @@
 import { Injectable, Signal, inject } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { resolveMediaUrl } from '../../../shared/utils/media-url';
 import {
   Motorcycle,
   SaveMotorcycleDTO,
@@ -17,7 +18,9 @@ export class MotorcyclesService {
   private apiUrl = `${environment.apiUrl}/motorcycles`;
 
   getMyMotorcycles(): Observable<Motorcycle[]> {
-    return this.http.get<Motorcycle[]>(`${this.apiUrl}/mine`);
+    return this.http
+      .get<Motorcycle[]>(`${this.apiUrl}/mine`)
+      .pipe(map((motorcycles) => motorcycles.map(withResolvedImage)));
   }
 
   /**
@@ -25,15 +28,18 @@ export class MotorcyclesService {
    * Must be called in an injection context (e.g. a component field initializer).
    */
   getMyMotorcyclesResource(): HttpResourceRef<Motorcycle[]> {
-    return httpResource<Motorcycle[]>(() => `${this.apiUrl}/mine`, { defaultValue: [] });
+    return httpResource<Motorcycle[]>(() => `${this.apiUrl}/mine`, {
+      defaultValue: [],
+      parse: (raw) => (raw as Motorcycle[]).map(withResolvedImage),
+    });
   }
 
   getById(id: string): Observable<Motorcycle> {
-    return this.http.get<Motorcycle>(`${this.apiUrl}/${id}`);
+    return this.http.get<Motorcycle>(`${this.apiUrl}/${id}`).pipe(map(withResolvedImage));
   }
 
   addMotorcycle(motorcycle: SaveMotorcycleDTO): Observable<Motorcycle> {
-    return this.http.post<Motorcycle>(`${this.apiUrl}`, motorcycle);
+    return this.http.post<Motorcycle>(`${this.apiUrl}`, motorcycle).pipe(map(withResolvedImage));
   }
 
   updateMotorcycle(id: string, dto: SaveMotorcycleDTO): Observable<void> {
@@ -77,4 +83,15 @@ export class MotorcyclesService {
       responseType: 'blob',
     });
   }
+}
+
+/**
+ * `image` is "default.png", a legacy data URL, or a signed media path
+ * (`/api/media/motorcycles/{id}?v&exp&sig`) that must be resolved against the API
+ * origin. The edit form may send the resolved URL back: the server recognises its own.
+ */
+function withResolvedImage(motorcycle: Motorcycle): Motorcycle {
+  return motorcycle.image
+    ? { ...motorcycle, image: resolveMediaUrl(motorcycle.image) }
+    : motorcycle;
 }

@@ -16,5 +16,14 @@ namespace Bikontrol.Application.Interfaces
         string CreateAttachmentUrl(Guid attachmentId);
 
         bool IsValidAttachmentUrl(Guid attachmentId, long expiresUnix, string? signature);
+
+        /// <summary>
+        /// <c>/api/media/motorcycles/{id}?v=…&amp;exp=…&amp;sig=…</c>. <paramref name="version"/>
+        /// changes with every new photo and is part of the URL only to bust the
+        /// browser cache; it is not signed because it grants nothing.
+        /// </summary>
+        string CreateMotorcycleUrl(Guid motorcycleId, string? version);
+
+        bool IsValidMotorcycleUrl(Guid motorcycleId, long expiresUnix, string? signature);
     }
 }

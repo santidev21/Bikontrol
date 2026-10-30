@@ -118,7 +118,7 @@ public class ObjectStorageTests
         var legacy = new MaintenanceRecordAttachment { Id = Guid.NewGuid(), DataUrl = PngDataUrl, ContentType = "image/png" };
         var repo = new FakeRepo(owner, legacy);
         var storage = new InMemoryObjectStorage();
-        var migrator = new AttachmentStorageMigrator(repo, storage, NullLogger<AttachmentStorageMigrator>.Instance);
+        var migrator = new ImageStorageMigrator(repo, new FakeMotos(), storage, NullLogger<ImageStorageMigrator>.Instance);
 
         var first = await migrator.MigrateBatchAsync(10);
         var second = await migrator.MigrateBatchAsync(10);
@@ -138,7 +138,7 @@ public class ObjectStorageTests
         var orphan = new MaintenanceRecordAttachment { Id = Guid.NewGuid(), DataUrl = PngDataUrl };
         var repo = new FakeRepo(Guid.NewGuid(), broken, orphan) { NoOwnerFor = orphan.Id };
         var storage = new InMemoryObjectStorage();
-        var migrator = new AttachmentStorageMigrator(repo, storage, NullLogger<AttachmentStorageMigrator>.Instance);
+        var migrator = new ImageStorageMigrator(repo, new FakeMotos(), storage, NullLogger<ImageStorageMigrator>.Instance);
 
         var result = await migrator.MigrateBatchAsync(10);
 
@@ -151,9 +151,58 @@ public class ObjectStorageTests
     [Fact]
     public async Task Migrator_RefusesToRunWithoutStorage()
     {
-        var migrator = new AttachmentStorageMigrator(new FakeRepo(Guid.NewGuid()), new NoopObjectStorage(), NullLogger<AttachmentStorageMigrator>.Instance);
+        var migrator = new ImageStorageMigrator(new FakeRepo(Guid.NewGuid()), new FakeMotos(), new NoopObjectStorage(), NullLogger<ImageStorageMigrator>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => migrator.MigrateBatchAsync(10));
+    }
+
+    [Fact]
+    public async Task Migrator_MovesLegacyMotorcyclePhotosToStorage()
+    {
+        var owner = Guid.NewGuid();
+        var legacy = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", owner) { Id = Guid.NewGuid(), Image = PngDataUrl };
+        var untouched = new Motorcycle("CB", "Honda", 2024, "N", 150, "XYZ12D", owner) { Id = Guid.NewGuid() };
+        var motos = new FakeMotos(legacy, untouched);
+        var storage = new InMemoryObjectStorage();
+        var migrator = new ImageStorageMigrator(new FakeRepo(owner), motos, storage, NullLogger<ImageStorageMigrator>.Instance);
+
+        var first = await migrator.MigrateBatchAsync(10);
+        var second = await migrator.MigrateBatchAsync(10);
+
+        Assert.Equal(new StorageMigrationBatch(1, 0), first);
+        Assert.Equal(new StorageMigrationBatch(0, 0), second);
+        Assert.Equal("default.png", legacy.Image);
+        Assert.Equal($"motorcycles/{owner:N}/{legacy.Id:N}/{legacy.ImageVersion}.png", legacy.ImageKey);
+        Assert.Equal(ImageDataUrlValidator.Decode(PngDataUrl).Length, legacy.ImageSizeBytes);
+        Assert.Null(untouched.ImageKey);
+        Assert.Equal(new[] { legacy.ImageKey! }, storage.GetKeys());
+    }
+
+    [Fact]
+    public async Task Migrator_KeepsAnInvalidMotorcyclePhotoInTheDatabase()
+    {
+        var broken = new Motorcycle("YBR", "Yamaha", 2024, "N", 125, "ABC12D", Guid.NewGuid()) { Id = Guid.NewGuid(), Image = "data:text/plain;base64,aGk=" };
+        var migrator = new ImageStorageMigrator(new FakeRepo(Guid.NewGuid()), new FakeMotos(broken), new InMemoryObjectStorage(), NullLogger<ImageStorageMigrator>.Instance);
+
+        Assert.Equal(new StorageMigrationBatch(0, 1), await migrator.MigrateBatchAsync(10));
+        Assert.Null(broken.ImageKey);
+        Assert.StartsWith("data:", broken.Image);
+    }
+
+    private sealed class FakeMotos : IMotorcycleRepository
+    {
+        private readonly List<Motorcycle> _items;
+        public FakeMotos(params Motorcycle[] items) => _items = items.ToList();
+
+        public Task<IReadOnlyList<Motorcycle>> GetPendingImageMigrationAsync(int take) =>
+            Task.FromResult<IReadOnlyList<Motorcycle>>(_items.Where(m => m.ImageKey is null && m.Image.StartsWith("data:", StringComparison.Ordinal)).Take(take).ToList());
+
+        public Task SaveChangesAsync() => Task.CompletedTask;
+        public Task<Motorcycle?> GetByIdAsync(Guid id) => throw new NotImplementedException();
+        public Task<IEnumerable<Motorcycle>> GetByUserIdAsync(Guid userId) => throw new NotImplementedException();
+        public Task<Motorcycle> AddAsync(Motorcycle motorcycle) => throw new NotImplementedException();
+        public Task UpdateAsync(Motorcycle motorcycle) => throw new NotImplementedException();
+        public Task SoftDeleteAsync(Guid id) => throw new NotImplementedException();
     }
 
     private sealed class FakeRepo : IMaintenanceRecordAttachmentRepository

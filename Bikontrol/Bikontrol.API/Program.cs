@@ -474,10 +474,11 @@ if (migrateOnly || runMigrationsOnStartup)
     }
 }
 
-// One-off (`deploy.sh migrate-attachments`): move attachment images that still
-// live as data URLs in the database into object storage. Idempotent, resumable,
+// One-off (`deploy.sh migrate-images`; `--migrate-attachments` is the old name):
+// move attachment images and motorcycle photos that still live as data URLs in
+// the database into object storage. Idempotent, resumable,
 // one DI scope per batch so the change tracker never holds megabytes of base64.
-if (args.Contains("--migrate-attachments"))
+if (args.Contains("--migrate-images") || args.Contains("--migrate-attachments"))
 {
     var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
     int migrated = 0, failed = 0;
@@ -485,7 +486,7 @@ if (args.Contains("--migrate-attachments"))
     {
         using var scope = scopeFactory.CreateScope();
         var batch = await scope.ServiceProvider
-            .GetRequiredService<Bikontrol.Application.Services.AttachmentStorageMigrator>()
+            .GetRequiredService<Bikontrol.Application.Services.ImageStorageMigrator>()
             .MigrateBatchAsync(50);
         migrated += batch.Migrated;
         failed += batch.Failed;
@@ -493,7 +494,7 @@ if (args.Contains("--migrate-attachments"))
             break;
     }
 
-    Log.Information("Attachment migration finished: {Migrated} moved, {Failed} failed.", migrated, failed);
+    Log.Information("Image migration finished: {Migrated} moved, {Failed} failed.", migrated, failed);
     Environment.ExitCode = failed > 0 ? 1 : 0;
     return;
 }

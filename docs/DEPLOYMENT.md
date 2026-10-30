@@ -117,7 +117,7 @@ Recovery: `./scripts/deploy.sh restore-db backups/backup-xxx/db.sql.gz` (verifie
 
 ## Object storage (attachment images)
 
-Attachment photos can live in a private S3-compatible bucket instead of PostgreSQL (design and trade-offs:
+Attachment images and motorcycle photos can live in a private S3-compatible bucket instead of PostgreSQL (design and trade-offs:
 [ADR 005](adr/005-object-storage.md)). Recommended: **Cloudflare R2** (S3 API, no egress fees).
 
 1. Create a **private** bucket (e.g. `bikontrol-prod`). No public access, no CORS: the API streams the
@@ -133,11 +133,12 @@ Attachment photos can live in a private S3-compatible bucket instead of PostgreS
    ```
    (`Storage__Region=auto` and path-style addressing are the defaults and are what R2 expects. For B2 use
    its S3 endpoint and your bucket region; for MinIO/AWS adjust `ServiceUrl`/`Region`.)
-   `Storage__MaxBytesPerUser` caps each user's stored attachments (default 50 MB; `0` disables it).
+   `Storage__MaxBytesPerUser` caps each user's stored images, attachments and motorcycle photos together (default 50 MB; `0` disables it).
 4. Deploy. New uploads go to the bucket; existing ones keep working from the database.
-5. Move the existing images: `./scripts/deploy.sh migrate-attachments` (idempotent; rerun after a failure;
-   exits non-zero if any row could not be moved). Afterwards the `DataUrl` column is empty for those rows,
-   which shrinks the database and its dumps.
+5. Move the existing images: `./scripts/deploy.sh migrate-images` (attachments and motorcycle photos;
+   `migrate-attachments` still works as an alias; idempotent, rerun after a failure; exits non-zero if any
+   row could not be moved). Afterwards the image columns are empty for those rows, which shrinks the
+   database and its dumps.
 
 **Backups.** `pg_dump` and the offsite DB copy no longer contain the images, only their keys. Enable
 versioning or replication on the bucket at the provider, or mirror it periodically, e.g.
